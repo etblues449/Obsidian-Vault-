@@ -1,15 +1,28 @@
 # Memory Index
 
-- [User profile](user_profile.md) — Jelly Bean: paralegal/support for Elliot, AI tooling enthusiast, PowerShell + Gemini familiarity
-- [Smart Home project](project_smart_home.md) — HA Green + ESP32 nodes; lounge done, bedroom-2 live, upstairs has BLE/UART contention
-- [Doc to Learning App](project_doc_to_learning.md) — single-file HTML, Anthropic API, Cost Management notes, editorial design
-- [Faceless Finance YouTube](project_faceless_finance.md) — CA-credentialed faceless channel; Wed/Fri/Sun, Wed 4PM priority
-- [Other Claude.ai workspaces](project_other_workspaces.md) — Debt, Studying, Linux PC on Android, Select Website, Code/skills
-- [Claude.ai account inventory](Claude.ai%20Account%20Inventory.md) — projects, artifacts, and chat sidebar snapshot from screenshots (2026-05-01)
-- [Claude.ai account-level memory](claude_ai_account_memory.md) — single Memory blob shown in every project (CA / faceless finance focus)
-- [Capture queue](capture_queue.md) — what's still missing from Claude.ai (instructions, artifact source, newer chats)
-- **Project Custom Instructions (Claude.ai)** — captured from screenshots:
-  - [Shared CLAUDE.md block](shared_claude_md_instructions.md) — used in Studying, Code, Faceless Financial, Notebook lm, and Smart Home (revoked Fly.io token redacted)
-  - [Smart Home](project_smart_home_instructions.md), [skills](project_skills_instructions.md), [Studying](project_studying_instructions.md), [Code](project_code_instructions.md), [Faceless Financial](project_faceless_financial_instructions.md), [Notebook lm](project_notebook_lm_instructions.md), [Debt](project_debt_instructions.md) (partial)
-- [Conversations index](CONVERSATIONS_INDEX.md) — 94 imported Claude.ai conversations (in `conversations/`)
-- [Design chat](design_chats/) — 1 imported Claude.ai design chat
+Last updated: 2026-05-04
+
+## Profile
+→ [[Profile/user_profile]] — Jelly Bean: paralegal/support for Elliot, AI tooling enthusiast, CA, PowerShell + Gemini familiarity
+
+## Projects
+→ [[Projects/Smart Home/_index]] — HA Green + ESP32 nodes; lounge done, bedroom-2 live, upstairs has BLE/UART contention
+→ [[Projects/Faceless Finance/_index]] — CA-credentialed faceless channel; Wed/Fri/Sun, Wed 4PM priority
+→ [[Projects/Doc to Learning/_index]] — single-file HTML, Anthropic API, editorial design, Cost Management notes
+→ [[Projects/Other Workspaces/_index]] — Debt, Studying, Linux PC on Android, Select Website, Code/skills
+
+## Instructions (Claude.ai project custom instructions)
+→ [[Instructions/shared_claude_md_instructions]] — shared CLAUDE.md block used across Studying, Code, Faceless Financial, Notebook lm, Smart Home
+→ [[Instructions/project_smart_home_instructions]]
+→ [[Instructions/project_faceless_financial_instructions]]
+→ [[Instructions/project_code_instructions]]
+→ [[Instructions/project_notebook_lm_instructions]]
+→ [[Instructions/project_skills_instructions]]
+→ [[Instructions/project_studying_instructions]]
+→ [[Instructions/project_debt_instructions]] — partial; first line only captured
+
+## Account
+→ [[Account/Claude.ai Account Inventory]] — projects, artifacts, and chat sidebar snapshot (2026-05-01)
+→ [[Account/claude_ai_account_memory]] — single Memory blob shown in every project (CA / faceless finance focus)
+→ [[Account/CONVERSATIONS_INDEX]] — 94 imported Claude.ai conversations (in `conversations/`)
+→ [[Account/capture_queue]] — what's still missing from Claude.ai (instructions, artifact source, newer chats)
