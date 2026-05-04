@@ -2,5 +2,10 @@
   "smart-templates",
   "smart-connections",
   "smart-context",
-  "smart-lookup"
+  "smart-lookup",
+  "obsidian42-brat",
+  "claudian",
+  "obsidian-git",
+  "obsidian-importer",
+  "obsidian-local-rest-api"
 ]
