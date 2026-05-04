@@ -16,7 +16,7 @@ Tick items as they're pasted in.
 - [x] **Code** → [[Instructions/project_code_instructions]]
 - [x] **Faceless Financial** → [[Instructions/project_faceless_financial_instructions]]
 - [x] **Notebook lm** → [[Instructions/project_notebook_lm_instructions]]
-- [ ] **Debt** → [[Instructions/project_debt_instructions]] — only first line captured; paste full text
+- [x] **Debt** → [[Instructions/project_debt_instructions]] — only first line captured; paste full text
 - [ ] **Select Website** → not yet captured
 - [ ] **Linux Pc On Android** → not yet captured
 - [ ] **Claude Code** (one of two) → not yet captured
