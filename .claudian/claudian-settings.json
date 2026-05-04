@@ -1,7 +1,7 @@
 {
   "userName": "Jelly Bean",
   "permissionMode": "yolo",
-  "model": "sonnet[1m]",
+  "model": "claude-sonnet-4-6",
   "thinkingBudget": "low",
   "effortLevel": "high",
   "serviceTier": "default",
@@ -24,7 +24,9 @@
     "claude": {
       "safeMode": "acceptEdits",
       "cliPath": "",
-      "cliPathsByHost": {},
+      "cliPathsByHost": {
+        "Elliot": "C:\\Users\\ElliotHorton\\.local\\bin\\claude.exe"
+      },
       "loadUserSettings": true,
       "enableChrome": true,
       "enableBangBash": false,
@@ -63,7 +65,7 @@
   },
   "settingsProvider": "claude",
   "savedProviderModel": {
-    "claude": "sonnet[1m]"
+    "claude": "claude-sonnet-4-6"
   },
   "savedProviderEffort": {
     "claude": "high"
@@ -75,7 +77,7 @@
   "savedProviderPermissionMode": {
     "claude": "yolo"
   },
-  "lastCustomModel": "",
+  "lastCustomModel": "claude-sonnet-4-6",
   "maxTabs": 4,
   "tabBarPosition": "input",
   "enableAutoScroll": true,
