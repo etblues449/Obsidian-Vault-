@@ -30,7 +30,7 @@
       "enableBangBash": false,
       "enableOpus1M": true,
       "enableSonnet1M": true,
-      "customModels": "",
+      "customModels": "claude-opus-4-6\nclaude-sonnet-4-6\nclaude-haiku-4-5-20251001",
       "lastModel": "sonnet[1m]",
       "environmentVariables": "",
       "environmentHash": ""
