@@ -1,0 +1,19 @@
+# Obsidian per-device state
+.obsidian/workspace
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+.obsidian/hotkeys-mobile.json
+
+# Smart Connections plugin
+.smart-env/
+
+# Trash
+.trash/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
