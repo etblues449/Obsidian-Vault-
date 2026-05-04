@@ -9,5 +9,6 @@
   "obsidian-importer",
   "obsidian-local-rest-api",
   "shell-path-copy",
-  "obsidian-tasks-plugin"
+  "obsidian-tasks-plugin",
+  "obsidian-style-settings"
 ]
