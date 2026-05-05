@@ -81,6 +81,7 @@
   "maxTabs": 4,
   "tabBarPosition": "input",
   "enableAutoScroll": true,
-  "openInMainTab": true,
+  "deferMathRenderingDuringStreaming": true,
+  "chatViewPlacement": "main-tab",
   "hiddenProviderCommands": {}
 }
