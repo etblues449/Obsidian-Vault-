@@ -7,29 +7,26 @@ Source: company org chart provided.
 ## Departments
 
 ### Executive
-| Name             | Role                                          |
-| ---------------- | --------------------------------------------- |
-| Nick Horton      | Managing Director                             |
-| Christine Horton | Non-Executive Director                        |
-| Sue Grice        | Non-Executive Director                        |
-| Elliot Horton    | Contracts Manager *(YOU)*                     |
-| Emma Franks      | Executive Director (CQC Nominated Individual) |
-| Sumedh Jassal    | Executive Director                            |
-| Les Trumpeter    | Executive Director                            |
-| Alex Ford        | Executive Director                            |
-| Liz Grice        | Executive Director                            |
+| Name             | Role                   |
+| ---------------- | ---------------------- |
+| Nick Horton      | Managing Director      |
+| Christine Horton | Non-Executive Director |
+| Sue Grice        | Non-Executive Director |
+| Elliot Horton    | Executive Director     |
+| Emma Franks      | Executive Director     |
+| Sumedh Jassal    | Executive Director     |
+| Les Trumpeter    | Executive Director     |
+| Alex Ford        | Executive Director     |
+| Liz Grice        | NON Executive Director |
 
 ### Care & Compliance (Head: John Roberts)
-| Name | Role |
-|---|---|
-| John Roberts | Head of Care and Compliance |
-| Stephen McGough | Operations Manager (Regent House CQC Registered) |
-| Craig McGough | Systems & Monitoring Manager |
-| (TBC) | Systems Administrator |
-| Wayne Phillips | Training Manager |
-| Constance Mhishi | Marketing Executive |
-| Nicky Kaur | Office Manager & PA to Directors |
-| Amanda Johnson | Receptionist |
+| Name             | Role                                                   |
+| ---------------- | ------------------------------------------------------ |
+| John Roberts     | Head of Care and Compliance (CQC Nominated Individual) |
+| Csenge Losonczki | Systems Administrator                                  |
+| Wayne Phillips   | Training Manager                                       |
+| Nicky Kaur       | Office Manager & PA to Directors                       |
+| Amanda Johnson   | Receptionist                                           |
 
 ### Operations (sub-tree of Care & Compliance)
 Regional Managers:
@@ -47,20 +44,21 @@ Registered CQC Managers:
 - **Katie Bromwich** — Throne Road (Scheme Manager — Day Services)
 
 ### Finance (Head: Harry Jordanou)
-| Name | Role |
-|---|---|
-| Harry Jordanou | Head of Finance |
-| Lin Goodwin | Finance Manager |
-| Kelly Russell | Payroll Clerk |
-| Ann Russell | Payroll Clerk |
-| James Shuker | Accounts Assistant |
-| Asha Bibi | Benefits Officer |
+| Name           | Role               |
+| -------------- | ------------------ |
+| Harry Jordanou | Head of Finance    |
+| Lin Goodwin    | Finance Manager    |
+| Kelly Russell  | Payroll Clerk      |
+| Ann Russell    | Payroll Clerk      |
+| James Shuker   | Accounts Assistant |
+| Asha Bibi      | Benefits Officer   |
+| Amy            | Credit Control     |
 
 ### Estates (Head: Wayne Etheridge)
-| Name | Role |
-|---|---|
-| Wayne Etheridge | Head of Estates |
-| (TBC) | Maintenance Team |
+| Name            | Role             |
+| --------------- | ---------------- |
+| Wayne Etheridge | Head of Estates  |
+|                 | Maintenance Team |
 
 ### HR (Head: TBC)
 | Name | Role |
