@@ -2,23 +2,38 @@ import "./index.css";
 import { Composition } from "remotion";
 import { HelloWorld, myCompSchema } from "./HelloWorld";
 import { Logo, myCompSchema2 } from "./HelloWorld/Logo";
-
-// Each <Composition> is an entry in the sidebar!
+import {
+  CreditCardDebt,
+  creditCardDebtSchema,
+} from "./FinanceShort/CreditCardDebt";
 
 export const RemotionRoot: React.FC = () => {
   return (
     <>
       <Composition
-        // You can take the "id" to render a video:
-        // npx remotion render HelloWorld
+        id="CreditCardDebt"
+        component={CreditCardDebt}
+        durationInFrames={60 * 30}
+        fps={30}
+        width={1080}
+        height={1920}
+        schema={creditCardDebtSchema}
+        defaultProps={{
+          ca: "CA · CHARTERED ACCOUNTANT",
+          totalInterest: "£60.9B",
+          perAdult: "£1,080",
+          apr: "24.4%",
+          examplePrincipal: "£5,000",
+        }}
+      />
+
+      <Composition
         id="HelloWorld"
         component={HelloWorld}
         durationInFrames={150}
         fps={30}
         width={1920}
         height={1080}
-        // You can override these props for each render:
-        // https://www.remotion.dev/docs/parametrized-rendering
         schema={myCompSchema}
         defaultProps={{
           titleText: "Welcome to Remotion",
@@ -28,7 +43,6 @@ export const RemotionRoot: React.FC = () => {
         }}
       />
 
-      {/* Mount any React component to make it show up in the sidebar and work on it individually! */}
       <Composition
         id="OnlyLogo"
         component={Logo}
