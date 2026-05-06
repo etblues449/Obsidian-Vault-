@@ -7,17 +7,17 @@ Source: company org chart provided.
 ## Departments
 
 ### Executive
-| Name | Role |
-|---|---|
-| Nick Horton | Managing Director |
-| Christine Horton | Non-Executive Director |
-| Sue Grice | Non-Executive Director |
-| Elliot Horton | Contracts Manager *(YOU)* |
-| Emma Franks | Executive Director (CQC Nominated Individual) |
-| Sumedh Jassal | Executive Director |
-| Les Trumpeter | Executive Director |
-| Alex Ford | Executive Director |
-| Liz Grice | Executive Director |
+| Name             | Role                                          |
+| ---------------- | --------------------------------------------- |
+| Nick Horton      | Managing Director                             |
+| Christine Horton | Non-Executive Director                        |
+| Sue Grice        | Non-Executive Director                        |
+| Elliot Horton    | Contracts Manager *(YOU)*                     |
+| Emma Franks      | Executive Director (CQC Nominated Individual) |
+| Sumedh Jassal    | Executive Director                            |
+| Les Trumpeter    | Executive Director                            |
+| Alex Ford        | Executive Director                            |
+| Liz Grice        | Executive Director                            |
 
 ### Care & Compliance (Head: John Roberts)
 | Name | Role |
