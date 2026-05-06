@@ -44,37 +44,37 @@
 
 These got 1–106 emails to/from you. Tell me which department for each — or write **"skip"** to leave unmapped.
 
-| Person                    | Email                | Vol | Dept?                                                    |
-| ------------------------- | -------------------- | --: | -------------------------------------------------------- |
-| Asha Rahman               | arahman              | 106 | ? *(was "Asha Bibi" on chart — same person?)* SAME AND F |
-| Angelina Thompson         | athompson            |  69 | ?                                                        |
-| Onome Mine Ekporo         | oekporo              |  18 | ?                                                        |
-| Emma Greenaway            | egreenaway           |  18 | ?                                                        |
-| Matthew Turley            | mturley              |  17 | ?                                                        |
-| Sarah Keeling             | skeeling             |  13 | ?                                                        |
-| Julie Courts              | jcourts              |  13 | ?                                                        |
-| Damian Shaw               | dshaw                |   9 | ?                                                        |
-| Claudette Stephenson      | cstephenson          |   8 | ?                                                        |
-| Winifred Meredith         | wmeredith            |   7 | ?                                                        |
-| Karen Ann McAfee          | kmcafee              |   5 | ?                                                        |
-| Kate Joyce                | kjoyce               |   4 | ?                                                        |
-| Abiodun Okunnu            | aokunnu              |   4 | ?                                                        |
-| Adedoyin Kolawole         | akolawole            |   3 | ?                                                        |
-| Leanne Payton             | lpayton              |   3 | ?                                                        |
-| Jaspreet Hayer            | jhayer               |   3 | ?                                                        |
-| Amy Lavill                | alavill              |   2 | ?                                                        |
-| Mark Myrie                | mmyrie               |   2 | ?                                                        |
-| Abibat Olawole            | aolawole             |   2 | ?                                                        |
-| Claire Rolls              | crolls               |   2 | ?                                                        |
-| Tina Pirohova             | tpirohova            |   2 | ?                                                        |
-| Margaret Smith            | msmith               |   2 | ?                                                        |
-| Kian Golestani (internal) | kgolestani           |   1 | ? *(also has external carbonlawpartners account)*        |
-| Jonathan Burden           | jburden              |   1 | ?                                                        |
-| Nicole Roberts            | nroberts             |   1 | ?                                                        |
-| Philippa Knowles          | pknowles             |   1 | ?                                                        |
-| Oluwatoyin Toyin Balogun  | obalogun             |   1 | ?                                                        |
-| Mental Health First Aid   | mentalhealthfirstaid |   1 | ?                                                        |
-| Scan (generic)            | scan                 |   6 | ? *(scanner inbox?)*                                     |
+| Person                    | Email                | Vol | Dept?                                                      |
+| ------------------------- | -------------------- | --: | ---------------------------------------------------------- |
+| Asha Rahman               | arahman              | 106 | ? *(was "Asha Bibi" on chart — same person?)* SAME AND FIN |
+| Angelina Thompson         | athompson            |  69 | ? HEAD OF HR                                               |
+| Onome Mine Ekporo         | oekporo              |  18 | ?                                                          |
+| Emma Greenaway            | egreenaway           |  18 | ? LEFT                                                     |
+| Matthew Turley            | mturley              |  17 | ? MAIN                                                     |
+| Sarah Keeling             | skeeling             |  13 | ?                                                          |
+| Julie Courts              | jcourts              |  13 | ? OPS LOCALITY                                             |
+| Damian Shaw               | dshaw                |   9 | ? HR                                                       |
+| Claudette Stephenson      | cstephenson          |   8 | ? HR                                                       |
+| Winifred Meredith         | wmeredith            |   7 | ?                                                          |
+| Karen Ann McAfee          | kmcafee              |   5 | ?                                                          |
+| Kate Joyce                | kjoyce               |   4 | ?                                                          |
+| Abiodun Okunnu            | aokunnu              |   4 | ?                                                          |
+| Adedoyin Kolawole         | akolawole            |   3 | ?                                                          |
+| Leanne Payton             | lpayton              |   3 | ?                                                          |
+| Jaspreet Hayer            | jhayer               |   3 | ?                                                          |
+| Amy Lavill                | alavill              |   2 | ?                                                          |
+| Mark Myrie                | mmyrie               |   2 | ?                                                          |
+| Abibat Olawole            | aolawole             |   2 | ?                                                          |
+| Claire Rolls              | crolls               |   2 | ?                                                          |
+| Tina Pirohova             | tpirohova            |   2 | ?                                                          |
+| Margaret Smith            | msmith               |   2 | ?                                                          |
+| Kian Golestani (internal) | kgolestani           |   1 | ? *(also has external carbonlawpartners account)*  LAWYER  |
+| Jonathan Burden           | jburden              |   1 | ?                                                          |
+| Nicole Roberts            | nroberts             |   1 | ?                                                          |
+| Philippa Knowles          | pknowles             |   1 | ?                                                          |
+| Oluwatoyin Toyin Balogun  | obalogun             |   1 | ?                                                          |
+| Mental Health First Aid   | mentalhealthfirstaid |   1 | ?                                                          |
+| Scan (generic)            | scan                 |   6 | ? *(scanner inbox?)*                                       |
 
 ## External — top routing (do these look right?)
 
