@@ -1,0 +1,43 @@
+﻿Outlook Apply Report - DRY-RUN - 05/06/2026 03:10:14
+=============================================
+
+Total examined: 19873
+Stays put:      8855
+Routed:         11018
+
+Per source folder examined:
+   10213  Archive
+    9660  Inbox
+
+Routing breakdown:
+    1576  Marketing\Retail
+    1445  Marketing\Other
+    1329  Departments\1. Executive
+     673  Marketing\Investing
+     617  External\Banking & Finance\Xero
+     601  Notifications\Shipping
+     495  Departments\4. Finance
+     433  External\Utilities\Gas
+     426  Notifications\LinkedIn
+     398  External\Suppliers
+     334  External\Legal\Carbon Law Partners
+     287  Notifications\Quarantine
+     285  External\Other
+     255  Departments\2. Care & Compliance
+     230  Notifications\M365 Security
+     194  Marketing\Newsletters
+     167  External\Banking & Finance\Revolut
+     147  Departments\5. Estates
+     132  Notifications\Tools
+     129  External\Banking & Finance\HSBC
+     113  Notifications\Teams
+     105  External\Utilities\Other
+     100  Departments\6. HR
+      98  Departments\_Unmapped
+      86  External\Legal\Mills-Reeve
+      85  Departments\3. Operations
+      82  External\Utilities\Broadband
+      76  External\Utilities\Electric
+      74  Marketing\Football
+      41  Notifications\GitHub
+       5  External\Legal\SecureMail
