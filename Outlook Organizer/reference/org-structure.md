@@ -55,18 +55,17 @@ Registered CQC Managers:
 | Amy            | Credit Control     |
 
 ### Estates (Head: Wayne Etheridge)
-| Name            | Role             |
-| --------------- | ---------------- |
-| Wayne Etheridge | Head of Estates  |
-|                 | Maintenance Team |
+| Name            | Role            |
+| --------------- | --------------- |
+| Wayne Etheridge | Head of Estates |
+| Matthew Turley  | TBC             |
 
 ### HR (Head: TBC)
-| Name | Role |
-|---|---|
-| Dipa Lekhi | HR Advisor |
-| Lydia Williams | HR Administrator |
-| Catherine Belwood | HR Administrator |
-| Usman Mohammed | HR Assistant |
+| Name           | Role             |
+| -------------- | ---------------- |
+| Angelina       | Head of HR       |
+| Damian         | HR Administrator |
+| Usman Mohammed | HR Assistant     |
 
 ## Schemes (properties, all Operations)
 
