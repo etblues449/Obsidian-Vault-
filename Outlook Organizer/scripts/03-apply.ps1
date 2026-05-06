@@ -30,11 +30,38 @@ $logFile   = Join-Path $outDir "apply-log-$timestamp.txt"
 $reportFile = Join-Path $outDir "apply-report-$timestamp.txt"
 
 $mode = if ($Execute) { 'EXECUTE' } else { 'DRY-RUN' }
+
+# Hold a StreamWriter open for the whole run so external file watchers
+# (Obsidian, Google Drive sync) can't lock the file between writes.
+$logStream = $null
+function Open-Log {
+    $script:logStream = [System.IO.StreamWriter]::new($logFile, $true, [System.Text.Encoding]::UTF8)
+    $script:logStream.AutoFlush = $true
+}
+function Close-Log {
+    if ($script:logStream) { $script:logStream.Close(); $script:logStream = $null }
+}
 function Log {
     param([string]$msg)
-    Add-Content -Path $logFile -Value $msg
     Write-Host $msg
+    if ($script:logStream) {
+        try { $script:logStream.WriteLine($msg) } catch {}
+    }
 }
+function Save-WithRetry {
+    param([string]$path, [string[]]$lines)
+    for ($i = 0; $i -lt 5; $i++) {
+        try {
+            [System.IO.File]::WriteAllLines($path, $lines, [System.Text.Encoding]::UTF8)
+            return
+        } catch {
+            Start-Sleep -Milliseconds 500
+        }
+    }
+    Write-Warning "Could not write $path after 5 attempts"
+}
+
+Open-Log
 Log "=== Outlook Apply [$mode] $(Get-Date) ==="
 
 # ----------------------------------------------------------------------
@@ -494,7 +521,7 @@ $reportLines += "Routing breakdown:"
 $stats.GetEnumerator() | Sort-Object Value -Descending | ForEach-Object {
     $reportLines += ("  {0,6}  {1}" -f $_.Value, $_.Key)
 }
-Set-Content -Path $reportFile -Value $reportLines -Encoding UTF8
+Save-WithRetry -path $reportFile -lines $reportLines
 
 Log ""
 Log "Full log: $logFile"
@@ -505,3 +532,5 @@ if (-not $Execute) {
     Log "*** This was a DRY-RUN. Nothing was changed. ***"
     Log "*** Review the report, then re-run with -Execute to apply for real. ***"
 }
+
+Close-Log
