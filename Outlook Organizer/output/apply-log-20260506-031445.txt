@@ -89,3 +89,8 @@ Conversation map built: 372 conversations you've replied in.
 --- PHASE 4: Routing Inbox + Archive ---
 Processing Inbox (9723 items)...
   ...223 of 9723 Inbox items examined
+  ...723 of 9723 Inbox items examined
+  ...1223 of 9723 Inbox items examined
+  ...1723 of 9723 Inbox items examined
+  ...2223 of 9723 Inbox items examined
+  ...2723 of 9723 Inbox items examined
