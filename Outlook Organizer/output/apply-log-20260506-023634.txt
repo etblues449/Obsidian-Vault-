@@ -1,0 +1,167 @@
+﻿=== Outlook Apply [DRY-RUN] 05/06/2026 02:36:34 ===
+Connecting to Outlook...
+Using store: EHorton@selectlifestyles.co.uk
+
+--- PHASE 1: Folder tree ---
+  WOULD CREATE: Departments\1. Executive
+  WOULD CREATE: Departments\2. Care & Compliance
+  WOULD CREATE: Departments\3. Operations
+  WOULD CREATE: Departments\4. Finance
+  WOULD CREATE: Departments\5. Estates
+  WOULD CREATE: Departments\6. HR
+  WOULD CREATE: Departments\_Unmapped
+  WOULD CREATE: External\Legal\Carbon Law Partners
+  WOULD CREATE: External\Legal\Mills-Reeve
+  WOULD CREATE: External\Legal\SecureMail
+  WOULD CREATE: External\Banking & Finance\Xero
+  WOULD CREATE: External\Banking & Finance\HSBC
+  WOULD CREATE: External\Banking & Finance\Revolut
+  WOULD CREATE: External\Utilities\Gas
+  WOULD CREATE: External\Utilities\Electric
+  WOULD CREATE: External\Utilities\Water
+  WOULD CREATE: External\Utilities\Broadband
+  WOULD CREATE: External\Utilities\Other
+  WOULD CREATE: External\Suppliers
+  WOULD CREATE: External\Other
+  WOULD CREATE: Notifications\M365 Security
+  WOULD CREATE: Notifications\Quarantine
+  WOULD CREATE: Notifications\Teams
+  WOULD CREATE: Notifications\GitHub
+  WOULD CREATE: Notifications\Tools
+  WOULD CREATE: Notifications\Shipping
+  WOULD CREATE: Notifications\LinkedIn
+  WOULD CREATE: Marketing\Retail
+  WOULD CREATE: Marketing\Football
+  WOULD CREATE: Marketing\Newsletters
+  WOULD CREATE: Marketing\Investing
+  WOULD CREATE: Marketing\Other
+
+--- PHASE 2: Categories ---
+  WOULD CREATE category: Stafford Road
+  WOULD CREATE category: St Marks
+  WOULD CREATE category: Horsehills Drive
+  WOULD CREATE category: Oaks Crescent
+  WOULD CREATE category: Fellows Road
+  WOULD CREATE category: Dudding Road
+  WOULD CREATE category: St John Square
+  WOULD CREATE category: Himley Road
+  WOULD CREATE category: Peacock Close
+  WOULD CREATE category: Vicarage Road
+  WOULD CREATE category: Beeches Road
+  WOULD CREATE category: Stony Lane
+  WOULD CREATE category: Greswold Street
+  WOULD CREATE category: Moor Lane
+  WOULD CREATE category: Tiverton Drive
+  WOULD CREATE category: The Bantocks
+  WOULD CREATE category: Hawbush Road
+  WOULD CREATE category: Harrison Street
+  WOULD CREATE category: Doveridge Place
+  WOULD CREATE category: Walsall Road
+  WOULD CREATE category: Oberon Grove
+  WOULD CREATE category: Knipersley Road
+  WOULD CREATE category: Goodison Gardens
+  WOULD CREATE category: Penns Lane
+  WOULD CREATE category: Chester Road
+  WOULD CREATE category: Marsons Court
+  WOULD CREATE category: Lincoln Road
+  WOULD CREATE category: Stratford Road
+  WOULD CREATE category: All Saints Way
+  WOULD CREATE category: Helenny Close
+  WOULD CREATE category: John Street
+  WOULD CREATE category: Throne Road
+
+--- PHASE 3: Building conversation map from Sent Items ---
+Scanning 651 sent items...
+  ...100 sent items processed
+  ...200 sent items processed
+  ...400 sent items processed
+  ...500 sent items processed
+  ...600 sent items processed
+Conversation map built: 372 conversations you've replied in.
+
+--- PHASE 4: Routing Inbox + Archive ---
+Processing Inbox (9723 items)...
+  ...223 of 9723 Inbox items examined
+  ...723 of 9723 Inbox items examined
+  ...1223 of 9723 Inbox items examined
+  ...1723 of 9723 Inbox items examined
+  ...2223 of 9723 Inbox items examined
+  ...2723 of 9723 Inbox items examined
+  ...3223 of 9723 Inbox items examined
+  ...3723 of 9723 Inbox items examined
+  ...4223 of 9723 Inbox items examined
+  ...4723 of 9723 Inbox items examined
+  ...5223 of 9723 Inbox items examined
+  ...5723 of 9723 Inbox items examined
+  ...6223 of 9723 Inbox items examined
+  ...6723 of 9723 Inbox items examined
+  ...7223 of 9723 Inbox items examined
+  ...7723 of 9723 Inbox items examined
+  ...8223 of 9723 Inbox items examined
+  ...8723 of 9723 Inbox items examined
+  ...9223 of 9723 Inbox items examined
+Processing Archive (10257 items)...
+  ...257 of 10257 Archive items examined
+  ...757 of 10257 Archive items examined
+  ...1257 of 10257 Archive items examined
+  ...1757 of 10257 Archive items examined
+  ...2257 of 10257 Archive items examined
+  ...2757 of 10257 Archive items examined
+  ...3257 of 10257 Archive items examined
+  ...3757 of 10257 Archive items examined
+  ...4257 of 10257 Archive items examined
+  ...4757 of 10257 Archive items examined
+  ...5257 of 10257 Archive items examined
+  ...5757 of 10257 Archive items examined
+  ...6257 of 10257 Archive items examined
+  ...6757 of 10257 Archive items examined
+  ...7257 of 10257 Archive items examined
+  ...7757 of 10257 Archive items examined
+  ...8257 of 10257 Archive items examined
+  ...8757 of 10257 Archive items examined
+  ...9257 of 10257 Archive items examined
+  ...9757 of 10257 Archive items examined
+
+=== ROUTING SUMMARY [DRY-RUN] ===
+  Stays in Inbox/Archive: 0
+  Routed elsewhere:       11018
+  TOTAL examined:         11018
+
+By target folder:
+    1576  Marketing\Retail
+    1445  Marketing\Other
+    1329  Departments\1. Executive
+     673  Marketing\Investing
+     617  External\Banking & Finance\Xero
+     601  Notifications\Shipping
+     495  Departments\4. Finance
+     433  External\Utilities\Gas
+     426  Notifications\LinkedIn
+     398  External\Suppliers
+     334  External\Legal\Carbon Law Partners
+     287  Notifications\Quarantine
+     285  External\Other
+     255  Departments\2. Care & Compliance
+     230  Notifications\M365 Security
+     194  Marketing\Newsletters
+     167  External\Banking & Finance\Revolut
+     147  Departments\5. Estates
+     132  Notifications\Tools
+     129  External\Banking & Finance\HSBC
+     113  Notifications\Teams
+     105  External\Utilities\Other
+     100  Departments\6. HR
+      98  Departments\_Unmapped
+      86  External\Legal\Mills-Reeve
+      85  Departments\3. Operations
+      82  External\Utilities\Broadband
+      76  External\Utilities\Electric
+      74  Marketing\Football
+      41  Notifications\GitHub
+       5  External\Legal\SecureMail
+
+Full log: C:\Users\ElliotHorton\Documents\ObsidianVault\Outlook Organizer\output\apply-log-20260506-023634.txt
+Report:   C:\Users\ElliotHorton\Documents\ObsidianVault\Outlook Organizer\output\apply-report-20260506-023634.txt
+
+*** This was a DRY-RUN. Nothing was changed. ***
+*** Review the report, then re-run with -Execute to apply for real. ***
