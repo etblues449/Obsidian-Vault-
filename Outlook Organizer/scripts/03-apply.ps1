@@ -412,14 +412,17 @@ function Decide-Target {
 }
 
 # Stats
-$stats = @{}  # target -> count
-$untouched = 0
+$script:stats = @{}  # target -> count
+$script:untouched = 0
+$script:perFolder = @{}  # source folder name -> count
 
 function Tally {
-    param([string]$target)
-    if (-not $target) { $untouched++; return }
-    if (-not $stats.ContainsKey($target)) { $stats[$target] = 0 }
-    $stats[$target]++
+    param([string]$target, [string]$sourceFolder)
+    if (-not $script:perFolder.ContainsKey($sourceFolder)) { $script:perFolder[$sourceFolder] = 0 }
+    $script:perFolder[$sourceFolder]++
+    if (-not $target) { $script:untouched++; return }
+    if (-not $script:stats.ContainsKey($target)) { $script:stats[$target] = 0 }
+    $script:stats[$target]++
 }
 
 # Map of category names lookup (lower-cased)
@@ -480,7 +483,7 @@ foreach ($folderName in @('Inbox','Archive')) {
             $target   = Decide-Target $fromSmtp $fromName $subject $convId
             $cats     = Get-SchemeCategories $subject
 
-            Tally $target
+            Tally $target $folderName
 
             if ($Execute -and ($target -or $cats.Count -gt 0)) {
                 Move-OneItem $it $target $cats
@@ -498,13 +501,18 @@ foreach ($folderName in @('Inbox','Archive')) {
 
 Log ""
 Log "=== ROUTING SUMMARY [$mode] ==="
-$total = ($stats.Values | Measure-Object -Sum).Sum + $untouched
-Log "  Stays in Inbox/Archive: $untouched"
-Log "  Routed elsewhere:       $($total - $untouched)"
+$total = ($script:stats.Values | Measure-Object -Sum).Sum + $script:untouched
+Log "  Stays in Inbox/Archive: $($script:untouched)"
+Log "  Routed elsewhere:       $($total - $script:untouched)"
 Log "  TOTAL examined:         $total"
 Log ""
+Log "Per source folder examined:"
+$script:perFolder.GetEnumerator() | Sort-Object Value -Descending | ForEach-Object {
+    Log ("  {0,6}  {1}" -f $_.Value, $_.Key)
+}
+Log ""
 Log "By target folder:"
-$stats.GetEnumerator() | Sort-Object Value -Descending | ForEach-Object {
+$script:stats.GetEnumerator() | Sort-Object Value -Descending | ForEach-Object {
     Log ("  {0,6}  {1}" -f $_.Value, $_.Key)
 }
 
@@ -514,11 +522,16 @@ $reportLines += "Outlook Apply Report - $mode - $(Get-Date)"
 $reportLines += "============================================="
 $reportLines += ""
 $reportLines += "Total examined: $total"
-$reportLines += "Stays put:      $untouched"
-$reportLines += "Routed:         $($total - $untouched)"
+$reportLines += "Stays put:      $($script:untouched)"
+$reportLines += "Routed:         $($total - $script:untouched)"
+$reportLines += ""
+$reportLines += "Per source folder examined:"
+$script:perFolder.GetEnumerator() | Sort-Object Value -Descending | ForEach-Object {
+    $reportLines += ("  {0,6}  {1}" -f $_.Value, $_.Key)
+}
 $reportLines += ""
 $reportLines += "Routing breakdown:"
-$stats.GetEnumerator() | Sort-Object Value -Descending | ForEach-Object {
+$script:stats.GetEnumerator() | Sort-Object Value -Descending | ForEach-Object {
     $reportLines += ("  {0,6}  {1}" -f $_.Value, $_.Key)
 }
 Save-WithRetry -path $reportFile -lines $reportLines
