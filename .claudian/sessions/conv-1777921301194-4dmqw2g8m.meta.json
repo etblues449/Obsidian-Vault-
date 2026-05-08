@@ -4,21 +4,20 @@
   "title": "have a look at my capture-queue",
   "titleGenerationStatus": "failed",
   "createdAt": 1777921301195,
-  "updatedAt": 1777924637504,
-  "lastResponseAt": 1777924637504,
+  "updatedAt": 1778281652850,
+  "lastResponseAt": 1778281652850,
   "sessionId": "78c41121-c7e5-48d9-ab5e-3667ca863dc1",
   "providerState": {
     "providerSessionId": "78c41121-c7e5-48d9-ab5e-3667ca863dc1"
   },
-  "currentNote": "Claude Memory/Account/capture_queue.md",
   "usage": {
     "model": "claude-sonnet-4-6",
     "inputTokens": 1,
-    "cacheCreationInputTokens": 251,
-    "cacheReadInputTokens": 38104,
+    "cacheCreationInputTokens": 2459,
+    "cacheReadInputTokens": 41339,
     "contextWindow": 200000,
-    "contextTokens": 38356,
-    "percentage": 19,
+    "contextTokens": 43799,
+    "percentage": 22,
     "contextWindowIsAuthoritative": true
   }
 }

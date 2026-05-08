@@ -94,3 +94,82 @@ Processing Inbox (9723 items)...
   ...1723 of 9723 Inbox items examined
   ...2223 of 9723 Inbox items examined
   ...2723 of 9723 Inbox items examined
+  ...3223 of 9723 Inbox items examined
+  ...3723 of 9723 Inbox items examined
+  ...4223 of 9723 Inbox items examined
+  ...4723 of 9723 Inbox items examined
+  ...5223 of 9723 Inbox items examined
+  ...5723 of 9723 Inbox items examined
+  ...6223 of 9723 Inbox items examined
+  ...6723 of 9723 Inbox items examined
+  ...7223 of 9723 Inbox items examined
+  ...7723 of 9723 Inbox items examined
+  ...8223 of 9723 Inbox items examined
+  ...8723 of 9723 Inbox items examined
+  ...9223 of 9723 Inbox items examined
+Processing Archive (10257 items)...
+  ...257 of 10257 Archive items examined
+  ...757 of 10257 Archive items examined
+  ...1257 of 10257 Archive items examined
+  ...1757 of 10257 Archive items examined
+  ...2257 of 10257 Archive items examined
+  ...2757 of 10257 Archive items examined
+  ...3257 of 10257 Archive items examined
+  ...3757 of 10257 Archive items examined
+  ...4257 of 10257 Archive items examined
+  ...4757 of 10257 Archive items examined
+  ...5257 of 10257 Archive items examined
+  ...5757 of 10257 Archive items examined
+  ...6257 of 10257 Archive items examined
+  ...6757 of 10257 Archive items examined
+  ...7257 of 10257 Archive items examined
+  ...7757 of 10257 Archive items examined
+  ...8257 of 10257 Archive items examined
+  ...8757 of 10257 Archive items examined
+  ...9257 of 10257 Archive items examined
+  ...9757 of 10257 Archive items examined
+
+=== ROUTING SUMMARY [EXECUTE] ===
+  Stays in Inbox/Archive: 8855
+  Routed elsewhere:       11018
+  TOTAL examined:         19873
+
+Per source folder examined:
+   10213  Archive
+    9660  Inbox
+
+By target folder:
+    1576  Marketing\Retail
+    1445  Marketing\Other
+    1329  Departments\1. Executive
+     673  Marketing\Investing
+     617  External\Banking & Finance\Xero
+     601  Notifications\Shipping
+     495  Departments\4. Finance
+     433  External\Utilities\Gas
+     426  Notifications\LinkedIn
+     398  External\Suppliers
+     334  External\Legal\Carbon Law Partners
+     287  Notifications\Quarantine
+     285  External\Other
+     255  Departments\2. Care & Compliance
+     230  Notifications\M365 Security
+     194  Marketing\Newsletters
+     167  External\Banking & Finance\Revolut
+     147  Departments\5. Estates
+     132  Notifications\Tools
+     129  External\Banking & Finance\HSBC
+     113  Notifications\Teams
+     105  External\Utilities\Other
+     100  Departments\6. HR
+      98  Departments\_Unmapped
+      86  External\Legal\Mills-Reeve
+      85  Departments\3. Operations
+      82  External\Utilities\Broadband
+      76  External\Utilities\Electric
+      74  Marketing\Football
+      41  Notifications\GitHub
+       5  External\Legal\SecureMail
+
+Full log: C:\Users\ElliotHorton\Documents\ObsidianVault\Outlook Organizer\output\apply-log-20260506-031445.txt
+Report:   C:\Users\ElliotHorton\Documents\ObsidianVault\Outlook Organizer\output\apply-report-20260506-031445.txt
