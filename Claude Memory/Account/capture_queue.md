@@ -57,5 +57,7 @@ Export ends ~2026-03-24. Newer chats to capture:
 
 - [x] Fly.io org token revoked (2026-05-01)
 - [x] Audit all captured instruction files for secrets → **Clean.** Fly.io token correctly redacted in [[Instructions/shared_claude_md_instructions]]. No other secrets found. *(audited 2026-05-04)*
+- [x] MCP filesystem server restored in `claude_desktop_config.json` *(2026-05-09 — args were corrupted to bare Google Drive path; fixed to full npx command + correct paths)*
+- [ ] **⚠️ Rotate GitHub PAT** — plaintext token found in `C:\Users\ElliotHorton\AppData\Roaming\Claude\claude_desktop_config.json` (github MCP server env). Revoke on GitHub → Settings → Developer settings → PATs → regenerate → update config file.
 - [ ] **Reissue Fly.io token** (if still needed for `etblues449/App` or Termux agent) → store in password manager only, never in project instructions
 - [ ] **Audit Claude.ai project knowledge files** (170 files in Debt project + others) for secrets — cannot be done remotely; requires manual review on Claude.ai

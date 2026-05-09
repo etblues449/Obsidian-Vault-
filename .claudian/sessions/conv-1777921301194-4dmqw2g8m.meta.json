@@ -4,8 +4,8 @@
   "title": "have a look at my capture-queue",
   "titleGenerationStatus": "failed",
   "createdAt": 1777921301195,
-  "updatedAt": 1778285411665,
-  "lastResponseAt": 1778285411665,
+  "updatedAt": 1778286415157,
+  "lastResponseAt": 1778286415157,
   "sessionId": "78c41121-c7e5-48d9-ab5e-3667ca863dc1",
   "providerState": {
     "providerSessionId": "78c41121-c7e5-48d9-ab5e-3667ca863dc1"
@@ -13,11 +13,11 @@
   "usage": {
     "model": "claude-sonnet-4-6",
     "inputTokens": 3,
-    "cacheCreationInputTokens": 129816,
-    "cacheReadInputTokens": 45007,
+    "cacheCreationInputTokens": 904,
+    "cacheReadInputTokens": 50528,
     "contextWindow": 200000,
-    "contextTokens": 174826,
-    "percentage": 87,
+    "contextTokens": 51435,
+    "percentage": 26,
     "contextWindowIsAuthoritative": true
   }
 }
