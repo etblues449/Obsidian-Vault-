@@ -41,60 +41,31 @@ For each artifact → open on Claude.ai → copy contents → paste here. I'll w
 - [ ] Podcastfy: Complete Setup Guide for Windows and Android → `artifacts/podcastfy_setup_guide.md`
 - [ ] `doc_learning_app_docs.docx` (Notebook lm project, 143 lines) → `artifacts/doc_learning_app_docs.md`
 
-## 3. Newer chats not in the 94-conversation export
+## 3. Newer chats ✅ — imported via 2026-05-08 export
 
-The export ends ~2026-03-24. Confirmed newer (from screenshots):
+105 total conversations now in vault (95–105 added 2026-05-09):
 
-**Smart Home** (~17 newer chats):
-- [ ] 26 April new HA
-- [ ] FULL Home assistant green not appearing in app ⭐
-- [ ] Lounge presence sensor
-- [ ] Home Assistant system diagnostic ⭐
-- [ ] Home assistant diagnostic and setup ⭐
-- [ ] Upstairs Sensor config (22 Apr)
-- [ ] Adding SmartThings sensor to lounge automations (22 Apr)
-- [ ] Hardware build list with components (21 Apr)
-- [ ] NAS and Home Assistant credentials (21 Apr)
-- [ ] ESP factory reset and Home Assistant reinstall (21 Apr)
-- [ ] Home automation system handover summary (21 Apr)
-- [ ] Conversation history unavailable (18 Apr)
-- [ ] Automations and apps overview (15 Apr)
-- [ ] MQTT IO configuration with YAML (11 Apr)
-- [ ] NotebookLM integration continuation (11 Apr)
-- [ ] Android Studio on mobile with Gemini (11 Apr)
-- [ ] LD2410 radar sensor configuration for bedroom (31 Mar)
-- [ ] Bedroom radar configuration / Dashboard setup / ESP32 S3 switch node setup — verify against export, may be duplicates
+- [x] 095 — Phone file storage location (2026-05-01)
+- [x] 096 — Syncing Claude apps with Obsidian vault (2026-05-01, 136 msgs) ⭐
+- [x] 097 — Organizing Obsidian vault with project structure (2026-05-04, 202 msgs) ⭐
+- [x] 098 — Recurring pop-up nuisance (2026-05-04)
+- [x] 099 — Setting up Obsidian vault folder structure (2026-05-04)
+- [x] 100 — Debugging code and optimization tips (2026-05-06)
+- [x] 101 — Using Claude on Android devices (2026-05-07)
+- [x] 102 — Samsung TV configuration through home assistant (2026-05-07, 172 msgs) ⭐
+- [x] 103 — Screen fill ratio optimization (2026-05-07)
+- [x] 104 — Free private servers in Roblox: worth the cost (2026-05-08)
+- [x] 105 — Building a custom skill together (2026-05-08)
 
-**Faceless Financial:**
-- [ ] Top financial influencer and investment niches (4d)
-- [ ] Converting Anthropic courses into video content (4d)
+**Note:** All conversations from the original screenshot-confirmed list (Smart Home, Faceless Financial, Code, Studying, Debt, skills, Notebook lm) were already included in the 94-conversation May 1 export. The May 8 export added 11 newer ones above.
 
-**Code:**
-- [ ] OpenRouter SDK import setup (22 Apr)
-
-**Studying:**
-- [ ] Import GitHub project files (3d)
-
-**Debt:**
-- [ ] Email snippet review (22 Apr)
-
-**skills:**
-- [ ] Adding remotion best practices skill (4d)
-- [ ] Learning Remotion through video resources (15 Apr)
-
-**Notebook lm:**
-- [ ] Product costing and lifecycle cost management (3d)
-- [ ] Installing Podcastfy for notebook LM (14 Apr)
-
-**Standalone (sidebar):**
-- [ ] I want you to build a persiste… (full title?)
-- [ ] Adding Composio MCP integration
-
-**Best path:** re-export Claude.ai data (Settings → Privacy → Export data). When the new ZIP arrives, point me at it and I'll diff against `CONVERSATIONS_INDEX.md` and import only the new ones.
+**Next export:** run again periodically to pick up any new chats.
 
 ## 4. Account-level memory ✅
 
-Done — captured 2026-05-01 to [claude_ai_account_memory.md](claude_ai_account_memory.md).
+Done — captured 2026-05-01, updated 2026-05-09 to [claude_ai_account_memory.md](claude_ai_account_memory.md).
+
+**What changed in the memory (2026-05-08 update):** Added Executive Director / work context, smart home project, "top of mind" section covering Claude Code setup + Work PC Obsidian sync (rclone still outstanding), and a brief history section. Also added explicit Claude Code working instructions (read project _index.md first, one step at a time, be concise, etc.).
 
 ## 5. Security follow-ups
 

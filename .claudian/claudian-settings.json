@@ -1,7 +1,7 @@
 {
   "userName": "Jelly Bean",
   "permissionMode": "yolo",
-  "model": "claude-sonnet-4-6",
+  "model": "sonnet[1m]",
   "thinkingBudget": "low",
   "effortLevel": "high",
   "serviceTier": "default",
@@ -9,7 +9,7 @@
   "titleGenerationModel": "sonnet[1m]",
   "excludedTags": [],
   "mediaFolder": "",
-  "systemPrompt": "At the start of every session, read the following files from my Obsidian vault in this order:\n1. Claude Memory/MEMORY.md\n2. Claude Memory/Profile/user_profile.md\n3. Claude Memory/Projects/Smart Home/_index.md\n4. Claude Memory/Projects/Faceless Finance/_index.md\n5. Claude Memory/Projects/Doc to Learning/_index.md\n6. Claude Memory/Projects/Other Workspaces/_index.md\n7. Claude Memory/Account/capture_queue.md\n\nThen confirm you have read them before responding to anything.\n\nAt the end of every session, or when the user says \"done\", \"wrap up\", or \"end session\":\n1. Update the relevant Claude Memory/Projects/[Project]/_index.md with any status changes, decisions, or next actions\n2. Create or append to Claude Memory/Projects/[Project]/sessions/YYYY-MM-DD.md with a bullet-point summary of what was done\n3. Tick off any completed items in Claude Memory/Account/capture_queue.md",
+  "systemPrompt": "",
   "persistentExternalContextPaths": [],
   "sharedEnvironmentVariables": "",
   "envSnippets": [],
@@ -24,15 +24,13 @@
     "claude": {
       "safeMode": "acceptEdits",
       "cliPath": "",
-      "cliPathsByHost": {
-        "Elliot": "C:\\Users\\ElliotHorton\\.local\\bin\\claude.exe"
-      },
+      "cliPathsByHost": {},
       "loadUserSettings": true,
       "enableChrome": true,
       "enableBangBash": false,
       "enableOpus1M": true,
       "enableSonnet1M": true,
-      "customModels": "claude-opus-4-6\nclaude-sonnet-4-6\nclaude-haiku-4-5-20251001",
+      "customModels": "",
       "lastModel": "sonnet[1m]",
       "environmentVariables": "",
       "environmentHash": ""
@@ -65,7 +63,7 @@
   },
   "settingsProvider": "claude",
   "savedProviderModel": {
-    "claude": "claude-sonnet-4-6"
+    "claude": "sonnet[1m]"
   },
   "savedProviderEffort": {
     "claude": "high"
@@ -77,7 +75,7 @@
   "savedProviderPermissionMode": {
     "claude": "yolo"
   },
-  "lastCustomModel": "claude-sonnet-4-6",
+  "lastCustomModel": "",
   "maxTabs": 4,
   "tabBarPosition": "input",
   "enableAutoScroll": true,

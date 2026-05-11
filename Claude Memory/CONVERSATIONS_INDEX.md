@@ -1,6 +1,6 @@
 # Conversations Index (imported from Claude.ai 2026-05-01)
 
-94 conversations. Sorted oldest → newest.
+105 conversations. Sorted oldest → newest.
 
 - [2026-03-23 — Linking to home assistant](conversations/001-2026-03-23-linking-to-home-assistant-1f54476c.md) — 82 msgs
 - [2026-03-24 — Untitled](conversations/002-2026-03-24-untitled-3d1f80b3.md) — 0 msgs
@@ -96,3 +96,14 @@
 - [2026-04-28 — Import GitHub project files](conversations/092-2026-04-28-import-github-project-files-21c78e85.md) — 54 msgs
 - [2026-04-28 — Starting from scratch](conversations/093-2026-04-28-starting-from-scratch-ef3aa1c0.md) — 2 msgs
 - [2026-04-30 — Untitled](conversations/094-2026-04-30-untitled-bae6f1c0.md) — 0 msgs
+- [2026-05-01 — Phone file storage location](conversations/095-2026-05-01-phone-file-storage-location-d3facd59.md) — 4 msgs
+- [2026-05-01 — Syncing Claude apps with Obsidian vault](conversations/096-2026-05-01-syncing-claude-apps-with-obsidian-vault-c292f2c1.md) — 136 msgs
+- [2026-05-04 — Organizing Obsidian vault with project structure](conversations/097-2026-05-04-organizing-obsidian-vault-with-project-structure-ef51f446.md) — 202 msgs
+- [2026-05-04 — Recurring pop-up nuisance](conversations/098-2026-05-04-recurring-pop-up-nuisance-9c9d2bc8.md) — 30 msgs
+- [2026-05-04 — Setting up Obsidian vault folder structure](conversations/099-2026-05-04-setting-up-obsidian-vault-folder-structure-34353141.md) — 2 msgs
+- [2026-05-06 — Debugging code and optimization tips](conversations/100-2026-05-06-debugging-code-and-optimization-tips-6612e296.md) — 4 msgs
+- [2026-05-07 — Using Claude on Android devices](conversations/101-2026-05-07-using-claude-on-android-devices-03895466.md) — 6 msgs
+- [2026-05-07 — Samsung TV configuration through home assistant](conversations/102-2026-05-07-samsung-tv-configuration-through-home-assistant-9e68de59.md) — 172 msgs
+- [2026-05-07 — Screen fill ratio optimization](conversations/103-2026-05-07-screen-fill-ratio-optimization-32904b5c.md) — 8 msgs
+- [2026-05-08 — Free private servers in Roblox: worth the cost](conversations/104-2026-05-08-free-private-servers-in-roblox-worth-the-cost-f7bab755.md) — 2 msgs
+- [2026-05-08 — Building a custom skill together](conversations/105-2026-05-08-building-a-custom-skill-together-34a5eed9.md) — 6 msgs
