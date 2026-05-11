@@ -1,11 +1,11 @@
 {
   "id": "conv-1777862990161-izs81tayj",
   "providerId": "claude",
-  "title": "Good question",
-  "titleGenerationStatus": "failed",
+  "title": "Remove JB vault from Obsidian and clean up files",
+  "titleGenerationStatus": "success",
   "createdAt": 1777862990163,
-  "updatedAt": 1777920526492,
-  "lastResponseAt": 1777920526492,
+  "updatedAt": 1778538609637,
+  "lastResponseAt": 1778538609637,
   "sessionId": "492f644a-300b-4eb1-9182-1a2b7fe2528d",
   "providerState": {
     "providerSessionId": "492f644a-300b-4eb1-9182-1a2b7fe2528d"
