@@ -2,42 +2,47 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 /**
- * FinCast — production cockpit for a faceless personal-finance YouTube channel.
+ * Faceless Finance App — production cockpit for a CA-led faceless personal-finance YouTube channel.
  * Single-file React component. Drop-in for a Claude.ai artifact or a Vite/CRA App.jsx.
- * Rebuilt from the 10 reference screenshots — see "FinCast App Spec.md".
+ * Rebuilt from the 10 reference screenshots — see "Faceless Finance App Spec.md".
  *
  * Screens: Dashboard · Channel ROI & Analytics · AI Provider Performance Analytics ·
  * Video Creator · Live Events · Script Editor & Storyboard Tune · Batch Approval Review Feed ·
  * Bulk Actions · Fallback Sandbox · Smart Fallback Rule Builder.
+ *
+ * Visual pass: Material-3 / Google-Stitch-flavoured — pill buttons, soft elevation, tonal surfaces.
  */
+const APP_NAME = "Faceless Finance App";
 
 /* ───────────────────────── design tokens ───────────────────────── */
 const C = {
-  bg: "#070A12",
-  surface: "#0B111E",
-  card: "#141C2E",
-  cardAlt: "#1B2436",
-  cardHi: "#222C42",
-  border: "#27314A",
+  bg: "#06090F",
+  surface: "#0B111C",
+  card: "#141B29",
+  cardAlt: "#1A2333",
+  cardHi: "#232E42",
+  border: "#28344B",
   borderHi: "#3A4663",
-  accent: "#22E5A0",
-  accentDim: "rgba(34,229,160,0.13)",
-  accentSoft: "rgba(34,229,160,0.28)",
-  blue: "#3B82F6",
-  blueDim: "rgba(59,130,246,0.16)",
-  gold: "#FACC15",
-  goldDim: "rgba(250,204,21,0.16)",
-  purple: "#A78BFA",
-  purpleDim: "rgba(167,139,250,0.18)",
-  red: "#F2545B",
-  redDim: "rgba(242,84,91,0.16)",
-  text: "#E8ECF4",
-  textDim: "#95A1B8",
-  muted: "#5E6B85",
+  accent: "#27E8A4",
+  accentDim: "rgba(39,232,164,0.14)",
+  accentSoft: "rgba(39,232,164,0.30)",
+  blue: "#5B8DEF",
+  blueDim: "rgba(91,141,239,0.18)",
+  gold: "#F5C544",
+  goldDim: "rgba(245,197,68,0.16)",
+  purple: "#B197FC",
+  purpleDim: "rgba(177,151,252,0.18)",
+  red: "#F2606A",
+  redDim: "rgba(242,96,106,0.16)",
+  text: "#EAEEF6",
+  textDim: "#97A3BA",
+  muted: "#5F6C86",
   white: "#fff",
+  elev1: "0 1px 2px rgba(0,0,0,.30), 0 1px 8px rgba(0,0,0,.20)",
+  elev2: "0 4px 14px rgba(0,0,0,.34)",
 };
 
-const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+const FONT = "'Google Sans Text', 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const MONO = "'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace";
 
 /* ───────────────────────── helpers ───────────────────────── */
@@ -147,7 +152,7 @@ const Pill = ({ children, bg = C.cardAlt, color = C.textDim, style }) => (
 );
 
 const Card = ({ children, style, onClick }) => (
-  <div onClick={onClick} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, ...style }}>{children}</div>
+  <div onClick={onClick} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: 16, boxShadow: C.elev1, ...style }}>{children}</div>
 );
 
 const Eyebrow = ({ children, right }) => (
@@ -159,15 +164,15 @@ const Eyebrow = ({ children, right }) => (
 
 const Btn = ({ children, onClick, variant = "primary", size = "md", color, full, style, disabled }) => {
   const base = {
-    border: "none", cursor: disabled ? "default" : "pointer", fontWeight: 700, fontFamily: FONT,
-    borderRadius: 11, transition: "transform .08s, filter .15s", opacity: disabled ? 0.5 : 1,
-    padding: size === "sm" ? "7px 12px" : size === "lg" ? "14px 18px" : "11px 16px",
+    border: "none", cursor: disabled ? "default" : "pointer", fontWeight: 600, fontFamily: FONT, letterSpacing: ".01em",
+    borderRadius: 999, transition: "transform .08s, filter .15s", opacity: disabled ? 0.5 : 1,
+    padding: size === "sm" ? "7px 14px" : size === "lg" ? "14px 22px" : "11px 18px",
     fontSize: size === "sm" ? 12 : size === "lg" ? 15 : 13.5,
     width: full ? "100%" : "auto", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7,
   };
   const v =
-    variant === "primary" ? { background: color || C.accent, color: "#062417" }
-    : variant === "blue" ? { background: C.blue, color: C.white }
+    variant === "primary" ? { background: color || C.accent, color: "#062417", boxShadow: C.elev1 }
+    : variant === "blue" ? { background: C.blue, color: C.white, boxShadow: C.elev1 }
     : variant === "danger" ? { background: C.redDim, color: C.red, border: `1px solid ${C.red}` }
     : variant === "ghost" ? { background: "transparent", color: color || C.textDim }
     : variant === "outline" ? { background: "transparent", color: color || C.accent, border: `1px solid ${color || C.accent}` }
@@ -255,7 +260,7 @@ function Dashboard({ go, queue, projects }) {
   const inPipe = projects.length;
   return (
     <div>
-      <SectionTitle sub="Faceless Finance · CA-led · UK">FinCast</SectionTitle>
+      <SectionTitle sub="Your AI video production cockpit · CA-led · UK">{APP_NAME}</SectionTitle>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 14 }}>
         {[
           { num: "1.4K", label: "Subscribers", delta: "+480 / mo", c: C.accent },
