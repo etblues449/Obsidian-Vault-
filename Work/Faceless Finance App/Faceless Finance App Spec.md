@@ -1,36 +1,42 @@
 ---
-name: FinCast App — Redesign Spec
-description: Design + feature spec for the rebuilt FinCast app, derived from the 10 reference screenshots (AI faceless-finance video pipeline)
+name: Faceless Finance App — Redesign Spec
+description: Design + feature spec for the Faceless Finance App, derived from the 10 reference screenshots (AI faceless-finance video pipeline)
 type: project
 project: Faceless Finance YouTube channel
 captured: 2026-05-13
+updated: 2026-05-13
 status: draft
+aliases: [FinCast App Spec]
 ---
 
-# FinCast — App Redesign Spec
+# Faceless Finance App — Redesign Spec
 
-Source of truth: the **10 reference screenshots** supplied 2026-05-13. This doc captures what each screen contains and how the rebuilt app is structured. The working prototype lives next to this file: [[FinCast.jsx]] (single-file React component — drop-in for a Claude.ai artifact or a `create-react-app`/Vite `App.jsx`).
+> Renamed from "FinCast" → **Faceless Finance App** (2026-05-13). Visual pass: Material-3 / Google-Stitch-flavoured (pill buttons, soft elevation, tonal surfaces). The Google Stitch MCP was unreachable from the build environment (DNS), so the Stitch screen generation is still pending — see §7.
+
+Source of truth: the **10 reference screenshots** supplied 2026-05-13. This doc captures what each screen contains and how the app is structured. The working prototype lives next to this file: [[Faceless Finance App.jsx]] (single-file React component — drop-in for a Claude.ai artifact or a `create-react-app`/Vite `App.jsx`).
 
 > Context: faceless personal-finance/investing YouTube channel, CA-credentialed, UK audience (GBP, HMRC, ISAs, pensions), Wed/Fri/Sun cadence. The app is the **production cockpit**: idea → script → storyboard → multi-provider AI render → batch approval → auto-publish, with cost/ROI tracking and an AI-provider fallback engine.
 
-## 1. Design system
+## 1. Design system  *(dark, Material-3 / Stitch-flavoured)*
 
 | Token | Value | Use |
 |---|---|---|
-| `bg` | `#0A0E17` | App background (behind phone frame) |
-| `surface` | `#0F1623` | Screen background |
-| `card` | `#161D2E` | Cards / panels |
-| `cardAlt` | `#1B2436` | Nested panels, inputs |
-| `border` | `#27314A` | Hairlines |
-| `accent` (green) | `#22E5A0` | Primary actions, "approve", success, brand |
-| `blue` | `#3B82F6` | Secondary actions, info, links |
-| `gold` | `#FACC15` | Scheduled / warning / "selected" highlight |
-| `red` | `#F2545B` | Errors, "reject", destructive |
-| `text` | `#E8ECF4` / `textDim` `#94A0B8` / `muted` `#5E6B85` | Text hierarchy |
+| `bg` | `#06090F` | App background (behind phone frame) |
+| `surface` | `#0B111C` | Screen background |
+| `card` | `#141B29` | Cards / panels (with `elev1` shadow) |
+| `cardAlt` | `#1A2333` | Nested panels, inputs |
+| `cardHi` | `#232E42` | Hover / track fills |
+| `border` | `#28344B` | Hairlines |
+| `accent` (green) | `#27E8A4` | Primary actions, "approve", success, brand |
+| `blue` | `#5B8DEF` | Secondary actions, info, links |
+| `gold` | `#F5C544` | Scheduled / warning / "selected" highlight |
+| `red` | `#F2606A` | Errors, "reject", destructive |
+| `text` | `#EAEEF6` / `textDim` `#97A3BA` / `muted` `#5F6C86` | Text hierarchy |
+| `elev1` / `elev2` | soft drop shadows | Card & button elevation (Material vibe) |
 
-- Type: system sans (Inter-ish). Page titles 22–24px/700; card eyebrow labels 11px/600 uppercase, 0.08em tracking.
-- Radius: cards 14–16px, buttons/inputs 10px, pills 999px.
-- Layout: **mobile-first**. Prototype renders an iPhone-style frame (notch, home indicator) ~390×844 centred on screen, with a 5-item bottom tab bar.
+- Type: `Google Sans Text` → Roboto → Inter → system fallback. Page titles 19–24px/800; card eyebrow labels 11px/700 uppercase, 0.09em tracking.
+- Radius: cards 18px, **buttons fully pill-shaped (999px)**, inputs/pills 999px.
+- Layout: **mobile-first**. Prototype renders an iPhone-style frame (notch, home indicator) ~392×844 centred on screen, with a 5-item bottom tab bar.
 - Charts/visuals are hand-rolled (divs + simple SVG) — no chart library, so it stays single-file.
 
 ## 2. Navigation
@@ -139,12 +145,25 @@ Review    { id, title, source, thumbEmoji, decision: null|'approve'|'reject', co
 ```
 
 ## 5. Out of scope (prototype)
-- Real API calls (the old build hit `api.anthropic.com` directly from the browser — removed; "Generate" buttons now simulate). Wire a backend later.
+- Real API calls (the original FinCast build hit `api.anthropic.com` directly from the browser — removed; "Generate" buttons now simulate). Wire a backend later.
 - Real video render / ElevenLabs / Runway / Veo / HeyGen integrations.
 - Auth, persistence, multi-user.
 
 ## 6. TODO / ideas not yet in screenshots
-- Calendar view for the Wed/Fri/Sun cadence (was in the old FinCast).
-- Pre-publish checklist (was in the old FinCast) — fold into the Batch Approval flow.
+- Calendar view for the Wed/Fri/Sun cadence (was in the original FinCast build).
+- Pre-publish checklist (was in the original FinCast build) — fold into the Batch Approval flow.
 - Shorts-repurposing view (long-form → 3–5 Shorts).
 - Per-video P&L (render cost vs ad/affiliate revenue) feeding the ROI screen.
+
+## 7. Google Stitch (pending)
+The Stitch MCP server (`stitch.googleapis.com`) was **unreachable from the build environment** (DNS resolution failure), so the planned Stitch screen generation didn't run. When connectivity is available:
+1. `create_project` → "Faceless Finance App".
+2. `create_design_system` (or `create_design_system_from_design_md`) from the §1 tokens so all screens share styling.
+3. `generate_screen_from_text` for each §3 screen (start with Dashboard, Video Creator, Smart Fallback Rule Builder), `deviceType: MOBILE`.
+4. Drop the resulting Stitch project URL here and reconcile any visual deltas back into `Faceless Finance App.jsx`.
+
+Until then, the `.jsx` prototype carries a manual Material-3 / Stitch-flavoured pass (pill buttons, `elev1`/`elev2` shadows, tonal surfaces, Google-Sans-first font stack).
+
+## 8. Changelog
+- **2026-05-13** — Renamed FinCast → Faceless Finance App; folder `Work/FinCast/` → `Work/Faceless Finance App/`; files `FinCast.jsx`/`FinCast App Spec.md` → `Faceless Finance App.jsx`/`Faceless Finance App Spec.md`; in-app branding, design tokens and button shape updated; added §7 Stitch plan.
+- **2026-05-13** — Initial rebuild from the 10 reference screenshots (10 screens, 5-tab mobile shell).
