@@ -1,16 +1,16 @@
 {
   "id": "conv-1777862990161-izs81tayj",
   "providerId": "claude",
-  "title": "Remove JB vault from Obsidian and clean up files",
+  "title": "Check for Stitch API key",
   "titleGenerationStatus": "success",
   "createdAt": 1777862990163,
-  "updatedAt": 1778538609637,
-  "lastResponseAt": 1778538609637,
+  "updatedAt": 1778631520908,
+  "lastResponseAt": 1778631520908,
   "sessionId": "492f644a-300b-4eb1-9182-1a2b7fe2528d",
   "providerState": {
     "providerSessionId": "492f644a-300b-4eb1-9182-1a2b7fe2528d"
   },
-  "currentNote": "Claude Memory/MEMORY.md",
+  "currentNote": "Claude Memory/Account/capture_queue.md",
   "usage": {
     "model": "haiku",
     "inputTokens": 0,
