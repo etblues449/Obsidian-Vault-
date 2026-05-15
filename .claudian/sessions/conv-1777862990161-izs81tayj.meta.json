@@ -1,11 +1,11 @@
 {
   "id": "conv-1777862990161-izs81tayj",
   "providerId": "claude",
-  "title": "Save Excel cashflow session to Obsidian vault",
+  "title": "Check Google Drive vault sync status",
   "titleGenerationStatus": "success",
   "createdAt": 1777862990163,
-  "updatedAt": 1778808185827,
-  "lastResponseAt": 1778808185827,
+  "updatedAt": 1778809158816,
+  "lastResponseAt": 1778809158816,
   "sessionId": "492f644a-300b-4eb1-9182-1a2b7fe2528d",
   "providerState": {
     "providerSessionId": "492f644a-300b-4eb1-9182-1a2b7fe2528d"
