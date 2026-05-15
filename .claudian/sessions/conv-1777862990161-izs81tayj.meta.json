@@ -1,22 +1,23 @@
 {
   "id": "conv-1777862990161-izs81tayj",
   "providerId": "claude",
-  "title": "Check for Stitch API key",
+  "title": "Save Excel cashflow session to Obsidian vault",
   "titleGenerationStatus": "success",
   "createdAt": 1777862990163,
-  "updatedAt": 1778806563938,
-  "lastResponseAt": 1778631520908,
+  "updatedAt": 1778808185827,
+  "lastResponseAt": 1778808185827,
   "sessionId": "492f644a-300b-4eb1-9182-1a2b7fe2528d",
   "providerState": {
     "providerSessionId": "492f644a-300b-4eb1-9182-1a2b7fe2528d"
   },
   "usage": {
-    "model": "haiku",
+    "model": "opus[1m]",
     "inputTokens": 0,
     "cacheCreationInputTokens": 0,
     "cacheReadInputTokens": 0,
-    "contextWindow": 200000,
+    "contextWindow": 1000000,
     "contextTokens": 0,
-    "percentage": 0
+    "percentage": 0,
+    "contextWindowIsAuthoritative": false
   }
 }
