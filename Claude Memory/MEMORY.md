@@ -8,6 +8,7 @@ Last updated: 2026-05-04
 ## Projects
 → [[Projects/Smart Home/_index]] — HA Green + ESP32 nodes; lounge done, bedroom-2 live, upstairs has BLE/UART contention
 → [[Projects/Faceless Finance/_index]] — CA-credentialed faceless channel; Wed/Fri/Sun, Wed 4PM priority
+→ [[Projects/FinCast Studio/_index]] — Next.js AI video pipeline (Veo3→Runway→Higgsfield→HeyGen); built 2026-05-17
 → [[Projects/Doc to Learning/_index]] — single-file HTML, Anthropic API, editorial design, Cost Management notes
 → [[Projects/Other Workspaces/_index]] — Debt, Studying, Linux PC on Android, Select Website, Code/skills
 
