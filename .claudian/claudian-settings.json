@@ -34,7 +34,7 @@
       "enableSonnet1M": true,
       "customModels": "claude-opus-4-6\nclaude-sonnet-4-6\nclaude-haiku-4-5-20251001",
       "lastModel": "sonnet[1m]",
-      "environmentVariables":STITCH_API_KEY=AQ.Ab8RN6K46KR_Fs2bqvv_zwZInugIhozzdfwxEq_u6b3Gy5i0Dg,
+      "environmentVariables": "",
       "environmentHash": ""
     },
     "codex": {
