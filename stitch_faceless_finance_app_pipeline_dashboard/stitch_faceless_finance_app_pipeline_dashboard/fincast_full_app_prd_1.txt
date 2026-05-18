@@ -1,0 +1,43 @@
+# FinCast Full App Build - PRD
+
+## Overview
+A comprehensive UK Tax-Saving Studio application designed to automate personal finance video production. This document consolidates the functional requirements for the full application build.
+
+## Core Modules
+
+### 1. Production Pipeline
+- **Kanban-style workflow**: Idea -> Script -> Rendering -> Approval -> Published.
+- **Stage tracking**: Monitor progress and item counts at each stage.
+- **Bulk Actions**: Select multiple videos for batch processing (render, approve, delete).
+
+### 2. Video Studio (New Video)
+- **Configuration**: Set video tone (e.g., Mat-style), primary platform (TikTok/YouTube), and mood.
+- **Wizard flow**: Multi-step process to generate ideas and scripts.
+
+### 3. Batch Approval Review
+- **Immersive Feed**: High-velocity quality control interface.
+- **Actionable Logs**: View render logs and retry failed scenes immediately.
+- **Approval Actions**: Approve or send back renders for re-generation.
+
+### 4. AI Provider Analytics
+- **Performance tracking**: Compare success rates and costs for Runway, Veo 3, and Fal.ai.
+- **Fallback Logic**: Automated rule builder to switch providers on failure.
+- **Sandbox**: Test fallback rules before deployment.
+
+### 5. Studio Settings & AI Config
+- **API Management**: Centralized store for Anthropic, HeyGen, Google AI Studio, and Fal.ai keys.
+- **Character Bible**: Define persona name, tone of voice, and visual style.
+- **Export/Import**: JSON-based backup for Claude configurations.
+
+## Navigation Structure
+- **Sidebar (Desktop) / Bottom Nav (Mobile)**:
+  - Pipeline
+  - New Video
+  - Approval (Batch Feed)
+  - Analytics (Provider Comparison)
+  - Settings
+
+## Design System
+- **Colors**: Slate/Navy primary, Emerald for success, Rose/Amber for errors, Sky Blue for info.
+- **Typography**: Inter (Sans-serif).
+- **Style**: Clean, modern, high-density data management.

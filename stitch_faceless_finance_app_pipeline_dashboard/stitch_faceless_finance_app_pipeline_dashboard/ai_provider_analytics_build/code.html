@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Provider Analytics - FinCast</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#fcf8fa",
+                        "surface-tint": "#565e74",
+                        "primary-fixed": "#dae2fd",
+                        "primary-container": "#131b2e",
+                        "inverse-surface": "#303032",
+                        "on-surface": "#1b1b1d",
+                        "surface-container-low": "#f6f3f5",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#cce5ff",
+                        "on-tertiary-container": "#98805d",
+                        "on-primary-container": "#7c839b",
+                        "secondary-fixed-dim": "#93ccff",
+                        "outline": "#76777d",
+                        "surface-bright": "#fcf8fa",
+                        "surface-container-highest": "#e4e2e4",
+                        "inverse-on-surface": "#f3f0f2",
+                        "tertiary-fixed": "#fcdeb5",
+                        "tertiary-container": "#271901",
+                        "on-background": "#1b1b1d",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#eae7e9",
+                        "outline-variant": "#c6c6cd",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "surface": "#fcf8fa",
+                        "primary": "#000000",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#dec29a",
+                        "on-surface-variant": "#45464d",
+                        "on-secondary-container": "#00476e",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#f0edef",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#000000",
+                        "on-secondary-fixed-variant": "#004b73",
+                        "inverse-primary": "#bec6e0",
+                        "on-tertiary-fixed": "#271901",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed": "#001d31",
+                        "primary-fixed-dim": "#bec6e0",
+                        "surface-variant": "#e4e2e4",
+                        "surface-dim": "#dcd9db",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#5bb8fe",
+                        "on-tertiary-fixed-variant": "#574425",
+                        "secondary": "#006398",
+                        "on-primary-fixed": "#131b2e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .success-emerald { color: #059669; }
+        .success-bg-emerald { background-color: rgba(5, 150, 105, 0.1); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-20">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface border-b border-outline-variant shadow-sm flex justify-between items-center h-16 px-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">menu</span>
+<h1 class="font-bold text-xl text-primary tracking-tight">FinCast</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold border border-outline-variant">
+                JD
+            </div>
+</div>
+</header>
+<main class="pt-20 px-4 max-w-md mx-auto">
+<!-- Page Title & Context -->
+<div class="mb-6">
+<div class="flex items-center justify-between">
+<h2 class="text-2xl font-bold text-primary tracking-tight">AI Provider Analytics</h2>
+<span class="material-symbols-outlined text-secondary">filter_list</span>
+</div>
+<p class="text-sm text-on-surface-variant mt-1">Comparing Runway, Veo 3, and Fal.ai performance.</p>
+</div>
+<!-- Success Rates Grid -->
+<section class="grid grid-cols-1 gap-4 mb-8">
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl shadow-sm">
+<div class="flex justify-between items-center mb-3">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Success Rates</span>
+<span class="material-symbols-outlined text-secondary text-lg">verified</span>
+</div>
+<div class="space-y-4">
+<!-- Fal.ai -->
+<div class="group">
+<div class="flex justify-between text-sm mb-1">
+<span class="font-semibold text-primary">Fal.ai</span>
+<span class="success-emerald font-bold">95%</span>
+</div>
+<div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+<div class="bg-emerald-600 h-full rounded-full" style="width: 95%"></div>
+</div>
+</div>
+<!-- Runway -->
+<div>
+<div class="flex justify-between text-sm mb-1">
+<span class="font-semibold text-primary">Runway</span>
+<span class="success-emerald font-bold">92%</span>
+</div>
+<div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+<div class="bg-emerald-600 h-full rounded-full" style="width: 92%"></div>
+</div>
+</div>
+<!-- Veo 3 -->
+<div>
+<div class="flex justify-between text-sm mb-1">
+<span class="font-semibold text-primary">Veo 3</span>
+<span class="text-secondary font-bold">88%</span>
+</div>
+<div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+<div class="bg-secondary-container h-full rounded-full" style="width: 88%"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Cost Per Render Charts -->
+<section class="mb-8">
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl shadow-sm">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-sm font-bold text-primary">Cost per Render (USD)</h3>
+<div class="flex gap-2">
+<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-secondary-container text-on-secondary-container">24H</span>
+<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-surface-container text-on-surface-variant">7D</span>
+</div>
+</div>
+<div class="flex items-end justify-between h-32 px-2 gap-4">
+<!-- Runway Bar -->
+<div class="flex flex-col items-center flex-1">
+<div class="w-full bg-secondary-container opacity-40 rounded-t-lg h-[60%] relative group">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-secondary">$0.42</div>
+</div>
+<span class="text-[10px] mt-2 font-semibold text-on-surface-variant">Runway</span>
+</div>
+<!-- Veo 3 Bar -->
+<div class="flex flex-col items-center flex-1">
+<div class="w-full bg-secondary-container rounded-t-lg h-[85%] relative">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-secondary">$0.68</div>
+</div>
+<span class="text-[10px] mt-2 font-semibold text-on-surface-variant">Veo 3</span>
+</div>
+<!-- Fal.ai Bar -->
+<div class="flex flex-col items-center flex-1">
+<div class="w-full bg-secondary-container opacity-60 rounded-t-lg h-[40%] relative">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-secondary">$0.29</div>
+</div>
+<span class="text-[10px] mt-2 font-semibold text-on-surface-variant">Fal.ai</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Recent Failures Log -->
+<section class="mb-8">
+<div class="flex items-center justify-between mb-3 px-1">
+<h3 class="text-sm font-bold text-primary">Recent Failures Log</h3>
+<span class="text-xs text-secondary font-semibold">View All</span>
+</div>
+<div class="space-y-3">
+<!-- Log Item 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-3 rounded-lg flex items-start gap-3 shadow-sm">
+<div class="w-10 h-10 rounded bg-error-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-error text-xl">error_outline</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-primary">Veo 3: Timeout Error</span>
+<span class="text-[10px] text-on-surface-variant">2m ago</span>
+</div>
+<p class="text-[11px] text-on-surface-variant mt-1">Render #8291 failed during final frame stitching. Provider returned 504.</p>
+<div class="flex gap-2 mt-2">
+<button class="px-3 py-1 bg-surface-container rounded-full text-[10px] font-bold text-on-surface-variant border border-outline-variant">Retry</button>
+<button class="px-3 py-1 bg-surface-container rounded-full text-[10px] font-bold text-on-surface-variant border border-outline-variant">Logs</button>
+</div>
+</div>
+</div>
+<!-- Log Item 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-3 rounded-lg flex items-start gap-3 shadow-sm">
+<div class="w-10 h-10 rounded bg-error-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-error text-xl">warning</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-primary">Runway: NSFW Flag</span>
+<span class="text-[10px] text-on-surface-variant">14m ago</span>
+</div>
+<p class="text-[11px] text-on-surface-variant mt-1">System false positive on texture generation for "Granite Slab". Manual override pending.</p>
+<div class="flex gap-2 mt-2">
+<button class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-[10px] font-bold">Approve</button>
+<button class="px-3 py-1 bg-surface-container rounded-full text-[10px] font-bold text-on-surface-variant border border-outline-variant">Dismiss</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Provider Health Bento -->
+<section class="grid grid-cols-2 gap-3 mb-4">
+<div class="bg-primary-container text-on-primary-container p-4 rounded-xl flex flex-col justify-between">
+<span class="material-symbols-outlined text-secondary-container">hub</span>
+<div>
+<h4 class="text-xs font-bold opacity-80 mb-1">Active Nodes</h4>
+<p class="text-2xl font-bold">12/12</p>
+</div>
+</div>
+<div class="bg-surface-container-highest border border-outline-variant p-4 rounded-xl flex flex-col justify-between">
+<span class="material-symbols-outlined text-primary">speed</span>
+<div>
+<h4 class="text-xs font-bold text-on-surface-variant mb-1">Avg Latency</h4>
+<p class="text-2xl font-bold text-primary">1.2s</p>
+</div>
+</div>
+</section>
+<!-- Decorative UI Element -->
+<div class="relative w-full h-24 rounded-xl overflow-hidden mb-8 border border-outline-variant">
+<img alt="Network visualization" class="w-full h-full object-cover grayscale opacity-20" data-alt="A high-tech digital representation of a global neural network with shimmering light nodes and blue data streams. The aesthetic is clean and corporate, featuring a cool Slate and Sky blue color palette. The lighting is soft and diffused, creating a professional and analytical mood consistent with a financial media platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOY9XnUnTA5D1mcNGxetXq4WVSTm840Rq8JfBG61FkoyYXZA5hV4kXij8b6_DnRU1eEBbW8ieoAlYHoFD7zYiZl4RJMLK1G-JkHFyNKW8AW6JTkqZhxbcQBhGzvqqtAHBid9EZHbMAVCJUbOqyRyHyAAYzl9FXRSRDWFAYJTSfmxJq3zXX1wZTbIRqJCmxLAnSRN8PT-xLRg4BCbO__atelA9h0u9pos-B8sf8SgcID4vByS6jODwhYolxousn2LBXyiLECQJj1h9z"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent flex items-end p-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="text-xs font-bold text-primary">All Systems Operational</span>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface/80 backdrop-blur-md border-t border-outline-variant flex justify-around items-center h-16 px-4">
+<button class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">view_kanban</span>
+<span class="text-[10px] font-bold">Pipeline</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="text-[10px] font-bold">New</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="text-[10px] font-bold">Approval</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary font-bold">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="text-[10px]">Data</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-bold">Settings</span>
+</button>
+</nav>
+</body></html>

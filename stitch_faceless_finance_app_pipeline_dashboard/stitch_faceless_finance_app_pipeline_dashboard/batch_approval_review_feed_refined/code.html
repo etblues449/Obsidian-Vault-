@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Batch Approval Review Feed</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style data-purpose="custom-styles">
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #000000;
+      color: #ffffff;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Custom glow effects for the interactive buttons */
+    .glow-green {
+      box-shadow: 0 0 30px rgba(52, 199, 89, 0.4);
+    }
+    
+    .glow-red {
+      box-shadow: 0 0 30px rgba(255, 59, 48, 0.3);
+    }
+
+    /* Hide scrollbar but keep functionality */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'ios-dark-gray': '#1c1c1e',
+            'ios-green': '#34c759',
+            'ios-red-bg': '#3d2321',
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="h-full flex flex-col justify-center items-center overflow-hidden">
+<!-- BEGIN: Mobile Container -->
+<main class="relative w-full max-w-[430px] h-full max-h-[932px] bg-black overflow-hidden flex flex-col shadow-2xl">
+<!-- BEGIN: Header -->
+<header class="pt-14 pb-4 px-6 flex items-center justify-between" data-purpose="app-header">
+<div class="flex items-center gap-4">
+<button aria-label="Go back" class="w-10 h-10 rounded-full bg-ios-dark-gray flex items-center justify-center">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<div>
+<h1 class="text-lg font-bold leading-tight">Batch Approval</h1>
+<h1 class="text-lg font-bold leading-tight text-gray-400">Review Feed</h1>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1">
+<div class="w-20 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+<div class="bg-ios-green h-full w-[30%]"></div>
+</div>
+<div class="text-right">
+<span class="text-white font-bold block">3/10</span>
+<span class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Reviewed</span>
+</div>
+</div>
+</header>
+<!-- END: Header -->
+<!-- BEGIN: Main Review Card Area -->
+<section class="flex-1 px-4 relative flex flex-col" data-purpose="video-review-area">
+<!-- BEGIN: Video Card -->
+<div class="relative w-full h-full rounded-[40px] overflow-hidden bg-zinc-900 shadow-inner">
+<!-- Background Video Placeholder -->
+<img alt="Video Content" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmlTT3MfWGrpx_7EvLOMmq52xBwxjkMRpznRUJ0Yyd-a4CmHhb0StNagikuv9B1BqhG06dyLBYYlQ2tfkVsbp1eq44wcsalrKZVQjFz6olAIeHGg2_vuR-Hv3unJH2-vTFjcUGxPOztkoEq-UJTHypUEDxQEdU5zitrvJW5LINCLD4bUudcu_uTlDssEChB632Gm5Je0lK2_fhIL-Cn0MHQSpGb41B1pOmXhB3G80u1lxmX8p07PvzlBDXnJ4_okuYG6i1Jzcqkx94"/>
+<!-- Overlay Gradient for Readability -->
+<div class="absolute inset-0 bg-black/30"></div>
+<!-- UK Personal Finance Logo -->
+<div class="absolute top-6 right-6">
+<img alt="UK Personal Finance Logo" class="h-10 w-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_9I18dRFuBs8FESiQoM_c9_H3sbDKo0nrbQ-M0rK4RW2lon81dt-tWR7cKHsKROaJOWK8-9vGLpSZLm08eCnXMOP7iLj9-dEjmMTn5JptP4pEBzQXI4rgB7GFen7OGyD5GWDxGZ5bTd2MdDUgVVZ2uvNmRdXGxvbuUyY41NmayOQgmQ6tfpfE4UlxilnHOwLtz3u-1xkz5JejZx4zd1fEY0AWVScjLpQxxe2nwYX8Drd_3Ek9ChMQGp0i5C3FgE04EeAPlQ8HxGKZ"/>
+</div>
+<!-- Central Text Content -->
+<div class="absolute inset-0 flex flex-col items-center justify-center px-10 text-center pointer-events-none">
+<h2 class="text-3xl font-bold text-white drop-shadow-lg leading-tight">
+            Understanding Capital<br/>Tax for UK Creators
+          </h2>
+</div>
+<!-- BEGIN: Action Controls (Floating) -->
+<!-- Approve Action -->
+<div class="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-4">
+<!-- Green Swipe Indicator Arrow -->
+<div class="flex items-center gap-1 mb-4">
+<div class="flex gap-0.5">
+<div class="w-1 h-1 rounded-full bg-ios-green/40"></div>
+<div class="w-1 h-1 rounded-full bg-ios-green/60"></div>
+<div class="w-1 h-1 rounded-full bg-ios-green/80"></div>
+</div>
+<svg class="w-6 h-6 text-ios-green" fill="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M16.72 7.72a.75.75 0 0 1 1.06 0l3.75 3.75a.75.75 0 0 1 0 1.06l-3.75 3.75a.75.75 0 1 1-1.06-1.06l2.47-2.47H3a.75.75 0 0 1 0-1.5h16.19l-2.47-2.47a.75.75 0 0 1 0-1.06Z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<!-- Approve Button & Glow -->
+<div class="relative group cursor-pointer">
+<div class="w-20 h-20 rounded-full border-2 border-ios-green/50 flex items-center justify-center glow-green bg-black/20 backdrop-blur-sm">
+<svg class="w-10 h-10 text-ios-green" fill="none" stroke="currentColor" stroke-width="3" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="m4.5 12.75 6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="absolute -bottom-10 left-1/2 -translate-x-1/2">
+<span class="bg-ios-green text-black font-bold px-4 py-1.5 rounded-full text-xs tracking-wider uppercase">Approve</span>
+</div>
+</div>
+</div>
+<!-- Reject Action -->
+<div class="absolute left-6 top-[65%] -translate-y-1/2 flex flex-col items-center gap-4">
+<!-- Reject Button & Glow -->
+<div class="relative group cursor-pointer">
+<div class="w-20 h-20 rounded-full border-2 border-red-500/50 flex items-center justify-center glow-red bg-black/20 backdrop-blur-sm">
+<svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" stroke-width="3" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M6 18 18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="absolute -bottom-10 left-1/2 -translate-x-1/2">
+<span class="bg-ios-red-bg text-red-200 border border-red-900 font-bold px-5 py-1.5 rounded-full text-xs tracking-wider uppercase">Reject</span>
+</div>
+</div>
+<!-- Red Swipe Indicator Arrow -->
+<div class="flex items-center gap-1 mt-8">
+<svg class="w-6 h-6 text-red-500/70 rotate-180" fill="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M16.72 7.72a.75.75 0 0 1 1.06 0l3.75 3.75a.75.75 0 0 1 0 1.06l-3.75 3.75a.75.75 0 1 1-1.06-1.06l2.47-2.47H3a.75.75 0 0 1 0-1.5h16.19l-2.47-2.47a.75.75 0 0 1 0-1.06Z" fill-rule="evenodd"></path>
+</svg>
+<div class="flex gap-0.5">
+<div class="w-1 h-1 rounded-full bg-red-500/40"></div>
+<div class="w-1 h-1 rounded-full bg-red-500/20"></div>
+<div class="w-1 h-1 rounded-full bg-red-500/10"></div>
+</div>
+</div>
+</div>
+<!-- END: Action Controls -->
+<!-- BEGIN: Card Bottom Actions -->
+<div class="absolute bottom-6 left-0 right-0 px-6 flex items-center gap-3">
+<div class="relative flex-1">
+<input class="w-full bg-ios-dark-gray/80 backdrop-blur-md border-none rounded-2xl py-3 pl-4 pr-10 text-white placeholder-gray-500 focus:ring-0" placeholder="Comment..." type="text"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+<button class="bg-ios-dark-gray/80 backdrop-blur-md text-white font-semibold py-3 px-5 rounded-2xl">
+            Send Feedback
+          </button>
+</div>
+<!-- END: Card Bottom Actions -->
+</div>
+<!-- END: Video Card -->
+</section>
+<!-- END: Main Review Card Area -->
+<!-- BEGIN: Footer -->
+<footer class="p-6 bg-black flex items-center justify-between" data-purpose="app-footer">
+<div class="max-w-[200px]">
+<p class="text-[13px] text-gray-400 leading-snug">
+<span class="text-white font-semibold">Batch Summary:</span> 3 of 10 videos approved. <a class="underline" href="#">Session Progress</a>.
+        </p>
+</div>
+<button class="bg-white text-black px-6 py-3 rounded-full font-bold text-sm tracking-tight whitespace-nowrap">
+        REVIEW LATER
+      </button>
+</footer>
+<!-- END: Footer -->
+<!-- iOS Home Indicator -->
+<div class="w-32 h-1.5 bg-white/30 rounded-full mx-auto mb-2"></div>
+</main>
+<!-- END: Mobile Container -->
+</body></html><!-- MISSING_IMAGES:
+- TEMP_VIDEO_IMAGE: A high-quality video still or portrait photo of a man explaining financial concepts.
+- TEMP_LOGO_IMAGE: A text-based logo for 'UK Personal Finance' as seen in the mockup.
+-->

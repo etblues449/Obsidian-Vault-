@@ -1,0 +1,58 @@
+{
+  "name": "FinCast Design System",
+  "version": "1.0.0",
+  "theme": {
+    "colors": {
+      "surface": "#fcf8fa",
+      "surface_dim": "#dcd9db",
+      "surface_bright": "#fcf8fa",
+      "surface_container_lowest": "#ffffff",
+      "surface_container_low": "#f6f3f5",
+      "surface_container": "#f1edf0",
+      "surface_container_high": "#ebe7ea",
+      "surface_container_highest": "#e5e1e4",
+      "primary": "#0f172a",
+      "on_primary": "#ffffff",
+      "secondary": "#059669",
+      "on_secondary": "#ffffff",
+      "accent": "#0ea5e9",
+      "error": "#e11d48",
+      "warning": "#f59e0b",
+      "success": "#10b981",
+      "outline": "#79747e",
+      "outline_variant": "#c4c7c5"
+    },
+    "typography": {
+      "font_family": "Inter, sans-serif",
+      "scale": {
+        "xs": "0.75rem",
+        "sm": "0.875rem",
+        "base": "1rem",
+        "lg": "1.125rem",
+        "xl": "1.25rem",
+        "xxl": "1.5rem",
+        "xxxl": "1.875rem"
+      },
+      "weights": {
+        "regular": 400,
+        "medium": 500,
+        "semibold": 600,
+        "bold": 700,
+        "black": 900
+      }
+    },
+    "spacing": {
+      "margin_mobile": "16px",
+      "margin_desktop": "32px",
+      "gutter": "16px"
+    },
+    "shape": {
+      "roundness": "8px",
+      "radius_sm": "4px",
+      "radius_md": "8px",
+      "radius_lg": "12px",
+      "radius_xl": "24px",
+      "radius_full": "9999px"
+    }
+  }
+}

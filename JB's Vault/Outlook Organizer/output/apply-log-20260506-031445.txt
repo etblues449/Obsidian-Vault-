@@ -1,0 +1,175 @@
+﻿=== Outlook Apply [EXECUTE] 05/06/2026 03:14:45 ===
+Connecting to Outlook...
+Using store: EHorton@selectlifestyles.co.uk
+
+--- PHASE 1: Folder tree ---
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Departments
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Departments\1. Executive
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Departments\2. Care & Compliance
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Departments\3. Operations
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Departments\4. Finance
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Departments\5. Estates
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Departments\6. HR
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Departments\_Unmapped
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Legal
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Legal\Carbon Law Partners
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Legal\Mills-Reeve
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Legal\SecureMail
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Banking & Finance
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Banking & Finance\Xero
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Banking & Finance\HSBC
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Banking & Finance\Revolut
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Utilities
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Utilities\Gas
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Utilities\Electric
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Utilities\Water
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Utilities\Broadband
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Utilities\Other
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Suppliers
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\External\Other
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Notifications
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Notifications\M365 Security
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Notifications\Quarantine
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Notifications\Teams
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Notifications\GitHub
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Notifications\Tools
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Notifications\Shipping
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Notifications\LinkedIn
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Marketing
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Marketing\Retail
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Marketing\Football
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Marketing\Newsletters
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Marketing\Investing
+  CREATE folder: \\EHorton@selectlifestyles.co.uk\Marketing\Other
+
+--- PHASE 2: Categories ---
+  CREATE category: Stafford Road
+  CREATE category: St Marks
+  CREATE category: Horsehills Drive
+  CREATE category: Oaks Crescent
+  CREATE category: Fellows Road
+  CREATE category: Dudding Road
+  CREATE category: St John Square
+  CREATE category: Himley Road
+  CREATE category: Peacock Close
+  CREATE category: Vicarage Road
+  CREATE category: Beeches Road
+  CREATE category: Stony Lane
+  CREATE category: Greswold Street
+  CREATE category: Moor Lane
+  CREATE category: Tiverton Drive
+  CREATE category: The Bantocks
+  CREATE category: Hawbush Road
+  CREATE category: Harrison Street
+  CREATE category: Doveridge Place
+  CREATE category: Walsall Road
+  CREATE category: Oberon Grove
+  CREATE category: Knipersley Road
+  CREATE category: Goodison Gardens
+  CREATE category: Penns Lane
+  CREATE category: Chester Road
+  CREATE category: Marsons Court
+  CREATE category: Lincoln Road
+  CREATE category: Stratford Road
+  CREATE category: All Saints Way
+  CREATE category: Helenny Close
+  CREATE category: John Street
+  CREATE category: Throne Road
+
+--- PHASE 3: Building conversation map from Sent Items ---
+Scanning 651 sent items...
+  ...100 sent items processed
+  ...200 sent items processed
+  ...400 sent items processed
+  ...500 sent items processed
+  ...600 sent items processed
+Conversation map built: 372 conversations you've replied in.
+
+--- PHASE 4: Routing Inbox + Archive ---
+Processing Inbox (9723 items)...
+  ...223 of 9723 Inbox items examined
+  ...723 of 9723 Inbox items examined
+  ...1223 of 9723 Inbox items examined
+  ...1723 of 9723 Inbox items examined
+  ...2223 of 9723 Inbox items examined
+  ...2723 of 9723 Inbox items examined
+  ...3223 of 9723 Inbox items examined
+  ...3723 of 9723 Inbox items examined
+  ...4223 of 9723 Inbox items examined
+  ...4723 of 9723 Inbox items examined
+  ...5223 of 9723 Inbox items examined
+  ...5723 of 9723 Inbox items examined
+  ...6223 of 9723 Inbox items examined
+  ...6723 of 9723 Inbox items examined
+  ...7223 of 9723 Inbox items examined
+  ...7723 of 9723 Inbox items examined
+  ...8223 of 9723 Inbox items examined
+  ...8723 of 9723 Inbox items examined
+  ...9223 of 9723 Inbox items examined
+Processing Archive (10257 items)...
+  ...257 of 10257 Archive items examined
+  ...757 of 10257 Archive items examined
+  ...1257 of 10257 Archive items examined
+  ...1757 of 10257 Archive items examined
+  ...2257 of 10257 Archive items examined
+  ...2757 of 10257 Archive items examined
+  ...3257 of 10257 Archive items examined
+  ...3757 of 10257 Archive items examined
+  ...4257 of 10257 Archive items examined
+  ...4757 of 10257 Archive items examined
+  ...5257 of 10257 Archive items examined
+  ...5757 of 10257 Archive items examined
+  ...6257 of 10257 Archive items examined
+  ...6757 of 10257 Archive items examined
+  ...7257 of 10257 Archive items examined
+  ...7757 of 10257 Archive items examined
+  ...8257 of 10257 Archive items examined
+  ...8757 of 10257 Archive items examined
+  ...9257 of 10257 Archive items examined
+  ...9757 of 10257 Archive items examined
+
+=== ROUTING SUMMARY [EXECUTE] ===
+  Stays in Inbox/Archive: 8855
+  Routed elsewhere:       11018
+  TOTAL examined:         19873
+
+Per source folder examined:
+   10213  Archive
+    9660  Inbox
+
+By target folder:
+    1576  Marketing\Retail
+    1445  Marketing\Other
+    1329  Departments\1. Executive
+     673  Marketing\Investing
+     617  External\Banking & Finance\Xero
+     601  Notifications\Shipping
+     495  Departments\4. Finance
+     433  External\Utilities\Gas
+     426  Notifications\LinkedIn
+     398  External\Suppliers
+     334  External\Legal\Carbon Law Partners
+     287  Notifications\Quarantine
+     285  External\Other
+     255  Departments\2. Care & Compliance
+     230  Notifications\M365 Security
+     194  Marketing\Newsletters
+     167  External\Banking & Finance\Revolut
+     147  Departments\5. Estates
+     132  Notifications\Tools
+     129  External\Banking & Finance\HSBC
+     113  Notifications\Teams
+     105  External\Utilities\Other
+     100  Departments\6. HR
+      98  Departments\_Unmapped
+      86  External\Legal\Mills-Reeve
+      85  Departments\3. Operations
+      82  External\Utilities\Broadband
+      76  External\Utilities\Electric
+      74  Marketing\Football
+      41  Notifications\GitHub
+       5  External\Legal\SecureMail
+
+Full log: C:\Users\ElliotHorton\Documents\ObsidianVault\Outlook Organizer\output\apply-log-20260506-031445.txt
+Report:   C:\Users\ElliotHorton\Documents\ObsidianVault\Outlook Organizer\output\apply-report-20260506-031445.txt
