@@ -120,9 +120,9 @@ if [ ! -d "$VAULT" ]; then
     fi
 fi
 
-# Persist the vault path + shell helpers. For Path B, claude-vault enters
-# proot-Ubuntu with Termux home bind-mounted so the vault path resolves
-# inside the rootfs.
+# Persist the vault path + shell helpers. For Path B, claude-vault and the
+# per-project launchers enter proot-Ubuntu with Termux home bind-mounted so
+# the vault path resolves inside the rootfs.
 BLOCK_TAG="# --- Obsidian vault (added by install-claude-code-android.sh) ---"
 if ! grep -qF "$BLOCK_TAG" "$HOME/.bashrc" 2>/dev/null; then
     {
@@ -131,12 +131,127 @@ if ! grep -qF "$BLOCK_TAG" "$HOME/.bashrc" 2>/dev/null; then
         echo "export OBSIDIAN_VAULT=\"$VAULT\""
         echo "alias cdv='cd \"\$OBSIDIAN_VAULT\"'"
         if [ "$MODE" = "path-b" ]; then
-            echo "alias claude-vault='proot-distro login ubuntu --bind \"\$HOME/storage:/root/storage\" -- bash -lc \"cd \\\"\$OBSIDIAN_VAULT\\\" && claude\"'"
+            # Helper: run a command inside Ubuntu with the vault visible.
+            cat <<'PROOT_HELPERS'
+_cc_in_ubuntu() {
+    proot-distro login ubuntu \
+        --bind "$HOME/storage:/root/storage" \
+        -- bash -lc "$1"
+}
+claude-vault()     { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT\" && claude \"$@\""; }
+claude-faceless()  { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Faceless Finance\" && claude \"$@\""; }
+claude-smarthome() { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Smart Home\" && claude \"$@\""; }
+claude-studying()  { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Studying\" && claude \"$@\""; }
+claude-debt()      { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Debt\" && claude \"$@\""; }
+claude-resume()    { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT\" && claude --resume"; }
+PROOT_HELPERS
         else
-            echo "alias claude-vault='cd \"\$OBSIDIAN_VAULT\" && claude'"
+            cat <<'NATIVE_HELPERS'
+claude-vault()     { cd "$OBSIDIAN_VAULT" && claude "$@"; }
+claude-faceless()  { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Faceless Finance" && claude "$@"; }
+claude-smarthome() { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Smart Home" && claude "$@"; }
+claude-studying()  { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Studying" && claude "$@"; }
+claude-debt()      { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Debt" && claude "$@"; }
+claude-resume()    { cd "$OBSIDIAN_VAULT" && claude --resume; }
+NATIVE_HELPERS
         fi
     } >> "$HOME/.bashrc"
 fi
+
+# Deploy global memory + MCP config inside the runtime (so they apply to
+# every claude session regardless of cwd, like claude.ai's account-level
+# Memory and MCP settings).
+deploy_global_claude_config() {
+    local shared="$VAULT/Claude Memory/shared_claude_md_instructions.md"
+    local memory="$VAULT/Claude Memory/MEMORY.md"
+
+    if [ ! -f "$shared" ] || [ ! -f "$memory" ]; then
+        c_warn "Skipping global ~/.claude/CLAUDE.md deploy (source files missing)."
+        return
+    fi
+
+    # Stage the files on host first, then move them into the runtime. This
+    # is more reliable than piping heredocs through `proot-distro login`.
+    local stage="$PREFIX/tmp/cc-android-stage"
+    rm -rf "$stage" && mkdir -p "$stage"
+
+    cat > "$stage/CLAUDE.md" <<EOF
+# Global CLAUDE.md (Jelly Bean)
+
+Account-level instructions, mirrored from claude.ai. Applies to every
+Claude Code session on this device.
+
+## Memory — read first
+
+Authoritative memory index lives in the vault:
+\`Claude Memory/MEMORY.md\` under \$OBSIDIAN_VAULT.
+
+When inside proot-Ubuntu the same file is at
+\`/root/storage/shared/Documents/Obsidian-Vault-/Claude Memory/MEMORY.md\`
+(assuming the default vault path; the \`claude-vault\` shell function
+bind-mounts \$HOME/storage automatically).
+
+## Shared instructions
+
+Use the shared CLAUDE.md project instructions block as the baseline for
+code/tech work — same wording as the claude.ai projects. Canonical source:
+\`Claude Memory/shared_claude_md_instructions.md\`.
+
+## Project routing
+
+When working inside one of the starred projects, Claude Code walks up the
+tree and merges every CLAUDE.md it finds. The project-specific ones live
+at:
+
+- Faceless Finance → \`Claude Memory/Projects/Faceless Finance/CLAUDE.md\`
+- Smart Home → \`Claude Memory/Projects/Smart Home/CLAUDE.md\`
+- Studying → \`Claude Memory/Projects/Studying/CLAUDE.md\`
+- Debt → \`Claude Memory/Projects/Debt/CLAUDE.md\`
+
+Each project CLAUDE.md links back to the canonical instructions file in
+\`Claude Memory/Instructions/\` (the claude.ai project custom-instructions
+captured verbatim).
+EOF
+
+    cat > "$stage/mcp.json" <<'EOF'
+{
+  "mcpServers": {
+    "stitch": {
+      "type": "http",
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "${STITCH_API_KEY}"
+      }
+    }
+  }
+}
+EOF
+
+    case "$MODE" in
+        path-a)
+            mkdir -p "$HOME/.claude"
+            cp "$stage/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+            [ -f "$HOME/.claude/mcp.json" ] || cp "$stage/mcp.json" "$HOME/.claude/mcp.json"
+            ;;
+        path-b)
+            # Bind the stage dir into Ubuntu, then cp into the rootfs.
+            proot-distro login ubuntu \
+                --bind "$stage:/cc-stage" \
+                -- bash -lc '
+                    mkdir -p /root/.claude
+                    cp /cc-stage/CLAUDE.md /root/.claude/CLAUDE.md
+                    [ -f /root/.claude/mcp.json ] || cp /cc-stage/mcp.json /root/.claude/mcp.json
+                '
+            ;;
+    esac
+
+    rm -rf "$stage"
+    c_ok "Deployed ~/.claude/CLAUDE.md and ~/.claude/mcp.json"
+    c_warn "mcp.json uses \$STITCH_API_KEY env var. Set it in the runtime's shell rc before launching:"
+    c_warn '    echo "export STITCH_API_KEY=YOUR-KEY-HERE" >> /root/.bashrc   # (inside Ubuntu, Path B)'
+}
+
+deploy_global_claude_config
 
 if [ -d "$VAULT/.git" ]; then
     if ! git -C "$VAULT" config user.email >/dev/null 2>&1; then
