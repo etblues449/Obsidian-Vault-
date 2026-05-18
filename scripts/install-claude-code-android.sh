@@ -64,8 +64,11 @@ case "$MODE" in
     path-b)
         c_info "Path B: proot-Ubuntu, pinned to claude-code ${CC_PIN}."
         pkg install proot-distro git curl -y
-        if ! proot-distro list --installed 2>/dev/null | grep -q ubuntu; then
+        # proot-distro has no `--installed` flag; check the rootfs dir instead.
+        if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/ubuntu" ]; then
             proot-distro install ubuntu
+        else
+            c_info "proot-distro ubuntu already installed; skipping."
         fi
         c_info "Provisioning Claude Code inside the Ubuntu rootfs (via npm)..."
         # Why npm + pin 2.1.112 (not https://claude.ai/install.sh + latest):
