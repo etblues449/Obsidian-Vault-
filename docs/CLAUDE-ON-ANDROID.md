@@ -80,3 +80,12 @@ settings stay untouched.
 - Claude prints an OAuth URL but no browser opens — copy/paste it into
   Chrome manually. Documented in upstream FAQ.
 - Path B disk usage scares you — Path A is ~50 MB but pinned to 2.1.112.
+- `Error: claude native binary not installed.` (Path B) — the postinstall
+  hook didn't run. Recover inside the Ubuntu rootfs:
+  ```bash
+  proot-distro login ubuntu
+  INSTALL_CJS=$(find / -path "*@anthropic-ai/claude-code/install.cjs" 2>/dev/null | head -1)
+  node "$INSTALL_CJS"
+  claude --version
+  ```
+  If that still fails, reinstall via npm: `apt install -y nodejs npm && npm install -g @anthropic-ai/claude-code`. The current installer uses this npm path by default to avoid the issue.

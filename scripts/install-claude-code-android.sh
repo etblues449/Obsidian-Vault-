@@ -61,16 +61,24 @@ case "$MODE" in
         if ! proot-distro list --installed 2>/dev/null | grep -q ubuntu; then
             proot-distro install ubuntu
         fi
-        c_info "Provisioning Claude Code inside the Ubuntu rootfs..."
+        c_info "Provisioning Claude Code inside the Ubuntu rootfs (via npm)..."
+        # We install via apt nodejs/npm + global npm install rather than
+        # https://claude.ai/install.sh because the latter has been observed
+        # to leave the native binary undownloaded inside proot, producing:
+        #   "Error: claude native binary not installed."
+        # The npm path runs the postinstall reliably.
         proot-distro login ubuntu -- bash -lc '
             set -euo pipefail
+            export DEBIAN_FRONTEND=noninteractive
             apt update && apt upgrade -y
-            apt install -y curl git ca-certificates
-            if ! command -v claude >/dev/null 2>&1; then
-                curl -fsSL https://claude.ai/install.sh | bash
+            apt install -y curl git ca-certificates nodejs npm
+            npm install -g @anthropic-ai/claude-code
+            # Defensive: if a previous claude.ai/install.sh run left a broken
+            # install, force-run its postinstall.
+            if ! claude --version >/dev/null 2>&1; then
+                INSTALL_CJS=$(find / -path "*@anthropic-ai/claude-code/install.cjs" 2>/dev/null | head -1)
+                [ -n "$INSTALL_CJS" ] && node "$INSTALL_CJS" || true
             fi
-            grep -q ".local/bin" "$HOME/.bashrc" || \
-                echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> "$HOME/.bashrc"
             claude --version
         '
         ;;
