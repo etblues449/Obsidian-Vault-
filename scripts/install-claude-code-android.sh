@@ -145,21 +145,29 @@ _cc_in_ubuntu() {
         --bind "$HOME/storage:/root/storage" \
         -- bash -lc "$1"
 }
-claude-vault()     { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT\" && claude \"$@\""; }
-claude-faceless()  { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Faceless Finance\" && claude \"$@\""; }
-claude-smarthome() { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Smart Home\" && claude \"$@\""; }
-claude-studying()  { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Studying\" && claude \"$@\""; }
-claude-debt()      { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Debt\" && claude \"$@\""; }
-claude-resume()    { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT\" && claude --resume"; }
+claude-vault()      { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT\" && claude \"$@\""; }
+claude-faceless()   { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Faceless Finance\" && claude \"$@\""; }
+claude-smarthome()  { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Smart Home\" && claude \"$@\""; }
+claude-studying()   { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Studying\" && claude \"$@\""; }
+claude-debt()       { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Debt\" && claude \"$@\""; }
+claude-skills()     { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Skills\" && claude \"$@\""; }
+claude-linuxpc()    { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Linux PC On Android\" && claude \"$@\""; }
+claude-website()    { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Select Website\" && claude \"$@\""; }
+claude-d2l()        { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT/Claude Memory/Projects/Doc to Learning\" && claude \"$@\""; }
+claude-resume()     { _cc_in_ubuntu "cd \"$OBSIDIAN_VAULT\" && claude --resume"; }
 PROOT_HELPERS
         else
             cat <<'NATIVE_HELPERS'
-claude-vault()     { cd "$OBSIDIAN_VAULT" && claude "$@"; }
-claude-faceless()  { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Faceless Finance" && claude "$@"; }
-claude-smarthome() { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Smart Home" && claude "$@"; }
-claude-studying()  { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Studying" && claude "$@"; }
-claude-debt()      { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Debt" && claude "$@"; }
-claude-resume()    { cd "$OBSIDIAN_VAULT" && claude --resume; }
+claude-vault()      { cd "$OBSIDIAN_VAULT" && claude "$@"; }
+claude-faceless()   { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Faceless Finance" && claude "$@"; }
+claude-smarthome()  { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Smart Home" && claude "$@"; }
+claude-studying()   { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Studying" && claude "$@"; }
+claude-debt()       { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Debt" && claude "$@"; }
+claude-skills()     { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Skills" && claude "$@"; }
+claude-linuxpc()    { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Linux PC On Android" && claude "$@"; }
+claude-website()    { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Select Website" && claude "$@"; }
+claude-d2l()        { cd "$OBSIDIAN_VAULT/Claude Memory/Projects/Doc to Learning" && claude "$@"; }
+claude-resume()     { cd "$OBSIDIAN_VAULT" && claude --resume; }
 NATIVE_HELPERS
         fi
     } >> "$HOME/.bashrc"
@@ -206,7 +214,7 @@ code/tech work — same wording as the claude.ai projects. Canonical source:
 
 ## Project routing
 
-When working inside one of the starred projects, Claude Code walks up the
+When working inside one of the project folders, Claude Code walks up the
 tree and merges every CLAUDE.md it finds. The project-specific ones live
 at:
 
@@ -214,10 +222,14 @@ at:
 - Smart Home → \`Claude Memory/Projects/Smart Home/CLAUDE.md\`
 - Studying → \`Claude Memory/Projects/Studying/CLAUDE.md\`
 - Debt → \`Claude Memory/Projects/Debt/CLAUDE.md\`
+- Skills → \`Claude Memory/Projects/Skills/CLAUDE.md\`
+- Linux PC On Android → \`Claude Memory/Projects/Linux PC On Android/CLAUDE.md\`
+- Select Website → \`Claude Memory/Projects/Select Website/CLAUDE.md\`
+- Doc to Learning → \`Claude Memory/Projects/Doc to Learning/CLAUDE.md\`
 
 Each project CLAUDE.md links back to the canonical instructions file in
 \`Claude Memory/Instructions/\` (the claude.ai project custom-instructions
-captured verbatim).
+captured verbatim, where available).
 EOF
 
     cat > "$stage/mcp.json" <<'EOF'

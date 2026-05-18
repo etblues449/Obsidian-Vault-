@@ -31,18 +31,41 @@ This is your "goto app".
 
 ### Keep CLI and web in sync
 
-The four starred projects on claude.ai are mirrored in this vault as:
+Your projects from claude.ai are mirrored in this vault as folders under
+`Claude Memory/Projects/`. Each folder has a `CLAUDE.md` that links back
+to its custom-instructions file in `Claude Memory/Instructions/`:
 
-- `Claude Memory/Projects/Faceless Finance/CLAUDE.md`
-- `Claude Memory/Projects/Smart Home/CLAUDE.md`
-- `Claude Memory/Projects/Studying/CLAUDE.md`
-- `Claude Memory/Projects/Debt/CLAUDE.md`
+| claude.ai project | Vault folder | Launcher |
+|---|---|---|
+| Faceless Finance | `Faceless Finance/` | `claude-faceless` |
+| Smart Home | `Smart Home/` | `claude-smarthome` |
+| Studying | `Studying/` | `claude-studying` |
+| Debt | `Debt/` | `claude-debt` |
+| skills | `Skills/` | `claude-skills` |
+| Linux Pc On Android | `Linux PC On Android/` | `claude-linuxpc` |
+| Select Website | `Select Website/` | `claude-website` |
+| Doc to Learning (Notebook lm) | `Doc to Learning/` | `claude-d2l` |
 
-Each one links back to its claude.ai custom-instructions file in
-`Claude Memory/Instructions/`, so the CLI uses the same wording the web
-project uses. When you change the instructions on claude.ai, mirror the
-change into the corresponding `Instructions/project_*_instructions.md`
-note and the CLI picks it up next session.
+When you change the instructions on claude.ai, mirror the change into the
+corresponding `Instructions/project_*_instructions.md` note and the CLI
+picks it up next session.
+
+### What does NOT sync between the PWA and the CLI
+
+Be aware of these product boundaries:
+
+- **Chat history.** Your past conversations on claude.ai live on
+  Anthropic's servers. The CLI has no API to read them. If you need a
+  past chat, open the PWA.
+- **Project knowledge files.** PDFs, statements, and uploads attached to
+  claude.ai Projects are server-side. Mirror anything important into the
+  matching `Claude Memory/Projects/<name>/` folder.
+- **claude.ai/code Sessions.** That's a *separate* Anthropic product
+  (cloud-hosted Claude Code that operates on GitHub repos). The local
+  CLI is a different thing — same brand, different surface.
+- **Account-level Memory** (the bullet-point summary on claude.ai). We
+  point the CLI at `Claude Memory/MEMORY.md` to give it the equivalent;
+  refresh that file by hand when claude.ai memory changes.
 
 ---
 
@@ -100,10 +123,14 @@ starred projects in your claude.ai sidebar:
 | Command | What it does |
 |---|---|
 | `claude-vault` | cd to vault root, launch claude (general vault work) |
-| `claude-faceless` | cd to `Claude Memory/Projects/Faceless Finance`, launch claude |
-| `claude-smarthome` | cd to `Claude Memory/Projects/Smart Home`, launch claude |
-| `claude-studying` | cd to `Claude Memory/Projects/Studying`, launch claude |
-| `claude-debt` | cd to `Claude Memory/Projects/Debt`, launch claude |
+| `claude-faceless` | Faceless Finance project |
+| `claude-smarthome` | Smart Home project |
+| `claude-studying` | Studying project |
+| `claude-debt` | Debt (marital debt paralegal) project |
+| `claude-skills` | skills project ("install each link i give you") |
+| `claude-linuxpc` | Linux PC On Android project |
+| `claude-website` | Select Website project |
+| `claude-d2l` | Doc to Learning (Notebook lm) project |
 | `claude-resume` | resume an earlier session from this vault |
 | `cdv` | just cd to the vault, no claude |
 
