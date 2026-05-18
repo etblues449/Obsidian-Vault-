@@ -81,6 +81,10 @@ case "$MODE" in
             export DEBIAN_FRONTEND=noninteractive
             apt update && apt upgrade -y
             apt install -y curl git ca-certificates nodejs npm
+            # If a previous run already chmod-locked the install dir, npm
+            # cannot replace it. Unlock first so this script stays idempotent.
+            [ -d /usr/local/lib/node_modules/@anthropic-ai/claude-code ] && \
+                chmod -R u+w /usr/local/lib/node_modules/@anthropic-ai/claude-code || true
             DISABLE_AUTOUPDATER=1 npm install -g '@anthropic-ai/claude-code@${CC_PIN}'
             # Auto-updater lockout (three layers, all needed per upstream
             # README: env in ~/.bashrc, env in ~/.claude/settings.json, and
