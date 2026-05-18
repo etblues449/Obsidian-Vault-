@@ -17,8 +17,15 @@ installer with vault-specific configuration.
 
 | Path | Use when |
 |------|----------|
-| **B — proot-Ubuntu (default)** | You want full latest Claude Code with no version pin. ~2 GB disk. Recommended. |
-| **A — native Termux** | You want the smallest footprint and are OK with the 2.1.112 pin. ~50 MB disk. |
+| **B — proot-Ubuntu (default)** | You want a full Linux env (apt, ssh, etc.). ~2 GB disk. |
+| **A — native Termux** | You want the smallest footprint. ~50 MB disk. |
+
+Both paths pin Claude Code to **2.1.112**. Empirically, 2.1.113+ probes
+the host kernel even from inside proot-Ubuntu, sees `android arm64`, and
+fails to download a native binary (no such build is published). 2.1.112
+was the last release that shipped pure JS and runs anywhere Node runs.
+Track [anthropics/claude-code#50270](https://github.com/anthropics/claude-code/issues/50270)
+for when this changes.
 
 ## One-line install on the phone
 
@@ -65,12 +72,36 @@ settings stay untouched.
 
 ## Updating Claude Code
 
-- **Path B (Ubuntu):** `proot-distro login ubuntu` then re-run
-  `curl -fsSL https://claude.ai/install.sh | bash`.
-- **Path A (native):** the install is pinned and chmod-locked on purpose.
-  Re-run `setup.sh path-a` to refresh once upstream restores the
-  android-arm64 binary (track
-  [anthropics/claude-code#50270](https://github.com/anthropics/claude-code/issues/50270)).
+Both paths are deliberately pinned to 2.1.112 and chmod-locked against the
+in-process auto-updater. Don't run `npm install -g @anthropic-ai/claude-code`
+without a version pin — upgrading to 2.1.113+ breaks claude on android-arm64
+(see issue #50270 above). When upstream restores the platform binary, bump
+`CC_PIN` in `scripts/install-claude-code-android.sh` and re-run.
+
+## Working in proot-Ubuntu (Path B)
+
+The vault lives in Termux's shared storage (`~/storage/shared/...`), which
+is **not** visible inside proot-Ubuntu by default. The installer wires up
+a `claude-vault` alias that handles this automatically:
+
+```bash
+# Inside Termux (not inside Ubuntu):
+claude-vault
+```
+
+That expands to:
+
+```bash
+proot-distro login ubuntu \
+  --bind "$HOME/storage:/root/storage" \
+  -- bash -lc "cd \"$OBSIDIAN_VAULT\" && claude"
+```
+
+If you want a regular Ubuntu shell with the vault visible:
+
+```bash
+proot-distro login ubuntu --bind "$HOME/storage:/root/storage"
+```
 
 ## Troubleshooting
 

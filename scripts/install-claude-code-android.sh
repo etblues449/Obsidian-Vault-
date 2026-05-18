@@ -4,22 +4,28 @@
 # Wraps upstream https://github.com/ferrumclaudepilgrim/claude-code-android
 # and adds vault-specific setup:
 #   - Records the vault path in ~/.bashrc as $OBSIDIAN_VAULT
-#   - Adds a `cdv` alias to jump into the vault
+#   - Adds `cdv` and `claude-vault` aliases
 #   - Configures git inside the vault if not already set
 #   - Verifies the vault CLAUDE.md is in place
+#   - For Path B, bind-mounts Termux home into proot-Ubuntu so the vault
+#     stays reachable from inside the rootfs
 #
 # Usage (inside Termux on your Android phone):
 #   curl -fsSL <raw-url-of-this-file> -o install-claude-code-android.sh
 #   bash install-claude-code-android.sh [path-b|path-a]
 #
-# Default path is "path-b" (proot-Ubuntu, latest Claude Code, recommended for
-# full Claude.ai-equivalent capabilities). Pass "path-a" for the lightweight
-# native Termux install pinned to 2.1.112.
+# Default path is "path-b" (proot-Ubuntu, fuller Linux environment). Both
+# paths pin claude-code to 2.1.112 -- empirically, 2.1.113+ probes the host
+# kernel (not the rootfs) and reports "android arm64" even inside
+# proot-Ubuntu, so the platform-native binary download fails. 2.1.112 was
+# the last version that shipped pure JS and runs anywhere Node runs.
+# Tracking upstream: https://github.com/anthropics/claude-code/issues/50270
 
 set -euo pipefail
 
 MODE="${1:-path-b}"
 VAULT_DEFAULT="$HOME/storage/shared/Documents/Obsidian-Vault-"
+CC_PIN="2.1.112"
 
 c_info()  { printf '\033[0;36m[info]\033[0m  %s\n' "$1"; }
 c_ok()    { printf '\033[0;32m[ok]\033[0m    %s\n' "$1"; }
@@ -47,7 +53,7 @@ fi
 
 case "$MODE" in
     path-a)
-        c_info "Path A: native Termux, pinned to 2.1.112."
+        c_info "Path A: native Termux, pinned to ${CC_PIN}."
         pkg install nodejs git curl proot ripgrep termux-api jq -y
         export TMPDIR="$PREFIX/tmp"
         grep -q 'TMPDIR=$PREFIX/tmp' "$HOME/.bashrc" 2>/dev/null \
@@ -56,31 +62,39 @@ case "$MODE" in
         bash /tmp/cca-install.sh
         ;;
     path-b)
-        c_info "Path B: proot-Ubuntu with latest Claude Code (recommended)."
+        c_info "Path B: proot-Ubuntu, pinned to claude-code ${CC_PIN}."
         pkg install proot-distro git curl -y
         if ! proot-distro list --installed 2>/dev/null | grep -q ubuntu; then
             proot-distro install ubuntu
         fi
         c_info "Provisioning Claude Code inside the Ubuntu rootfs (via npm)..."
-        # We install via apt nodejs/npm + global npm install rather than
-        # https://claude.ai/install.sh because the latter has been observed
-        # to leave the native binary undownloaded inside proot, producing:
-        #   "Error: claude native binary not installed."
-        # The npm path runs the postinstall reliably.
-        proot-distro login ubuntu -- bash -lc '
+        # Why npm + pin 2.1.112 (not https://claude.ai/install.sh + latest):
+        #   * claude.ai/install.sh fetches a native binary keyed by
+        #     process.platform. Inside proot-Ubuntu the postinstall sees
+        #     "android arm64" because Node probes the host kernel; no such
+        #     binary is published, so claude installs broken.
+        #   * 2.1.112 shipped pure JS and works regardless of platform
+        #     reporting.
+        # If 2.1.113+ ever publishes android-arm64, bump CC_PIN here.
+        proot-distro login ubuntu -- bash -lc "
             set -euo pipefail
             export DEBIAN_FRONTEND=noninteractive
             apt update && apt upgrade -y
             apt install -y curl git ca-certificates nodejs npm
-            npm install -g @anthropic-ai/claude-code
-            # Defensive: if a previous claude.ai/install.sh run left a broken
-            # install, force-run its postinstall.
-            if ! claude --version >/dev/null 2>&1; then
-                INSTALL_CJS=$(find / -path "*@anthropic-ai/claude-code/install.cjs" 2>/dev/null | head -1)
-                [ -n "$INSTALL_CJS" ] && node "$INSTALL_CJS" || true
+            DISABLE_AUTOUPDATER=1 npm install -g '@anthropic-ai/claude-code@${CC_PIN}'
+            # Auto-updater lockout (three layers, all needed per upstream
+            # README: env in ~/.bashrc, env in ~/.claude/settings.json, and
+            # chmod the install dir read-only).
+            grep -q 'DISABLE_AUTOUPDATER=1' /root/.bashrc 2>/dev/null \
+                || echo 'export DISABLE_AUTOUPDATER=1' >> /root/.bashrc
+            mkdir -p /root/.claude
+            if [ ! -f /root/.claude/settings.json ]; then
+                printf '%s\n' '{ \"env\": { \"DISABLE_AUTOUPDATER\": \"1\" } }' \
+                    > /root/.claude/settings.json
             fi
+            chmod -R a-w /usr/local/lib/node_modules/@anthropic-ai/claude-code
             claude --version
-        '
+        "
         ;;
     *)
         c_fail "Unknown mode: $MODE (use path-a or path-b)"
@@ -106,14 +120,23 @@ if [ ! -d "$VAULT" ]; then
     fi
 fi
 
-# Persist the vault path + cdv alias
-{
-    echo ""
-    echo "# --- Obsidian vault (added by install-claude-code-android.sh) ---"
-    echo "export OBSIDIAN_VAULT=\"$VAULT\""
-    echo "alias cdv='cd \"\$OBSIDIAN_VAULT\"'"
-    echo "alias claude-vault='cd \"\$OBSIDIAN_VAULT\" && claude'"
-} >> "$HOME/.bashrc"
+# Persist the vault path + shell helpers. For Path B, claude-vault enters
+# proot-Ubuntu with Termux home bind-mounted so the vault path resolves
+# inside the rootfs.
+BLOCK_TAG="# --- Obsidian vault (added by install-claude-code-android.sh) ---"
+if ! grep -qF "$BLOCK_TAG" "$HOME/.bashrc" 2>/dev/null; then
+    {
+        echo ""
+        echo "$BLOCK_TAG"
+        echo "export OBSIDIAN_VAULT=\"$VAULT\""
+        echo "alias cdv='cd \"\$OBSIDIAN_VAULT\"'"
+        if [ "$MODE" = "path-b" ]; then
+            echo "alias claude-vault='proot-distro login ubuntu --bind \"\$HOME/storage:/root/storage\" -- bash -lc \"cd \\\"\$OBSIDIAN_VAULT\\\" && claude\"'"
+        else
+            echo "alias claude-vault='cd \"\$OBSIDIAN_VAULT\" && claude'"
+        fi
+    } >> "$HOME/.bashrc"
+fi
 
 if [ -d "$VAULT/.git" ]; then
     if ! git -C "$VAULT" config user.email >/dev/null 2>&1; then
