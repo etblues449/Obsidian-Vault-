@@ -301,7 +301,9 @@ __export(env_exports, {
   formatContextLimit: () => formatContextLimit,
   getEnhancedPath: () => getEnhancedPath,
   getHostnameKey: () => getHostnameKey,
+  getLegacyHostnameKey: () => getLegacyHostnameKey,
   getMissingNodeError: () => getMissingNodeError,
+  migrateLegacyHostnameKeyedMap: () => migrateLegacyHostnameKeyedMap,
   parseContextLimit: () => parseContextLimit,
   parseEnvironmentVariables: () => parseEnvironmentVariables
 });
@@ -571,8 +573,69 @@ function parseEnvironmentVariables(input) {
   }
   return result;
 }
+function getDeviceSettingsStorage() {
+  try {
+    return typeof window === "undefined" ? null : window.localStorage;
+  } catch (e2) {
+    return null;
+  }
+}
+function createOpaqueDeviceSettingsKey() {
+  var _a3;
+  const cryptoApi = typeof window === "undefined" ? null : window.crypto;
+  const randomUUID2 = (_a3 = cryptoApi == null ? void 0 : cryptoApi.randomUUID) == null ? void 0 : _a3.call(cryptoApi);
+  if (randomUUID2) {
+    return `device:${randomUUID2}`;
+  }
+  if (cryptoApi == null ? void 0 : cryptoApi.getRandomValues) {
+    const randomBytes = new Uint8Array(16);
+    cryptoApi.getRandomValues(randomBytes);
+    const entropy2 = Array.from(randomBytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+    return `device:${Date.now().toString(36)}:${entropy2}`;
+  }
+  const entropy = Math.random().toString(36).slice(2);
+  return `device:${Date.now().toString(36)}:${entropy}`;
+}
 function getHostnameKey() {
-  return os4.hostname();
+  var _a3;
+  if (cachedDeviceSettingsKey) {
+    return cachedDeviceSettingsKey;
+  }
+  const storage = getDeviceSettingsStorage();
+  const stored = (_a3 = storage == null ? void 0 : storage.getItem(DEVICE_SETTINGS_STORAGE_KEY)) == null ? void 0 : _a3.trim();
+  if (stored) {
+    cachedDeviceSettingsKey = stored;
+    return cachedDeviceSettingsKey;
+  }
+  cachedDeviceSettingsKey = createOpaqueDeviceSettingsKey();
+  try {
+    storage == null ? void 0 : storage.setItem(DEVICE_SETTINGS_STORAGE_KEY, cachedDeviceSettingsKey);
+  } catch (e2) {
+  }
+  return cachedDeviceSettingsKey;
+}
+function getLegacyHostnameKey() {
+  try {
+    return os4.hostname();
+  } catch (e2) {
+    return "";
+  }
+}
+function migrateLegacyHostnameKeyedMap(entries, currentKey, legacyHostnameKey) {
+  if (!currentKey || !legacyHostnameKey || currentKey === legacyHostnameKey) {
+    return entries;
+  }
+  const hasCurrentEntry = Object.prototype.hasOwnProperty.call(entries, currentKey);
+  const hasLegacyEntry = Object.prototype.hasOwnProperty.call(entries, legacyHostnameKey);
+  if (!hasLegacyEntry) {
+    return entries;
+  }
+  const migrated = { ...entries };
+  if (!hasCurrentEntry) {
+    migrated[currentKey] = entries[legacyHostnameKey];
+  }
+  delete migrated[legacyHostnameKey];
+  return migrated;
 }
 function parseContextLimit(input) {
   var _a3;
@@ -598,7 +661,7 @@ function formatContextLimit(tokens) {
   }
   return tokens.toLocaleString();
 }
-var fs4, os4, path4, isWindows, PATH_SEPARATOR, NODE_EXECUTABLE, MIN_CONTEXT_LIMIT, MAX_CONTEXT_LIMIT;
+var fs4, os4, path4, isWindows, PATH_SEPARATOR, NODE_EXECUTABLE, DEVICE_SETTINGS_STORAGE_KEY, cachedDeviceSettingsKey, MIN_CONTEXT_LIMIT, MAX_CONTEXT_LIMIT;
 var init_env = __esm({
   "src/utils/env.ts"() {
     fs4 = __toESM(require("fs"));
@@ -608,6 +671,8 @@ var init_env = __esm({
     isWindows = process.platform === "win32";
     PATH_SEPARATOR = isWindows ? ";" : ":";
     NODE_EXECUTABLE = isWindows ? "node.exe" : "node";
+    DEVICE_SETTINGS_STORAGE_KEY = "claudian.deviceSettingsKey";
+    cachedDeviceSettingsKey = null;
     MIN_CONTEXT_LIMIT = 1e3;
     MAX_CONTEXT_LIMIT = 1e7;
   }
@@ -22716,12 +22781,12 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f2;
     };
-    function addFormats(ajv, list, fs28, exportName) {
+    function addFormats(ajv, list, fs27, exportName) {
       var _a3;
       var _b2;
       (_a3 = (_b2 = ajv.opts.code).formats) !== null && _a3 !== void 0 ? _a3 : _b2.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
       for (const f2 of list)
-        ajv.addFormat(f2, fs28[f2]);
+        ajv.addFormat(f2, fs27[f2]);
     }
     module2.exports = exports = formatsPlugin;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -22734,7 +22799,7 @@ var require_windows = __commonJS({
   "node_modules/isexe/windows.js"(exports, module2) {
     module2.exports = isexe;
     isexe.sync = sync;
-    var fs28 = require("fs");
+    var fs27 = require("fs");
     function checkPathExt(path24, options) {
       var pathext = options.pathExt !== void 0 ? options.pathExt : process.env.PATHEXT;
       if (!pathext) {
@@ -22759,12 +22824,12 @@ var require_windows = __commonJS({
       return checkPathExt(path24, options);
     }
     function isexe(path24, options, cb) {
-      fs28.stat(path24, function(er, stat) {
+      fs27.stat(path24, function(er, stat) {
         cb(er, er ? false : checkStat(stat, path24, options));
       });
     }
     function sync(path24, options) {
-      return checkStat(fs28.statSync(path24), path24, options);
+      return checkStat(fs27.statSync(path24), path24, options);
     }
   }
 });
@@ -22774,14 +22839,14 @@ var require_mode = __commonJS({
   "node_modules/isexe/mode.js"(exports, module2) {
     module2.exports = isexe;
     isexe.sync = sync;
-    var fs28 = require("fs");
+    var fs27 = require("fs");
     function isexe(path24, options, cb) {
-      fs28.stat(path24, function(er, stat) {
+      fs27.stat(path24, function(er, stat) {
         cb(er, er ? false : checkStat(stat, options));
       });
     }
     function sync(path24, options) {
-      return checkStat(fs28.statSync(path24), options);
+      return checkStat(fs27.statSync(path24), options);
     }
     function checkStat(stat, options) {
       return stat.isFile() && checkMode(stat, options);
@@ -22805,7 +22870,7 @@ var require_mode = __commonJS({
 // node_modules/isexe/index.js
 var require_isexe = __commonJS({
   "node_modules/isexe/index.js"(exports, module2) {
-    var fs28 = require("fs");
+    var fs27 = require("fs");
     var core;
     if (process.platform === "win32" || global.TESTING_WINDOWS) {
       core = require_windows();
@@ -23069,16 +23134,16 @@ var require_shebang_command = __commonJS({
 var require_readShebang = __commonJS({
   "node_modules/cross-spawn/lib/util/readShebang.js"(exports, module2) {
     "use strict";
-    var fs28 = require("fs");
+    var fs27 = require("fs");
     var shebangCommand = require_shebang_command();
     function readShebang(command) {
       const size = 150;
       const buffer = Buffer.alloc(size);
       let fd2;
       try {
-        fd2 = fs28.openSync(command, "r");
-        fs28.readSync(fd2, buffer, 0, size, 0);
-        fs28.closeSync(fd2);
+        fd2 = fs27.openSync(command, "r");
+        fs27.readSync(fd2, buffer, 0, size, 0);
+        fs27.closeSync(fd2);
       } catch (e2) {
       }
       return shebangCommand(buffer.toString());
@@ -24787,8 +24852,20 @@ var ProviderRegistry = class {
     const providerId = (_a3 = options.providerId) != null ? _a3 : DEFAULT_CHAT_PROVIDER_ID;
     return this.getProviderRegistration(providerId).createRuntime(options);
   }
-  static createTitleGenerationService(plugin, providerId = DEFAULT_CHAT_PROVIDER_ID) {
+  static createTitleGenerationService(plugin, providerId) {
+    if (!providerId) {
+      return new RoutedTitleGenerationService(plugin);
+    }
     return this.getProviderRegistration(providerId).createTitleGenerationService(plugin);
+  }
+  static resolveTitleGenerationProviderId(settings11) {
+    const titleModel = typeof settings11.titleGenerationModel === "string" ? settings11.titleGenerationModel.trim() : "";
+    if (!titleModel) {
+      return DEFAULT_CHAT_PROVIDER_ID;
+    }
+    return this.resolveProviderForModel(titleModel, settings11, {
+      fallbackProviderId: DEFAULT_CHAT_PROVIDER_ID
+    });
   }
   static createInstructionRefineService(plugin, providerId = DEFAULT_CHAT_PROVIDER_ID) {
     return this.getProviderRegistration(providerId).createInstructionRefineService(plugin);
@@ -24869,6 +24946,43 @@ var ProviderRegistry = class {
   }
 };
 ProviderRegistry.registrations = {};
+var RoutedTitleGenerationService = class {
+  constructor(plugin) {
+    this.plugin = plugin;
+    this.activeGenerations = /* @__PURE__ */ new Map();
+  }
+  async generateTitle(conversationId, userMessage, callback) {
+    const providerId = ProviderRegistry.resolveTitleGenerationProviderId(
+      this.plugin.settings
+    );
+    const service = ProviderRegistry.createTitleGenerationService(this.plugin, providerId);
+    const generation = { service };
+    const previous = this.activeGenerations.get(conversationId);
+    this.activeGenerations.set(conversationId, generation);
+    previous == null ? void 0 : previous.service.cancel();
+    try {
+      await service.generateTitle(conversationId, userMessage, async (convId, result) => {
+        if (this.activeGenerations.get(conversationId) !== generation) {
+          return;
+        }
+        await callback(convId, result);
+      });
+    } finally {
+      if (this.activeGenerations.get(conversationId) === generation) {
+        this.activeGenerations.delete(conversationId);
+      }
+    }
+  }
+  cancel() {
+    const services = new Set(
+      [...this.activeGenerations.values()].map((generation) => generation.service)
+    );
+    this.activeGenerations.clear();
+    for (const service of services) {
+      service.cancel();
+    }
+  }
+};
 
 // src/core/storage/HomeFileAdapter.ts
 var fs = __toESM(require("fs"));
@@ -42003,6 +42117,7 @@ function getEnvironmentScopeUpdates(envText, fallbackScope) {
 }
 
 // src/providers/claude/settings.ts
+init_env();
 var CLAUDE_SAFE_MODES = ["acceptEdits", "auto", "default"];
 var DEFAULT_CLAUDE_PROVIDER_SETTINGS = Object.freeze({
   safeMode: "acceptEdits",
@@ -42036,10 +42151,18 @@ function normalizeClaudeSafeMode(value) {
 function getClaudeProviderSettings(settings11) {
   var _a3, _b2, _c, _d2, _e, _f, _g, _h, _i, _j2, _k, _l, _m, _n, _o, _p2, _q, _r, _s, _t, _u, _v;
   const config2 = getProviderConfig(settings11, "claude");
+  const normalizedCliPathsByHost = normalizeHostnameCliPaths(
+    (_a3 = config2.cliPathsByHost) != null ? _a3 : settings11.claudeCliPathsByHost
+  );
+  const cliPathsByHost = Object.keys(normalizedCliPathsByHost).length > 0 ? migrateLegacyHostnameKeyedMap(
+    normalizedCliPathsByHost,
+    getHostnameKey(),
+    getLegacyHostnameKey()
+  ) : normalizedCliPathsByHost;
   return {
-    safeMode: (_b2 = (_a3 = normalizeClaudeSafeMode(config2.safeMode)) != null ? _a3 : normalizeClaudeSafeMode(settings11.claudeSafeMode)) != null ? _b2 : DEFAULT_CLAUDE_PROVIDER_SETTINGS.safeMode,
-    cliPath: (_d2 = (_c = config2.cliPath) != null ? _c : settings11.claudeCliPath) != null ? _d2 : DEFAULT_CLAUDE_PROVIDER_SETTINGS.cliPath,
-    cliPathsByHost: normalizeHostnameCliPaths((_e = config2.cliPathsByHost) != null ? _e : settings11.claudeCliPathsByHost),
+    safeMode: (_c = (_b2 = normalizeClaudeSafeMode(config2.safeMode)) != null ? _b2 : normalizeClaudeSafeMode(settings11.claudeSafeMode)) != null ? _c : DEFAULT_CLAUDE_PROVIDER_SETTINGS.safeMode,
+    cliPath: (_e = (_d2 = config2.cliPath) != null ? _d2 : settings11.claudeCliPath) != null ? _e : DEFAULT_CLAUDE_PROVIDER_SETTINGS.cliPath,
+    cliPathsByHost,
     loadUserSettings: (_g = (_f = config2.loadUserSettings) != null ? _f : settings11.loadUserClaudeSettings) != null ? _g : DEFAULT_CLAUDE_PROVIDER_SETTINGS.loadUserSettings,
     enableChrome: (_i = (_h = config2.enableChrome) != null ? _h : settings11.enableChrome) != null ? _i : DEFAULT_CLAUDE_PROVIDER_SETTINGS.enableChrome,
     enableBangBash: (_k = (_j2 = config2.enableBangBash) != null ? _j2 : settings11.enableBangBash) != null ? _k : DEFAULT_CLAUDE_PROVIDER_SETTINGS.enableBangBash,
@@ -42494,7 +42617,7 @@ var ClaudeCliResolver = class {
     this.cachedHostname = getHostnameKey();
   }
   /**
-   * Resolves CLI path with priority: hostname-specific -> legacy -> auto-detect.
+   * Resolves CLI path with priority: device-specific -> legacy -> auto-detect.
    * @param settings Full app settings bag
    */
   resolveFromSettings(settings11) {
@@ -42716,17 +42839,23 @@ function getCodexProviderSettings(settings11) {
   var _a3, _b2, _c, _d2, _e, _f, _g, _h, _i, _j2, _k, _l, _m, _n, _o, _p2;
   const config2 = getProviderConfig(settings11, "codex");
   const hostnameKey = getHostnameKey();
-  const installationMethodsByHost = normalizeInstallationMethodsByHost(config2.installationMethodsByHost);
-  const wslDistroOverridesByHost = normalizeHostnameCliPaths2(config2.wslDistroOverridesByHost);
+  const normalizedCliPathsByHost = normalizeHostnameCliPaths2((_a3 = config2.cliPathsByHost) != null ? _a3 : settings11.codexCliPathsByHost);
+  const normalizedInstallationMethodsByHost = normalizeInstallationMethodsByHost(config2.installationMethodsByHost);
+  const normalizedWslDistroOverridesByHost = normalizeHostnameCliPaths2(config2.wslDistroOverridesByHost);
+  const hasLegacyHostnameKeyedSettings = Object.keys(normalizedCliPathsByHost).length > 0 || Object.keys(normalizedInstallationMethodsByHost).length > 0 || Object.keys(normalizedWslDistroOverridesByHost).length > 0;
+  const legacyHostnameKey = hasLegacyHostnameKeyedSettings ? getLegacyHostnameKey() : "";
+  const cliPathsByHost = hasLegacyHostnameKeyedSettings ? migrateLegacyHostnameKeyedMap(normalizedCliPathsByHost, hostnameKey, legacyHostnameKey) : normalizedCliPathsByHost;
+  const installationMethodsByHost = hasLegacyHostnameKeyedSettings ? migrateLegacyHostnameKeyedMap(normalizedInstallationMethodsByHost, hostnameKey, legacyHostnameKey) : normalizedInstallationMethodsByHost;
+  const wslDistroOverridesByHost = hasLegacyHostnameKeyedSettings ? migrateLegacyHostnameKeyedMap(normalizedWslDistroOverridesByHost, hostnameKey, legacyHostnameKey) : normalizedWslDistroOverridesByHost;
   const hasHostScopedInstallationMethods = Object.keys(installationMethodsByHost).length > 0;
   const hasHostScopedWslDistroOverrides = Object.keys(wslDistroOverridesByHost).length > 0;
   const legacyInstallationMethod = normalizeCodexInstallationMethod(config2.installationMethod);
   const legacyWslDistroOverride = normalizeOptionalString(config2.wslDistroOverride);
   return {
-    enabled: (_b2 = (_a3 = config2.enabled) != null ? _a3 : settings11.codexEnabled) != null ? _b2 : DEFAULT_CODEX_PROVIDER_SETTINGS.enabled,
-    safeMode: (_d2 = (_c = config2.safeMode) != null ? _c : settings11.codexSafeMode) != null ? _d2 : DEFAULT_CODEX_PROVIDER_SETTINGS.safeMode,
-    cliPath: (_f = (_e = config2.cliPath) != null ? _e : settings11.codexCliPath) != null ? _f : DEFAULT_CODEX_PROVIDER_SETTINGS.cliPath,
-    cliPathsByHost: normalizeHostnameCliPaths2((_g = config2.cliPathsByHost) != null ? _g : settings11.codexCliPathsByHost),
+    enabled: (_c = (_b2 = config2.enabled) != null ? _b2 : settings11.codexEnabled) != null ? _c : DEFAULT_CODEX_PROVIDER_SETTINGS.enabled,
+    safeMode: (_e = (_d2 = config2.safeMode) != null ? _d2 : settings11.codexSafeMode) != null ? _e : DEFAULT_CODEX_PROVIDER_SETTINGS.safeMode,
+    cliPath: (_g = (_f = config2.cliPath) != null ? _f : settings11.codexCliPath) != null ? _g : DEFAULT_CODEX_PROVIDER_SETTINGS.cliPath,
+    cliPathsByHost,
     customModels: (_h = config2.customModels) != null ? _h : DEFAULT_CODEX_PROVIDER_SETTINGS.customModels,
     reasoningSummary: (_j2 = (_i = config2.reasoningSummary) != null ? _i : settings11.codexReasoningSummary) != null ? _j2 : DEFAULT_CODEX_PROVIDER_SETTINGS.reasoningSummary,
     environmentVariables: (_l = (_k = config2.environmentVariables) != null ? _k : getProviderEnvironmentVariables(settings11, "codex")) != null ? _l : DEFAULT_CODEX_PROVIDER_SETTINGS.environmentVariables,
@@ -43275,6 +43404,12 @@ function normalizeOpencodePreferredThinkingByModel(value, discoveredModels = [])
 function getOpencodeProviderSettings(settings11) {
   var _a3, _b2, _c, _d2, _e;
   const config2 = getProviderConfig(settings11, "opencode");
+  const normalizedCliPathsByHost = normalizeHostnameCliPaths3(config2.cliPathsByHost);
+  const cliPathsByHost = Object.keys(normalizedCliPathsByHost).length > 0 ? migrateLegacyHostnameKeyedMap(
+    normalizedCliPathsByHost,
+    getHostnameKey(),
+    getLegacyHostnameKey()
+  ) : normalizedCliPathsByHost;
   seedOpencodeDiscoveryStateFromLegacyConfig(settings11, config2);
   const discoveryState = getOpencodeDiscoveryState(settings11);
   const availableModes = discoveryState.availableModes;
@@ -43282,7 +43417,7 @@ function getOpencodeProviderSettings(settings11) {
   return {
     availableModes,
     cliPath: (_a3 = config2.cliPath) != null ? _a3 : DEFAULT_OPENCODE_PROVIDER_SETTINGS.cliPath,
-    cliPathsByHost: normalizeHostnameCliPaths3(config2.cliPathsByHost),
+    cliPathsByHost,
     discoveredModels,
     enabled: (_b2 = config2.enabled) != null ? _b2 : DEFAULT_OPENCODE_PROVIDER_SETTINGS.enabled,
     environmentHash: (_c = config2.environmentHash) != null ? _c : DEFAULT_OPENCODE_PROVIDER_SETTINGS.environmentHash,
@@ -43325,8 +43460,8 @@ function updateOpencodeProviderSettings(settings11, updates) {
     nextVisibleModels
   );
   const nextCliPathsByHost = "cliPathsByHost" in updates ? normalizeHostnameCliPaths3(updates.cliPathsByHost) : { ...current.cliPathsByHost };
-  let nextCliPath = "cliPathsByHost" in updates ? DEFAULT_OPENCODE_PROVIDER_SETTINGS.cliPath : current.cliPath.trim();
-  if ("cliPath" in updates) {
+  let nextCliPath = "cliPathsByHost" in updates ? typeof updates.cliPath === "string" ? updates.cliPath.trim() : DEFAULT_OPENCODE_PROVIDER_SETTINGS.cliPath : current.cliPath.trim();
+  if ("cliPath" in updates && !("cliPathsByHost" in updates)) {
     const trimmedCliPath = typeof updates.cliPath === "string" ? updates.cliPath.trim() : "";
     if (trimmedCliPath) {
       nextCliPathsByHost[hostnameKey] = trimmedCliPath;
@@ -43454,6 +43589,7 @@ var DEFAULT_CLAUDIAN_SETTINGS = {
     scrollDownKey: "s",
     focusInputKey: "i"
   },
+  requireCommandOrControlEnterToSend: false,
   locale: "en",
   providerConfigs: getBuiltInProviderDefaultConfigs(),
   settingsProvider: "claude",
@@ -43536,6 +43672,30 @@ function normalizeProviderConfigs(value) {
     }
   }
   return result;
+}
+var HOST_SCOPED_PROVIDER_CONFIG_FIELDS = {
+  claude: ["cliPathsByHost"],
+  codex: ["cliPathsByHost", "installationMethodsByHost", "wslDistroOverridesByHost"],
+  opencode: ["cliPathsByHost"]
+};
+function hasHostScopedProviderConfigNormalization(original, normalized) {
+  if (!normalized || typeof normalized !== "object" || Array.isArray(normalized)) {
+    return false;
+  }
+  const normalizedConfigs = normalized;
+  for (const [providerId, fields] of Object.entries(HOST_SCOPED_PROVIDER_CONFIG_FIELDS)) {
+    const originalConfig = original[providerId];
+    const normalizedConfig = normalizedConfigs[providerId];
+    if (!originalConfig || !normalizedConfig) {
+      continue;
+    }
+    for (const field of fields) {
+      if (field in originalConfig && JSON.stringify(originalConfig[field]) !== JSON.stringify(normalizedConfig[field])) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 function isEnvironmentScope(value) {
   return value === "shared" || typeof value === "string" && value.startsWith("provider:");
@@ -43642,7 +43802,15 @@ var ClaudianSettingsStorage = class {
       merged,
       getCodexProviderSettings(legacyProviderSettings)
     );
-    if (settingsPath !== CLAUDIAN_SETTINGS_PATH || (hasLegacyTopLevelProviderFields(stored) || "show1MModel" in stored || "slashCommands" in stored || "hiddenSlashCommands" in stored || "activeConversationId" in stored || "allowExternalAccess" in stored || "allowedExportPaths" in stored || "enableBlocklist" in stored || "blockedCommands" in stored || shouldPersistChatViewPlacementMigration(stored, chatViewPlacement) || JSON.stringify(envSnippets) !== JSON.stringify((_a3 = stored.envSnippets) != null ? _a3 : []))) {
+    updateOpencodeProviderSettings(
+      merged,
+      getOpencodeProviderSettings(legacyProviderSettings)
+    );
+    const didNormalizeHostScopedProviderConfigs = hasHostScopedProviderConfigNormalization(
+      providerConfigs,
+      merged.providerConfigs
+    );
+    if (settingsPath !== CLAUDIAN_SETTINGS_PATH || (hasLegacyTopLevelProviderFields(stored) || "show1MModel" in stored || "slashCommands" in stored || "hiddenSlashCommands" in stored || "activeConversationId" in stored || "allowExternalAccess" in stored || "allowedExportPaths" in stored || "enableBlocklist" in stored || "blockedCommands" in stored || shouldPersistChatViewPlacementMigration(stored, chatViewPlacement) || JSON.stringify(envSnippets) !== JSON.stringify((_a3 = stored.envSnippets) != null ? _a3 : []) || didNormalizeHostScopedProviderConfigs)) {
       await this.save(merged);
     }
     return merged;
@@ -44900,10 +45068,15 @@ var common = {
 var chat = {
   rewind: {
     confirmMessage: "Zu diesem Punkt zur\xFCckspulen? Datei\xE4nderungen nach dieser Nachricht werden r\xFCckg\xE4ngig gemacht. Das Zur\xFCckspulen betrifft keine manuell oder \xFCber Bash bearbeiteten Dateien.",
+    confirmMessageConversationOnly: "Konversation zu diesem Punkt zur\xFCckspulen? Datei\xE4nderungen bleiben erhalten.",
     confirmButton: "Zur\xFCckspulen",
     ariaLabel: "Hierher zur\xFCckspulen",
+    menuConversationOnly: "Nur Konversation zur\xFCckspulen",
+    menuCodeAndConversation: "Code + Konversation zur\xFCckspulen",
     notice: "Zur\xFCckgespult: {count} Datei(en) wiederhergestellt",
+    noticeConversationOnly: "Konversation zur\xFCckgespult; Datei\xE4nderungen bleiben erhalten",
     noticeSaveFailed: "Zur\xFCckgespult: {count} Datei(en) wiederhergestellt, aber Status konnte nicht gespeichert werden: {error}",
+    noticeConversationOnlySaveFailed: "Konversation zur\xFCckgespult, aber Status konnte nicht gespeichert werden: {error}",
     failed: "Zur\xFCckspulen fehlgeschlagen: {error}",
     cannot: "Zur\xFCckspulen nicht m\xF6glich: {error}",
     unavailableStreaming: "Zur\xFCckspulen w\xE4hrend des Streamings nicht m\xF6glich",
@@ -44982,6 +45155,10 @@ var settings = {
   navMappings: {
     name: "Vim-Style Navigationszuordnungen",
     desc: 'Eine Zuordnung pro Zeile. Format: "map <Taste> <Aktion>" (Aktionen: scrollUp, scrollDown, focusInput).'
+  },
+  requireCommandOrControlEnterToSend: {
+    name: "Command/Ctrl+Enter zum Senden erfordern",
+    desc: "Wenn aktiviert, f\xFCgt Enter einen Zeilenumbruch ein. Command+Enter sendet unter macOS; Ctrl+Enter sendet unter Windows und Linux."
   },
   hotkeys: "Tastenk\xFCrzel",
   inlineEditHotkey: {
@@ -45220,10 +45397,15 @@ var common2 = {
 var chat2 = {
   rewind: {
     confirmMessage: "Rewind to this point? File changes after this message will be reverted. Rewinding does not affect files edited manually or via bash.",
+    confirmMessageConversationOnly: "Rewind conversation to this point? File changes will be kept.",
     confirmButton: "Rewind",
     ariaLabel: "Rewind to here",
+    menuConversationOnly: "Rewind conversation only",
+    menuCodeAndConversation: "Rewind code + conversation",
     notice: "Rewound: {count} file(s) reverted",
+    noticeConversationOnly: "Rewound conversation; file changes kept",
     noticeSaveFailed: "Rewound: {count} file(s) reverted, but failed to save state: {error}",
+    noticeConversationOnlySaveFailed: "Rewound conversation, but failed to save state: {error}",
     failed: "Rewind failed: {error}",
     cannot: "Cannot rewind: {error}",
     unavailableStreaming: "Cannot rewind while streaming",
@@ -45302,6 +45484,10 @@ var settings2 = {
   navMappings: {
     name: "Vim-style navigation mappings",
     desc: 'One mapping per line. Format: "map <key> <action>" (actions: scrollUp, scrollDown, focusInput).'
+  },
+  requireCommandOrControlEnterToSend: {
+    name: "Require Command/Ctrl+Enter to send",
+    desc: "When enabled, Enter inserts a newline. Command+Enter sends on macOS; Ctrl+Enter sends on Windows and Linux."
   },
   hotkeys: "Hotkeys",
   inlineEditHotkey: {
@@ -45540,10 +45726,15 @@ var common3 = {
 var chat3 = {
   rewind: {
     confirmMessage: "\xBFRebobinar a este punto? Los cambios de archivos despu\xE9s de este mensaje ser\xE1n revertidos. El rebobinado no afecta archivos editados manualmente o mediante bash.",
+    confirmMessageConversationOnly: "\xBFRebobinar la conversaci\xF3n hasta este punto? Se conservar\xE1n los cambios de archivos.",
     confirmButton: "Rebobinar",
     ariaLabel: "Rebobinar hasta aqu\xED",
+    menuConversationOnly: "Rebobinar solo conversaci\xF3n",
+    menuCodeAndConversation: "Rebobinar c\xF3digo + conversaci\xF3n",
     notice: "Rebobinado: {count} archivo(s) revertido(s)",
+    noticeConversationOnly: "Conversaci\xF3n rebobinada; cambios de archivos conservados",
     noticeSaveFailed: "Rebobinado: {count} archivo(s) revertido(s), pero no se pudo guardar el estado: {error}",
+    noticeConversationOnlySaveFailed: "Conversaci\xF3n rebobinada, pero no se pudo guardar el estado: {error}",
     failed: "Error al rebobinar: {error}",
     cannot: "No se puede rebobinar: {error}",
     unavailableStreaming: "No se puede rebobinar durante la transmisi\xF3n",
@@ -45622,6 +45813,10 @@ var settings3 = {
   navMappings: {
     name: "Mapeos de navegaci\xF3n estilo Vim",
     desc: 'Un mapeo por l\xEDnea. Formato: "map <tecla> <acci\xF3n>" (acciones: scrollUp, scrollDown, focusInput).'
+  },
+  requireCommandOrControlEnterToSend: {
+    name: "Requerir Command/Ctrl+Enter para enviar",
+    desc: "Cuando est\xE1 activado, Enter inserta un salto de l\xEDnea. Command+Enter env\xEDa en macOS; Ctrl+Enter env\xEDa en Windows y Linux."
   },
   hotkeys: "Atajos de teclado",
   inlineEditHotkey: {
@@ -45860,10 +46055,15 @@ var common4 = {
 var chat4 = {
   rewind: {
     confirmMessage: "Rembobiner jusqu'\xE0 ce point ? Les modifications de fichiers apr\xE8s ce message seront annul\xE9es. Le rembobinage n'affecte pas les fichiers modifi\xE9s manuellement ou via bash.",
+    confirmMessageConversationOnly: "Rembobiner la conversation jusqu'\xE0 ce point ? Les modifications de fichiers seront conserv\xE9es.",
     confirmButton: "Rembobiner",
     ariaLabel: "Rembobiner jusqu'ici",
+    menuConversationOnly: "Rembobiner la conversation seule",
+    menuCodeAndConversation: "Rembobiner code + conversation",
     notice: "Rembobin\xE9 : {count} fichier(s) restaur\xE9(s)",
+    noticeConversationOnly: "Conversation rembobin\xE9e ; modifications de fichiers conserv\xE9es",
     noticeSaveFailed: "Rembobin\xE9 : {count} fichier(s) restaur\xE9(s), mais impossible d'enregistrer l'\xE9tat : {error}",
+    noticeConversationOnlySaveFailed: "Conversation rembobin\xE9e, mais impossible d'enregistrer l'\xE9tat : {error}",
     failed: "\xC9chec du rembobinage : {error}",
     cannot: "Impossible de rembobiner : {error}",
     unavailableStreaming: "Impossible de rembobiner pendant le streaming",
@@ -45942,6 +46142,10 @@ var settings4 = {
   navMappings: {
     name: "Mappages de navigation style Vim",
     desc: 'Un mappage par ligne. Format : "map <touche> <action>" (actions : scrollUp, scrollDown, focusInput).'
+  },
+  requireCommandOrControlEnterToSend: {
+    name: "Exiger Command/Ctrl+Entr\xE9e pour envoyer",
+    desc: "Lorsque cette option est activ\xE9e, Entr\xE9e ins\xE8re une nouvelle ligne. Command+Entr\xE9e envoie sur macOS ; Ctrl+Entr\xE9e envoie sur Windows et Linux."
   },
   hotkeys: "Raccourcis clavier",
   inlineEditHotkey: {
@@ -46180,10 +46384,15 @@ var common5 = {
 var chat5 = {
   rewind: {
     confirmMessage: "\u3053\u306E\u6642\u70B9\u306B\u5DFB\u304D\u623B\u3057\u307E\u3059\u304B\uFF1F\u3053\u306E\u30E1\u30C3\u30BB\u30FC\u30B8\u4EE5\u964D\u306E\u30D5\u30A1\u30A4\u30EB\u5909\u66F4\u304C\u5143\u306B\u623B\u3055\u308C\u307E\u3059\u3002\u624B\u52D5\u307E\u305F\u306Fbash\u3067\u7DE8\u96C6\u3055\u308C\u305F\u30D5\u30A1\u30A4\u30EB\u306B\u306F\u5F71\u97FF\u3057\u307E\u305B\u3093\u3002",
+    confirmMessageConversationOnly: "\u4F1A\u8A71\u3092\u3053\u306E\u6642\u70B9\u306B\u5DFB\u304D\u623B\u3057\u307E\u3059\u304B\uFF1F\u30D5\u30A1\u30A4\u30EB\u5909\u66F4\u306F\u4FDD\u6301\u3055\u308C\u307E\u3059\u3002",
     confirmButton: "\u5DFB\u304D\u623B\u3059",
     ariaLabel: "\u3053\u3053\u306B\u5DFB\u304D\u623B\u3059",
+    menuConversationOnly: "\u4F1A\u8A71\u306E\u307F\u5DFB\u304D\u623B\u3059",
+    menuCodeAndConversation: "\u30B3\u30FC\u30C9 + \u4F1A\u8A71\u3092\u5DFB\u304D\u623B\u3059",
     notice: "\u5DFB\u304D\u623B\u3057\u5B8C\u4E86\uFF1A{count} \u500B\u306E\u30D5\u30A1\u30A4\u30EB\u3092\u5FA9\u5143",
+    noticeConversationOnly: "\u4F1A\u8A71\u3092\u5DFB\u304D\u623B\u3057\u307E\u3057\u305F\u3002\u30D5\u30A1\u30A4\u30EB\u5909\u66F4\u306F\u4FDD\u6301\u3055\u308C\u307E\u3057\u305F",
     noticeSaveFailed: "\u5DFB\u304D\u623B\u3057\u5B8C\u4E86\uFF1A{count} \u500B\u306E\u30D5\u30A1\u30A4\u30EB\u3092\u5FA9\u5143\u3057\u307E\u3057\u305F\u304C\u3001\u72B6\u614B\u3092\u4FDD\u5B58\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\uFF1A{error}",
+    noticeConversationOnlySaveFailed: "\u4F1A\u8A71\u3092\u5DFB\u304D\u623B\u3057\u307E\u3057\u305F\u304C\u3001\u72B6\u614B\u3092\u4FDD\u5B58\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\uFF1A{error}",
     failed: "\u5DFB\u304D\u623B\u3057\u306B\u5931\u6557\uFF1A{error}",
     cannot: "\u5DFB\u304D\u623B\u3057\u3067\u304D\u307E\u305B\u3093\uFF1A{error}",
     unavailableStreaming: "\u30B9\u30C8\u30EA\u30FC\u30DF\u30F3\u30B0\u4E2D\u306F\u5DFB\u304D\u623B\u3057\u3067\u304D\u307E\u305B\u3093",
@@ -46262,6 +46471,10 @@ var settings5 = {
   navMappings: {
     name: "Vim\u30B9\u30BF\u30A4\u30EB\u30CA\u30D3\u30B2\u30FC\u30B7\u30E7\u30F3\u30DE\u30C3\u30D4\u30F3\u30B0",
     desc: '1\u884C\u306B1\u3064\u306E\u30DE\u30C3\u30D4\u30F3\u30B0\u3002\u5F62\u5F0F\uFF1A"map <\u30AD\u30FC> <\u30A2\u30AF\u30B7\u30E7\u30F3>"\uFF08\u30A2\u30AF\u30B7\u30E7\u30F3\uFF1AscrollUp, scrollDown, focusInput\uFF09\u3002'
+  },
+  requireCommandOrControlEnterToSend: {
+    name: "\u9001\u4FE1\u306B Command/Ctrl+Enter \u3092\u5FC5\u9808\u306B\u3059\u308B",
+    desc: "\u6709\u52B9\u306B\u3059\u308B\u3068\u3001Enter \u306F\u6539\u884C\u3092\u633F\u5165\u3057\u307E\u3059\u3002macOS \u3067\u306F Command+Enter\u3001Windows \u3068 Linux \u3067\u306F Ctrl+Enter \u3067\u9001\u4FE1\u3057\u307E\u3059\u3002"
   },
   hotkeys: "\u30DB\u30C3\u30C8\u30AD\u30FC",
   inlineEditHotkey: {
@@ -46500,10 +46713,15 @@ var common6 = {
 var chat6 = {
   rewind: {
     confirmMessage: "\uC774 \uC2DC\uC810\uC73C\uB85C \uB418\uAC10\uC73C\uC2DC\uACA0\uC2B5\uB2C8\uAE4C? \uC774 \uBA54\uC2DC\uC9C0 \uC774\uD6C4\uC758 \uD30C\uC77C \uBCC0\uACBD \uC0AC\uD56D\uC774 \uB418\uB3CC\uB824\uC9D1\uB2C8\uB2E4. \uC218\uB3D9\uC73C\uB85C \uB610\uB294 bash\uB97C \uD1B5\uD574 \uD3B8\uC9D1\uB41C \uD30C\uC77C\uC5D0\uB294 \uC601\uD5A5\uC744 \uBBF8\uCE58\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+    confirmMessageConversationOnly: "\uB300\uD654\uB97C \uC774 \uC2DC\uC810\uC73C\uB85C \uB418\uAC10\uC73C\uC2DC\uACA0\uC2B5\uB2C8\uAE4C? \uD30C\uC77C \uBCC0\uACBD \uC0AC\uD56D\uC740 \uC720\uC9C0\uB429\uB2C8\uB2E4.",
     confirmButton: "\uB418\uAC10\uAE30",
     ariaLabel: "\uC5EC\uAE30\uB85C \uB418\uAC10\uAE30",
+    menuConversationOnly: "\uB300\uD654\uB9CC \uB418\uAC10\uAE30",
+    menuCodeAndConversation: "\uCF54\uB4DC + \uB300\uD654 \uB418\uAC10\uAE30",
     notice: "\uB418\uAC10\uAE30 \uC644\uB8CC: {count}\uAC1C \uD30C\uC77C \uBCF5\uC6D0\uB428",
+    noticeConversationOnly: "\uB300\uD654\uB97C \uB418\uAC10\uC558\uC2B5\uB2C8\uB2E4. \uD30C\uC77C \uBCC0\uACBD \uC0AC\uD56D\uC740 \uC720\uC9C0\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
     noticeSaveFailed: "\uB418\uAC10\uAE30 \uC644\uB8CC: {count}\uAC1C \uD30C\uC77C \uBCF5\uC6D0\uB428, \uD558\uC9C0\uB9CC \uC0C1\uD0DC\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: {error}",
+    noticeConversationOnlySaveFailed: "\uB300\uD654\uB97C \uB418\uAC10\uC558\uC9C0\uB9CC \uC0C1\uD0DC\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4: {error}",
     failed: "\uB418\uAC10\uAE30 \uC2E4\uD328: {error}",
     cannot: "\uB418\uAC10\uAE30 \uBD88\uAC00: {error}",
     unavailableStreaming: "\uC2A4\uD2B8\uB9AC\uBC0D \uC911\uC5D0\uB294 \uB418\uAC10\uAE30\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
@@ -46582,6 +46800,10 @@ var settings6 = {
   navMappings: {
     name: "Vim \uC2A4\uD0C0\uC77C \uB124\uBE44\uAC8C\uC774\uC158 \uB9E4\uD551",
     desc: '\uD55C \uC904\uC5D0 \uD558\uB098\uC758 \uB9E4\uD551. \uD615\uC2DD: "map <\uD0A4> <\uB3D9\uC791>" (\uB3D9\uC791: scrollUp, scrollDown, focusInput).'
+  },
+  requireCommandOrControlEnterToSend: {
+    name: "Command/Ctrl+Enter\uB85C \uBCF4\uB0B4\uAE30 \uD544\uC218",
+    desc: "\uD65C\uC131\uD654\uD558\uBA74 Enter\uB294 \uC904\uBC14\uAFC8\uC744 \uC0BD\uC785\uD569\uB2C8\uB2E4. macOS\uC5D0\uC11C\uB294 Command+Enter, Windows\uC640 Linux\uC5D0\uC11C\uB294 Ctrl+Enter\uB85C \uBCF4\uB0C5\uB2C8\uB2E4."
   },
   hotkeys: "\uB2E8\uCD95\uD0A4",
   inlineEditHotkey: {
@@ -46820,10 +47042,15 @@ var common7 = {
 var chat7 = {
   rewind: {
     confirmMessage: "Retroceder at\xE9 este ponto? As altera\xE7\xF5es de arquivos ap\xF3s esta mensagem ser\xE3o revertidas. O retrocesso n\xE3o afeta arquivos editados manualmente ou via bash.",
+    confirmMessageConversationOnly: "Retroceder a conversa at\xE9 este ponto? As altera\xE7\xF5es de arquivos ser\xE3o mantidas.",
     confirmButton: "Retroceder",
     ariaLabel: "Retroceder at\xE9 aqui",
+    menuConversationOnly: "Retroceder somente conversa",
+    menuCodeAndConversation: "Retroceder c\xF3digo + conversa",
     notice: "Retrocedido: {count} arquivo(s) revertido(s)",
+    noticeConversationOnly: "Conversa retrocedida; altera\xE7\xF5es de arquivos mantidas",
     noticeSaveFailed: "Retrocedido: {count} arquivo(s) revertido(s), mas n\xE3o foi poss\xEDvel salvar o estado: {error}",
+    noticeConversationOnlySaveFailed: "Conversa retrocedida, mas n\xE3o foi poss\xEDvel salvar o estado: {error}",
     failed: "Falha ao retroceder: {error}",
     cannot: "N\xE3o \xE9 poss\xEDvel retroceder: {error}",
     unavailableStreaming: "N\xE3o \xE9 poss\xEDvel retroceder durante a transmiss\xE3o",
@@ -46902,6 +47129,10 @@ var settings7 = {
   navMappings: {
     name: "Mapeamentos de navega\xE7\xE3o estilo Vim",
     desc: 'Um mapeamento por linha. Formato: "map <tecla> <a\xE7\xE3o>" (a\xE7\xF5es: scrollUp, scrollDown, focusInput).'
+  },
+  requireCommandOrControlEnterToSend: {
+    name: "Exigir Command/Ctrl+Enter para enviar",
+    desc: "Quando ativado, Enter insere uma quebra de linha. Command+Enter envia no macOS; Ctrl+Enter envia no Windows e Linux."
   },
   hotkeys: "Atalhos",
   inlineEditHotkey: {
@@ -47140,10 +47371,15 @@ var common8 = {
 var chat8 = {
   rewind: {
     confirmMessage: "\u041E\u0442\u043A\u0430\u0442\u0438\u0442\u044C \u0434\u043E \u044D\u0442\u043E\u0439 \u0442\u043E\u0447\u043A\u0438? \u0418\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0444\u0430\u0439\u043B\u043E\u0432 \u043F\u043E\u0441\u043B\u0435 \u044D\u0442\u043E\u0433\u043E \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u0431\u0443\u0434\u0443\u0442 \u043E\u0442\u043C\u0435\u043D\u0435\u043D\u044B. \u041E\u0442\u043A\u0430\u0442 \u043D\u0435 \u0437\u0430\u0442\u0440\u0430\u0433\u0438\u0432\u0430\u0435\u0442 \u0444\u0430\u0439\u043B\u044B, \u043E\u0442\u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u0432\u0440\u0443\u0447\u043D\u0443\u044E \u0438\u043B\u0438 \u0447\u0435\u0440\u0435\u0437 bash.",
+    confirmMessageConversationOnly: "\u041E\u0442\u043A\u0430\u0442\u0438\u0442\u044C \u0440\u0430\u0437\u0433\u043E\u0432\u043E\u0440 \u0434\u043E \u044D\u0442\u043E\u0439 \u0442\u043E\u0447\u043A\u0438? \u0418\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0444\u0430\u0439\u043B\u043E\u0432 \u0431\u0443\u0434\u0443\u0442 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u044B.",
     confirmButton: "\u041E\u0442\u043A\u0430\u0442\u0438\u0442\u044C",
     ariaLabel: "\u041E\u0442\u043A\u0430\u0442\u0438\u0442\u044C \u0441\u044E\u0434\u0430",
+    menuConversationOnly: "\u041E\u0442\u043A\u0430\u0442\u0438\u0442\u044C \u0442\u043E\u043B\u044C\u043A\u043E \u0440\u0430\u0437\u0433\u043E\u0432\u043E\u0440",
+    menuCodeAndConversation: "\u041E\u0442\u043A\u0430\u0442\u0438\u0442\u044C \u043A\u043E\u0434 + \u0440\u0430\u0437\u0433\u043E\u0432\u043E\u0440",
     notice: "\u041E\u0442\u043A\u0430\u0447\u0435\u043D\u043E: \u0432\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \u0444\u0430\u0439\u043B\u043E\u0432 \u2014 {count}",
+    noticeConversationOnly: "\u0420\u0430\u0437\u0433\u043E\u0432\u043E\u0440 \u043E\u0442\u043A\u0430\u0447\u0435\u043D; \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0444\u0430\u0439\u043B\u043E\u0432 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u044B",
     noticeSaveFailed: "\u041E\u0442\u043A\u0430\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D: \u0432\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \u0444\u0430\u0439\u043B\u043E\u0432 \u2014 {count}, \u043D\u043E \u043D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0441\u043E\u0441\u0442\u043E\u044F\u043D\u0438\u0435: {error}",
+    noticeConversationOnlySaveFailed: "\u0420\u0430\u0437\u0433\u043E\u0432\u043E\u0440 \u043E\u0442\u043A\u0430\u0447\u0435\u043D, \u043D\u043E \u043D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0441\u043E\u0441\u0442\u043E\u044F\u043D\u0438\u0435: {error}",
     failed: "\u041E\u0448\u0438\u0431\u043A\u0430 \u043E\u0442\u043A\u0430\u0442\u0430: {error}",
     cannot: "\u041D\u0435\u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E \u043E\u0442\u043A\u0430\u0442\u0438\u0442\u044C: {error}",
     unavailableStreaming: "\u041D\u0435\u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E \u043E\u0442\u043A\u0430\u0442\u0438\u0442\u044C \u0432\u043E \u0432\u0440\u0435\u043C\u044F \u043F\u043E\u0442\u043E\u043A\u043E\u0432\u043E\u0439 \u043F\u0435\u0440\u0435\u0434\u0430\u0447\u0438",
@@ -47222,6 +47458,10 @@ var settings8 = {
   navMappings: {
     name: "\u0421\u043E\u043F\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u0438\u044F \u043D\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u0438 \u0432 \u0441\u0442\u0438\u043B\u0435 Vim",
     desc: '\u041F\u043E \u043E\u0434\u043D\u043E\u043C\u0443 \u0441\u043E\u043F\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u0438\u044E \u0432 \u0441\u0442\u0440\u043E\u043A\u0435. \u0424\u043E\u0440\u043C\u0430\u0442: "map <\u043A\u043B\u044E\u0447> <\u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435>" (\u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F: scrollUp, scrollDown, focusInput).'
+  },
+  requireCommandOrControlEnterToSend: {
+    name: "\u0422\u0440\u0435\u0431\u043E\u0432\u0430\u0442\u044C Command/Ctrl+Enter \u0434\u043B\u044F \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438",
+    desc: "\u0415\u0441\u043B\u0438 \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u043E, Enter \u0432\u0441\u0442\u0430\u0432\u043B\u044F\u0435\u0442 \u043D\u043E\u0432\u0443\u044E \u0441\u0442\u0440\u043E\u043A\u0443. Command+Enter \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u0435\u0442 \u043D\u0430 macOS; Ctrl+Enter \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u0435\u0442 \u043D\u0430 Windows \u0438 Linux."
   },
   hotkeys: "\u0413\u043E\u0440\u044F\u0447\u0438\u0435 \u043A\u043B\u0430\u0432\u0438\u0448\u0438",
   inlineEditHotkey: {
@@ -47460,10 +47700,15 @@ var common9 = {
 var chat9 = {
   rewind: {
     confirmMessage: "\u56DE\u9000\u5230\u6B64\u5904\uFF1F\u6B64\u6D88\u606F\u4E4B\u540E\u7684\u6587\u4EF6\u66F4\u6539\u5C06\u88AB\u8FD8\u539F\u3002\u56DE\u9000\u4E0D\u4F1A\u5F71\u54CD\u624B\u52A8\u6216\u901A\u8FC7 bash \u7F16\u8F91\u7684\u6587\u4EF6\u3002",
+    confirmMessageConversationOnly: "\u5C06\u5BF9\u8BDD\u56DE\u9000\u5230\u6B64\u5904\uFF1F\u6587\u4EF6\u66F4\u6539\u5C06\u4FDD\u7559\u3002",
     confirmButton: "\u56DE\u9000",
     ariaLabel: "\u56DE\u9000\u5230\u6B64\u5904",
+    menuConversationOnly: "\u4EC5\u56DE\u9000\u5BF9\u8BDD",
+    menuCodeAndConversation: "\u56DE\u9000\u4EE3\u7801 + \u5BF9\u8BDD",
     notice: "\u5DF2\u56DE\u9000\uFF1A\u8FD8\u539F\u4E86 {count} \u4E2A\u6587\u4EF6",
+    noticeConversationOnly: "\u5DF2\u56DE\u9000\u5BF9\u8BDD\uFF1B\u6587\u4EF6\u66F4\u6539\u5DF2\u4FDD\u7559",
     noticeSaveFailed: "\u5DF2\u56DE\u9000\uFF1A\u8FD8\u539F\u4E86 {count} \u4E2A\u6587\u4EF6\uFF0C\u4F46\u65E0\u6CD5\u4FDD\u5B58\u72B6\u6001\uFF1A{error}",
+    noticeConversationOnlySaveFailed: "\u5DF2\u56DE\u9000\u5BF9\u8BDD\uFF0C\u4F46\u65E0\u6CD5\u4FDD\u5B58\u72B6\u6001\uFF1A{error}",
     failed: "\u56DE\u9000\u5931\u8D25\uFF1A{error}",
     cannot: "\u65E0\u6CD5\u56DE\u9000\uFF1A{error}",
     unavailableStreaming: "\u6D41\u5F0F\u54CD\u5E94\u4E2D\u65E0\u6CD5\u56DE\u9000",
@@ -47542,6 +47787,10 @@ var settings9 = {
   navMappings: {
     name: "Vim \u98CE\u683C\u5BFC\u822A\u6620\u5C04",
     desc: '\u6BCF\u884C\u4E00\u4E2A\u6620\u5C04\u3002\u683C\u5F0F\uFF1A"map <\u952E> <\u52A8\u4F5C>"\uFF08\u52A8\u4F5C\uFF1AscrollUp, scrollDown, focusInput\uFF09\u3002'
+  },
+  requireCommandOrControlEnterToSend: {
+    name: "\u9700\u8981 Command/Ctrl+Enter \u53D1\u9001",
+    desc: "\u542F\u7528\u540E\uFF0CEnter \u4F1A\u63D2\u5165\u6362\u884C\u3002macOS \u4F7F\u7528 Command+Enter \u53D1\u9001\uFF1BWindows \u548C Linux \u4F7F\u7528 Ctrl+Enter \u53D1\u9001\u3002"
   },
   hotkeys: "\u5FEB\u6377\u952E",
   inlineEditHotkey: {
@@ -47780,10 +48029,15 @@ var common10 = {
 var chat10 = {
   rewind: {
     confirmMessage: "\u56DE\u9000\u5230\u6B64\u8655\uFF1F\u6B64\u8A0A\u606F\u4E4B\u5F8C\u7684\u6A94\u6848\u8B8A\u66F4\u5C07\u88AB\u9084\u539F\u3002\u56DE\u9000\u4E0D\u6703\u5F71\u97FF\u624B\u52D5\u6216\u900F\u904E bash \u7DE8\u8F2F\u7684\u6A94\u6848\u3002",
+    confirmMessageConversationOnly: "\u5C07\u5C0D\u8A71\u56DE\u9000\u5230\u6B64\u8655\uFF1F\u6A94\u6848\u8B8A\u66F4\u5C07\u4FDD\u7559\u3002",
     confirmButton: "\u56DE\u9000",
     ariaLabel: "\u56DE\u9000\u5230\u6B64\u8655",
+    menuConversationOnly: "\u50C5\u56DE\u9000\u5C0D\u8A71",
+    menuCodeAndConversation: "\u56DE\u9000\u7A0B\u5F0F\u78BC + \u5C0D\u8A71",
     notice: "\u5DF2\u56DE\u9000\uFF1A\u9084\u539F\u4E86 {count} \u500B\u6A94\u6848",
+    noticeConversationOnly: "\u5DF2\u56DE\u9000\u5C0D\u8A71\uFF1B\u6A94\u6848\u8B8A\u66F4\u5DF2\u4FDD\u7559",
     noticeSaveFailed: "\u5DF2\u56DE\u9000\uFF1A\u9084\u539F\u4E86 {count} \u500B\u6A94\u6848\uFF0C\u4F46\u7121\u6CD5\u5132\u5B58\u72C0\u614B\uFF1A{error}",
+    noticeConversationOnlySaveFailed: "\u5DF2\u56DE\u9000\u5C0D\u8A71\uFF0C\u4F46\u7121\u6CD5\u5132\u5B58\u72C0\u614B\uFF1A{error}",
     failed: "\u56DE\u9000\u5931\u6557\uFF1A{error}",
     cannot: "\u7121\u6CD5\u56DE\u9000\uFF1A{error}",
     unavailableStreaming: "\u4E32\u6D41\u56DE\u61C9\u4E2D\u7121\u6CD5\u56DE\u9000",
@@ -47862,6 +48116,10 @@ var settings10 = {
   navMappings: {
     name: "Vim \u98A8\u683C\u5C0E\u822A\u6620\u5C04",
     desc: '\u6BCF\u884C\u4E00\u500B\u6620\u5C04\u3002\u683C\u5F0F\uFF1A"map <\u9375> <\u52D5\u4F5C>"\uFF08\u52D5\u4F5C\uFF1AscrollUp, scrollDown, focusInput\uFF09\u3002'
+  },
+  requireCommandOrControlEnterToSend: {
+    name: "\u9700\u8981 Command/Ctrl+Enter \u624D\u80FD\u50B3\u9001",
+    desc: "\u555F\u7528\u5F8C\uFF0CEnter \u6703\u63D2\u5165\u63DB\u884C\u3002macOS \u4F7F\u7528 Command+Enter \u50B3\u9001\uFF1BWindows \u548C Linux \u4F7F\u7528 Ctrl+Enter \u50B3\u9001\u3002"
   },
   hotkeys: "\u5FEB\u6377\u9375",
   inlineEditHotkey: {
@@ -57577,7 +57835,7 @@ var claudeSettingsTabRenderer = {
     const hostnameKey = getHostnameKey();
     const platformDesc = process.platform === "win32" ? t("settings.cliPath.descWindows") : t("settings.cliPath.descUnix");
     const cliPathDescription = `${t("settings.cliPath.desc")} ${platformDesc}`;
-    const cliPathSetting = new import_obsidian13.Setting(container).setName(`${t("settings.cliPath.name")} (${hostnameKey})`).setDesc(cliPathDescription);
+    const cliPathSetting = new import_obsidian13.Setting(container).setName(t("settings.cliPath.name")).setDesc(cliPathDescription);
     const validationEl = container.createDiv({
       cls: "claudian-cli-path-validation claudian-setting-validation claudian-setting-validation-error claudian-hidden"
     });
@@ -58677,7 +58935,14 @@ Generate a title for this conversation:`;
     const envVars = parseEnvironmentVariables(
       this.plugin.getActiveEnvironmentVariables("claude")
     );
-    return this.plugin.settings.titleGenerationModel || envVars.ANTHROPIC_DEFAULT_HAIKU_MODEL || "claude-haiku-4-5";
+    const titleModel = this.plugin.settings.titleGenerationModel;
+    if (titleModel && claudeChatUIConfig.ownsModel(
+      titleModel,
+      this.plugin.settings
+    )) {
+      return titleModel;
+    }
+    return envVars.ANTHROPIC_DEFAULT_HAIKU_MODEL || "claude-haiku-4-5";
   }
   truncateText(text, maxLength) {
     if (text.length <= maxLength) return text;
@@ -59253,6 +59518,10 @@ function parseApplyPatchDiffs(patchText) {
   flushCurrent();
   return fileDiffs;
 }
+function parseFileUpdateChangeDiffs(changes) {
+  if (!Array.isArray(changes)) return [];
+  return changes.map(parseFileUpdateChangeDiff).filter((diff) => diff !== null);
+}
 function extractDiffData(toolUseResult, toolCall) {
   const filePath = toolCall.input.file_path || "file";
   if (toolUseResult && typeof toolUseResult === "object") {
@@ -59325,6 +59594,75 @@ function buildApplyPatchFileDiff(current) {
   };
   if (current.movedTo) result.movedTo = current.movedTo;
   return result;
+}
+function parseFileUpdateChangeDiff(change) {
+  var _a3;
+  if (!change || typeof change !== "object" || Array.isArray(change)) {
+    return null;
+  }
+  const record2 = change;
+  const filePath = typeof record2.path === "string" ? record2.path : "";
+  const diff = typeof record2.diff === "string" ? record2.diff : "";
+  if (!filePath || !diff.trim()) {
+    return null;
+  }
+  const kindInfo = parseFileUpdateKind((_a3 = record2.kind) != null ? _a3 : record2.type);
+  const diffLines = parseUnifiedDiffLines(diff);
+  return {
+    filePath,
+    operation: kindInfo.operation,
+    ...kindInfo.movedTo ? { movedTo: kindInfo.movedTo } : {},
+    diffLines,
+    stats: countLineChanges(diffLines)
+  };
+}
+function parseFileUpdateKind(value) {
+  if (typeof value === "string") {
+    return { operation: normalizePatchOperation(value) };
+  }
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const record2 = value;
+    const type = typeof record2.type === "string" ? record2.type : "";
+    const movedTo = typeof record2.move_path === "string" ? record2.move_path : void 0;
+    return {
+      operation: normalizePatchOperation(type),
+      ...movedTo ? { movedTo } : {}
+    };
+  }
+  return { operation: "update" };
+}
+function normalizePatchOperation(value) {
+  if (value === "add" || value === "delete" || value === "update") {
+    return value;
+  }
+  return "update";
+}
+function parseUnifiedDiffLines(diffText) {
+  const diffLines = [];
+  let oldLineNum = 1;
+  let newLineNum = 1;
+  for (const line of diffText.split(/\r?\n/)) {
+    if (!line) continue;
+    if (line.startsWith("--- ") || line.startsWith("+++ ")) continue;
+    if (line.startsWith("@@")) {
+      const match = line.match(/^@@\s+-(\d+)(?:,\d+)?\s+\+(\d+)(?:,\d+)?\s+@@/);
+      if (match) {
+        oldLineNum = Number(match[1]);
+        newLineNum = Number(match[2]);
+      }
+      continue;
+    }
+    const prefix = line[0];
+    const text = line.slice(1);
+    if (prefix === "+") {
+      diffLines.push({ type: "insert", text, newLineNum: newLineNum++ });
+    } else if (prefix === "-") {
+      diffLines.push({ type: "delete", text, oldLineNum: oldLineNum++ });
+    } else if (prefix === " ") {
+      diffLines.push({ type: "equal", text, oldLineNum: oldLineNum++, newLineNum: newLineNum++ });
+    }
+  }
+  return diffLines;
 }
 
 // src/utils/interrupt.ts
@@ -62370,6 +62708,11 @@ async function createClaudeRewindBackup(filesChanged, vaultPath) {
   return { restore, cleanup };
 }
 async function executeClaudeRewind(userMessageId, deps) {
+  if (deps.mode === "conversation") {
+    deps.setPendingResumeAt(deps.assistantMessageId);
+    deps.closePersistentQuery("conversation rewind");
+    return { canRewind: true, filesChanged: [] };
+  }
   const preview = await deps.rewindFiles(userMessageId, true);
   if (!preview.canRewind) {
     return preview;
@@ -63758,9 +64101,10 @@ var ClaudianService = class {
     if (this.shuttingDown) throw new Error("Service is shutting down");
     return this.persistentQuery.rewindFiles(userMessageId, { dryRun });
   }
-  async rewind(userMessageId, assistantMessageId) {
+  async rewind(userMessageId, assistantMessageId, mode = "code-and-conversation") {
     return executeClaudeRewind(userMessageId, {
       assistantMessageId,
+      mode,
       rewindFiles: (id, dryRun) => this.rewindFiles(id, dryRun),
       closePersistentQuery: (reason) => this.closePersistentQuery(reason),
       setPendingResumeAt: (resumeAt) => {
@@ -66756,7 +67100,7 @@ var codexSettingsTabRenderer = {
       };
     };
     const shouldValidateCliPathAsFile = () => !isWindowsHost || installationMethod !== "wsl";
-    const cliPathSetting = new import_obsidian17.Setting(container).setName(`Codex CLI path (${hostnameKey})`).setDesc(getCliPathCopy().desc);
+    const cliPathSetting = new import_obsidian17.Setting(container).setName("Codex CLI path").setDesc(getCliPathCopy().desc);
     const validationEl = container.createDiv({
       cls: "claudian-cli-path-validation claudian-setting-validation claudian-setting-validation-error claudian-hidden"
     });
@@ -67111,7 +67455,7 @@ var CodexAuxQueryRunner = class {
         approvalPolicy: "never",
         sandbox: "read-only",
         baseInstructions: config2.systemPrompt,
-        experimentalRawEvents: false,
+        experimentalRawEvents: true,
         persistExtendedHistory: false
       });
       this.threadId = result.thread.id;
@@ -67828,6 +68172,9 @@ function createPersistedParseContext() {
     turnOrder: [],
     currentTurnId: null,
     toolCallToTurn: /* @__PURE__ */ new Map(),
+    suppressedToolOutputIds: /* @__PURE__ */ new Set(),
+    terminalSessionToCommandId: /* @__PURE__ */ new Map(),
+    stdinCallToCommandId: /* @__PURE__ */ new Map(),
     turnCounter: 0
   };
 }
@@ -68101,12 +68448,24 @@ function nextTurnId(ctx) {
   return `turn-${ctx.turnCounter}`;
 }
 function processPersistedToolCall(payload, timestamp, ctx) {
-  var _a3;
+  var _a3, _b2;
   const callId = payload.call_id;
   if (!callId) return;
+  if (payload.name === "write_stdin") {
+    const parsedArgs2 = parseCodexArguments((_a3 = payload.arguments) != null ? _a3 : payload.input);
+    if (isSilentWriteStdinInput(parsedArgs2)) {
+      const terminalSessionId = readTerminalSessionIdArgument(parsedArgs2);
+      const parentCallId = terminalSessionId ? ctx.terminalSessionToCommandId.get(terminalSessionId) : void 0;
+      if (parentCallId) {
+        ctx.stdinCallToCommandId.set(callId, parentCallId);
+      }
+      ctx.suppressedToolOutputIds.add(callId);
+      return;
+    }
+  }
   const turn = ensureTurn(ctx.turns, ctx.turnOrder, nextTurnId(ctx), ctx.currentTurnId, timestamp);
   const bubble = ensureAssistantBubble(turn, timestamp);
-  const rawArgs = (_a3 = payload.arguments) != null ? _a3 : payload.input;
+  const rawArgs = (_b2 = payload.arguments) != null ? _b2 : payload.input;
   const parsedArgs = parseCodexArguments(rawArgs);
   const normalizedName = normalizeCodexToolName(payload.name);
   const normalizedInput = normalizeCodexToolInput(payload.name, parsedArgs);
@@ -68126,6 +68485,21 @@ function processPersistedToolOutput(payload, timestamp, ctx) {
   const callId = payload.call_id;
   if (!callId) return;
   const rawOutput = typeof payload.output === "string" ? payload.output : Array.isArray(payload.output) ? JSON.stringify(payload.output) : "";
+  const parentCommandId = ctx.stdinCallToCommandId.get(callId);
+  if (parentCommandId) {
+    const parentToolCall = findPersistedToolCallById(ctx, parentCommandId);
+    if (parentToolCall) {
+      applyPersistedToolOutput(parentToolCall, payload.output, rawOutput, ctx, {
+        allowImplicitCommandCompletion: false
+      });
+    }
+    ctx.stdinCallToCommandId.delete(callId);
+    ctx.suppressedToolOutputIds.delete(callId);
+    return;
+  }
+  if (ctx.suppressedToolOutputIds.delete(callId)) {
+    return;
+  }
   const origin = ctx.toolCallToTurn.get(callId);
   if (origin) {
     const originTurn = ctx.turns.get(origin.turnId);
@@ -68133,11 +68507,13 @@ function processPersistedToolOutput(payload, timestamp, ctx) {
       const originBubble = originTurn.assistantBubbles[origin.bubbleIndex];
       const existing = originBubble.toolCalls.find((tool) => tool.id === callId);
       if (existing) {
-        existing.result = normalizePersistedToolOutput(existing, payload.output, rawOutput);
-        existing.status = isCodexToolOutputError(rawOutput) ? "error" : "completed";
+        applyPersistedToolOutput(existing, payload.output, rawOutput, ctx);
         return;
       }
     }
+  }
+  if (payload.type === "custom_tool_call_output") {
+    return;
   }
   const turn = ensureTurn(ctx.turns, ctx.turnOrder, nextTurnId(ctx), ctx.currentTurnId, timestamp);
   const bubble = ensureAssistantBubble(turn, timestamp);
@@ -68149,6 +68525,67 @@ function processPersistedToolOutput(payload, timestamp, ctx) {
     status: isCodexToolOutputError(rawOutput) ? "error" : "completed",
     result: normalizedResult
   });
+}
+function findPersistedToolCallById(ctx, callId) {
+  var _a3;
+  const origin = ctx.toolCallToTurn.get(callId);
+  if (!origin) {
+    return null;
+  }
+  const turn = ctx.turns.get(origin.turnId);
+  if (!turn || origin.bubbleIndex >= turn.assistantBubbles.length) {
+    return null;
+  }
+  return (_a3 = turn.assistantBubbles[origin.bubbleIndex].toolCalls.find((tool) => tool.id === callId)) != null ? _a3 : null;
+}
+function readTerminalSessionIdArgument(input) {
+  var _a3;
+  const value = (_a3 = input.session_id) != null ? _a3 : input.sessionId;
+  if (typeof value === "string" && value) return value;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return void 0;
+}
+function isSilentWriteStdinInput(input) {
+  return typeof input.chars !== "string" || input.chars.length === 0;
+}
+function appendCommandOutput(previous, next) {
+  if (!next) return previous != null ? previous : "";
+  if (!previous) return next;
+  if (previous.endsWith("\n") || next.startsWith("\n")) return previous + next;
+  return `${previous}
+${next}`;
+}
+function readPersistedCommandToolResult(rawOutputText) {
+  var _a3, _b2;
+  const output = normalizeCodexToolResult("Bash", rawOutputText);
+  const exitCodeMatch = rawOutputText.match(/(?:Exit code:|Process exited with code)\s*(-?\d+)/i);
+  const runningMatch = rawOutputText.match(/Process running with session ID\s*([^\n]+)/i);
+  return {
+    output,
+    status: exitCodeMatch ? "completed" : runningMatch ? "running" : "unknown",
+    ...exitCodeMatch ? { exitCode: Number((_a3 = exitCodeMatch[1]) != null ? _a3 : 0) } : {},
+    ...runningMatch ? { terminalSessionId: ((_b2 = runningMatch[1]) != null ? _b2 : "").trim() } : {}
+  };
+}
+function applyPersistedToolOutput(toolCall, rawOutputValue, rawOutputText, ctx, options = {}) {
+  if (toolCall.name === "Bash") {
+    const commandResult = readPersistedCommandToolResult(rawOutputText);
+    toolCall.result = appendCommandOutput(toolCall.result, commandResult.output);
+    if (commandResult.terminalSessionId) {
+      ctx.terminalSessionToCommandId.set(commandResult.terminalSessionId, toolCall.id);
+    }
+    if (commandResult.status === "running") {
+      toolCall.status = "running";
+      return;
+    }
+    if (commandResult.status === "unknown" && options.allowImplicitCommandCompletion === false) {
+      return;
+    }
+    toolCall.status = commandResult.exitCode !== void 0 ? commandResult.exitCode === 0 ? "completed" : "error" : isCodexToolOutputError(rawOutputText) ? "error" : "completed";
+    return;
+  }
+  toolCall.result = normalizePersistedToolOutput(toolCall, rawOutputValue, rawOutputText);
+  toolCall.status = isCodexToolOutputError(rawOutputText) ? "error" : "completed";
 }
 function normalizePersistedToolOutput(toolCall, rawOutputValue, rawOutputText) {
   if (Array.isArray(rawOutputValue) && toolCall.name === "Read") {
@@ -68266,6 +68703,9 @@ function applyCompactedReplacementHistory(payload, timestamp, ctx) {
   ctx.turnOrder.length = 0;
   ctx.currentTurnId = null;
   ctx.toolCallToTurn.clear();
+  ctx.suppressedToolOutputIds.clear();
+  ctx.terminalSessionToCommandId.clear();
+  ctx.stdinCallToCommandId.clear();
   ctx.turnCounter = 0;
   const replacementHistory = Array.isArray(payload == null ? void 0 : payload.replacement_history) ? payload.replacement_history : [];
   for (const [index, item] of replacementHistory.entries()) {
@@ -69106,7 +69546,7 @@ var codexSubagentLifecycleAdapter = {
 };
 
 // src/providers/codex/runtime/CodexChatRuntime.ts
-var fs17 = __toESM(require("fs"));
+var fs16 = __toESM(require("fs"));
 var os10 = __toESM(require("os"));
 var path15 = __toESM(require("path"));
 init_path();
@@ -69189,6 +69629,49 @@ var CodexNotificationRouter = class {
     this.startedUserMessageIds = /* @__PURE__ */ new Set();
     this.startedAgentMessageIds = /* @__PURE__ */ new Set();
     this.agentMessageDeltaIds = /* @__PURE__ */ new Set();
+    this.streamedAssistantTurnText = "";
+    this.currentAssistantSegmentText = "";
+    this.rawStartedCallIds = /* @__PURE__ */ new Set();
+    this.rawToolNamesByCallId = /* @__PURE__ */ new Map();
+    this.rawToolInputsByCallId = /* @__PURE__ */ new Map();
+    this.rawToolOutputsByCallId = /* @__PURE__ */ new Map();
+    this.suppressedRawCallIds = /* @__PURE__ */ new Set();
+    this.fileChangeInputsById = /* @__PURE__ */ new Map();
+  }
+  resetAssistantTextTracking() {
+    this.streamedAssistantTurnText = "";
+    this.resetAssistantSegmentText();
+  }
+  resetAssistantSegmentText() {
+    this.currentAssistantSegmentId = void 0;
+    this.currentAssistantSegmentText = "";
+  }
+  beginAssistantSegment(itemId) {
+    if (this.currentAssistantSegmentId === itemId) {
+      return;
+    }
+    this.currentAssistantSegmentId = itemId;
+    this.currentAssistantSegmentText = "";
+  }
+  claimAssistantSegment(itemId) {
+    if (!itemId) {
+      return;
+    }
+    if (this.currentAssistantSegmentId && this.currentAssistantSegmentId !== itemId) {
+      this.beginAssistantSegment(itemId);
+      return;
+    }
+    if (!this.currentAssistantSegmentId) {
+      this.currentAssistantSegmentId = itemId;
+    }
+  }
+  appendAssistantText(text, itemId) {
+    if (!text) {
+      return;
+    }
+    this.claimAssistantSegment(itemId);
+    this.currentAssistantSegmentText += text;
+    this.streamedAssistantTurnText += text;
   }
   beginTurn(params) {
     this.isPlanTurn = params.isPlanTurn;
@@ -69196,6 +69679,13 @@ var CodexNotificationRouter = class {
     this.startedUserMessageIds.clear();
     this.startedAgentMessageIds.clear();
     this.agentMessageDeltaIds.clear();
+    this.resetAssistantTextTracking();
+    this.rawStartedCallIds.clear();
+    this.rawToolNamesByCallId.clear();
+    this.rawToolInputsByCallId.clear();
+    this.rawToolOutputsByCallId.clear();
+    this.suppressedRawCallIds.clear();
+    this.fileChangeInputsById.clear();
   }
   endTurn() {
     this.isPlanTurn = false;
@@ -69203,6 +69693,13 @@ var CodexNotificationRouter = class {
     this.startedUserMessageIds.clear();
     this.startedAgentMessageIds.clear();
     this.agentMessageDeltaIds.clear();
+    this.resetAssistantTextTracking();
+    this.rawStartedCallIds.clear();
+    this.rawToolNamesByCallId.clear();
+    this.rawToolInputsByCallId.clear();
+    this.rawToolOutputsByCallId.clear();
+    this.suppressedRawCallIds.clear();
+    this.fileChangeInputsById.clear();
   }
   handleNotification(method, params) {
     switch (method) {
@@ -69230,6 +69727,15 @@ var CodexNotificationRouter = class {
       case "item/fileChange/outputDelta":
         this.onOutputDelta(params);
         break;
+      case "item/fileChange/patchUpdated":
+        this.onFileChangePatchUpdated(params);
+        break;
+      case "rawResponseItem/completed":
+        this.onRawResponseItemCompleted(params);
+        break;
+      case "event_msg":
+        this.onEventMsg(params);
+        break;
       case "thread/tokenUsage/updated":
         this.onTokenUsageUpdated(params);
         break;
@@ -69248,6 +69754,7 @@ var CodexNotificationRouter = class {
   }
   onAgentMessageDelta(params) {
     this.agentMessageDeltaIds.add(params.itemId);
+    this.appendAssistantText(params.delta, params.itemId);
     this.emit({ type: "text", content: params.delta });
   }
   onReasoningSummaryDelta(params) {
@@ -69262,6 +69769,10 @@ var CodexNotificationRouter = class {
   }
   onItemStarted(params) {
     const item = params.item;
+    const itemId = getItemId(item);
+    if (itemId && this.rawStartedCallIds.has(itemId)) {
+      return;
+    }
     switch (item.type) {
       case "userMessage":
         this.emitUserMessageBoundary(item);
@@ -69295,6 +69806,8 @@ var CodexNotificationRouter = class {
   }
   onItemCompleted(params) {
     const item = params.item;
+    const itemId = getItemId(item);
+    const rawResult = itemId ? this.consumeRawToolOutput(itemId) : void 0;
     switch (item.type) {
       case "userMessage":
         if (!this.startedUserMessageIds.has(item.id)) {
@@ -69305,9 +69818,10 @@ var CodexNotificationRouter = class {
         this.completeAgentMessage(item);
         break;
       case "commandExecution":
-        this.emitToolResultFromCommand(item);
+        this.emitToolResultFromCommand(item, rawResult);
         break;
       case "fileChange":
+        this.emitToolUseFromFileChange(item);
         this.emitToolResultFromFileChange(item);
         break;
       case "imageView":
@@ -69326,8 +69840,161 @@ var CodexNotificationRouter = class {
         this.emitContextCompactionBoundary(item);
         break;
       default:
+        if (itemId && rawResult) {
+          this.emit({ type: "tool_result", id: itemId, ...rawResult });
+        }
         break;
     }
+  }
+  onRawResponseItemCompleted(params) {
+    var _a3;
+    const item = asRecord((_a3 = asRecord(params)) == null ? void 0 : _a3.item);
+    const itemType = typeof (item == null ? void 0 : item.type) === "string" ? item.type : void 0;
+    if (!item || !itemType) {
+      return;
+    }
+    switch (itemType) {
+      case "function_call":
+        this.handleRawFunctionCall(item);
+        break;
+      case "custom_tool_call":
+        this.handleRawCustomToolCall(item);
+        break;
+      case "function_call_output":
+      case "custom_tool_call_output":
+        this.handleRawToolOutput(item);
+        break;
+      case "agentMessage":
+      case "message":
+        this.emitMissingRawAgentMessageText(item);
+        break;
+      default:
+        break;
+    }
+  }
+  onEventMsg(params) {
+    const payload = asRecord(params);
+    if (!payload) {
+      return;
+    }
+    const payloadType = typeof payload.type === "string" ? payload.type : void 0;
+    if (payloadType !== "agent_message") {
+      return;
+    }
+    const text = firstString(payload.text, payload.message);
+    this.emitMissingAssistantTurnText(text);
+  }
+  handleRawFunctionCall(item) {
+    const rawName = firstString(item.name, item.type);
+    const callId = readRawCallId(item);
+    if (!callId) {
+      return;
+    }
+    const rawArguments = parseRawArguments(item);
+    if (rawName === "write_stdin" && isSilentWriteStdinInput2(rawArguments)) {
+      this.suppressedRawCallIds.add(callId);
+      return;
+    }
+    this.emitRawToolUse(callId, rawName, item, rawArguments);
+  }
+  handleRawCustomToolCall(item) {
+    const rawName = firstString(item.name, item.type);
+    const callId = readRawCallId(item);
+    if (!callId) {
+      return;
+    }
+    if (rawName === "apply_patch") {
+      const input = normalizeCodexToolInput(rawName, parseRawArguments(item));
+      this.rememberFileChangeInput(callId, input);
+      this.suppressedRawCallIds.add(callId);
+      this.resetAssistantSegmentText();
+      return;
+    }
+    this.emitRawToolUse(callId, rawName, item);
+  }
+  emitRawToolUse(callId, rawName, item, rawArguments) {
+    const normalizedName = normalizeCodexToolName(rawName);
+    const input = normalizeCodexToolInput(rawName, rawArguments != null ? rawArguments : parseRawArguments(item));
+    if (this.rawStartedCallIds.has(callId)) {
+      this.rawToolNamesByCallId.set(callId, normalizedName);
+      this.rawToolInputsByCallId.set(callId, input);
+      return;
+    }
+    this.rawStartedCallIds.add(callId);
+    this.rawToolNamesByCallId.set(callId, normalizedName);
+    this.rawToolInputsByCallId.set(callId, input);
+    this.resetAssistantSegmentText();
+    this.emit({
+      type: "tool_use",
+      id: callId,
+      name: normalizedName,
+      input
+    });
+  }
+  handleRawToolOutput(item) {
+    const callId = readRawCallId(item);
+    if (!callId) {
+      return;
+    }
+    if (this.suppressedRawCallIds.delete(callId)) {
+      return;
+    }
+    const normalizedName = this.rawToolNamesByCallId.get(callId);
+    if (!normalizedName) {
+      return;
+    }
+    const rawOutput = item.output;
+    const content = normalizeRawToolOutput(
+      normalizedName,
+      rawOutput,
+      this.rawToolInputsByCallId.get(callId)
+    );
+    this.rawToolOutputsByCallId.set(callId, {
+      content,
+      isError: isCodexToolOutputError(stringifyRawOutput(rawOutput))
+    });
+  }
+  emitMissingRawAgentMessageText(item) {
+    const text = item.type === "message" ? readAssistantMessageText(item) : firstString(item.text, item.message);
+    this.emitMissingAssistantSegmentText(text);
+  }
+  emitMissingAssistantSegmentText(text, itemId) {
+    this.claimAssistantSegment(itemId);
+    const missingText = normalizeAgentMessageCompletionText(
+      text,
+      this.currentAssistantSegmentText
+    );
+    if (text) {
+      this.currentAssistantSegmentText = text;
+    }
+    if (!missingText) {
+      return;
+    }
+    this.streamedAssistantTurnText += missingText;
+    this.emit({ type: "text", content: missingText });
+  }
+  emitMissingAssistantTurnText(text) {
+    const missingText = normalizeAgentMessageCompletionText(
+      text,
+      this.streamedAssistantTurnText
+    );
+    if (!missingText) {
+      return;
+    }
+    this.streamedAssistantTurnText += missingText;
+    this.currentAssistantSegmentText += missingText;
+    this.emit({ type: "text", content: missingText });
+  }
+  consumeRawToolOutput(callId) {
+    const result = this.rawToolOutputsByCallId.get(callId);
+    this.rawToolOutputsByCallId.delete(callId);
+    return result;
+  }
+  flushPendingRawToolOutputs() {
+    for (const [callId, result] of this.rawToolOutputsByCallId) {
+      this.emit({ type: "tool_result", id: callId, ...result });
+    }
+    this.rawToolOutputsByCallId.clear();
   }
   // -- commandExecution -------------------------------------------------------
   emitToolUseFromCommand(item) {
@@ -69335,38 +70002,74 @@ var CodexNotificationRouter = class {
     const rawAction = (_c = (_b2 = (_a3 = item.commandActions) == null ? void 0 : _a3[0]) == null ? void 0 : _b2.command) != null ? _c : item.command;
     const normalizedName = normalizeCodexToolName("command_execution");
     const input = normalizeCodexToolInput("command_execution", { command: rawAction });
+    this.resetAssistantSegmentText();
     this.emit({ type: "tool_use", id: item.id, name: normalizedName, input });
   }
-  emitToolResultFromCommand(item) {
-    var _a3;
-    const output = (_a3 = item.aggregatedOutput) != null ? _a3 : "";
+  emitToolResultFromCommand(item, rawResult) {
+    var _a3, _b2, _c;
     const normalizedName = normalizeCodexToolName("command_execution");
-    const content = normalizeCodexToolResult(normalizedName, output);
-    const isError = item.exitCode !== null && item.exitCode !== 0;
+    const output = (_a3 = item.aggregatedOutput) != null ? _a3 : "";
+    const content = (_b2 = rawResult == null ? void 0 : rawResult.content) != null ? _b2 : normalizeCodexToolResult(normalizedName, output);
+    const isError = item.exitCode !== null ? item.exitCode !== 0 : (_c = rawResult == null ? void 0 : rawResult.isError) != null ? _c : isCodexToolOutputError(output);
     this.emit({ type: "tool_result", id: item.id, content, isError });
   }
   // -- fileChange -------------------------------------------------------------
   emitToolUseFromFileChange(item) {
     var _a3;
+    const input = this.rememberFileChangeInput(
+      item.id,
+      buildFileChangeInput((_a3 = item.changes) != null ? _a3 : [])
+    );
+    this.resetAssistantSegmentText();
     this.emit({
       type: "tool_use",
       id: item.id,
       name: normalizeCodexToolName("file_change"),
-      input: { changes: (_a3 = item.changes) != null ? _a3 : [] }
+      input
     });
   }
   emitToolResultFromFileChange(item) {
     var _a3;
-    const paths = ((_a3 = item.changes) != null ? _a3 : []).map((c) => c.path).join(", ");
+    const input = this.rememberFileChangeInput(
+      item.id,
+      buildFileChangeInput((_a3 = item.changes) != null ? _a3 : [])
+    );
+    const changes = Array.isArray(input.changes) ? input.changes : [];
+    const paths = changes.map((change) => formatFileChangeSummary(change)).filter(Boolean).join(", ");
     this.emit({
       type: "tool_result",
       id: item.id,
       content: paths || "File change completed",
-      isError: false
+      isError: item.status === "failed" || item.status === "declined"
     });
+  }
+  onFileChangePatchUpdated(params) {
+    var _a3;
+    const itemId = firstString(params.itemId);
+    if (!itemId) {
+      return;
+    }
+    const input = this.rememberFileChangeInput(
+      itemId,
+      buildFileChangeInput((_a3 = params.changes) != null ? _a3 : [])
+    );
+    this.resetAssistantSegmentText();
+    this.emit({
+      type: "tool_use",
+      id: itemId,
+      name: normalizeCodexToolName("file_change"),
+      input
+    });
+  }
+  rememberFileChangeInput(itemId, input) {
+    const previous = this.fileChangeInputsById.get(itemId);
+    const merged = mergeApplyPatchInputs(previous, input);
+    this.fileChangeInputsById.set(itemId, merged);
+    return merged;
   }
   // -- imageView --------------------------------------------------------------
   emitToolUseFromImageView(item) {
+    this.resetAssistantSegmentText();
     this.emit({
       type: "tool_use",
       id: item.id,
@@ -69382,6 +70085,7 @@ var CodexNotificationRouter = class {
     var _a3, _b2, _c, _d2, _e;
     if (this.seenWebSearchIds.has(item.id)) return;
     this.seenWebSearchIds.add(item.id);
+    this.resetAssistantSegmentText();
     this.emit({
       type: "tool_use",
       id: item.id,
@@ -69407,6 +70111,7 @@ var CodexNotificationRouter = class {
   emitToolUseFromCollabAgent(item) {
     var _a3, _b2;
     const toolName = (_a3 = COLLAB_AGENT_TOOL_MAP[item.tool]) != null ? _a3 : item.tool;
+    this.resetAssistantSegmentText();
     this.emit({
       type: "tool_use",
       id: item.id,
@@ -69427,6 +70132,7 @@ var CodexNotificationRouter = class {
   // -- mcpToolCall ------------------------------------------------------------
   emitToolUseFromMcp(item) {
     var _a3;
+    this.resetAssistantSegmentText();
     this.emit({
       type: "tool_use",
       id: item.id,
@@ -69474,6 +70180,7 @@ var CodexNotificationRouter = class {
       return;
     }
     this.startedAgentMessageIds.add(item.id);
+    this.claimAssistantSegment(item.id);
     this.emit({ type: "assistant_message_start", itemId: item.id });
   }
   completeAgentMessage(item) {
@@ -69483,7 +70190,7 @@ var CodexNotificationRouter = class {
     if (this.agentMessageDeltaIds.has(item.id) || !item.text) {
       return;
     }
-    this.emit({ type: "text", content: item.text });
+    this.emitMissingAssistantSegmentText(item.text, item.id);
   }
   extractUserMessageText(content) {
     return content.map((part) => part.type === "text" ? part.text : "").filter((text) => text.length > 0).join("\n\n");
@@ -69506,6 +70213,7 @@ var CodexNotificationRouter = class {
         status: (_a4 = PLAN_STATUS_MAP[item.status]) != null ? _a4 : item.status
       };
     });
+    this.resetAssistantSegmentText();
     this.emit({ type: "tool_use", id: syntheticId, name: "TodoWrite", input: { todos } });
     this.emit({ type: "tool_result", id: syntheticId, content: "Plan updated", isError: false });
   }
@@ -69541,6 +70249,7 @@ var CodexNotificationRouter = class {
         ...this.isPlanTurn && this.sawPlanDelta ? { planCompleted: true } : {}
       });
     }
+    this.flushPendingRawToolOutputs();
     this.emit({ type: "done" });
   }
   onError(params) {
@@ -69548,6 +70257,167 @@ var CodexNotificationRouter = class {
     this.emit({ type: "error", content: params.error.message });
   }
 };
+function asRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
+function firstString(...values) {
+  for (const value of values) {
+    if (typeof value === "string") {
+      return value;
+    }
+  }
+  return "";
+}
+function getItemId(item) {
+  return typeof item.id === "string" ? item.id : void 0;
+}
+function readRawCallId(item) {
+  return firstString(item.call_id, item.id);
+}
+function parseRawArguments(item) {
+  const rawArgs = typeof item.arguments === "string" ? item.arguments : typeof item.input === "string" ? item.input : void 0;
+  return parseCodexArguments(rawArgs);
+}
+function isSilentWriteStdinInput2(input) {
+  return typeof input.chars !== "string" || input.chars.length === 0;
+}
+function normalizeRawToolOutput(normalizedName, rawOutput, input) {
+  if (Array.isArray(rawOutput) && normalizedName === "Read") {
+    const filePath = firstString(input == null ? void 0 : input.file_path, input == null ? void 0 : input.path);
+    if (filePath) {
+      return filePath;
+    }
+  }
+  return normalizeCodexToolResult(normalizedName, stringifyRawOutput(rawOutput));
+}
+function stringifyRawOutput(value) {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value === void 0) {
+    return "";
+  }
+  try {
+    const result = JSON.stringify(value);
+    return typeof result === "string" ? result : String(value);
+  } catch (e2) {
+    return String(value);
+  }
+}
+function buildFileChangeInput(changes) {
+  return { changes: normalizeFileChanges(changes) };
+}
+function mergeApplyPatchInputs(previous, next) {
+  if (!previous) {
+    return next;
+  }
+  const patch = typeof next.patch === "string" ? next.patch : typeof previous.patch === "string" ? previous.patch : void 0;
+  const changes = mergeFileChanges(previous.changes, next.changes);
+  return {
+    ...previous,
+    ...next,
+    ...patch ? { patch } : {},
+    ...changes.length > 0 ? { changes } : {}
+  };
+}
+function normalizeFileChanges(changes) {
+  if (!Array.isArray(changes)) {
+    return [];
+  }
+  return changes.map(normalizeFileChange).filter((change) => change !== null);
+}
+function normalizeFileChange(change) {
+  var _a3;
+  const record2 = asRecord(change);
+  const path24 = firstString(record2 == null ? void 0 : record2.path);
+  if (!record2 || !path24) {
+    return null;
+  }
+  const kindInfo = normalizeFileChangeKind((_a3 = record2.kind) != null ? _a3 : record2.type);
+  const diff = firstString(record2.diff);
+  return {
+    ...record2,
+    path: path24,
+    kind: kindInfo.kind,
+    type: kindInfo.kind,
+    ...kindInfo.movePath ? { movePath: kindInfo.movePath } : {},
+    ...diff ? { diff } : {}
+  };
+}
+function normalizeFileChangeKind(value) {
+  if (typeof value === "string" && value) {
+    return { kind: value };
+  }
+  const record2 = asRecord(value);
+  const kind = firstString(record2 == null ? void 0 : record2.type) || "change";
+  const movePath = firstString(record2 == null ? void 0 : record2.move_path);
+  return {
+    kind,
+    ...movePath ? { movePath } : {}
+  };
+}
+function mergeFileChanges(previous, next) {
+  const previousChanges = normalizeFileChanges(previous);
+  const nextChanges = normalizeFileChanges(next);
+  if (previousChanges.length === 0) return nextChanges;
+  if (nextChanges.length === 0) return previousChanges;
+  const merged = /* @__PURE__ */ new Map();
+  for (const change of previousChanges) {
+    merged.set(fileChangeKey(change), change);
+  }
+  for (const change of nextChanges) {
+    const key = fileChangeKey(change);
+    const previousChange = merged.get(key);
+    merged.set(key, previousChange ? mergeFileChange(previousChange, change) : change);
+  }
+  return [...merged.values()];
+}
+function mergeFileChange(previous, next) {
+  return {
+    ...previous,
+    ...next,
+    ...typeof next.diff === "string" ? { diff: next.diff } : typeof previous.diff === "string" ? { diff: previous.diff } : {}
+  };
+}
+function fileChangeKey(change) {
+  return `${firstString(change.path)}\0${firstString(change.movePath)}`;
+}
+function formatFileChangeSummary(change) {
+  const record2 = asRecord(change);
+  const path24 = firstString(record2 == null ? void 0 : record2.path);
+  if (!record2 || !path24) {
+    return "";
+  }
+  const kind = firstString(record2.kind, record2.type) || "change";
+  return `${kind}: ${path24}`;
+}
+function readContentText(value) {
+  if (!Array.isArray(value)) {
+    return "";
+  }
+  return value.map((entry) => {
+    var _a3;
+    return firstString((_a3 = asRecord(entry)) == null ? void 0 : _a3.text);
+  }).join("");
+}
+function readAssistantMessageText(item) {
+  if (firstString(item.role) !== "assistant") {
+    return "";
+  }
+  return readContentText(item.content);
+}
+function normalizeAgentMessageCompletionText(text, streamedAssistantText) {
+  if (!text) {
+    return "";
+  }
+  if (!streamedAssistantText) {
+    return text;
+  }
+  if (text.startsWith(streamedAssistantText)) {
+    return text.slice(streamedAssistantText.length);
+  }
+  return text;
+}
 
 // src/providers/codex/runtime/CodexServerRequestRouter.ts
 var CodexServerRequestRouter = class {
@@ -69801,527 +70671,6 @@ function decodeCommandApprovalDecision(value) {
   }
 }
 
-// src/providers/codex/runtime/CodexSessionFileTail.ts
-var fs16 = __toESM(require("fs"));
-var DEFAULT_CONTEXT_WINDOW2 = 2e5;
-function getNonEmptyString(value, fallback) {
-  return typeof value === "string" && value.length > 0 ? value : fallback;
-}
-function isRecord6(value) {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-function stringifyPayloadValue(raw) {
-  try {
-    const result = JSON.stringify(raw);
-    return typeof result === "string" ? result : String(raw);
-  } catch (e2) {
-    return String(raw);
-  }
-}
-function extractResponseItemMessageText(raw) {
-  if (!Array.isArray(raw)) return "";
-  return raw.map((part) => isRecord6(part) && typeof part.text === "string" ? part.text : "").join("");
-}
-function extractTextFromParts(parts) {
-  return parts.map((part) => {
-    if (typeof part === "string") return part;
-    return isRecord6(part) && typeof part.text === "string" ? part.text : "";
-  }).join("");
-}
-function extractResponseItemReasoningText(raw) {
-  if (Array.isArray(raw.summary) && raw.summary.length > 0) {
-    return extractTextFromParts(raw.summary);
-  }
-  if (Array.isArray(raw.content) && raw.content.length > 0) {
-    return extractTextFromParts(raw.content);
-  }
-  return typeof raw.text === "string" ? raw.text : "";
-}
-function createSessionTailState(fallbackContextWindow = DEFAULT_CONTEXT_WINDOW2) {
-  return {
-    responseItemState: {
-      emittedToolUseIds: /* @__PURE__ */ new Set(),
-      emittedToolResultIds: /* @__PURE__ */ new Set(),
-      knownCalls: /* @__PURE__ */ new Map()
-    },
-    currentTurnId: null,
-    syntheticTurnCounter: 0,
-    modelContextWindow: fallbackContextWindow,
-    modelContextWindowIsAuthoritative: false,
-    lastTextByTurn: /* @__PURE__ */ new Map(),
-    lastThinkingByTurn: /* @__PURE__ */ new Map(),
-    pendingUsageByTurn: /* @__PURE__ */ new Map(),
-    emittedDoneByTurn: /* @__PURE__ */ new Set(),
-    emittedUsageByTurn: /* @__PURE__ */ new Set(),
-    callEnrichment: /* @__PURE__ */ new Map()
-  };
-}
-function emitDelta(fullText, lastSeenMap, turnId, chunkType) {
-  var _a3;
-  if (!fullText) return [];
-  const lastSeen = (_a3 = lastSeenMap.get(turnId)) != null ? _a3 : "";
-  if (fullText.length <= lastSeen.length) return [];
-  const delta = fullText.slice(lastSeen.length);
-  lastSeenMap.set(turnId, fullText);
-  return [{ type: chunkType, content: delta }];
-}
-function resolveTurnId(state, preferredTurnId) {
-  if (preferredTurnId) return preferredTurnId;
-  if (state.currentTurnId) return state.currentTurnId;
-  const id = `synthetic-turn-${state.syntheticTurnCounter}`;
-  state.syntheticTurnCounter += 1;
-  return id;
-}
-var reportedUnhandledSessionEventTypes = /* @__PURE__ */ new Set();
-function mapSessionFileEvent(event, sessionId, lineIndex, state) {
-  var _a3;
-  const eventType = event.type;
-  if (eventType === "event_msg") {
-    const payload = (_a3 = event.payload) != null ? _a3 : event;
-    return mapEventMsgEvent(payload, sessionId, state);
-  }
-  if (eventType === "response_item") {
-    return mapResponseItemEvent(event, sessionId, lineIndex, state);
-  }
-  if (eventType && !reportedUnhandledSessionEventTypes.has(eventType)) {
-    reportedUnhandledSessionEventTypes.add(eventType);
-  }
-  return [];
-}
-function mapEventMsgEvent(payload, sessionId, state) {
-  const payloadType = payload.type;
-  const info = isRecord6(payload.info) ? payload.info : {};
-  switch (payloadType) {
-    case "task_started": {
-      const turnId = getNonEmptyString(
-        info.id,
-        getNonEmptyString(payload.turn_id, `synthetic-turn-${state.syntheticTurnCounter++}`)
-      );
-      state.currentTurnId = turnId;
-      state.modelContextWindowIsAuthoritative = false;
-      if (typeof payload.model_context_window === "number" && payload.model_context_window > 0) {
-        state.modelContextWindow = payload.model_context_window;
-        state.modelContextWindowIsAuthoritative = true;
-      }
-      return [];
-    }
-    case "task_complete": {
-      const turnId = resolveTurnId(state, void 0);
-      const chunks = [];
-      if (!state.emittedUsageByTurn.has(turnId)) {
-        const pending = state.pendingUsageByTurn.get(turnId);
-        if (pending) {
-          const usage = buildUsageInfo2(
-            pending.contextTokens,
-            pending.contextWindow,
-            pending.contextWindowIsAuthoritative
-          );
-          chunks.push({ type: "usage", usage, sessionId });
-          state.emittedUsageByTurn.add(turnId);
-        }
-      }
-      if (!state.emittedDoneByTurn.has(turnId)) {
-        chunks.push({ type: "done" });
-        state.emittedDoneByTurn.add(turnId);
-      }
-      return chunks;
-    }
-    case "turn_aborted": {
-      const turnId = resolveTurnId(state, void 0);
-      const chunks = [];
-      if (!state.emittedDoneByTurn.has(turnId)) {
-        chunks.push({ type: "done" });
-        state.emittedDoneByTurn.add(turnId);
-      }
-      return chunks;
-    }
-    case "user_message":
-      return [];
-    case "agent_message": {
-      const turnId = resolveTurnId(state, void 0);
-      const fullText = typeof payload.text === "string" ? payload.text : typeof payload.message === "string" ? payload.message : "";
-      return emitDelta(fullText, state.lastTextByTurn, turnId, "text");
-    }
-    case "agent_reasoning": {
-      const turnId = resolveTurnId(state, void 0);
-      const fullText = typeof payload.text === "string" ? payload.text : "";
-      return emitDelta(fullText, state.lastThinkingByTurn, turnId, "thinking");
-    }
-    case "token_count": {
-      const turnId = resolveTurnId(state, void 0);
-      const lastTokenUsage = isRecord6(info.last_token_usage) ? info.last_token_usage : {};
-      const inputTokens = typeof lastTokenUsage.input_tokens === "number" ? lastTokenUsage.input_tokens : typeof lastTokenUsage.input === "number" ? lastTokenUsage.input : 0;
-      state.pendingUsageByTurn.set(turnId, {
-        contextTokens: inputTokens,
-        contextWindow: state.modelContextWindow,
-        contextWindowIsAuthoritative: state.modelContextWindowIsAuthoritative
-      });
-      return [];
-    }
-    case "exec_command_end": {
-      const callId = typeof payload.call_id === "string" ? payload.call_id : "";
-      if (callId) {
-        const exitCode = typeof payload.exit_code === "number" ? payload.exit_code : void 0;
-        state.callEnrichment.set(callId, {
-          ...state.callEnrichment.get(callId),
-          exitCode
-        });
-      }
-      return [];
-    }
-    case "patch_apply_end": {
-      const callId = typeof payload.call_id === "string" ? payload.call_id : "";
-      if (callId && typeof payload.success === "boolean" && !payload.success) {
-        state.callEnrichment.set(callId, {
-          ...state.callEnrichment.get(callId),
-          exitCode: 1
-        });
-      }
-      return [];
-    }
-    case "mcp_tool_call_end": {
-      const callId = typeof payload.call_id === "string" ? payload.call_id : "";
-      const invocation = isRecord6(payload.invocation) ? payload.invocation : {};
-      if (callId && typeof invocation.server === "string" && typeof invocation.tool === "string") {
-        state.callEnrichment.set(callId, {
-          ...state.callEnrichment.get(callId),
-          mcpServer: invocation.server,
-          mcpTool: invocation.tool
-        });
-        const known = state.responseItemState.knownCalls.get(callId);
-        if (known) {
-          known.toolName = `mcp__${invocation.server}__${invocation.tool}`;
-        }
-      }
-      return [];
-    }
-    case "web_search_end":
-    case "view_image_tool_call":
-    case "collab_agent_spawn_end":
-    case "collab_waiting_end":
-    case "collab_close_end":
-      return [];
-    default:
-      return [];
-  }
-}
-function mapResponseItemEvent(event, sessionId, lineIndex, state) {
-  var _a3, _b2, _c;
-  const payload = isRecord6(event.payload) ? event.payload : {};
-  const payloadType = payload.type;
-  const riState = state.responseItemState;
-  switch (payloadType) {
-    case "message": {
-      if (payload.role !== "assistant") return [];
-      const turnId = resolveTurnId(state, void 0);
-      const fullText = extractResponseItemMessageText(payload.content);
-      return emitDelta(fullText, state.lastTextByTurn, turnId, "text");
-    }
-    case "reasoning": {
-      const turnId = resolveTurnId(state, void 0);
-      const fullText = extractResponseItemReasoningText(payload);
-      return emitDelta(fullText, state.lastThinkingByTurn, turnId, "thinking");
-    }
-    case "function_call":
-    case "custom_tool_call": {
-      const callId = getNonEmptyString(payload.call_id, `tail-call-${lineIndex}`);
-      if (riState.emittedToolUseIds.has(callId)) return [];
-      riState.emittedToolUseIds.add(callId);
-      const rawName = typeof payload.name === "string" ? payload.name : void 0;
-      const rawArgs = typeof payload.arguments === "string" ? payload.arguments : typeof payload.input === "string" ? payload.input : void 0;
-      const parsedArgs = parseCodexArguments(rawArgs);
-      const enrichment = state.callEnrichment.get(callId);
-      const normalizedName = (enrichment == null ? void 0 : enrichment.mcpServer) && (enrichment == null ? void 0 : enrichment.mcpTool) ? `mcp__${enrichment.mcpServer}__${enrichment.mcpTool}` : normalizeCodexToolName(rawName);
-      const normalizedInput = normalizeCodexToolInput(rawName, parsedArgs);
-      riState.knownCalls.set(callId, { toolName: normalizedName, toolInput: normalizedInput });
-      return [{
-        type: "tool_use",
-        id: callId,
-        name: normalizedName,
-        input: normalizedInput
-      }];
-    }
-    case "web_search_call": {
-      const callId = getNonEmptyString(payload.call_id, `tail-ws-${lineIndex}`);
-      if (riState.emittedToolUseIds.has(callId)) return [];
-      riState.emittedToolUseIds.add(callId);
-      const input = normalizeCodexToolInput("web_search_call", {
-        action: (_a3 = payload.action) != null ? _a3 : {}
-      });
-      riState.knownCalls.set(callId, { toolName: "WebSearch", toolInput: input });
-      const chunks = [{
-        type: "tool_use",
-        id: callId,
-        name: "WebSearch",
-        input
-      }];
-      if (payload.status) {
-        riState.emittedToolResultIds.add(callId);
-        chunks.push({
-          type: "tool_result",
-          id: callId,
-          content: "Search complete",
-          isError: payload.status === "failed" || payload.status === "error"
-        });
-      }
-      return chunks;
-    }
-    case "mcp_tool_call": {
-      const callId = getNonEmptyString(payload.call_id, `tail-mcp-${lineIndex}`);
-      const normalizedName = normalizeCodexMcpToolName(payload.server, payload.tool);
-      const normalizedInput = normalizeCodexMcpToolInput(payload.arguments);
-      const normalizedState = normalizeCodexMcpToolState(payload.status, payload.result, payload.error);
-      const chunks = [];
-      riState.knownCalls.set(callId, { toolName: normalizedName, toolInput: normalizedInput });
-      if (!riState.emittedToolUseIds.has(callId)) {
-        riState.emittedToolUseIds.add(callId);
-        chunks.push({
-          type: "tool_use",
-          id: callId,
-          name: normalizedName,
-          input: normalizedInput
-        });
-      }
-      if (normalizedState.isTerminal && !riState.emittedToolResultIds.has(callId)) {
-        riState.emittedToolResultIds.add(callId);
-        chunks.push({
-          type: "tool_result",
-          id: callId,
-          content: (_b2 = normalizedState.result) != null ? _b2 : normalizedState.isError ? "Failed" : "Completed",
-          isError: normalizedState.isError
-        });
-      }
-      return chunks;
-    }
-    case "function_call_output":
-    case "custom_tool_call_output": {
-      const callId = getNonEmptyString(payload.call_id, `tail-out-${lineIndex}`);
-      if (riState.emittedToolResultIds.has(callId)) return [];
-      riState.emittedToolResultIds.add(callId);
-      const known = riState.knownCalls.get(callId);
-      const normalizedName = (_c = known == null ? void 0 : known.toolName) != null ? _c : "tool";
-      const enrichment = state.callEnrichment.get(callId);
-      if (Array.isArray(payload.output)) {
-        const imagePath = (known == null ? void 0 : known.toolInput) && typeof known.toolInput.file_path === "string" ? known.toolInput.file_path : "Image loaded";
-        return [{
-          type: "tool_result",
-          id: callId,
-          content: imagePath,
-          isError: false
-        }];
-      }
-      const rawOutput = typeof payload.output === "string" ? payload.output : stringifyPayloadValue(payload.output);
-      const content = normalizeCodexToolResult(normalizedName, rawOutput);
-      const isError = (enrichment == null ? void 0 : enrichment.exitCode) !== void 0 ? enrichment.exitCode !== 0 : isCodexToolOutputError(rawOutput);
-      return [{
-        type: "tool_result",
-        id: callId,
-        content,
-        isError
-      }];
-    }
-    default:
-      return [];
-  }
-}
-function buildUsageInfo2(contextTokens, contextWindow, contextWindowIsAuthoritative) {
-  return {
-    inputTokens: contextTokens,
-    cacheCreationInputTokens: 0,
-    cacheReadInputTokens: 0,
-    contextWindow,
-    contextWindowIsAuthoritative,
-    contextTokens,
-    percentage: contextWindow > 0 ? Math.min(100, Math.max(0, Math.round(contextTokens / contextWindow * 100))) : 0
-  };
-}
-function sleep(ms) {
-  return new Promise((resolve8) => window.setTimeout(resolve8, ms));
-}
-var CodexFileTailEngine = class {
-  constructor(sessionsDir, defaultContextWindow) {
-    this.sessionsDir = sessionsDir;
-    this.defaultContextWindow = defaultContextWindow;
-    this.tailSessionFile = null;
-    this.tailLineCursor = 0;
-    this.pendingEvents = [];
-    this.pollingActive = false;
-    this.pollPromise = null;
-    this.pollingError = null;
-    this.lastEventAt = 0;
-    this.lastPollAt = 0;
-    this.consecutiveReadFailures = 0;
-    this._turnCompleteEmitted = false;
-    this._usageEmitted = false;
-    this.tailState = createSessionTailState(defaultContextWindow);
-  }
-  get turnCompleteEmitted() {
-    return this._turnCompleteEmitted;
-  }
-  get usageEmitted() {
-    return this._usageEmitted;
-  }
-  async primeCursor(sessionId, sessionFilePath) {
-    const filePath = this.findSessionFile(sessionId, sessionFilePath);
-    if (!filePath) return false;
-    const lines = this.readFileLines(filePath);
-    this.tailLineCursor = lines.length;
-    return true;
-  }
-  startPolling(sessionId, sessionFilePath) {
-    const filePath = this.findSessionFile(sessionId, sessionFilePath);
-    if (!filePath) {
-      return false;
-    }
-    this.tailSessionFile = filePath;
-    this.pollingActive = true;
-    this.pollingError = null;
-    this.pollPromise = this.pollLoop(sessionId);
-    return true;
-  }
-  async stopPolling() {
-    this.pollingActive = false;
-    if (this.pollPromise) {
-      await this.pollPromise;
-      this.pollPromise = null;
-    }
-  }
-  async waitForSettle() {
-    const maxWait = 2500;
-    const checkInterval = 80;
-    const idleThreshold = 500;
-    const pollRecencyThreshold = 250;
-    const start = Date.now();
-    while (Date.now() - start < maxWait) {
-      const now = Date.now();
-      const idle = this.lastEventAt > 0 ? now - this.lastEventAt : now - start;
-      const pollRecent = this.lastPollAt > 0 && now - this.lastPollAt < pollRecencyThreshold;
-      if (idle >= idleThreshold && pollRecent) {
-        return;
-      }
-      await sleep(checkInterval);
-    }
-  }
-  collectPendingEvents() {
-    const events = this.pendingEvents;
-    this.pendingEvents = [];
-    return events;
-  }
-  consumePollingError() {
-    const error48 = this.pollingError;
-    this.pollingError = null;
-    return error48;
-  }
-  resetForNewTurn() {
-    this.tailState = createSessionTailState(this.defaultContextWindow);
-    this.pendingEvents = [];
-    this._turnCompleteEmitted = false;
-    this._usageEmitted = false;
-    this.pollingError = null;
-    this.lastEventAt = 0;
-    this.lastPollAt = 0;
-    this.consecutiveReadFailures = 0;
-  }
-  // -----------------------------------------------------------------------
-  // Private
-  // -----------------------------------------------------------------------
-  async pollLoop(sessionId) {
-    try {
-      while (this.pollingActive) {
-        const events = this.drainSessionFileEvents(sessionId);
-        if (events.length > 0) {
-          this.pendingEvents.push(...events);
-          this.lastEventAt = Date.now();
-          this.trackTailFlags(events);
-        }
-        this.lastPollAt = Date.now();
-        await sleep(100);
-      }
-      const finalEvents = this.drainSessionFileEvents(sessionId);
-      if (finalEvents.length > 0) {
-        this.pendingEvents.push(...finalEvents);
-        this.trackTailFlags(finalEvents);
-      }
-    } catch (error48) {
-      this.pollingError = error48 instanceof Error ? error48 : new Error(String(error48));
-      this.pollingActive = false;
-    } finally {
-      this.lastPollAt = Date.now();
-    }
-  }
-  drainSessionFileEvents(sessionId) {
-    if (!sessionId) return [];
-    const filePath = this.findSessionFile(sessionId);
-    if (!filePath) return [];
-    let lines;
-    try {
-      lines = this.readFileLines(filePath);
-      this.consecutiveReadFailures = 0;
-    } catch (e2) {
-      this.consecutiveReadFailures += 1;
-      if (this.consecutiveReadFailures >= 5) {
-        throw new Error(`CodexFileTailEngine: 5 consecutive read failures for ${filePath}`);
-      }
-      return [];
-    }
-    if (this.tailLineCursor > lines.length) {
-      this.tailLineCursor = 0;
-    }
-    if (this.tailLineCursor >= lines.length) return [];
-    const newLines = lines.slice(this.tailLineCursor);
-    const startIndex = this.tailLineCursor;
-    this.tailLineCursor = lines.length;
-    const chunks = [];
-    for (let i2 = 0; i2 < newLines.length; i2++) {
-      const line = newLines[i2];
-      if (!line.trim()) continue;
-      let parsed;
-      try {
-        parsed = JSON.parse(line);
-      } catch (e2) {
-        continue;
-      }
-      const mapped = mapSessionFileEvent(parsed, sessionId, startIndex + i2, this.tailState);
-      chunks.push(...mapped);
-    }
-    return chunks;
-  }
-  findSessionFile(sessionId, sessionFilePath) {
-    if (sessionFilePath && fs16.existsSync(sessionFilePath)) {
-      this.tailSessionFile = sessionFilePath;
-      return sessionFilePath;
-    }
-    if (this.tailSessionFile) {
-      try {
-        if (fs16.existsSync(this.tailSessionFile)) {
-          return this.tailSessionFile;
-        }
-      } catch (e2) {
-      }
-      this.tailSessionFile = null;
-    }
-    const filePath = findCodexSessionFile(sessionId, this.sessionsDir);
-    if (filePath) {
-      this.tailSessionFile = filePath;
-    }
-    return filePath;
-  }
-  readFileLines(filePath) {
-    const content = fs16.readFileSync(filePath, "utf-8");
-    return content.split("\n").filter((line) => line.trim());
-  }
-  trackTailFlags(events) {
-    for (const event of events) {
-      if (event.type === "done") {
-        this._turnCompleteEmitted = true;
-      }
-      if (event.type === "usage") {
-        this._usageEmitted = true;
-      }
-    }
-  }
-};
-
 // src/providers/codex/runtime/CodexSessionManager.ts
 var CodexSessionManager = class {
   constructor() {
@@ -70486,7 +70835,7 @@ var CodexChatRuntime = class {
     return shouldRebuild;
   }
   async *query(originalTurn, _conversationHistory, queryOptions) {
-    var _a3, _b2, _c, _d2, _e, _f, _g, _h, _i, _j2, _k, _l, _m, _n, _o, _p2, _q, _r, _s;
+    var _a3, _b2, _c, _d2, _e, _f, _g, _h, _i, _j2, _k, _l, _m, _n, _o, _p2, _q, _r;
     this.resetTurnMetadata();
     let turn = originalTurn;
     await this.ensureReady();
@@ -70496,11 +70845,6 @@ var CodexChatRuntime = class {
     this.chunkResolve = null;
     this.currentQueryThreadId = null;
     this.pendingTurnNotifications = [];
-    let tailEngine = null;
-    let tailDrainInterval = null;
-    let toolSourceMode = "fallback";
-    let tailDonePromise = null;
-    let transcriptSessionFilePath;
     const model = this.resolveModel(queryOptions);
     const promptSettings = this.getSystemPromptSettings();
     const promptText = buildSystemPrompt(promptSettings);
@@ -70511,84 +70855,8 @@ var CodexChatRuntime = class {
         this.chunkResolve = null;
       }
     };
-    const switchToLiveToolFallback = () => {
-      if (toolSourceMode === "fallback") {
-        return;
-      }
-      toolSourceMode = "fallback";
-      if (tailDrainInterval) {
-        window.clearInterval(tailDrainInterval);
-        tailDrainInterval = null;
-      }
-      if (tailEngine) {
-        void tailEngine.stopPolling().catch(() => {
-        });
-      }
-    };
-    const syncTailPollingState = () => {
-      if (!tailEngine) return null;
-      const tailError = tailEngine.consumePollingError();
-      if (tailError) {
-        switchToLiveToolFallback();
-        return tailError;
-      }
-      return null;
-    };
-    const drainTailToolChunks = () => {
-      if (!tailEngine) return;
-      if (toolSourceMode !== "transcript") return;
-      if (syncTailPollingState()) return;
-      const toolChunks = tailEngine.collectPendingEvents().filter(
-        (chunk) => chunk.type === "tool_use" || chunk.type === "tool_result"
-      );
-      for (const chunk of toolChunks) {
-        enqueueChunk(chunk);
-      }
-    };
-    const stopTailToolPolling = async () => {
-      if (tailDrainInterval) {
-        window.clearInterval(tailDrainInterval);
-        tailDrainInterval = null;
-      }
-      if (tailEngine) {
-        await tailEngine.stopPolling();
-      }
-    };
-    const flushTailToolsBeforeDone = () => {
-      if (toolSourceMode !== "transcript" || !tailEngine) {
-        enqueueChunk({ type: "done" });
-        return;
-      }
-      if (tailDonePromise) {
-        return;
-      }
-      tailDonePromise = (async () => {
-        try {
-          await tailEngine.waitForSettle();
-          if (syncTailPollingState()) {
-            return;
-          }
-          drainTailToolChunks();
-        } finally {
-          await stopTailToolPolling();
-          enqueueChunk({ type: "done" });
-        }
-      })();
-    };
     this.notificationRouter = new CodexNotificationRouter(
-      (chunk) => {
-        syncTailPollingState();
-        if (toolSourceMode === "transcript") {
-          if (chunk.type === "tool_use" || chunk.type === "tool_result") {
-            return;
-          }
-          if (chunk.type === "done") {
-            flushTailToolsBeforeDone();
-            return;
-          }
-        }
-        enqueueChunk(chunk);
-      },
+      (chunk) => enqueueChunk(chunk),
       (update) => this.recordTurnMetadata(update)
     );
     this.wireTransportHandlers();
@@ -70626,6 +70894,7 @@ var CodexChatRuntime = class {
           sandbox: permissionMode.sandbox,
           serviceTier: resolveCodexServiceTier(this.getProviderSettings().serviceTier, model != null ? model : DEFAULT_CODEX_PRIMARY_MODEL),
           baseInstructions: promptText,
+          experimentalRawEvents: true,
           persistExtendedHistory: true
         });
         if (numTurnsToRollback > 0) {
@@ -70662,6 +70931,7 @@ User: ${turn.prompt}`
           sandbox: permissionMode.sandbox,
           serviceTier: resolveCodexServiceTier(this.getProviderSettings().serviceTier, model != null ? model : DEFAULT_CODEX_PRIMARY_MODEL),
           baseInstructions: promptText,
+          experimentalRawEvents: true,
           persistExtendedHistory: true
         });
         threadId = resumeResult.thread.id;
@@ -70679,7 +70949,7 @@ User: ${turn.prompt}`
           sandbox: permissionMode.sandbox,
           serviceTier: resolveCodexServiceTier(this.getProviderSettings().serviceTier, model != null ? model : DEFAULT_CODEX_PRIMARY_MODEL),
           baseInstructions: promptText,
-          experimentalRawEvents: false,
+          experimentalRawEvents: true,
           persistExtendedHistory: true
         });
         threadId = startResult.thread.id;
@@ -70701,34 +70971,22 @@ User: ${turn.prompt}`
         );
         this.recordTurnMetadata({ wasSent: true });
       } else {
-        tailEngine = new CodexFileTailEngine(
-          (_j2 = this.resolveTranscriptRootHost(threadPath)) != null ? _j2 : path15.join(os10.homedir(), ".codex", "sessions"),
-          2e5
-        );
-        tailEngine.resetForNewTurn();
-        transcriptSessionFilePath = (_k = threadPath != null ? threadPath : this.session.getSessionFilePath()) != null ? _k : null;
-        const transcriptReady = await tailEngine.primeCursor(
-          threadId,
-          transcriptSessionFilePath != null ? transcriptSessionFilePath : void 0
-        );
-        if (transcriptReady) {
-          toolSourceMode = "transcript";
-        }
+        const sessionFilePathHint = (_j2 = threadPath != null ? threadPath : this.session.getSessionFilePath()) != null ? _j2 : null;
         const skillInputs = await this.resolveSkillInputs(turn.request.text);
         const turnInputBundle = this.buildInput(turn.prompt, turn.request.images, skillInputs);
         this.registerActiveInputBundle(turnInputBundle);
         const providerSettings = this.getProviderSettings();
-        const effort = (_l = EFFORT_MAP[providerSettings.effortLevel]) != null ? _l : "medium";
+        const effort = (_k = EFFORT_MAP[providerSettings.effortLevel]) != null ? _k : "medium";
         const resolvedModel = model != null ? model : DEFAULT_CODEX_PRIMARY_MODEL;
         const isPlanMode = providerSettings.permissionMode === "plan";
         const externalContextPaths = this.resolveExternalContextPaths(turn, queryOptions);
         const permissionMode = this.resolveSandboxConfig();
-        const transcriptRootTarget = (_o = (_n = (_m = this.runtimeContext) == null ? void 0 : _m.sessionsDirTarget) != null ? _n : deriveCodexSessionsRootFromSessionPath(threadTargetPath)) != null ? _o : this.resolveTranscriptRootTarget(threadPath != null ? threadPath : transcriptSessionFilePath);
+        const transcriptRootTarget = (_n = (_m = (_l = this.runtimeContext) == null ? void 0 : _l.sessionsDirTarget) != null ? _m : deriveCodexSessionsRootFromSessionPath(threadTargetPath)) != null ? _n : this.resolveTranscriptRootTarget(sessionFilePathHint);
         const sandboxPolicy = this.buildTurnSandboxPolicy(
           externalContextPaths,
           permissionMode.sandbox,
           transcriptRootTarget,
-          threadPath != null ? threadPath : transcriptSessionFilePath
+          sessionFilePathHint
         );
         const collaborationMode = {
           mode: isPlanMode ? "plan" : "default",
@@ -70740,7 +70998,7 @@ User: ${turn.prompt}`
         };
         const summary = getEffectiveCodexReasoningSummary(providerSettings, resolvedModel);
         const serviceTier = resolveCodexServiceTier(providerSettings.serviceTier, resolvedModel);
-        (_p2 = this.notificationRouter) == null ? void 0 : _p2.beginTurn({ isPlanTurn: isPlanMode });
+        (_o = this.notificationRouter) == null ? void 0 : _o.beginTurn({ isPlanTurn: isPlanMode });
         const turnResult = await this.transport.request("turn/start", {
           threadId,
           input: turnInputBundle.input,
@@ -70758,19 +71016,6 @@ User: ${turn.prompt}`
           wasSent: true
         });
         this.flushPendingTurnNotifications();
-        if (toolSourceMode === "transcript" && tailEngine) {
-          const transcriptPollingStarted = tailEngine.startPolling(
-            threadId,
-            transcriptSessionFilePath != null ? transcriptSessionFilePath : void 0
-          );
-          if (transcriptPollingStarted) {
-            tailDrainInterval = window.setInterval(() => {
-              drainTailToolChunks();
-            }, 50);
-          } else {
-            switchToLiveToolFallback();
-          }
-        }
       }
       while (true) {
         if (this.canceled) {
@@ -70809,11 +71054,7 @@ User: ${turn.prompt}`
       yield { type: "done" };
       return;
     } finally {
-      (_q = this.notificationRouter) == null ? void 0 : _q.endTurn();
-      if (!tailDonePromise) {
-        await stopTailToolPolling().catch(() => {
-        });
-      }
+      (_p2 = this.notificationRouter) == null ? void 0 : _p2.endTurn();
       this.cleanupActiveInputBundles();
       this.currentTurnId = null;
       this.currentQueryThreadId = null;
@@ -70823,7 +71064,7 @@ User: ${turn.prompt}`
         if (threadId) {
           const sessionFilePath = findCodexSessionFile(
             threadId,
-            (_s = this.resolveTranscriptRootHost((_r = this.session.getSessionFilePath()) != null ? _r : this.currentThreadPath)) != null ? _s : void 0
+            (_r = this.resolveTranscriptRootHost((_q = this.session.getSessionFilePath()) != null ? _q : this.currentThreadPath)) != null ? _r : void 0
           );
           if (sessionFilePath) {
             this.session.setThread(threadId, sessionFilePath);
@@ -70903,7 +71144,7 @@ User: ${turn.prompt}`
     this.teardownState();
     this.readyListeners.clear();
   }
-  async rewind(_userMessageId, _assistantMessageId) {
+  async rewind(_userMessageId, _assistantMessageId, _mode) {
     return { canRewind: false, error: "Codex does not support rewind" };
   }
   setApprovalCallback(callback) {
@@ -71073,7 +71314,10 @@ User: ${turn.prompt}`
       "turn/started",
       "serverRequest/resolved",
       "item/commandExecution/outputDelta",
-      "item/fileChange/outputDelta"
+      "item/fileChange/outputDelta",
+      "item/fileChange/patchUpdated",
+      "rawResponseItem/completed",
+      "event_msg"
     ];
     for (const method of methods) {
       this.transport.onNotification(method, (params) => {
@@ -71237,7 +71481,7 @@ User: ${turn.prompt}`
       const turnId2 = turn && typeof turn === "object" && typeof turn.id === "string" ? turn.id : null;
       return threadId && turnId2 ? { threadId, turnId: turnId2 } : null;
     }
-    const turnId = typeof notification.turnId === "string" ? notification.turnId : null;
+    const turnId = typeof notification.turnId === "string" ? notification.turnId : typeof notification.turn_id === "string" ? notification.turn_id : null;
     return threadId && turnId ? { threadId, turnId } : null;
   }
   async resolveSkillInputs(text) {
@@ -71277,19 +71521,19 @@ User: ${turn.prompt}`
         return;
       }
       try {
-        fs17.rmSync(tempDir, { recursive: true, force: true });
+        fs16.rmSync(tempDir, { recursive: true, force: true });
       } catch (e2) {
       }
     };
     try {
       if (images && images.length > 0) {
-        tempDir = fs17.mkdtempSync(path15.join(os10.tmpdir(), "claudian-codex-images-"));
+        tempDir = fs16.mkdtempSync(path15.join(os10.tmpdir(), "claudian-codex-images-"));
         for (let i2 = 0; i2 < images.length; i2++) {
           const img = images[i2];
           if (!img.mediaType.startsWith("image/")) continue;
           const filename = toAttachmentFilename(img, i2);
           const filePath = path15.join(tempDir, `${i2 + 1}-${filename}`);
-          fs17.writeFileSync(filePath, Buffer.from(img.data, "base64"));
+          fs16.writeFileSync(filePath, Buffer.from(img.data, "base64"));
           const targetFilePath = this.mapHostPathToTarget(filePath);
           if (!targetFilePath) {
             throw new Error(`Codex cannot access image attachment path from the selected target: ${filePath}`);
@@ -71509,7 +71753,7 @@ var OpencodeCommandCatalog = class {
 };
 
 // src/providers/opencode/runtime/OpencodeCliResolver.ts
-var fs18 = __toESM(require("node:fs"));
+var fs17 = __toESM(require("node:fs"));
 init_env();
 init_path();
 var OpencodeCliResolver = class {
@@ -71557,7 +71801,7 @@ function resolveConfiguredCliPath(cliPath) {
   }
   try {
     const expanded = expandHomePath(cliPath);
-    if (fs18.existsSync(expanded) && fs18.statSync(expanded).isFile()) {
+    if (fs17.existsSync(expanded) && fs17.statSync(expanded).isFile()) {
       return expanded;
     }
   } catch (e2) {
@@ -71855,7 +72099,7 @@ function isSupportedAgentFilePath(filePath) {
 }
 
 // src/providers/opencode/ui/OpencodeSettingsTab.ts
-var fs19 = __toESM(require("fs"));
+var fs18 = __toESM(require("fs"));
 var import_obsidian19 = require("obsidian");
 init_env();
 init_path();
@@ -72286,7 +72530,7 @@ var opencodeSettingsTabRenderer = {
         context.refreshModelSelectors();
       })
     );
-    const cliPathSetting = new import_obsidian19.Setting(container).setName(`CLI Path (${hostnameKey})`).setDesc("Optional absolute path to the OpenCode CLI for this computer. Leave empty to use `opencode` from PATH.");
+    const cliPathSetting = new import_obsidian19.Setting(container).setName("CLI path").setDesc("Optional absolute path to the OpenCode CLI for this computer. Leave empty to use `opencode` from PATH.");
     const validationEl = container.createDiv({
       cls: "claudian-cli-path-validation claudian-setting-validation claudian-setting-validation-error claudian-hidden"
     });
@@ -72296,10 +72540,10 @@ var opencodeSettingsTabRenderer = {
         return null;
       }
       const expandedPath = expandHomePath(trimmed);
-      if (!fs19.existsSync(expandedPath)) {
+      if (!fs18.existsSync(expandedPath)) {
         return "Path does not exist";
       }
-      const stat = fs19.statSync(expandedPath);
+      const stat = fs18.statSync(expandedPath);
       if (!stat.isFile()) {
         return "Path must point to a file";
       }
@@ -72739,7 +72983,7 @@ function buildEnrichedModels(discoveredModels, visibleModels) {
 }
 
 // src/providers/opencode/runtime/OpencodeChatRuntime.ts
-var fs22 = __toESM(require("node:fs/promises"));
+var fs21 = __toESM(require("node:fs/promises"));
 var path19 = __toESM(require("node:path"));
 init_env();
 init_path();
@@ -73855,7 +74099,7 @@ function toKnownToolName(value) {
   const normalized = value.trim().toLowerCase();
   return isKnownToolName(normalized) ? normalized : null;
 }
-function firstString(...values) {
+function firstString2(...values) {
   for (const value of values) {
     if (typeof value === "string") {
       return value;
@@ -74058,20 +74302,20 @@ function normalizeOpencodeToolInput(rawName, input) {
       return { questions: normalizeQuestionItems(input.questions) };
     case "read":
       return {
-        ...firstString(input.file_path, input.filePath) ? { file_path: firstString(input.file_path, input.filePath) } : {},
+        ...firstString2(input.file_path, input.filePath) ? { file_path: firstString2(input.file_path, input.filePath) } : {},
         ...typeof input.limit === "number" ? { limit: input.limit } : {},
         ...typeof input.offset === "number" ? { offset: input.offset } : {}
       };
     case "write":
       return {
         ...typeof input.content === "string" ? { content: input.content } : {},
-        ...firstString(input.file_path, input.filePath) ? { file_path: firstString(input.file_path, input.filePath) } : {}
+        ...firstString2(input.file_path, input.filePath) ? { file_path: firstString2(input.file_path, input.filePath) } : {}
       };
     case "edit":
       return {
-        ...firstString(input.file_path, input.filePath) ? { file_path: firstString(input.file_path, input.filePath) } : {},
-        ...firstString(input.old_string, input.oldString) ? { old_string: firstString(input.old_string, input.oldString) } : {},
-        ...firstString(input.new_string, input.newString) ? { new_string: firstString(input.new_string, input.newString) } : {},
+        ...firstString2(input.file_path, input.filePath) ? { file_path: firstString2(input.file_path, input.filePath) } : {},
+        ...firstString2(input.old_string, input.oldString) ? { old_string: firstString2(input.old_string, input.oldString) } : {},
+        ...firstString2(input.new_string, input.newString) ? { new_string: firstString2(input.new_string, input.newString) } : {},
         ...typeof input.replace_all === "boolean" ? { replace_all: input.replace_all } : typeof input.replaceAll === "boolean" ? { replace_all: input.replaceAll } : {}
       };
     case "task":
@@ -74097,8 +74341,8 @@ function normalizeOpencodeToolUseResult(rawName, input, rawOutput) {
   const knownName = toKnownToolName(rawName);
   const metadata = extractToolMetadata(rawOutput);
   const normalized = {};
-  if ((knownName === "write" || knownName === "edit") && firstString(input.file_path, input.filePath, metadata == null ? void 0 : metadata.filepath, metadata == null ? void 0 : metadata.filePath)) {
-    normalized.filePath = firstString(input.file_path, input.filePath, metadata == null ? void 0 : metadata.filepath, metadata == null ? void 0 : metadata.filePath);
+  if ((knownName === "write" || knownName === "edit") && firstString2(input.file_path, input.filePath, metadata == null ? void 0 : metadata.filepath, metadata == null ? void 0 : metadata.filePath)) {
+    normalized.filePath = firstString2(input.file_path, input.filePath, metadata == null ? void 0 : metadata.filepath, metadata == null ? void 0 : metadata.filePath);
   }
   if (knownName === "question") {
     const questions = Array.isArray(input.questions) ? input.questions : [];
@@ -74168,12 +74412,12 @@ function buildOpencodePromptBlocks(request, conversationHistory = []) {
 }
 
 // src/providers/opencode/runtime/OpencodeLaunchArtifacts.ts
-var fs21 = __toESM(require("node:fs/promises"));
+var fs20 = __toESM(require("node:fs/promises"));
 var path18 = __toESM(require("node:path"));
 init_path();
 
 // src/providers/opencode/runtime/OpencodePaths.ts
-var fs20 = __toESM(require("node:fs"));
+var fs19 = __toESM(require("node:fs"));
 var os11 = __toESM(require("node:os"));
 var path17 = __toESM(require("node:path"));
 var OPENCODE_APP_NAME = "opencode";
@@ -74203,7 +74447,7 @@ function resolveOpencodeDatabasePath(env = process.env) {
   }
   const candidates = getOpencodeDatabasePathCandidates(env);
   for (const candidate of candidates) {
-    if (fs20.existsSync(candidate)) {
+    if (fs19.existsSync(candidate)) {
       return candidate;
     }
   }
@@ -74215,12 +74459,12 @@ function resolveExistingOpencodeDatabasePath(preferredPath, env = process.env) {
     if (preferred === ":memory:") {
       return preferred;
     }
-    if (fs20.existsSync(preferred)) {
+    if (fs19.existsSync(preferred)) {
       return preferred;
     }
   }
   const resolved = resolveOpencodeDatabasePath(env);
-  if (resolved && (resolved === ":memory:" || fs20.existsSync(resolved))) {
+  if (resolved && (resolved === ":memory:" || fs19.existsSync(resolved))) {
     return resolved;
   }
   return preferred != null ? preferred : resolved;
@@ -74236,7 +74480,7 @@ function getOpencodeDatabasePathCandidates(env) {
   for (const dataDir of dataDirs) {
     pushCandidate(candidates, seen, path17.join(dataDir, DEFAULT_DATABASE_NAME));
     try {
-      const matches = fs20.readdirSync(dataDir).filter((entry) => DATABASE_NAME_PATTERN.test(entry)).sort((left, right) => {
+      const matches = fs19.readdirSync(dataDir).filter((entry) => DATABASE_NAME_PATTERN.test(entry)).sort((left, right) => {
         if (left === DEFAULT_DATABASE_NAME) return -1;
         if (right === DEFAULT_DATABASE_NAME) return 1;
         return left.localeCompare(right);
@@ -74314,7 +74558,7 @@ async function prepareOpencodeLaunchArtifacts(params) {
   )}
 `;
   const databasePath = resolveOpencodeDatabasePath(params.runtimeEnv);
-  await fs21.mkdir(artifactsDir, { recursive: true });
+  await fs20.mkdir(artifactsDir, { recursive: true });
   await writeIfChanged(systemPromptPath, systemPrompt);
   await writeIfChanged(configPath, configContent);
   return {
@@ -74361,13 +74605,13 @@ function buildOpencodeManagedConfig(baseConfig, systemPromptPath, userName, mana
 }
 async function writeIfChanged(filePath, content) {
   try {
-    const existing = await fs21.readFile(filePath, "utf-8");
+    const existing = await fs20.readFile(filePath, "utf-8");
     if (existing === content) {
       return;
     }
   } catch (e2) {
   }
-  await fs21.writeFile(filePath, content, "utf-8");
+  await fs20.writeFile(filePath, content, "utf-8");
 }
 async function loadOpencodeBaseConfig(configuredPath, workspaceRoot) {
   const trimmedPath = configuredPath == null ? void 0 : configuredPath.trim();
@@ -74377,7 +74621,7 @@ async function loadOpencodeBaseConfig(configuredPath, workspaceRoot) {
   const expandedPath = expandHomePath(trimmedPath);
   const resolvedPath = path18.isAbsolute(expandedPath) ? expandedPath : path18.resolve(workspaceRoot, expandedPath);
   try {
-    const rawConfig = await fs21.readFile(resolvedPath, "utf8");
+    const rawConfig = await fs20.readFile(resolvedPath, "utf8");
     const parsedConfig = JSON.parse(rawConfig);
     return isPlainObject5(parsedConfig) ? parsedConfig : {};
   } catch (e2) {
@@ -74729,7 +74973,7 @@ var OpencodeChatRuntime = class {
     (_a3 = this.activeTurn) == null ? void 0 : _a3.queue.close();
     void this.shutdownProcess();
   }
-  async rewind(_userMessageId, _assistantMessageId) {
+  async rewind(_userMessageId, _assistantMessageId, _mode) {
     return { canRewind: false };
   }
   setApprovalCallback(callback) {
@@ -75259,7 +75503,7 @@ var OpencodeChatRuntime = class {
   async readTextFile(request) {
     var _a3;
     const resolvedPath = this.resolveSessionPath(request.sessionId, request.path);
-    const content = await fs22.readFile(resolvedPath, "utf-8");
+    const content = await fs21.readFile(resolvedPath, "utf-8");
     if (request.line === void 0 && request.limit === void 0) {
       return { content };
     }
@@ -75272,8 +75516,8 @@ var OpencodeChatRuntime = class {
   }
   async writeTextFile(request) {
     const resolvedPath = this.resolveSessionPath(request.sessionId, request.path);
-    await fs22.mkdir(path19.dirname(resolvedPath), { recursive: true });
-    await fs22.writeFile(resolvedPath, request.content, "utf-8");
+    await fs21.mkdir(path19.dirname(resolvedPath), { recursive: true });
+    await fs21.writeFile(resolvedPath, request.content, "utf-8");
     return {};
   }
   resolveSessionPath(sessionId, rawPath) {
@@ -75579,7 +75823,7 @@ function maybeGetOpencodeWorkspaceServices() {
 }
 
 // src/providers/opencode/runtime/OpencodeAuxQueryRunner.ts
-var fs23 = __toESM(require("node:fs/promises"));
+var fs22 = __toESM(require("node:fs/promises"));
 var path20 = __toESM(require("node:path"));
 init_path();
 
@@ -75587,7 +75831,7 @@ init_path();
 var OPENCODE_MODELS = [
   { value: OPENCODE_SYNTHETIC_MODEL_ID, label: "OpenCode", description: "ACP runtime" }
 ];
-var DEFAULT_CONTEXT_WINDOW3 = 2e5;
+var DEFAULT_CONTEXT_WINDOW2 = 2e5;
 var OPENCODE_PERMISSION_MODE_TOGGLE = {
   inactiveValue: "normal",
   inactiveLabel: "Safe",
@@ -75692,7 +75936,7 @@ var opencodeChatUIConfig = {
   },
   getContextWindowSize(model, customLimits) {
     var _a3;
-    return (_a3 = customLimits == null ? void 0 : customLimits[model]) != null ? _a3 : DEFAULT_CONTEXT_WINDOW3;
+    return (_a3 = customLimits == null ? void 0 : customLimits[model]) != null ? _a3 : DEFAULT_CONTEXT_WINDOW2;
   },
   isDefaultModel(model) {
     return isOpencodeModelSelectionId(model);
@@ -76020,7 +76264,7 @@ ${stderr}` : message,
   async readTextFile(request) {
     var _a3;
     const resolvedPath = this.resolveSessionPath(request.sessionId, request.path);
-    const content = await fs23.readFile(resolvedPath, "utf-8");
+    const content = await fs22.readFile(resolvedPath, "utf-8");
     if (request.line === void 0 && request.limit === void 0) {
       return { content };
     }
@@ -76304,10 +76548,10 @@ var opencodeSettingsReconciler = {
 
 // src/providers/opencode/history/OpencodeHistoryStore.ts
 var import_node_child_process2 = require("node:child_process");
-var fs24 = __toESM(require("node:fs"));
+var fs23 = __toESM(require("node:fs"));
 async function loadOpencodeSessionMessages(sessionId, providerState) {
   const databasePath = resolveExistingOpencodeDatabasePath(providerState == null ? void 0 : providerState.databasePath);
-  if (!databasePath || databasePath === ":memory:" || !fs24.existsSync(databasePath)) {
+  if (!databasePath || databasePath === ":memory:" || !fs23.existsSync(databasePath)) {
     return [];
   }
   const rows = await loadOpencodeSessionRows(databasePath, sessionId);
@@ -76725,7 +76969,7 @@ var import_obsidian47 = require("obsidian");
 
 // src/app/storage/SharedStorageService.ts
 var import_obsidian20 = require("obsidian");
-function isRecord7(value) {
+function isRecord6(value) {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 var SharedStorageService = class {
@@ -76746,7 +76990,7 @@ var SharedStorageService = class {
   async setTabManagerState(state) {
     try {
       const loaded = await this.plugin.loadData();
-      const data = isRecord7(loaded) ? loaded : {};
+      const data = isRecord6(loaded) ? loaded : {};
       data.tabManagerState = state;
       await this.plugin.saveData(data);
     } catch (e2) {
@@ -76756,7 +77000,7 @@ var SharedStorageService = class {
   async getTabManagerState() {
     try {
       const data = await this.plugin.loadData();
-      if (!isRecord7(data) || !data.tabManagerState) {
+      if (!isRecord6(data) || !data.tabManagerState) {
         return null;
       }
       return this.validateTabManagerState(data.tabManagerState);
@@ -77884,7 +78128,7 @@ var ConversationController = class {
       state.isSwitchingConversation = false;
     }
   }
-  async rewind(userMessageId) {
+  async rewind(userMessageId, mode = "code-and-conversation") {
     var _a3, _b2, _c;
     const { plugin, state, renderer } = this.deps;
     const agentServiceForCheck = this.getAgentService();
@@ -77915,7 +78159,7 @@ var ConversationController = class {
     const prevAssistantUuid = rewindCtx.prevAssistantUuid;
     const confirmed = await confirm(
       plugin.app,
-      t("chat.rewind.confirmMessage"),
+      mode === "conversation" ? t("chat.rewind.confirmMessageConversationOnly") : t("chat.rewind.confirmMessage"),
       t("chat.rewind.confirmButton")
     );
     if (!confirmed) return;
@@ -77930,7 +78174,7 @@ var ConversationController = class {
     }
     let result;
     try {
-      result = await agentService.rewind(userMsg.userMessageId, prevAssistantUuid);
+      result = await agentService.rewind(userMsg.userMessageId, prevAssistantUuid, mode);
     } catch (e2) {
       new import_obsidian21.Notice(t("chat.rewind.failed", { error: e2 instanceof Error ? e2.message : "Unknown error" }));
       return;
@@ -77954,10 +78198,14 @@ var ConversationController = class {
       saveError = e2 instanceof Error ? e2.message : "Failed to save";
     }
     if (saveError) {
-      new import_obsidian21.Notice(t("chat.rewind.noticeSaveFailed", { count: String(filesChanged), error: saveError }));
+      new import_obsidian21.Notice(
+        mode === "conversation" ? t("chat.rewind.noticeConversationOnlySaveFailed", { error: saveError }) : t("chat.rewind.noticeSaveFailed", { count: String(filesChanged), error: saveError })
+      );
       return;
     }
-    new import_obsidian21.Notice(t("chat.rewind.notice", { count: String(filesChanged) }));
+    new import_obsidian21.Notice(
+      mode === "conversation" ? t("chat.rewind.noticeConversationOnly") : t("chat.rewind.notice", { count: String(filesChanged) })
+    );
   }
   /**
    * Saves the current conversation.
@@ -79490,7 +79738,7 @@ var InlineAskUserQuestion = class {
 };
 
 // src/features/chat/rendering/InlineExitPlanMode.ts
-var fs25 = __toESM(require("fs"));
+var fs24 = __toESM(require("fs"));
 var nodePath = __toESM(require("path"));
 var HINTS_TEXT2 = "Arrow keys to navigate \xB7 Enter to select \xB7 Esc to cancel";
 var InlineExitPlanMode = class {
@@ -79605,7 +79853,7 @@ var InlineExitPlanMode = class {
       return null;
     }
     try {
-      const content = fs25.readFileSync(planFilePath, "utf-8");
+      const content = fs24.readFileSync(planFilePath, "utf-8");
       return content.trim() || null;
     } catch (err) {
       this.planReadError = err instanceof Error ? err.message : "unknown error";
@@ -79918,6 +80166,19 @@ function getToolIcon(toolName) {
 }
 
 // src/features/chat/rendering/DiffRenderer.ts
+function renderDiffStats(statsEl, stats) {
+  if (stats.added > 0) {
+    const addedEl = statsEl.createSpan({ cls: "added" });
+    addedEl.setText(`+${stats.added}`);
+  }
+  if (stats.removed > 0) {
+    if (stats.added > 0) {
+      statsEl.createSpan({ text: " " });
+    }
+    const removedEl = statsEl.createSpan({ cls: "removed" });
+    removedEl.setText(`-${stats.removed}`);
+  }
+}
 function splitIntoHunks(diffLines, contextLines = 3) {
   if (diffLines.length === 0) return [];
   const changedIndices = [];
@@ -80420,31 +80681,12 @@ function renderWebFetchExpanded(container, result) {
 function renderApplyPatchExpanded(container, input, result) {
   var _a3;
   const patchText = typeof input.patch === "string" ? input.patch : "";
-  const parsedDiffs = patchText ? parseApplyPatchDiffs(patchText) : [];
+  const parsedDiffs = getApplyPatchFileDiffs(input);
   if (result && /verification failed|^[Ee]rror:/.test(result.trim())) {
     renderLinesExpanded(container, result, 20);
   }
   if (parsedDiffs.length > 0) {
-    for (const fileDiff of parsedDiffs) {
-      const sectionEl = container.createDiv({ cls: "claudian-tool-patch-section" });
-      const statsSuffix = fileDiff.stats.added || fileDiff.stats.removed ? ` (+${fileDiff.stats.added} -${fileDiff.stats.removed})` : "";
-      const pathText = fileDiff.movedTo ? `${fileDiff.filePath} -> ${fileDiff.movedTo}` : fileDiff.filePath;
-      sectionEl.createDiv({
-        cls: "claudian-tool-patch-header",
-        text: `${fileDiff.operation}: ${pathText}${statsSuffix}`
-      });
-      if (fileDiff.operation === "delete" && fileDiff.diffLines.length === 0) {
-        sectionEl.createDiv({ cls: "claudian-tool-empty", text: "File deleted" });
-        continue;
-      }
-      if (fileDiff.diffLines.length === 0) {
-        sectionEl.createDiv({ cls: "claudian-tool-empty", text: "No textual diff available" });
-        continue;
-      }
-      const diffRow = sectionEl.createDiv({ cls: "claudian-write-edit-diff-row" });
-      const diffEl = diffRow.createDiv({ cls: "claudian-write-edit-diff" });
-      renderDiffContent(diffEl, fileDiff.diffLines);
-    }
+    renderApplyPatchDiffSections(container, parsedDiffs);
     return;
   }
   const changes = Array.isArray(input.changes) ? input.changes : [];
@@ -80454,9 +80696,10 @@ function renderApplyPatchExpanded(container, input, result) {
       if (!change || typeof change !== "object" || Array.isArray(change)) continue;
       const changeRecord = change;
       const path24 = typeof changeRecord.path === "string" ? changeRecord.path : "";
-      const kind = typeof changeRecord.kind === "string" ? changeRecord.kind : "change";
       if (!path24) continue;
-      linesEl.createDiv({ cls: "claudian-tool-line", text: `${kind}: ${path24}` });
+      const movedTo = readMoveTarget(changeRecord.kind);
+      const pathText = movedTo ? `${path24} -> ${movedTo}` : path24;
+      linesEl.createDiv({ cls: "claudian-tool-line", text: pathText });
     }
     return;
   }
@@ -80481,6 +80724,49 @@ function renderApplyPatchExpanded(container, input, result) {
     return;
   }
   container.createDiv({ cls: "claudian-tool-empty", text: "No result" });
+}
+function renderApplyPatchDiffSections(container, fileDiffs) {
+  for (const fileDiff of fileDiffs) {
+    const sectionEl = container.createDiv({ cls: "claudian-tool-patch-section" });
+    if (fileDiff.operation === "delete" && fileDiff.diffLines.length === 0) {
+      sectionEl.createDiv({ cls: "claudian-tool-empty", text: "File deleted" });
+      continue;
+    }
+    if (fileDiff.diffLines.length === 0) {
+      sectionEl.createDiv({ cls: "claudian-tool-empty", text: "No textual diff available" });
+      continue;
+    }
+    const diffRow = sectionEl.createDiv({ cls: "claudian-write-edit-diff-row" });
+    const diffEl = diffRow.createDiv({ cls: "claudian-write-edit-diff" });
+    renderDiffContent(diffEl, fileDiff.diffLines);
+  }
+}
+function readMoveTarget(kind) {
+  if (!kind || typeof kind !== "object" || Array.isArray(kind)) {
+    return void 0;
+  }
+  const record2 = kind;
+  return typeof record2.move_path === "string" ? record2.move_path : void 0;
+}
+function getApplyPatchFileDiffs(input) {
+  const patchText = typeof input.patch === "string" ? input.patch : "";
+  const parsedDiffs = patchText ? parseApplyPatchDiffs(patchText) : [];
+  return parsedDiffs.length > 0 ? parsedDiffs : parseFileUpdateChangeDiffs(input.changes);
+}
+function getApplyPatchDiffStats(input) {
+  const fileDiffs = getApplyPatchFileDiffs(input);
+  if (fileDiffs.length === 0) return void 0;
+  const stats = fileDiffs.reduce(
+    (acc, fileDiff) => ({
+      added: acc.added + fileDiff.stats.added,
+      removed: acc.removed + fileDiff.stats.removed
+    }),
+    { added: 0, removed: 0 }
+  );
+  return stats.added > 0 || stats.removed > 0 ? stats : void 0;
+}
+function getDiffStatsAriaLabel(stats) {
+  return `Changes: +${stats.added} -${stats.removed}`;
 }
 function renderAgentLifecycleExpanded(container, result) {
   const trimmed = result.trim();
@@ -80510,7 +80796,7 @@ function formatToolDisplayValue(value) {
   return JSON.stringify(value);
 }
 function renderExpandedContent(container, toolName, result, input = {}) {
-  if (!result && toolName !== TOOL_WEB_SEARCH && toolName !== TOOL_BASH) {
+  if (!result && toolName !== TOOL_WEB_SEARCH && toolName !== TOOL_BASH && toolName !== TOOL_APPLY_PATCH) {
     container.createDiv({ cls: "claudian-tool-empty", text: "No result" });
     return;
   }
@@ -80588,6 +80874,25 @@ function setToolStatus(statusEl, status) {
   resetStatusElement(statusEl, `status-${status}`, `Status: ${status}`);
   const icon = STATUS_ICONS[status];
   if (icon) (0, import_obsidian25.setIcon)(statusEl, icon);
+}
+function setApplyPatchHeaderRight(statusEl, toolCall) {
+  const isError = toolCall.status === "error" || toolCall.status === "blocked";
+  const stats = isError ? void 0 : getApplyPatchDiffStats(toolCall.input);
+  if (!stats) {
+    setToolStatus(statusEl, toolCall.status);
+    return;
+  }
+  statusEl.className = "claudian-tool-status claudian-write-edit-stats";
+  statusEl.empty();
+  statusEl.setAttribute("aria-label", getDiffStatsAriaLabel(stats));
+  renderDiffStats(statusEl, stats);
+}
+function setGenericToolHeaderRight(statusEl, toolCall) {
+  if (toolCall.name === TOOL_APPLY_PATCH) {
+    setApplyPatchHeaderRight(statusEl, toolCall);
+    return;
+  }
+  setToolStatus(statusEl, toolCall.status);
 }
 function renderTodoWriteResult(container, input) {
   container.empty();
@@ -80773,8 +81078,7 @@ function renderToolCall(parentEl, toolCall, toolCallElements) {
   const { toolEl, header, statusEl, content, currentTaskEl } = createToolElementStructure(parentEl, toolCall);
   toolEl.dataset.toolId = toolCall.id;
   toolCallElements.set(toolCall.id, toolEl);
-  statusEl.addClass(`status-${toolCall.status}`);
-  statusEl.setAttribute("aria-label", `Status: ${toolCall.status}`);
+  setGenericToolHeaderRight(statusEl, toolCall);
   renderToolContent(content, toolCall, "Running...");
   const state = { isExpanded: false };
   toolCall.isExpanded = false;
@@ -80813,7 +81117,7 @@ function updateToolCallResult(toolId, toolCall, toolCallElements) {
   }
   const statusEl = toolEl.querySelector(".claudian-tool-status");
   if (statusEl) {
-    setToolStatus(statusEl, toolCall.status);
+    setGenericToolHeaderRight(statusEl, toolCall);
   }
   if (toolCall.name === TOOL_ASK_USER_QUESTION) {
     const content2 = toolEl.querySelector(".claudian-tool-content");
@@ -80836,7 +81140,7 @@ function renderStoredToolCall(parentEl, toolCall) {
   if (toolCall.name === TOOL_TODO_WRITE) {
     setTodoWriteStatus(statusEl, toolCall.input);
   } else {
-    setToolStatus(statusEl, toolCall.status);
+    setGenericToolHeaderRight(statusEl, toolCall);
   }
   renderToolContent(content, toolCall);
   const state = { isExpanded: false };
@@ -83193,19 +83497,6 @@ function shortenPath2(filePath, maxLength = 40) {
   }
   return `${firstDir}/.../${filename}`;
 }
-function renderDiffStats(statsEl, stats) {
-  if (stats.added > 0) {
-    const addedEl = statsEl.createSpan({ cls: "added" });
-    addedEl.setText(`+${stats.added}`);
-  }
-  if (stats.removed > 0) {
-    if (stats.added > 0) {
-      statsEl.createSpan({ text: " " });
-    }
-    const removedEl = statsEl.createSpan({ cls: "removed" });
-    removedEl.setText(`-${stats.removed}`);
-  }
-}
 function createWriteEditBlock(parentEl, toolCall) {
   const filePath = toolCall.input.file_path || "file";
   const toolName = toolCall.name;
@@ -84895,6 +85186,9 @@ var MessageRenderer = class {
         return;
       }
     }
+    if (msg.role === "assistant" && !this.hasVisibleContent(msg)) {
+      return;
+    }
     const msgEl = this.messagesEl.createDiv({
       cls: `claudian-message claudian-message-${msg.role}`,
       attr: {
@@ -84926,9 +85220,21 @@ var MessageRenderer = class {
     }
   }
   hasVisibleContent(msg) {
+    var _a3, _b2;
     if (msg.content && msg.content.trim().length > 0) return true;
-    if (msg.toolCalls && msg.toolCalls.length > 0) return true;
-    if (msg.contentBlocks && msg.contentBlocks.length > 0) return true;
+    if (msg.contentBlocks && msg.contentBlocks.length > 0) {
+      for (const block of msg.contentBlocks) {
+        if (block.type === "thinking" && block.content.trim().length > 0) return true;
+        if (block.type === "text" && block.content.trim().length > 0) return true;
+        if (block.type === "context_compacted") return true;
+        if (block.type === "subagent") return true;
+        if (block.type === "tool_use") {
+          const toolCall = (_a3 = msg.toolCalls) == null ? void 0 : _a3.find((tc) => tc.id === block.toolId);
+          if (toolCall && this.shouldRenderToolCall(toolCall)) return true;
+        }
+      }
+    }
+    if ((_b2 = msg.toolCalls) == null ? void 0 : _b2.some((toolCall) => this.shouldRenderToolCall(toolCall))) return true;
     return false;
   }
   isRewindEligible(allMessages, index) {
@@ -85024,9 +85330,8 @@ var MessageRenderer = class {
    * and Codex collab agent lifecycle tools.
    */
   renderToolCall(contentEl, toolCall, msg) {
+    if (!this.shouldRenderToolCall(toolCall)) return;
     const subagentLifecycleAdapter = this.getSubagentLifecycleAdapter(toolCall.name);
-    if (toolCall.name === TOOL_AGENT_OUTPUT) return;
-    if (subagentLifecycleAdapter == null ? void 0 : subagentLifecycleAdapter.isHiddenTool(toolCall.name)) return;
     if (isWriteEditTool(toolCall.name)) {
       renderStoredWriteEdit(contentEl, toolCall);
     } else if (isSubagentToolName(toolCall.name)) {
@@ -85036,6 +85341,17 @@ var MessageRenderer = class {
     } else {
       renderStoredToolCall(contentEl, toolCall);
     }
+  }
+  shouldRenderToolCall(toolCall) {
+    if (toolCall.name === TOOL_AGENT_OUTPUT) return false;
+    if (toolCall.name === TOOL_WRITE_STDIN && this.isSilentWriteStdinTool(toolCall)) return false;
+    if (toolCall.name === "custom_tool_call_output") return false;
+    const subagentLifecycleAdapter = this.getSubagentLifecycleAdapter(toolCall.name);
+    if (subagentLifecycleAdapter == null ? void 0 : subagentLifecycleAdapter.isHiddenTool(toolCall.name)) return false;
+    return true;
+  }
+  isSilentWriteStdinTool(toolCall) {
+    return typeof toolCall.input.chars !== "string" || toolCall.input.chars.length === 0;
   }
   renderTaskSubagent(contentEl, toolCall, modeHint) {
     const subagentInfo = this.resolveTaskSubagent(toolCall, modeHint);
@@ -85344,13 +85660,28 @@ var MessageRenderer = class {
     btn.setAttribute("aria-label", t("chat.rewind.ariaLabel"));
     btn.addEventListener("click", (e2) => {
       e2.stopPropagation();
-      runRendererAction(async () => {
-        var _a3;
-        try {
-          await ((_a3 = this.rewindCallback) == null ? void 0 : _a3.call(this, messageId));
-        } catch (err) {
-          new import_obsidian31.Notice(t("chat.rewind.failed", { error: err instanceof Error ? err.message : "Unknown error" }));
-        }
+      this.showRewindMenu(e2, messageId);
+    });
+  }
+  showRewindMenu(event, messageId) {
+    const menu = new import_obsidian31.Menu();
+    this.addRewindMenuItem(menu, messageId, "conversation");
+    this.addRewindMenuItem(menu, messageId, "code-and-conversation");
+    menu.showAtMouseEvent(event);
+  }
+  addRewindMenuItem(menu, messageId, mode) {
+    menu.addItem((item) => {
+      item.setTitle(
+        mode === "conversation" ? t("chat.rewind.menuConversationOnly") : t("chat.rewind.menuCodeAndConversation")
+      ).setIcon(mode === "conversation" ? "message-square" : "rotate-ccw").onClick(() => {
+        runRendererAction(async () => {
+          var _a3;
+          try {
+            await ((_a3 = this.rewindCallback) == null ? void 0 : _a3.call(this, messageId, mode));
+          } catch (err) {
+            new import_obsidian31.Notice(t("chat.rewind.failed", { error: err instanceof Error ? err.message : "Unknown error" }));
+          }
+        });
       });
     });
   }
@@ -85436,13 +85767,13 @@ var BangBashService = class {
 var import_fs6 = require("fs");
 var import_os4 = require("os");
 var import_path29 = require("path");
-function isRecord8(value) {
+function isRecord7(value) {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 function parseJsonRecord(value) {
   try {
     const parsed = JSON.parse(value);
-    return isRecord8(parsed) ? parsed : null;
+    return isRecord7(parsed) ? parsed : null;
   } catch (e2) {
     return null;
   }
@@ -85906,7 +86237,7 @@ var _SubagentManager = class _SubagentManager {
         return directAgentId;
       }
       const taskRecord = parsed.task;
-      if (isRecord8(taskRecord)) {
+      if (isRecord7(taskRecord)) {
         return this.extractAgentIdFromRecord(taskRecord);
       }
     }
@@ -86001,13 +86332,13 @@ var _SubagentManager = class _SubagentManager {
     const parsed = parseJsonRecord(payload);
     if (parsed) {
       const status = (_a3 = parsed.retrieval_status) != null ? _a3 : parsed.status;
-      const agents = isRecord8(parsed.agents) ? parsed.agents : null;
+      const agents = isRecord7(parsed.agents) ? parsed.agents : null;
       const hasAgents = agents !== null && Object.keys(agents).length > 0;
       if (status === "not_ready" || status === "running" || status === "pending") {
         return true;
       }
       if (hasAgents && agents) {
-        const agentStatuses = Object.values(agents).map((agent) => isRecord8(agent) && typeof agent.status === "string" ? agent.status.toLowerCase() : "");
+        const agentStatuses = Object.values(agents).map((agent) => isRecord7(agent) && typeof agent.status === "string" ? agent.status.toLowerCase() : "");
         const anyRunning = agentStatuses.some(
           (s4) => s4 === "running" || s4 === "pending" || s4 === "not_ready"
         );
@@ -86048,9 +86379,9 @@ var _SubagentManager = class _SubagentManager {
       if (taskResult) {
         return taskResult;
       }
-      const agents = isRecord8(parsed.agents) ? parsed.agents : null;
+      const agents = isRecord7(parsed.agents) ? parsed.agents : null;
       const agentData = agents && agentId ? agents[agentId] : null;
-      if (isRecord8(agentData)) {
+      if (isRecord7(agentData)) {
         const parsedResult2 = this.extractResultFromCandidateString(agentData.result);
         if (parsedResult2) {
           return parsedResult2;
@@ -86065,7 +86396,7 @@ var _SubagentManager = class _SubagentManager {
         const agentIds = Object.keys(agents);
         if (agentIds.length > 0) {
           const firstAgent = agents[agentIds[0]];
-          if (isRecord8(firstAgent)) {
+          if (isRecord7(firstAgent)) {
             const parsedResult2 = this.extractResultFromCandidateString(firstAgent.result);
             if (parsedResult2) {
               return parsedResult2;
@@ -86140,7 +86471,7 @@ var _SubagentManager = class _SubagentManager {
         return agentId;
       }
       const data = parsed.data;
-      if (isRecord8(data) && typeof data.agent_id === "string") {
+      if (isRecord7(data) && typeof data.agent_id === "string") {
         return data.agent_id;
       }
       if (parsed.id && typeof parsed.id === "string") {
@@ -86153,7 +86484,7 @@ var _SubagentManager = class _SubagentManager {
     var _a3;
     const parsed = parseJsonRecord(result);
     if (parsed) {
-      const agents = isRecord8(parsed.agents) ? parsed.agents : null;
+      const agents = isRecord7(parsed.agents) ? parsed.agents : null;
       if (agents) {
         return (_a3 = Object.keys(agents)[0]) != null ? _a3 : null;
       }
@@ -86164,9 +86495,9 @@ var _SubagentManager = class _SubagentManager {
     const parsed = parseJsonValue(raw);
     if (parsed !== null) {
       if (Array.isArray(parsed)) {
-        const textBlock = parsed.find((block) => isRecord8(block) && typeof block.text === "string");
-        if (isRecord8(textBlock) && typeof textBlock.text === "string") return textBlock.text;
-      } else if (isRecord8(parsed) && typeof parsed.text === "string") {
+        const textBlock = parsed.find((block) => isRecord7(block) && typeof block.text === "string");
+        if (isRecord7(textBlock) && typeof textBlock.text === "string") return textBlock.text;
+      } else if (isRecord7(parsed) && typeof parsed.text === "string") {
         return parsed.text;
       }
     }
@@ -86702,7 +87033,7 @@ var import_obsidian36 = require("obsidian");
 var import_obsidian33 = require("obsidian");
 
 // src/utils/externalContext.ts
-var fs26 = __toESM(require("fs"));
+var fs25 = __toESM(require("fs"));
 init_path();
 function normalizePathForComparison3(p) {
   return normalizePathForComparison(p);
@@ -86762,7 +87093,7 @@ function buildExternalContextDisplayEntries(externalContexts) {
 }
 function validateDirectoryPath(p) {
   try {
-    const stats = fs26.statSync(p);
+    const stats = fs25.statSync(p);
     if (!stats.isDirectory()) {
       return { valid: false, error: "Path exists but is not a directory" };
     }
@@ -86790,7 +87121,7 @@ function isDuplicatePath(newPath, existingPaths) {
 }
 
 // src/utils/externalContextScanner.ts
-var fs27 = __toESM(require("fs"));
+var fs26 = __toESM(require("fs"));
 var path21 = __toESM(require("path"));
 init_path();
 var CACHE_TTL_MS = 3e4;
@@ -86837,10 +87168,10 @@ var ExternalContextScanner = class {
     if (depth > MAX_DEPTH) return [];
     const files = [];
     try {
-      if (!fs27.existsSync(dir)) return [];
-      const stat = fs27.statSync(dir);
+      if (!fs26.existsSync(dir)) return [];
+      const stat = fs26.statSync(dir);
       if (!stat.isDirectory()) return [];
-      const entries = fs27.readdirSync(dir, { withFileTypes: true });
+      const entries = fs26.readdirSync(dir, { withFileTypes: true });
       for (const entry of entries) {
         if (entry.name.startsWith(".")) continue;
         if (SKIP_DIRECTORIES.has(entry.name)) continue;
@@ -86851,7 +87182,7 @@ var ExternalContextScanner = class {
           files.push(...subFiles);
         } else if (entry.isFile()) {
           try {
-            const fileStat = fs27.statSync(fullPath);
+            const fileStat = fs26.statSync(fullPath);
             files.push({
               path: fullPath,
               name: entry.name,
@@ -90103,6 +90434,18 @@ function getTabHiddenCommands(tab, plugin, conversation) {
     getTabProviderId(tab, plugin, conversation)
   );
 }
+function shouldSendMessageFromEnterKey(e2, settings11) {
+  if (e2.key !== "Enter" || e2.shiftKey || e2.isComposing) {
+    return false;
+  }
+  if (settings11.requireCommandOrControlEnterToSend !== true) {
+    return true;
+  }
+  if (import_obsidian41.Platform.isMacOS) {
+    return e2.metaKey === true && !e2.ctrlKey && !e2.altKey;
+  }
+  return e2.ctrlKey === true && !e2.metaKey && !e2.altKey;
+}
 function getRegistryProviderCatalogInfo(providerId) {
   const catalog = ProviderWorkspaceRegistry.getCommandCatalog(providerId);
   if (!catalog) {
@@ -90177,16 +90520,19 @@ function applyProviderUIGating(tab, plugin) {
   (_h = tab.ui.contextUsageMeter) == null ? void 0 : _h.update(tab.state.usage);
 }
 function syncTabProviderServices(tab, plugin) {
-  var _a3, _b2, _c, _d2, _e;
+  var _a3, _b2, _c, _d2;
   (_a3 = tab.services.instructionRefineService) == null ? void 0 : _a3.cancel();
   (_b2 = tab.services.instructionRefineService) == null ? void 0 : _b2.resetConversation();
-  (_c = tab.services.titleGenerationService) == null ? void 0 : _c.cancel();
   tab.services.instructionRefineService = ProviderRegistry.createInstructionRefineService(plugin, tab.providerId);
-  tab.services.titleGenerationService = ProviderRegistry.createTitleGenerationService(plugin, tab.providerId);
-  (_e = (_d2 = tab.services.subagentManager).setTaskResultInterpreter) == null ? void 0 : _e.call(
-    _d2,
+  (_d2 = (_c = tab.services.subagentManager).setTaskResultInterpreter) == null ? void 0 : _d2.call(
+    _c,
     ProviderRegistry.getTaskResultInterpreter(tab.providerId)
   );
+}
+function ensureTitleGenerationService(tab, plugin) {
+  if (!tab.services.titleGenerationService) {
+    tab.services.titleGenerationService = ProviderRegistry.createTitleGenerationService(plugin);
+  }
 }
 function cleanupTabRuntime(tab) {
   if (tab.service && typeof tab.service.cleanup === "function") {
@@ -90459,6 +90805,7 @@ function initializeSlashCommands(tab, getHiddenCommands, catalogInfo) {
 function initializeInstructionAndTodo(tab, plugin) {
   const { dom } = tab;
   syncTabProviderServices(tab, plugin);
+  ensureTitleGenerationService(tab, plugin);
   tab.ui.instructionModeManager = new InstructionModeManager(
     dom.inputEl,
     {
@@ -90815,7 +91162,7 @@ function initializeTabControllers(tab, plugin, component, arg4, arg5, arg6, arg7
     plugin,
     component,
     dom.messagesEl,
-    (id) => tab.controllers.conversationController.rewind(id),
+    (id, mode) => tab.controllers.conversationController.rewind(id, mode),
     forkRequestCallback ? (id) => handleForkRequest(tab, plugin, id, forkRequestCallback) : void 0,
     () => getTabCapabilities(tab, plugin)
   );
@@ -91066,7 +91413,7 @@ function wireTabInputEvents(tab, plugin) {
       (_h = controllers.inputController) == null ? void 0 : _h.cancelStreaming();
       return;
     }
-    if (e2.key === "Enter" && !e2.shiftKey && !e2.isComposing) {
+    if (shouldSendMessageFromEnterKey(e2, plugin.settings)) {
       e2.preventDefault();
       void ((_i = controllers.inputController) == null ? void 0 : _i.sendMessage());
     }
@@ -92191,6 +92538,7 @@ var ClaudianView = class extends import_obsidian44.ItemView {
     this.titleTextEl = null;
     this.headerActionsEl = null;
     this.headerActionsContent = null;
+    this.newTabButtonEl = null;
     // Header elements
     this.historyDropdown = null;
     // Event refs for cleanup
@@ -92378,10 +92726,10 @@ var ClaudianView = class extends import_obsidian44.ItemView {
     fragment.appendChild(this.tabBarContainerEl);
     this.headerActionsContent = activeDocument.createElement("div");
     this.headerActionsContent.className = "claudian-header-actions";
-    const newTabBtn = this.headerActionsContent.createDiv({ cls: "claudian-header-btn claudian-new-tab-btn" });
-    (0, import_obsidian44.setIcon)(newTabBtn, "square-plus");
-    newTabBtn.setAttribute("aria-label", "New tab");
-    newTabBtn.addEventListener("click", () => {
+    this.newTabButtonEl = this.headerActionsContent.createDiv({ cls: "claudian-header-btn claudian-new-tab-btn" });
+    (0, import_obsidian44.setIcon)(this.newTabButtonEl, "square-plus");
+    this.newTabButtonEl.setAttribute("aria-label", "New tab");
+    this.newTabButtonEl.addEventListener("click", () => {
       void this.createNewTab().catch(() => new import_obsidian44.Notice("Failed to create tab"));
     });
     const newBtn = this.headerActionsContent.createDiv({ cls: "claudian-header-btn" });
@@ -92405,7 +92753,7 @@ var ClaudianView = class extends import_obsidian44.ItemView {
     });
     fragment.appendChild(this.headerActionsContent);
     const wrapper = activeDocument.createElement("div");
-    wrapper.className = "claudian-visible-contents";
+    wrapper.className = "claudian-input-nav-content";
     wrapper.appendChild(fragment);
     return wrapper;
   }
@@ -92449,6 +92797,10 @@ var ClaudianView = class extends import_obsidian44.ItemView {
     this.updateNavRowLocation();
     this.updateTabBarVisibility();
   }
+  /** Refreshes tab controls after settings that affect tab availability change. */
+  refreshTabControls() {
+    this.updateTabBarVisibility();
+  }
   // ============================================
   // Tab Management
   // ============================================
@@ -92476,6 +92828,7 @@ var ClaudianView = class extends import_obsidian44.ItemView {
     if (!tab) {
       const maxTabs = (_b2 = this.plugin.settings.maxTabs) != null ? _b2 : 3;
       new import_obsidian44.Notice(`Maximum ${maxTabs} tabs allowed`);
+      this.updateTabBarVisibility();
       return;
     }
     this.updateTabBarVisibility();
@@ -92507,6 +92860,19 @@ var ClaudianView = class extends import_obsidian44.ItemView {
     if (this.titleTextEl) {
       this.titleTextEl.toggleClass("claudian-hidden", hideBranding);
     }
+    this.updateNewTabButtonVisibility();
+  }
+  updateNewTabButtonVisibility() {
+    if (!this.newTabButtonEl || !this.tabManager) return;
+    const canCreateTab = this.tabManager.canCreateTab();
+    this.newTabButtonEl.toggleClass("claudian-hidden", !canCreateTab);
+    if (canCreateTab) {
+      this.newTabButtonEl.removeAttribute("aria-disabled");
+      this.newTabButtonEl.removeAttribute("aria-hidden");
+      return;
+    }
+    this.newTabButtonEl.setAttribute("aria-disabled", "true");
+    this.newTabButtonEl.setAttribute("aria-hidden", "true");
   }
   /** Sets `data-provider` on the root container so CSS brand color follows the active provider. */
   syncProviderBrandColor() {
@@ -92777,21 +93143,33 @@ var InputWidget = class extends import_view2.WidgetType {
     return true;
   }
 };
+function buildInlineEditInputDecorations(options) {
+  var _a3;
+  const isInbetween = (_a3 = options.isInbetween) != null ? _a3 : false;
+  const lineStart = options.doc.lineAt(options.inputPos).from;
+  return import_view2.Decoration.set([
+    import_view2.Decoration.line({
+      class: "claudian-inline-input-line"
+    }).range(lineStart),
+    import_view2.Decoration.widget({
+      widget: options.widget,
+      block: !isInbetween,
+      side: isInbetween ? 1 : -1
+    }).range(options.inputPos)
+  ], true);
+}
 var inlineEditField = import_state2.StateField.define({
   create: () => import_view2.Decoration.none,
   update: (deco, tr) => {
-    var _a3;
     deco = deco.map(tr.changes);
     for (const e2 of tr.effects) {
       if (e2.is(showInlineEdit)) {
-        const builder = new import_state2.RangeSetBuilder();
-        const isInbetween = (_a3 = e2.value.isInbetween) != null ? _a3 : false;
-        builder.add(e2.value.inputPos, e2.value.inputPos, import_view2.Decoration.widget({
-          widget: new InputWidget(e2.value.widget),
-          block: !isInbetween,
-          side: isInbetween ? 1 : -1
-        }));
-        deco = builder.finish();
+        deco = buildInlineEditInputDecorations({
+          doc: tr.state.doc,
+          inputPos: e2.value.inputPos,
+          isInbetween: e2.value.isInbetween,
+          widget: new InputWidget(e2.value.widget)
+        });
       } else if (e2.is(showDiff)) {
         const builder = new import_state2.RangeSetBuilder();
         builder.add(e2.value.from, e2.value.to, import_view2.Decoration.replace({
@@ -93555,6 +93933,9 @@ var ClaudianSettingTab = class extends import_obsidian46.PluginSettingTab {
         this.plugin.settings.maxTabs = value;
         await this.plugin.saveSettings();
         updateMaxTabsWarning(value);
+        for (const view of this.plugin.getAllViews()) {
+          view.refreshTabControls();
+        }
       });
       updateMaxTabsWarning((_b2 = this.plugin.settings.maxTabs) != null ? _b2 : 3);
     });
@@ -93650,6 +94031,13 @@ var ClaudianSettingTab = class extends import_obsidian46.PluginSettingTab {
       });
     });
     new import_obsidian46.Setting(container).setName(t("settings.input")).setHeading();
+    new import_obsidian46.Setting(container).setName(t("settings.requireCommandOrControlEnterToSend.name")).setDesc(t("settings.requireCommandOrControlEnterToSend.desc")).addToggle((toggle) => {
+      var _a3;
+      toggle.setValue((_a3 = this.plugin.settings.requireCommandOrControlEnterToSend) != null ? _a3 : false).onChange(async (value) => {
+        this.plugin.settings.requireCommandOrControlEnterToSend = value;
+        await this.plugin.saveSettings();
+      });
+    });
     new import_obsidian46.Setting(container).setName(t("settings.navMappings.name")).setDesc(t("settings.navMappings.desc")).addTextArea((text) => {
       let pendingValue = buildNavMappingText(this.plugin.settings.keyboardNavigation);
       let saveTimeout = null;

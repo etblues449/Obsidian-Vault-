@@ -19,6 +19,7 @@
     "scrollDownKey": "s",
     "focusInputKey": "i"
   },
+  "requireCommandOrControlEnterToSend": false,
   "locale": "en",
   "providerConfigs": {
     "claude": {
@@ -45,7 +46,7 @@
       "environmentVariables": "",
       "environmentHash": "",
       "installationMethodsByHost": {
-        "Elliot": "native-windows"
+        "device:8b62dfae-20eb-4d36-9574-7ed9497f74f5": "native-windows"
       },
       "wslDistroOverridesByHost": {}
     },
