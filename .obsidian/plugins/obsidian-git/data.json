@@ -22,7 +22,7 @@
   "autoBackupAfterFileChange": false,
   "treeStructure": false,
   "refreshSourceControl": true,
-  "basePath": "",
+  "basePath": "https://github.com/etblues449/Obsidian-Vault-.git",
   "differentIntervalCommitAndPush": false,
   "changedFilesInStatusBar": false,
   "showedMobileNotice": true,
@@ -33,7 +33,7 @@
   "gitDir": "",
   "showFileMenu": true,
   "authorInHistoryView": "hide",
-  "dateInHistoryView": false,
+  "dateInHistoryView": true,
   "diffStyle": "split",
   "hunks": {
     "showSigns": false,
