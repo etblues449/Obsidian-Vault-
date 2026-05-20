@@ -93,9 +93,28 @@ proot-distro login ubuntu -- bash -lc "
         ok \"node now \$(node --version)\"
     fi
 
-    # 3. Global install of ruflo from the npm registry.
-    info \"npm install -g \$RUFLO_PKG (this pulls ~10 MB + deps; be patient)...\"
-    npm install -g \"\$RUFLO_PKG\"
+    # 3. Global install of ruflo from the npm registry. npm's content-addressable
+    #    cache (cacache) does an atomic rename that ENOENTs on proot's filesystem,
+    #    so retry with a cache clean, then fall back to an isolated cache dir.
+    ruflo_install() { npm install -g \"\$RUFLO_PKG\" --no-fund --no-audit; }
+    info \"npm install -g \$RUFLO_PKG (pulls ~10 MB + deps; be patient)...\"
+    if ruflo_install; then
+        ok 'Install succeeded on first attempt.'
+    else
+        warn 'First attempt failed. Cleaning npm cache and retrying...'
+        npm cache clean --force || true
+        if ruflo_install; then
+            ok 'Install succeeded after cache clean.'
+        else
+            warn 'Retry failed. Trying an isolated cache dir (proot rename workaround)...'
+            rm -rf /tmp/ruflo-npm-cache
+            if npm install -g \"\$RUFLO_PKG\" --no-fund --no-audit --cache /tmp/ruflo-npm-cache; then
+                ok 'Install succeeded with an isolated cache.'
+            else
+                fail 'ruflo install failed after 3 attempts. Check disk (df -h /) and the npm error log above.'
+            fi
+        fi
+    fi
 
     # 4. Verify the ruflo binary runs.
     if command -v ruflo >/dev/null; then
@@ -115,13 +134,23 @@ proot-distro login ubuntu -- bash -lc "
         fi
     fi
 
-    ok 'ruflo global install complete.'
-    info 'Optional: wire ruflo MCP server into claude with:'
-    info '  claude mcp add ruflo -- npx ruflo@latest mcp start'
+    info 'Optional: wire ruflo MCP server into claude using the GLOBAL binary'
+    info '(faster + offline-safe vs npx, which re-fetches each start):'
+    info '  claude mcp add ruflo -- ruflo mcp start'
+    info 'If you already added an npx-based ruflo MCP server, replace it:'
+    info '  claude mcp remove ruflo && claude mcp add ruflo -- ruflo mcp start'
     info 'To use ruflo in a project (writes .claude/, CLAUDE.md to the workspace):'
     info '  cd <project> && ruflo init'
-"
+" || true
 
-c_ok "Done."
-c_info "Try it inside proot-Ubuntu: proot-distro login ubuntu -- ruflo --help"
-c_info "Uninstall: proot-distro login ubuntu -- npm uninstall -g ruflo"
+# Authoritative verification -- independent of proot-distro exit-code
+# propagation (it does not always forward the inner failure).
+if proot-distro login ubuntu -- bash -lc 'command -v ruflo >/dev/null 2>&1 && ruflo --version >/dev/null 2>&1'; then
+    RUFLO_VER=$(proot-distro login ubuntu -- bash -lc 'ruflo --version 2>/dev/null | head -1' || true)
+    c_ok "Verified: ruflo runs -> ${RUFLO_VER:-installed}"
+    c_info "Try it: proot-distro login ubuntu -- ruflo --help"
+    c_info "Uninstall: proot-distro login ubuntu -- npm uninstall -g ruflo"
+else
+    c_fail "ruflo still not runnable. Manual retry with an isolated cache:
+  proot-distro login ubuntu -- bash -lc 'npm cache clean --force && npm install -g ruflo@latest --no-fund --no-audit --cache /tmp/ruflo-npm-cache && ruflo --version'"
+fi

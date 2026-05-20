@@ -65,9 +65,31 @@ proot-distro login ubuntu -- ruflo --version
 # Per-project init (writes .claude/, CLAUDE.md to the workspace):
 proot-distro login ubuntu -- bash -lc 'cd ~/some-project && ruflo init'
 
-# Wire ruflo's MCP server into Claude Code:
-proot-distro login ubuntu -- claude mcp add ruflo -- npx ruflo@latest mcp start
+# Wire ruflo's MCP server into Claude Code (use the global binary, not npx --
+# npx re-fetches ruflo on every start and is slower + needs network):
+proot-distro login ubuntu -- claude mcp add ruflo -- ruflo mcp start
 ```
+
+## Troubleshooting: `npm error ENOENT ... rename '/root/.npm/_cacache/tmp/...'`
+
+npm's content-addressable cache does an atomic `rename()` that fails under
+proot's filesystem, so the install can ENOENT on the first try. The install
+script now retries automatically (cache clean, then an isolated cache dir).
+If you hit it running npm by hand:
+
+```bash
+proot-distro login ubuntu -- bash -lc '
+  npm cache clean --force
+  npm install -g ruflo@latest --no-fund --no-audit --cache /tmp/ruflo-npm-cache
+  ruflo --version
+'
+```
+
+> Note: `claude mcp add ruflo ...` only *writes config* — it does not check
+> that ruflo is installed. If you added the MCP entry before the global
+> install succeeded, it points at a missing binary. Re-point it with
+> `claude mcp remove ruflo && claude mcp add ruflo -- ruflo mcp start`
+> once `ruflo --version` works.
 
 ## Update
 
