@@ -17,7 +17,3 @@ Thumbs.db
 
 # Backup files
 *.bak
-
-# Local clones (not part of the vault)
-claude-android-skill/
-Stable-Video-Infinity/
