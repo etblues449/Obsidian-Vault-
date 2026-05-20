@@ -65,9 +65,11 @@ proot-distro login ubuntu -- ruflo --version
 # Per-project init (writes .claude/, CLAUDE.md to the workspace):
 proot-distro login ubuntu -- bash -lc 'cd ~/some-project && ruflo init'
 
-# Wire ruflo's MCP server into Claude Code (use the global binary, not npx --
-# npx re-fetches ruflo on every start and is slower + needs network):
-proot-distro login ubuntu -- claude mcp add ruflo -- ruflo mcp start
+# Wire ruflo's MCP server into Claude Code. Use --scope user so it loads in
+# EVERY project (without it, the default "local" scope ties it to the one
+# directory you ran the command in -- so claude-vault sessions wouldn't see
+# it). Use the global binary, not npx (npx re-fetches ruflo every start):
+proot-distro login ubuntu -- claude mcp add --scope user ruflo -- ruflo mcp start
 ```
 
 ## Troubleshooting: `npm error ENOENT ... rename '/root/.npm/_cacache/tmp/...'`
@@ -88,8 +90,13 @@ proot-distro login ubuntu -- bash -lc '
 > Note: `claude mcp add ruflo ...` only *writes config* — it does not check
 > that ruflo is installed. If you added the MCP entry before the global
 > install succeeded, it points at a missing binary. Re-point it with
-> `claude mcp remove ruflo && claude mcp add ruflo -- ruflo mcp start`
+> `claude mcp remove ruflo && claude mcp add --scope user ruflo -- ruflo mcp start`
 > once `ruflo --version` works.
+
+> Scope gotcha: `claude mcp add` defaults to *local* scope, tied to the
+> directory you ran it in. If you added ruflo from `/root` but launch Claude
+> from the vault (`claude-vault`), it won't load there. Always use
+> `--scope user` for ruflo so it's available everywhere.
 
 ## Update
 

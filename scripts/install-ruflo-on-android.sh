@@ -135,10 +135,12 @@ proot-distro login ubuntu -- bash -lc "
     fi
 
     info 'Optional: wire ruflo MCP server into claude using the GLOBAL binary'
-    info '(faster + offline-safe vs npx, which re-fetches each start):'
-    info '  claude mcp add ruflo -- ruflo mcp start'
-    info 'If you already added an npx-based ruflo MCP server, replace it:'
-    info '  claude mcp remove ruflo && claude mcp add ruflo -- ruflo mcp start'
+    info '(faster + offline-safe vs npx; --scope user so it loads in EVERY'
+    info 'project, including claude-vault -- the default local scope would'
+    info 'tie it to one directory only):'
+    info '  claude mcp add --scope user ruflo -- ruflo mcp start'
+    info 'If you already added a local/npx ruflo MCP server, replace it:'
+    info '  claude mcp remove ruflo && claude mcp add --scope user ruflo -- ruflo mcp start'
     info 'To use ruflo in a project (writes .claude/, CLAUDE.md to the workspace):'
     info '  cd <project> && ruflo init'
 " || true
