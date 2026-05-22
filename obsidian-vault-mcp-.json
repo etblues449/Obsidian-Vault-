@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "obsidian-vault-mcp-497102",
+  "private_key_id": "a1e3e2e53bea4962b209f78dcb0babf58d41a1ff",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDFlZnsueUbn4BR\nYWOqG6g9O4W9OquKplt4xmg1nAjWN+uHLr0tYJc2ShYF+gDWTKrdtTkalb7MxXC9\nF/M7qwegy7kaiKsKAbQF7uqpjZPJGStYDp4YDf2HIFDWXfwn09FC7xf/Ue25Pdb3\nwWsBm+k2YAuc5b122eOiF0+p3gHDxd+BKnjFhKEYWsiXvSIolAXskBO71vbtEYJI\nDMRLs2Irp4/rZo+TAllenK6/2pegZFrhLe2RDAchrRhDiLsZwl/xtKE7b2WAwIsC\nvPM7TBYm5ATyUJS184HjJNX94g3+DhVlwbasWBMTT72xbb7SJwWxBsfHytrdQ/EY\nkzU8rqf9AgMBAAECggEAJNV+VADVwsAJ4mH2+/va8ctaY8v/tcHMlKfcPn4/sXvM\nRy/B6aczmVXXZDbWmBzDz8AcjKW046S9HytLV2jLa8D+2YD37c4ieuauzXwMvHUa\nPPjApThadqniGAx+WQhmXwWGojzqRdnO7PIcWjjwEYh3McEsgG8fPhT9b2vpRU8W\njGl7rjssxFeucr1+bZNeWojMy2AuBs/DIjFO2DLvKMSWYNG1+lsOuASAAPhjTtG+\nagIwFFfbJ+DfgFGYWYjUIfpMnOvO885OTowBAIezxj+FTMhTcF0O77ax5hURtOpF\nCYkOw6JPXlMI1MX7gYhVYxUJwLC7Bi5525j2IlV7mwKBgQDxFGhPukcnAyvM/LdE\nOE1UijPfZ6nN1QqWpUoKwGPTwBrQaZIlHRNX35h3sscegAO0HfHJuMvLDn6cML44\nvFbvmFwtlQyDI0q+TKWP4/W/cNueGyqt14UzP0uxOJEioFTQ1ENg9s2ozF5WEAel\n39aI+IxmIWdDiXKIp4AzkbzqPwKBgQDR0BEvSJhc6kAzV/kHhPouuExF16EJI86u\nqXIwZH+7RFctYQkbmcDCgho/TAMnrPmLabgezgQ2lzWUeERfHksaodCWSBNztPz6\np7CUFBJ0DA0q6toryqaaZFMksQ3/iMNGL5NYTalyglEgukj6BM8sjdmA6Gn86X08\nmvbUYYVGwwKBgGL8Sxw5Uw+8qJZhSWp0Z6QHnubi7IC8Mb3LHkyt1A9UuG3MexpM\nBu40u6iiOknWrC6fgPCftOWqDOhaxzAKfPOhrm903I9XxU+/rtcW9YdmcnZHl02L\nyYBSQ+T/YfBCvrCEBypgC+98Alv59vnvn2ncC+G/Y2QCooljpSsHcvcHAoGBALe7\n3ICqsvqTDJupy2OBWNF3BRwYY2YsnD8qFdw49f5ZL3qGwkIQV9Q9uJx7hTvGZ1Vl\nxB39zYS8z+fvlfgyABUXZSFlhttJwEwEc0aJeUt0jkdqGJpGwbTsbD7yac6/xjl9\nSiwG/n9PjZn6aBPCCGb85V7UqJQZKFndXo/Hwr2fAoGAb7GYTpth5/JVKazwxjvW\nwFZSKLvq74QQQZiLW745a3fk1ymMyyj2KfQ1Rxf23M+DtabPZIeLTkdU6NkRwRoG\nL/Tq80T8YKrfq0oqTSDUR4bHf+IDwaZzinmTRFlZrUEsNuqqj7ZBgzn+ZBGf7w7a\nkiLEBAIycuTl5h4OBfebrVo=\n-----END PRIVATE KEY-----\n",
+  "client_email": "obsidian-vault-mcp@obsidian-vault-mcp-497102.iam.gserviceaccount.com",
+  "client_id": "100229657183775755690",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/obsidian-vault-mcp%40obsidian-vault-mcp-497102.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
