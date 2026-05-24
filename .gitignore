@@ -1,19 +1,86 @@
-# Obsidian per-device state
+# =============================================================================
+# Obsidian per-device state (workspace, cache, mobile-only hotkeys)
+# =============================================================================
 .obsidian/workspace
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
 .obsidian/cache
 .obsidian/hotkeys-mobile.json
 
-# Smart Connections plugin
+# Per-device plugin state — these mutate constantly on every plugin tick and
+# create noisy commits + frequent merge conflicts across devices.
+.obsidian/plugins/*/data.json
+.obsidian/plugins/obsidian-git/.gitignore
+
+# =============================================================================
+# Smart Connections plugin — local embeddings cache (~100MB), per-device only
+# =============================================================================
 .smart-env/
 
-# Trash
+# =============================================================================
+# Trash & local Claude/Claudian session state
+# =============================================================================
 .trash/
+.claudian/sessions/
+.claude/local/
+.claude/projects/
+.claude/todos/
+.claude/statsig/
+.claude/.credentials*
 
+# =============================================================================
+# Sync-conflict files (any plugin, any time, any device)
+# Prevents the May-2026 mess from ever recurring.
+# =============================================================================
+*(conflict *)*
+*.conflict
+*.conflict.*
+*~
+
+# =============================================================================
 # OS junk
+# =============================================================================
 .DS_Store
 Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
 
-# Backup files
+# Total Commander / file manager metadata
+.ttxfolder
+
+# =============================================================================
+# Backup / editor swap files
+# =============================================================================
 *.bak
+*.swp
+*.swo
+*~
+.#*
+
+# =============================================================================
+# Secrets — defense in depth (rotate AND keep them out of future commits)
+# =============================================================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*.json
+secrets.json
+secrets.yml
+secrets.yaml
+
+# =============================================================================
+# Editor / IDE state (in case any project subfolder is opened in VS Code etc.)
+# =============================================================================
+.vscode/
+.idea/
+*.code-workspace
+
+# =============================================================================
+# Office lockfiles
+# =============================================================================
+~$*.docx
+~$*.xlsx
+~$*.pptx
