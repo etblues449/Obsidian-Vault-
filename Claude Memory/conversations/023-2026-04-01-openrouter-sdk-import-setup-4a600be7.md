@@ -749,7 +749,7 @@ This will just work without any routing issues.
 At line:1 char:97
 + ... Y", "User") "[REDACTED-OPENROUTER-FRAG] ...
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Unexpected token '"[REDACTED-OPENROUTER-KEY]"' in expression or statement.
+Unexpected token '"[REDACTED-OPENROUTER-KEY-ROTATED-2026-05-25]"' in expression or statement.
     + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
     + FullyQualifiedErrorId : UnexpectedToken
  
@@ -806,7 +806,7 @@ y
 At line:1 char:86
 + ... EY", "User")"[REDACTED-ANTHROPIC-FRAG] ...
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Unexpected token '"[REDACTED-ANTHROPIC-KEY]"' in expression or statement.
+Unexpected token '"[REDACTED-ANTHROPIC-KEY-ROTATED-2026-05-25]"' in expression or statement.
     + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
     + FullyQualifiedErrorId : UnexpectedToken
 PS C:\Users\ElliotHorton\OneDrive - Select Lifestyles\Documents\ESPHomeProjects\vs code>
@@ -816,7 +816,7 @@ PS C:\Users\ElliotHorton\OneDrive - Select Lifestyles\Documents\ESPHomeProjects\
  You're missing a space before the key. Copy this exactly:
 
 ```powershell
-[System.Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY", "[REDACTED-ANTHROPIC-KEY]", "User")
+[System.Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY", "[REDACTED-ANTHROPIC-KEY-ROTATED-2026-05-25]", "User")
 ```
 
 Also — that key has been exposed in this chat multiple times. Please go to **console.anthropic.com/settings/keys** and revoke it, then create a new one.
@@ -904,7 +904,7 @@ export ANTHROPIC_MODEL="google/gemini-2.5-pro-exp-03-25"
  That's the problem — the `.bashrc` is overriding your system variables. Replace the contents with just this:
 
 ```bash
-export ANTHROPIC_API_KEY="[REDACTED-ANTHROPIC-KEY]"
+export ANTHROPIC_API_KEY="[REDACTED-ANTHROPIC-KEY-ROTATED-2026-05-25]"
 ```
 
 Save the file, then restart VS Code and run `claude`.
@@ -919,7 +919,7 @@ _(empty)_
  I can see the `.bashrc` file is open. Select **all the text** (Ctrl+A) and replace it with just this one line:
 
 ```bash
-export ANTHROPIC_API_KEY="[REDACTED-ANTHROPIC-KEY]"
+export ANTHROPIC_API_KEY="[REDACTED-ANTHROPIC-KEY-ROTATED-2026-05-25]"
 ```
 
 Then save with **Ctrl+S**, restart VS Code, and run `claude`.
@@ -991,7 +991,7 @@ Once you have it, come back and paste it here (it starts with `AIza...`) and I'l
 
 ## human — 2026-04-10 22:41:18
 
-[REDACTED-GOOGLE-KEY]
+[REDACTED-GOOGLE-KEY-ROTATED-2026-05-25]
 
 ## assistant — 2026-04-10 22:41:22
 

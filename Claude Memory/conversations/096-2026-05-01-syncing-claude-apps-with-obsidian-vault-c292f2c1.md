@@ -1839,7 +1839,7 @@ Paste a screenshot of what you see after restarting, or tell me if Notepad showe
         "HA_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI0NGNmZjIwMjVjYjQ0OTdjYjRiMjI0YTVmZWNjYTc1MyIsImlhdCI6MTc3NzMzMzI0MiwiZXhwIjoyMDkyNjkzMjQyfQ.UQDbQxghKtrbXQHk-6GrZN_Of2JfS3AM5QHQwByk8Es",
         "ANTHROPIC_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai/",
         "ANTHROPIC_MODEL": "gemini-2.5-flash",
-        "ANTHROPIC_API_KEY": "[REDACTED-GOOGLE-KEY]"
+        "ANTHROPIC_API_KEY": "[REDACTED-GOOGLE-KEY-ROTATED-2026-05-25]"
       }
     }
   },
@@ -1881,7 +1881,7 @@ Here's the merged config — copy this entire block and replace everything in th
         "HA_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI0NGNmZjIwMjVjYjQ0OTdjYjRiMjI0YTVmZWNjYTc1MyIsImlhdCI6MTc3NzMzMzI0MiwiZXhwIjoyMDkyNjkzMjQyfQ.UQDbQxghKtrbXQHk-6GrZN_Of2JfS3AM5QHQwByk8Es",
         "ANTHROPIC_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai/",
         "ANTHROPIC_MODEL": "gemini-2.5-flash",
-        "ANTHROPIC_API_KEY": "[REDACTED-GOOGLE-KEY]"
+        "ANTHROPIC_API_KEY": "[REDACTED-GOOGLE-KEY-ROTATED-2026-05-25]"
       }
     },
     "obsidian": {
