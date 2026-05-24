@@ -747,7 +747,7 @@ This will just work without any routing issues.
 ## human — 2026-04-02 00:49:30
 
 At line:1 char:97
-+ ... Y", "User") "[REDACTED-OPENROUTER-FRAG] ...
++ ... Y", "User") "[REDACTED-OPENROUTER-KEY-FRAGMENT] ...
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Unexpected token '"[REDACTED-OPENROUTER-KEY-ROTATED-2026-05-25]"' in expression or statement.
     + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
@@ -804,7 +804,7 @@ y
 ## human — 2026-04-02 00:52:19
 
 At line:1 char:86
-+ ... EY", "User")"[REDACTED-ANTHROPIC-FRAG] ...
++ ... EY", "User")"[REDACTED-ANTHROPIC-KEY-FRAGMENT] ...
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Unexpected token '"[REDACTED-ANTHROPIC-KEY-ROTATED-2026-05-25]"' in expression or statement.
     + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
@@ -895,7 +895,7 @@ What's in it?
 
 ```shellscript
 export ANTHROPIC_BASE_URL="https://openrouter.ai/api/v1"
-export ANTHROPIC_API_KEY="[REDACTED-OPENROUTER-KEY]"
+export ANTHROPIC_API_KEY="[REDACTED-OPENROUTER-KEY-FRAGMENT]"
 export ANTHROPIC_MODEL="google/gemini-2.5-pro-exp-03-25"
 ```
 

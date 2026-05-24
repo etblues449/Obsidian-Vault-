@@ -146,7 +146,7 @@ A: I'll paste my OpenRouter API key
 
 ## human — 2026-04-01 01:15:37
 
-[REDACTED-OPENROUTER-KEY]
+[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]
 
 ## assistant — 2026-04-01 01:15:57
 
@@ -180,7 +180,7 @@ Or if you're using **Claude Code**, just set these env vars in your shell:
 
 ```bash
 export ANTHROPIC_BASE_URL=https://openrouter.ai/api/v1
-export ANTHROPIC_AUTH_TOKEN=[REDACTED-OPENROUTER-KEY]
+export ANTHROPIC_AUTH_TOKEN=[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]
 export ANTHROPIC_API_KEY=""
 export CLAUDE_MODEL=openrouter/auto
 ```
@@ -220,7 +220,7 @@ its not working fix it 
     },
     {
         "name": "ANTHROPIC_API_KEY",
-        "value": "[REDACTED-OPENROUTER-KEY]"
+        "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
     }
 ],
     "workbench.editorAssociations": {
@@ -269,11 +269,11 @@ The fix is simple — update your `claudeCode.environmentVariables` to this:
     },
     {
         "name": "ANTHROPIC_API_KEY",
-        "value": "[REDACTED-OPENROUTER-KEY]"
+        "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
     },
     {
         "name": "ANTHROPIC_AUTH_TOKEN",
-        "value": "[REDACTED-OPENROUTER-KEY]"
+        "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
     }
 ],
 ```
@@ -418,11 +418,11 @@ node chat.mjs          # start chatting
         },
         {
             "name": "ANTHROPIC_API_KEY",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "ANTHROPIC_AUTH_TOKEN",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         }
     ],
     "claudeCode.model": "anthropic/claude-sonnet-4-5",
@@ -478,11 +478,11 @@ Git isn't installed at the expected location. Either:
     },
     {
         "name": "ANTHROPIC_API_KEY",
-        "value": "[REDACTED-OPENROUTER-KEY]"
+        "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
     },
     {
         "name": "ANTHROPIC_AUTH_TOKEN",
-        "value": "[REDACTED-OPENROUTER-KEY]"
+        "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
     }
 ]
 ```
@@ -527,7 +527,7 @@ fix code
     },
     {
         "name": "ANTHROPIC_API_KEY",
-        "value": "[REDACTED-OPENROUTER-KEY]"
+        "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
     }
 ],
     "workbench.editorAssociations": {
@@ -594,11 +594,11 @@ fix code
         },
         {
             "name": "ANTHROPIC_API_KEY",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "ANTHROPIC_AUTH_TOKEN",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "CLAUDE_CODE_GIT_BASH_PATH",
@@ -715,11 +715,11 @@ give me full code not part
         },
         {
             "name": "ANTHROPIC_API_KEY",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "ANTHROPIC_AUTH_TOKEN",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "CLAUDE_CODE_GIT_BASH_PATH",
@@ -815,11 +815,11 @@ If you're still getting the error after that, paste the new log and I'll dig dee
         },
         {
             "name": "ANTHROPIC_API_KEY",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "ANTHROPIC_AUTH_TOKEN",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "CLAUDE_CODE_GIT_BASH_PATH",
@@ -888,11 +888,11 @@ If you're still getting the error after that, paste the new log and I'll dig dee
         },
         {
             "name": "ANTHROPIC_API_KEY",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "ANTHROPIC_AUTH_TOKEN",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "CLAUDE_CODE_GIT_BASH_PATH",
@@ -978,11 +978,11 @@ This opens `C:\Users\ElliotHorton\AppData\Roaming\Code\User\settings.json` — p
         },
         {
             "name": "ANTHROPIC_API_KEY",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "ANTHROPIC_AUTH_TOKEN",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "CLAUDE_CODE_GIT_BASH_PATH",
@@ -1187,11 +1187,11 @@ notepad "$env:APPDATA\Claude\claude_desktop_config.json"
         },
         {
             "name": "ANTHROPIC_API_KEY",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "ANTHROPIC_AUTH_TOKEN",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "CLAUDE_CODE_GIT_BASH_PATH",
@@ -1276,11 +1276,11 @@ Desktop config
         },
         {
             "name": "ANTHROPIC_API_KEY",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "ANTHROPIC_AUTH_TOKEN",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "CLAUDE_CODE_GIT_BASH_PATH",
@@ -2148,7 +2148,7 @@ or
 ```json
 {
   "preferences": {
-    "anthropicApiKey": "[REDACTED-OPENROUTER-KEY]"
+    "anthropicApiKey": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
   }
 }
 ```
@@ -2165,11 +2165,11 @@ or
     },
     {
         "name": "ANTHROPIC_API_KEY",
-        "value": "[REDACTED-OPENROUTER-KEY]"
+        "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
     },
     {
         "name": "ANTHROPIC_AUTH_TOKEN",
-        "value": "[REDACTED-OPENROUTER-KEY]"
+        "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
     }
 ]
 ```
@@ -2186,11 +2186,11 @@ or
     },
     {
         "name": "ANTHROPIC_API_KEY",
-        "value": "[REDACTED-OPENROUTER-KEY]"
+        "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
     },
     {
         "name": "ANTHROPIC_AUTH_TOKEN",
-        "value": "[REDACTED-OPENROUTER-KEY]"
+        "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
     },
     {
         "name": "CLAUDE_CODE_GIT_BASH_PATH",
@@ -2270,8 +2270,8 @@ Not possible — Claude.ai doesn't support OpenRouter or custom API keys.
         "HA_URL": "http://192.168.0.200:8123",
         "HA_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI0NGNmZjIwMjVjYjQ0OTdjYjRiMjI0YTVmZWNjYTc1MyIsImlhdCI6MTc3NzMzMzI0MiwiZXhwIjoyMDkyNjkzMjQyfQ.UQDbQxghKtrbXQHk-6GrZN_Of2JfS3AM5QHQwByk8Es",
         "ANTHROPIC_BASE_URL": "https://openrouter.ai/api/v1",
-        "ANTHROPIC_API_KEY": "[REDACTED-OPENROUTER-KEY]",
-        "ANTHROPIC_AUTH_TOKEN": "[REDACTED-OPENROUTER-KEY]",
+        "ANTHROPIC_API_KEY": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]",
+        "ANTHROPIC_AUTH_TOKEN": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]",
         "ANTHROPIC_MODEL": "anthropic/claude-sonnet-4-5"
       }
     }

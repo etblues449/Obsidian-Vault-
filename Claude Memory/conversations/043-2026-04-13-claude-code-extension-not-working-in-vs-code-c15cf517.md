@@ -362,11 +362,11 @@ _(empty)_
         },
         {
             "name": "ANTHROPIC_API_KEY",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "ANTHROPIC_AUTH_TOKEN",
-            "value": "[REDACTED-OPENROUTER-KEY]"
+            "value": "[REDACTED-OPENROUTER-KEY-2-ROTATED-2026-05-25]"
         },
         {
             "name": "CLAUDE_CODE_GIT_BASH_PATH",
