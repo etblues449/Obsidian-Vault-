@@ -4,6 +4,20 @@
   "title": "Audit vault for security issues",
   "titleGenerationStatus": "success",
   "createdAt": 1779662039937,
-  "updatedAt": 1779662061939,
-  "sessionId": null
+  "updatedAt": 1779662324184,
+  "lastResponseAt": 1779662324184,
+  "sessionId": "704b310c-3f8e-43d5-9e3d-7fca09626fa3",
+  "providerState": {
+    "providerSessionId": "704b310c-3f8e-43d5-9e3d-7fca09626fa3"
+  },
+  "usage": {
+    "model": "opus[1m]",
+    "inputTokens": 1,
+    "cacheCreationInputTokens": 2518,
+    "cacheReadInputTokens": 63519,
+    "contextWindow": 1000000,
+    "contextTokens": 66038,
+    "percentage": 7,
+    "contextWindowIsAuthoritative": true
+  }
 }
