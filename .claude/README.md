@@ -96,11 +96,28 @@ To roll the framework out across many repos, run the installer once per repo
 ## Files
 
 ```
-.claude-commands.json              # manifest (drives the installer)
-scripts/install-claude-commands.js # installer / sync script
-.claude/commands/ultraplan.md      # /ultraplan
-.claude/commands/goal.md           # /goal
-.claude/commands/agents.md         # /agents
-.claude/commands/ultrareview.md    # /ultrareview
-.claude/plans/                     # where /ultraplan writes plans
+.claude-commands.json                  # manifest (drives the installer)
+scripts/install-claude-commands.js     # installer / sync script
+.claude/commands/ultraplan.md          # /ultraplan
+.claude/commands/goal.md               # /goal
+.claude/commands/agents.md             # /agents
+.claude/commands/ultrareview.md        # /ultrareview
+.claude/plans/                         # where /ultraplan writes plans
+.claude/README.md                      # this file (kept out of commands/ so it
+                                        #   isn't registered as a /README command)
+.claude/claude-ai-project-instructions.md  # paste-in scaffolding for the
+                                            #   consumer claude.ai chat app
 ```
+
+> The installer only copies the four command files (those listed in
+> `.claude-commands.json`). This README and the chat-app instructions are docs,
+> not commands, so they aren't propagated to target repos.
+
+## Using it in the consumer claude.ai chat app
+
+The Markdown commands only run in **Claude Code** (CLI, `claude.ai/code` web,
+mobile, desktop, IDE). The general **claude.ai chat app** is a separate product
+that can't read your repo or run sub-agents. For an approximation there, paste
+the block in `.claude/claude-ai-project-instructions.md` into a claude.ai
+**Project → custom instructions**; it gives you keyword-triggered
+`ULTRAPLAN:` / `GOAL` / `AGENTS` / `ULTRAREVIEW` behavior in pure-prompt form.
