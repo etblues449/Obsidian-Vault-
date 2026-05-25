@@ -4,8 +4,8 @@
   "title": "Audit vault for security issues",
   "titleGenerationStatus": "success",
   "createdAt": 1779662039937,
-  "updatedAt": 1779671092718,
-  "lastResponseAt": 1779671092718,
+  "updatedAt": 1779671410155,
+  "lastResponseAt": 1779671410155,
   "sessionId": "704b310c-3f8e-43d5-9e3d-7fca09626fa3",
   "providerState": {
     "providerSessionId": "704b310c-3f8e-43d5-9e3d-7fca09626fa3"
@@ -13,10 +13,10 @@
   "usage": {
     "model": "opus[1m]",
     "inputTokens": 6,
-    "cacheCreationInputTokens": 1232,
-    "cacheReadInputTokens": 157991,
+    "cacheCreationInputTokens": 3442,
+    "cacheReadInputTokens": 159223,
     "contextWindow": 1000000,
-    "contextTokens": 159229,
+    "contextTokens": 162671,
     "percentage": 16,
     "contextWindowIsAuthoritative": true
   }
