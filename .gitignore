@@ -84,3 +84,4 @@ secrets.yaml
 ~$*.docx
 ~$*.xlsx
 ~$*.pptx
+fincast-backup.json
