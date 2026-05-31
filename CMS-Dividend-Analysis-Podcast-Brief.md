@@ -1,57 +1,59 @@
-# Cutting My Child Maintenance to Zero: The Regulation 50 Playbook
+# Cutting My Child Maintenance to Zero: The Regulation 50 Playbook for a 50/50 Father of a Disabled Child
 
-## A Deep-Dive Briefing on UK Child Maintenance, 50/50 Shared Care, and the Single Legal Provision That Could Close My Case
+## A Deep-Dive Briefing on UK Child Maintenance, 50/50 Shared Care, Autism, and the Single Legal Provision That Could Close My Case
 
 **Prepared:** 31 May 2026
-**Subject:** A real-world analysis of how a UK paying parent on a genuine 50/50 shared-care arrangement can use Regulation 50 of the Child Support Maintenance Calculation Regulations 2012 to reduce, and potentially eliminate, Child Maintenance Service liability — combined with an immediate band-correction worth about a hundred pounds a month.
+**Subject:** A real-world analysis of how a UK paying parent on a genuine 50/50 shared-care arrangement — with one child who has autism and receives Disability Living Allowance paid entirely to the other parent — can use Regulation 50 of the Child Support Maintenance Calculation Regulations 2012 to reduce, and potentially eliminate, Child Maintenance Service liability. Includes an immediate band-correction worth about one hundred pounds a month and a long-form analysis of how the disability dimension strengthens the day-to-day care argument.
 
 ---
 
 ## The Situation in Plain English
 
-Meet Elliot. He's a director of a UK limited company called Select Lifestyles Limited. He is not a shareholder of that company. That distinction matters enormously and it changes the shape of this whole analysis. Because he holds no shares, he cannot legally receive dividends from Select Lifestyles, and that means the classic director's tax-restructuring trick — paying yourself a small salary and topping up with dividends — simply isn't available to him at his current employer. Anyone telling him to "go dividend" without first checking whether he owns shares has skipped the most basic step in the planning.
+Meet Elliot. He's a director of a UK limited company called Select Lifestyles Limited. He is not a shareholder of that company. That distinction matters enormously and it changes the shape of this whole analysis. Because he holds no shares, he cannot legally receive dividends from Select Lifestyles, and that means the classic director's tax-restructuring trick — paying yourself a small salary and topping up with dividends — simply isn't available to him at his current employer.
 
-Elliot's gross salary is fifty-nine thousand five hundred pounds a year, paid as straight PAYE through Select Lifestyles. He also gets a company car valued at two thousand two hundred pounds a year as a benefit in kind. His tax code is twelve fifty-seven L. After tax, National Insurance, a small pension contribution and a charity donation, his take-home pay is three thousand five hundred and seventy-one pounds and sixty-three pence per month.
+Elliot's gross salary is fifty-nine thousand five hundred pounds a year, paid as straight PAYE through Select Lifestyles. He also gets a company car valued at two thousand two hundred pounds a year as a benefit in kind. His take-home pay after tax, National Insurance, a small pension contribution and a charity donation is three thousand five hundred and seventy-one pounds and sixty-three pence per month.
 
-He has two children: Oakley, born thirty-first of March 2019 — currently seven years old — and Harrison, born twelfth of February 2021, currently five. His former partner is Leah. The custody arrangement is fifty-fifty in nights, formalised in a written agreement drafted by Mills and Reeve solicitors and signed by both parents.
+He has two children. Oakley is seven, born thirty-first of March 2019. Harrison is five, born twelfth of February 2021. Harrison has been diagnosed with autism. Harrison receives Disability Living Allowance at the middle or higher rate for the care component. That entire DLA award — every penny of it — is paid to Leah, Elliot's former partner and the children's mother. Elliot receives nothing from the DLA, despite providing equal autism-specific care in his own home: sensory equipment, structured routines, specialist communication tools, and personal attendance at the autism-related medical and educational appointments.
 
-The Child Maintenance Service has assessed Elliot at seventy-two pounds and fifty-five pence per week, which is three hundred and fourteen pounds and thirty-eight pence per month. That assessment was effective from twentieth of January 2026 and is on what the CMS calls Direct Pay — Elliot pays Leah directly into her bank account each month with no CMS collection charge.
+The custody arrangement is exactly fifty-fifty in nights. The schedule operates on a fortnightly cycle. In Week One, when it's Elliot's weekend, he has the children Wednesday night, Thursday night, Friday night, Saturday night and Sunday night, dropping them at school on Monday morning. In Week Two, when it's Leah's weekend, Elliot has Wednesday night and Thursday night. Across fourteen days, that's seven nights each. Across a year, that's one hundred and eighty-two and a half nights — comfortably above the one hundred and seventy-five night threshold that the Child Maintenance Service uses for what it calls Shared Care Band Equal.
 
-He also has historic household arrears: four hundred and eighty pounds on a water bill, twelve hundred on council tax, and forty-five hundred on gas and electric. Six thousand one hundred and eighty pounds total, all relating to the former family home.
+The Child Maintenance Service has assessed Elliot at seventy-two pounds and fifty-five pence per week. That's three hundred and fourteen pounds and thirty-eight pence per month. The assessment was effective from twentieth of January 2026, sits on Direct Pay (Elliot pays Leah directly with no CMS collection charge), and is based on a historic 2024/25 income figure of forty-one thousand three hundred and seventy-five pounds. Both his current salary and his shared-care night count are different from what the CMS has on file — both errors that we'll come to.
 
-This briefing answers one question: how does he get to zero — or as close to zero as the law allows — on his Child Maintenance payment? And it answers a closely related second question: where can he fix mistakes in the existing calculation today?
+He also has historic household arrears of six thousand one hundred and eighty pounds — water, council tax, gas and electric — relating to the former family home. These are real obligations but they have no bearing on the CMS calculation.
+
+This briefing answers one question, in three layers: how does Elliot get his Child Maintenance to zero, what does he do today to start saving money immediately, and how does Harrison's autism strengthen the legal argument?
 
 ---
 
-## Part One: There Are Two Errors in the Current CMS Assessment
+## Part One: The Two Errors in the Current Assessment
 
-Before discussing any strategy, we have to start with what's already wrong on the file. Reading Elliot's CMS letter dated twenty-ninth of January 2026 alongside his actual shared-care schedule reveals two separate errors. One of them is worth roughly a hundred pounds a month, and the other is going to cost him at the next annual review unless he does something now.
+Before discussing any strategy, we start with what's already wrong on the CMS file.
 
 ### Error one: the night count is wrong
 
-The CMS letter at Step Six — "shared care" — states that Oakley stays with Elliot "three nights a week, a hundred and fifty-six to a hundred and seventy-four nights a year". The letter says the same for Harrison. Based on that count, the CMS has applied the **three-sevenths reduction** to the pre-shared-care figure.
+The CMS letter at Step Six — "shared care" — states that Oakley stays with Elliot "three nights a week, a hundred and fifty-six to a hundred and seventy-four nights a year". The letter says the same for Harrison. Based on that count, the CMS has applied the three-sevenths reduction band.
 
-But the actual schedule, as both parents now operate it, runs on a fortnightly cycle. In Week One — when it's Dad's weekend — Elliot has the children Wednesday night, Thursday night, Friday night, Saturday night, and Sunday night. That's five nights. He then drops them at school on Monday morning. In Week Two — when it's Mum's weekend — Elliot has Wednesday night and Thursday night. That's two nights. So across fourteen days Elliot has seven nights and Leah has seven nights. That's exactly fifty-fifty.
+The actual schedule produces seven nights out of fourteen — exactly fifty percent — or one hundred and eighty-two point five nights per year. That's above the one hundred and seventy-five night threshold for Shared Care Band Equal, which uses a half-plus-seven-pounds-per-child reduction.
 
-Annually, seven divided by fourteen multiplied by three hundred and sixty-five point two five days gives one hundred and eighty-two and a half nights. That is decisively above the one hundred and seventy-five night threshold for what the CMS calls "Shared Care Band Equal". The correct reduction is **one half plus a further seven pounds per child per week**, not three-sevenths.
+Let's work the figures. CMS used yearly gross income of forty-one thousand three hundred and seventy-five pounds — that's the 2024/25 historic figure HMRC reported. Divide by fifty-two and the gross weekly income is seven hundred and ninety-three pounds and forty-nine pence, sitting just inside the basic rate band. For two children the basic rate is sixteen percent. Sixteen percent of seven hundred and ninety-three pounds and forty-nine pence is one hundred and twenty-six pounds and ninety-six pence per week.
 
-Let's work out what that does to the figure. The CMS used a yearly gross income of forty-one thousand three hundred and seventy-four pounds and ninety-eight pence — which is Elliot's historic 2024/25 income from HMRC. Divide by fifty-two and the gross weekly income is seven hundred and ninety-three pounds and forty-nine pence, sitting just inside the basic rate band of two hundred to eight hundred pounds. For two children the basic rate is sixteen percent. Sixteen percent of seven hundred and ninety-three pounds and forty-nine pence is one hundred and twenty-six pounds and ninety-six pence per week — that's the pre-shared-care figure.
+Under the current (incorrect) three-sevenths reduction: that becomes seventy-two pounds and fifty-five pence per week. Matches the letter.
 
-Currently CMS applies the three-sevenths reduction: one hundred and twenty-six pounds and ninety-six pence times four-sevenths equals seventy-two pounds and fifty-five pence per week, which matches the letter exactly.
+Under the correct Band Equal reduction: halve to sixty-three pounds and forty-eight pence, subtract fourteen pounds for the two children, equals forty-nine pounds and forty-eight pence per week. That's two hundred and fourteen pounds and forty-one pence per month.
 
-Under the correct Band Equal reduction: halve to sixty-three pounds and forty-eight pence, then subtract fourteen pounds for the two children, giving forty-nine pounds and forty-eight pence per week. That's two hundred and fourteen pounds and forty-one pence per month.
-
-So fixing the band alone — without arguing any new principle, just by reporting that the night count is wrong — saves about a hundred pounds a month. The mechanism is the "Report a change to shared care" link on the CMS online account. Elliot uploads the parenting plan, draws the CMS's attention to the fortnightly cycle producing seven nights out of fourteen, and the assessment gets revised.
+So fixing the band alone saves about one hundred pounds a month. It's administrative, not legal: log onto the CMS online account, use "Report a change to shared care", upload the parenting plan, spell out the fortnightly cycle. The new assessment should land within four to six weeks.
 
 ### Error two: the income figure is stale and about to bite
 
-The CMS letter says yearly gross income of forty-one thousand three hundred and seventy-five pounds. But Elliot's current payslip shows a fifty-nine thousand five hundred pound salary. The CMS uses historic income from HMRC — typically the latest fully reported tax year. The 2024/25 figure of forty-one thousand is what's on file now.
+The CMS letter says yearly gross income of forty-one thousand three hundred and seventy-five pounds. Elliot's current payslip shows a fifty-nine thousand five hundred pound salary. That's a forty-four percent jump.
 
-Under Regulation thirty-five of the calculation regulations, if current income differs from historic by twenty-five percent or more, the CMS switches to current income. Fifty-nine thousand five hundred is forty-four percent higher than forty-one thousand three hundred and seventy-five — well over the trigger.
+Under Regulation 35 of the calculation regulations, if current income differs from historic by twenty-five percent or more, the CMS switches to current income. Forty-four percent is well over the trigger.
 
-That means as soon as Leah, or HMRC's annual data feed, prompts a reconsideration, Elliot's CMS will move up to reflect his current salary. At fifty-nine thousand five hundred his gross weekly is eleven hundred and forty-four pounds and twenty-three pence, putting him in the basic-plus band. The full calculation runs: sixteen percent of eight hundred is one hundred and twenty-eight pounds; twelve percent of the three hundred and forty-four pound and twenty-three pence slice above eight hundred is forty-one pounds and thirty-one pence; total pre-shared-care one hundred and sixty-nine pounds and thirty-one pence. Under correct Band Equal: halve to eighty-four pounds and sixty-five pence, minus fourteen for the two children, equals seventy pounds and sixty-five pence per week — or three hundred and six pounds per month.
+That means as soon as HMRC's data feed catches up or Leah prompts a reconsideration, the CMS will revise upward. At fifty-nine thousand five hundred per year (eleven hundred and forty-four pounds and twenty-three pence per week) Elliot moves into the basic-plus band: sixteen percent of the first eight hundred is one hundred and twenty-eight pounds; twelve percent of the three hundred and forty-four pound twenty-three pence slice above eight hundred is forty-one pounds and thirty-one pence; total pre-shared-care one hundred and sixty-nine pounds and thirty-one pence. Apply correct Band Equal: halve to eighty-four pounds and sixty-five pence, minus fourteen pounds, equals seventy pounds and sixty-five pence per week. That's three hundred and six pounds per month.
 
-So the corrected figure at his actual current income is roughly three hundred pounds a month. The "saving" from fixing the band is real now — it brings him from three hundred and fourteen to two hundred and fourteen pounds — but it disappears as soon as CMS catches up with his new salary. The window to lock in the lower figure is short. He should report the shared-care change now to bank the hundred-pound-a-month saving for as many months as he can before the income recalc.
+So the band correction at the current income figure saves one hundred pounds a month. The same band correction at the higher income only saves about ten pounds a month — because the basic-plus band kicks in and the underlying number is so much bigger.
+
+The window to lock in the larger saving is short. Report the shared-care change today. Do not volunteer the higher income figure mid-cycle; the next annual review will pull it in automatically.
 
 ---
 
@@ -59,173 +61,206 @@ So the corrected figure at his actual current income is roughly three hundred po
 
 Earlier drafts of this analysis assumed Elliot was a director-shareholder of Select Lifestyles, and on that assumption a salary-to-dividend restructure looked very attractive — saving roughly nine and a half thousand pounds a year in tax. That whole analysis collapses when you know Elliot is a director only, with no shareholding.
 
-Dividends are payments out of company profits to **shareholders**. A director who doesn't hold shares has no legal entitlement to dividends, full stop. There is no workaround at Select Lifestyles unless the owner of the company agrees to issue him shares — and Elliot has confirmed there is no realistic path to that happening.
+Dividends are payments out of company profits to shareholders. A director who doesn't hold shares has no legal entitlement to dividends. There is no workaround at Select Lifestyles unless the owner agrees to issue him shares — and there's no realistic path to that.
 
-The alternative — leaving Select Lifestyles, setting up his own limited company, and contracting back to Select Lifestyles as a personal-service company — is theoretically possible but practically a minefield. He'd be the sole worker for a single end-client, which is the textbook profile for an off-payroll-working determination under IR35. If HMRC found him inside IR35, his company would owe back income tax, employer NI and employee NI on the deemed employment income, and the whole point of the exercise — paying himself in low-tax dividends — would be reversed retrospectively.
+The alternative — leaving Select Lifestyles, setting up his own limited company, and contracting back — is theoretically possible but practically a minefield. He'd be the sole worker for a single end-client, the textbook profile for an inside-IR35 determination. If HMRC found him inside IR35, his company would owe back income tax, employer NI and employee NI, and the whole point of the exercise would be reversed retrospectively.
 
-So for the rest of this briefing, the tax restructure is parked. We focus entirely on what Elliot can do with the Child Maintenance system as it applies to him now: a PAYE employee on fifty-nine thousand five hundred pounds with a fifty-fifty shared care arrangement and a Child Benefit problem.
+For the rest of this briefing, the tax restructure is parked. We focus entirely on Child Maintenance.
 
 ---
 
-## Part Three: The Legal Architecture of Regulation Fifty
+## Part Three: The Legal Architecture of Regulation 50
 
-This is the centre of gravity for the whole analysis, so it's worth slowing down on the law.
+The Child Support Maintenance Calculation Regulations 2012 — statutory instrument 2012/2677 — is the rulebook the CMS works to. Within it, Regulation 50 deals with shared-care cases. It does one specific thing: it tells the CMS when a parent who is physically sharing care should still be legally treated as the non-resident parent for the purposes of paying maintenance.
 
-The Child Support Maintenance Calculation Regulations 2012 — statutory instrument number two-six-seven-seven — is the rulebook the CMS works to. Within that rulebook, Regulation 50 is titled "Persons treated as non-resident parents in shared care cases". It does something very specific. It tells the CMS when a parent who is *physically* sharing care should still be *legally* treated as the non-resident parent for the purposes of being asked to pay maintenance.
+The key wording: a person is to be treated as a non-resident parent "if, and only if, that person provides day-to-day care to a lesser extent" than the parent with care.
 
-The key wording is this: a person is to be treated as a non-resident parent "if, and only if, that person provides day-to-day care to a lesser extent" than the parent with care.
+"If and only if" is a strong legal formulation. It cuts both ways. If you provide day-to-day care to a lesser extent than the other parent, you're the non-resident parent and you pay. But if you provide day-to-day care to an equal or greater extent, you are *not* the non-resident parent, and the CMS has no jurisdiction to assess you. The case closes.
 
-Read that carefully. "If and only if" is a strong legal formulation. It means both directions are true. If you provide day-to-day care to a lesser extent than the other parent, you're the non-resident parent and you pay. But if you provide day-to-day care to an *equal or greater* extent than the other parent, you are **not** the non-resident parent — and the CMS has no jurisdiction to assess you. The case closes.
-
-That's the door we're trying to open. To zero out maintenance under Regulation 50, Elliot doesn't need to argue that Leah is a bad parent or that he's a better one. He just needs to show that his provision of day-to-day care is *not lesser* than hers. Equal is enough. Greater is also enough.
+That's the door this briefing is opening. To zero out maintenance, Elliot doesn't need to argue that Leah is a bad parent or that he's a better one. He needs to show his provision of day-to-day care is not lesser. Equal is enough.
 
 ### The Child Benefit presumption
 
-The reason this isn't already happening — the reason the CMS has accepted that Elliot is the non-resident parent despite the fifty-fifty shared care — comes from a related provision. The regulations contain a rebuttable presumption: the parent who receives Child Benefit is *presumed*, in the absence of evidence to the contrary, to provide day-to-day care to a greater extent than the other parent.
+The reason this isn't already happening — the reason the CMS has accepted Elliot as the non-resident parent despite the fifty-fifty schedule — is a related rebuttable presumption inside the same regulation. The parent who receives Child Benefit is presumed, "in the absence of evidence to the contrary", to provide day-to-day care to a greater extent.
 
-Leah currently receives Child Benefit for both Oakley and Harrison. That presumption is doing the heavy lifting in keeping Elliot classified as the non-resident parent. And Leah has indicated she will not agree to split Child Benefit or transfer it to him.
+Leah currently receives Child Benefit for both children. That presumption is doing the heavy lifting in keeping Elliot classified as the non-resident parent. She has indicated she won't agree to transfer or split it.
 
-Two things to note about that presumption. First, it is explicitly rebuttable. The regulation says "in the absence of evidence to the contrary". With sufficient evidence of equal day-to-day care, the presumption can be defeated. Second, the law treats an election *not* to receive Child Benefit as if you do receive it — so simply refusing the benefit isn't a workaround.
+Three things to note about that presumption. First, it's explicitly rebuttable — "in the absence of evidence to the contrary" is an invitation to bring evidence. Second, the law treats an election not to receive Child Benefit as if you do receive it, so a workaround by refusal isn't possible. Third, where two parents both claim Child Benefit for the same child, HMRC applies the priority rules in Schedule 10 of the Social Security Contributions and Benefits Act 1992: existing awardee, person with whom the child lives, parent over non-parent. For a child genuinely living equally with both parents, the existing awardee position becomes the live battleground — and HMRC arbitrates on the facts.
+
+Importantly: **Child Benefit cannot be split for the same child**. HMRC's settled position is that only one person can be entitled at any one time. But where there are two children, Child Benefit can be split between parents on a one-each basis. Elliot taking Harrison's Child Benefit while Leah keeps Oakley's is legally possible.
 
 ### What "day-to-day care" actually means
 
-The regulations don't give a precise statutory definition of day-to-day care, which is good and bad for Elliot. Good because there's no rigid checklist to fail. Bad because the CMS caseworker — and, if it goes there, the First-tier Tribunal Social Entitlement Chamber — has discretion.
+The regulations don't give a precise statutory definition. That's good and bad. Good because there's no rigid checklist to fail. Bad because the CMS caseworker — and, on appeal, the First-tier Tribunal Social Entitlement Chamber — has wide discretion.
 
-In practice, the factors that the CMS, the Department for Work and Pensions decision-makers' guide, and the case law treat as relevant include:
+The leading authority on "main responsibility" determinations is *PG v HMRC and NG* [2016] UKUT 216 (AAC), a tax credits case whose principles are routinely applied to analogous main-carer / day-to-day-care determinations. The Upper Tribunal said overnight stays are "not a trump card … but one factor". The tribunal must collect information about all aspects of responsibility, resolve conflicts in evidence, and reach a balanced judgment.
+
+In practice the factors the CMS and Tribunal weigh include:
 
 - Number of overnight stays
 - School drop-offs and pick-ups
-- Morning routine and breakfast
+- Morning routines and breakfast
 - After-school care and tea
-- Bedtime routine
-- Sick days — who takes time off work when a child is unwell
-- Doctor, dentist, optician and other medical appointments
+- Bedtime routines
+- Who takes time off work when a child is sick
+- Doctor, dentist, optician appointments
 - School emergency contact arrangements
-- Parents' evenings, school correspondence, homework supervision
+- Parents' evenings and school correspondence
 - Activities, sports, clubs and hobbies — booking, ferrying, attending
-- Clothing, school uniforms, equipment, shoes
-- Holiday care and time off
-- Decision-making on education, healthcare and religion
-- Emotional availability and the child's day-to-day relationship
+- Clothing, uniforms, equipment, shoes
+- Holiday care
+- Decision-making on education, healthcare, religion
+- Emotional availability and day-to-day relationship
 
-If most of these factors are equal or weighted toward Elliot, the Child Benefit presumption falls.
-
----
-
-## Part Four: Elliot's Evidence Base for Rebutting the Presumption
-
-Going through that list against the facts Elliot has provided:
-
-**Overnight stays:** Exactly fifty-fifty. Seven nights out of fourteen, documented in the parenting plan. **Equal.**
-
-**School drop-offs:** Originally the Mills and Reeve plan stated that Leah would manage all school drop-offs. That term has since been updated. The current operating arrangement is that whoever has the children on the weekend drops them at school on Monday morning, alternating between parents. Combined with the weekday split — Mum has Monday and Tuesday nights, Dad has Wednesday and Thursday — that means Dad does drop-offs on Thursday and Friday mornings on his nights, plus Monday mornings on his weekend, plus pick-ups on his contact days. **Close to equal.**
-
-**Morning routine:** Updated in line with school drop-offs. On Elliot's nights and Elliot's mornings, he runs the morning routine. **Close to equal.**
-
-**Emergency contact:** Elliot is listed at the school as emergency contact equal to Mum. **Equal.**
-
-**Medical appointments — GP and dental:** Handled by Elliot. **Weighted to Dad.**
-
-**Parents' evenings:** Attended by Elliot. **Weighted to Dad.**
-
-**Activities and clubs:** Handled by Elliot — bookings, ferrying, attendance. **Weighted to Dad.**
-
-**Documentation:** A solicitor-drafted written parenting agreement on Mills and Reeve LLP letterhead, signed by both parents. **Strong.**
-
-The picture from these confirmed facts is of a genuine fifty-fifty arrangement in which day-to-day care responsibilities are split roughly evenly, with several major day-to-day-care categories actually weighted toward Elliot. That's a strong evidential platform for a Regulation 50 argument.
-
-What's still to firm up are the remaining categories: who takes time off when a child is sick, how the school holidays divide, who handles homework and bedtime on their respective nights, who buys school uniforms and equipment. Each of these is worth pinning down with text-message screenshots, calendar entries, receipts and bank statements, because the rebuttal of a presumption is won on cumulative documentary evidence rather than on assertion.
+If most of these are equal or weighted toward Elliot, the Child Benefit presumption falls and Regulation 50 closes the case.
 
 ---
 
-## Part Five: How to Run the Regulation Fifty Argument
+## Part Four: How Harrison's Autism Transforms the Argument
 
-There are three sequential moves to make, in this order.
+This is the most important section in the brief.
+
+When one of the children has additional needs, the analysis under Regulation 50 changes character. "Day-to-day care" is no longer a generic concept measured by school runs and meals. It includes a whole category of disability-specific work — work that takes more hours, more attention, and more specialist understanding than ordinary parenting.
+
+That additional work is exactly the kind of evidence that defeats the Child Benefit presumption. Because the presumption is rebuttable on the basis of "evidence to the contrary", and because disability-specific care is by its nature both effortful and documented (appointment letters, EHCP correspondence, equipment receipts, school SEN records), it gives Elliot a richer evidence base than most paying parents have available.
+
+Specifically, Elliot provides:
+
+- **Sensory equipment in his home.** Weighted blanket, sensory toys, specialist bedding, fidget aids and quiet space. This is documented expenditure that goes beyond ordinary parenting. It represents an active choice to make his home an environment that meets Harrison's autism-specific needs.
+- **Structured routines.** Visual schedules, regulated transitions, the kind of consistency that autistic children need to manage their day. This is a deliberate care practice, not something that happens by accident.
+- **Specialist communication tools.** Whatever specific approach Harrison uses — communication boards, AAC apps, Makaton, signing — Elliot uses it too at his house, which requires his own training and ongoing practice.
+- **Attendance at autism-specific appointments.** GP, paediatrician, occupational therapy, speech and language, CAMHS, EHCP reviews. Each of these generates an attendance record and a clinician's note, and each one represents time off work or rearrangement of work.
+- **Care hours that exceed thirty-five per week.** During his nights and contact time, the autism-specific care Elliot provides is well over the thirty-five hour per week threshold that Carer's Allowance uses as its time-and-care test.
+
+That last point is worth pausing on. The thirty-five hour threshold isn't legally significant for the Reg 50 test directly, but it tells you the scale of the disability-specific care being provided. When a tribunal hears that one parent is providing more than thirty-five hours per week of qualifying disability care, it's hearing something quantitatively different from a normal "I see the kids half the time" claim.
+
+Combine that with the equal night count, the equal emergency-contact position at school, Elliot doing the GP and dental, attending parents' evenings, running activities, doing the alternate-week Monday school drop, and the picture that emerges is of a parent providing equal or greater day-to-day care — by any reasonable measure.
+
+### The DLA point
+
+Leah receives the entire DLA award for Harrison. Elliot receives none of it. That fact cuts in two directions and it matters to be clear about both.
+
+The unfavourable direction first: DWP awards DLA on the basis of the child's needs, but the appointee receiving payment is treated by the system as the person principally responsible for managing those needs. The fact that DWP appointed Leah is, to some degree, administrative evidence that aligns with the Child Benefit presumption.
+
+But the favourable direction is more powerful, and it's the angle to lean into in front of CMS. **Elliot is providing equal autism-specific care without receiving any of the financial support that's been awarded for that care.** The DLA was awarded because Harrison's autism creates additional care needs that ordinary parenting doesn't cover. Half of those needs are being met at Elliot's home — out of Elliot's pocket, with no benefit support. That's a striking factual position to put in front of a tribunal: he's doing the work without the reward, and Leah is receiving the reward without doing all the work.
+
+The case law from PG v HMRC reinforces this. The Tribunal said overnight count is "not a trump card". DWP's choice of DLA payee is similarly not a trump card. What matters is the balanced judgment across all aspects of responsibility — and on that balance the autism-specific care is a substantial chunk of "responsibility" that's being shared at minimum and arguably weighted to Elliot.
+
+### What the law doesn't give you
+
+A few things the research has confirmed are *not* available, and it's important to know them so you don't waste effort.
+
+**DLA cannot be split between separated parents.** The leading authority is *R (Barber) v Secretary of State for Work and Pensions* [2002] EWHC 1915 (Admin). DWP can only appoint one person under Regulation 43 of the Social Security (Claims and Payments) Regulations 1987. So you can't ask DWP to pay half the DLA to each parent; you can only ask DWP to substitute the appointee from Leah to Elliot, and there's no published statutory right of appeal for a non-recipient parent to do this against the existing appointee's wishes. It's possible in principle as a DWP administrative decision but practically very difficult unless Leah agrees.
+
+**CMS has no variation for the qualifying child's disability.** Special expenses variations under Regulations 63 to 67 of the 2012 Regulations cover only the paying parent's own household — including "relevant other children" living with the paying parent. The qualifying child's disability — Harrison, in this case — does not trigger any reduction in the standard calculation. So Elliot cannot say to CMS "I spend money on autism adaptations for Harrison, please reduce my maintenance". That door is closed.
+
+**Carer's Allowance is blocked by the earnings cap.** The 2025/26 weekly earnings limit for Carer's Allowance is one hundred and ninety-six pounds after tax, National Insurance and half of pension contributions. Elliot's net weekly earnings are roughly eight hundred and twenty-five pounds, well over the cap. Even though he meets the thirty-five hour test and Harrison's DLA is at the qualifying rate, his salary disqualifies him from claiming. The thirty-five hour care figure is still useful as evidence in the Reg 50 argument; it just can't be monetised via Carer's Allowance.
+
+So the disability dimension doesn't unlock a separate cash-saving route. It does something more valuable: it provides the evidence base that makes the Reg 50 case-closure argument materially stronger than it would be for an ordinary 50/50 case.
+
+---
+
+## Part Five: Running the Argument — A Three-Move Sequence
 
 ### Move one: fix the band today
 
-Go onto the CMS online account, use the "Report a change to shared care" function, and submit the corrected night count. Upload the Mills and Reeve parenting plan. Spell out the fortnightly cycle: Week One five nights, Week Two two nights, seven nights out of fourteen, one hundred and eighty-two and a half nights per year, which is in the "a hundred and seventy-five or more" band. Ask for the calculation to be redone using Shared Care Band Equal, which is the half-plus-seven-pounds-per-child reduction.
+Log onto the CMS online account. Use "Report a change to shared care". Upload the Mills and Reeve parenting plan plus a written summary showing the fortnightly cycle: Week One five nights with Elliot, Week Two two nights with Elliot, seven nights out of fourteen, one hundred and eighty-two and a half nights per year, in the one-hundred-and-seventy-five-or-more band. Ask for the calculation to be redone using Shared Care Band Equal.
 
-This is administrative, not legal. The CMS caseworker should action it on the documents alone. The new assessment should land within four to six weeks at around two hundred and fourteen pounds per month, banking roughly a hundred pounds a month for as long as the historic income figure stays at forty-one thousand three hundred and seventy-five pounds.
+This is administrative. The CMS caseworker should action it on the documents. New assessment in four to six weeks, around two hundred and fourteen pounds per month — a hundred-pound monthly saving for however many months pass before the income recalculation catches up.
 
-### Move two: build the day-to-day care file
+### Move two: build the evidence file
 
-This is paperwork, not legal argument. Before the next move, Elliot needs to assemble a file that any CMS caseworker or tribunal judge can flip through and reach the obvious conclusion. The file should contain:
+The Reg 50 argument runs on documentary evidence. The file should contain:
 
-- The signed parenting plan from Mills and Reeve
-- Any updates to the plan in writing, even if just in WhatsApp form
-- A letter from the school confirming both parents listed as equal emergency contacts and stating who attends parents' evenings
-- GP and dental records confirming Elliot's address and that he brings the children to appointments
-- A twelve-month calendar showing actual overnight stays — most easily done as a screenshot of a shared parenting app or Google Calendar
-- Receipts and bank statements showing Elliot's expenditure on the children: school uniforms, shoes, activities, food at his house, holidays
-- Photographs date-stamped showing him doing day-to-day care activities
-- A short witness statement from any third party who can confirm equal involvement — a teacher, club coach, GP, or family member
+**General parenting evidence:**
+- Signed parenting plan from Mills and Reeve
+- Written updates to the plan (including the weekend-parent-does-Monday-drop change)
+- School letter confirming both parents listed as equal emergency contacts and stating who attends parents' evenings
+- GP and dental records confirming Elliot's address on file and attendance at appointments
+- Twelve-month calendar showing actual overnight stays, ideally from a shared parenting app
+- Receipts and bank statements showing Elliot's expenditure on children — uniforms, shoes, food, activities, holidays
+- Date-stamped photographs of day-to-day care activities
+- Short witness statements from a teacher, club coach, GP, or family member confirming equal involvement
 
-This is mundane work but it's the difference between a successful Regulation 50 application and a refused one.
+**Disability-specific evidence:**
+- Harrison's DLA award letter (request a copy via subject access if necessary — both parents have the right to information about their child's benefit awards in relation to parental responsibility)
+- The current draft EHCP plus any LA correspondence about the assessment
+- Evidence that Elliot is named on the EHCP and consulted on Harrison's needs
+- Receipts for sensory equipment, weighted blankets, communication tools, autism-specific items kept at Elliot's home
+- Appointment letters and attendance records for autism services: paediatrician, OT, SLT, CAMHS, EHCP reviews
+- A short written description of the structured routines Elliot maintains at his home — visual schedules, transitions, consistent meal and bedtime patterns
+- Photographs of the autism-adapted space in Elliot's home
+- Any communications with school or LA confirming Elliot's involvement in Harrison's SEN provision
 
-### Move three: apply for Regulation 50 case closure or apply for Child Benefit
+This file is the foundation of every subsequent application. It's also the file the family law solicitor will want to see before drafting the Reg 50 application.
 
-There are two parallel routes from here, and they can be pursued together.
+### Move three: file Reg 50 application, Child Benefit application for Harrison, and DLA appointee request — in that order
 
-The first route is to write to the CMS directly, asking them to treat Elliot as a person with care under Regulation 50 on the basis that he provides day-to-day care to an equal extent as Leah. The application should reference Regulation 50 by name, attach the evidence file, and request that the maintenance assessment be ended. The decision lies with the caseworker, with a right of mandatory reconsideration if refused, and then a right of appeal to the First-tier Tribunal Social Entitlement Chamber.
+The first application is to CMS. Write to them — in addition to whatever online reporting tools they offer — citing Regulation 50 by name and applying for Elliot to be treated as a person with care rather than a non-resident parent on the basis of equal day-to-day care. Attach the evidence file. Specifically reference the Harrison autism evidence as part of the case. Refer to PG v HMRC and NG [2016] UKUT 216 (AAC) as authority for the proposition that overnight stays are one factor among many and that all aspects of responsibility must be weighed. Ask for the maintenance assessment to be ended.
 
-The second route is to apply to HM Revenue and Customs for Child Benefit for the children — or for one of them. Either parent can claim Child Benefit; where both parents claim for the same child, HMRC applies the "priority" rules in Schedule 10 of the Social Security Contributions and Benefits Act 1992. Under those rules, where care is equal, HMRC examines the facts and decides. Because Leah currently claims, she has the existing claim, but if Elliot files a competing claim, HMRC will reconsider — and even if HMRC ultimately leaves the existing arrangement undisturbed, the application generates a paper trail showing that the Child Benefit position is contested rather than settled, which itself weakens the CMS presumption that flows from Leah's receipt.
+In parallel, file a Child Benefit claim with HMRC for Harrison only. Leah keeps Oakley's claim. The split-on-a-one-each-basis is legally clean and harder for Leah to resist than a full transfer. Even if HMRC ultimately decides in Leah's favour on the priority dispute for Harrison, the active application produces a paper trail that itself weakens the Child Benefit presumption in the Reg 50 argument.
 
-A pragmatic variation worth considering: applying for Child Benefit for the younger child only — Harrison — and leaving Oakley's claim with Leah. A split position like this is consistent with the fifty-fifty care reality and is harder for Leah to resist than a full transfer. It also has the side effect that, for CMS purposes, if Elliot becomes the Child Benefit recipient for Harrison, the presumption flips for that child and the maintenance for Harrison drops to roughly zero, with only the Oakley element remaining.
+Also in parallel, write to DWP requesting consideration as Harrison's appointee for DLA on the basis of equal care and equal provision of autism-specific support. This is the long-shot of the three — there's no statutory right of appeal and DWP's practice is to leave the existing appointee in place unless there's a strong reason — but the application itself generates further evidence of Elliot's involvement in Harrison's disability care, which feeds back into the Reg 50 file.
 
----
-
-## Part Six: The Realistic Range of Outcomes
-
-Putting it all together, Elliot is looking at one of three end-state outcomes.
-
-**Best case — full Regulation 50 success:** CMS accepts the equal day-to-day care argument, the case closes, maintenance falls to zero. Annual saving against the current three hundred and fourteen pound monthly assessment: three thousand seven hundred and seventy-two pounds. Probability: moderate. Depends entirely on the strength of the evidence file and whether the Child Benefit position can be rebutted or split.
-
-**Middle case — band fix plus partial Child Benefit transfer:** The night-count error is corrected, immediately saving a hundred pounds a month. Harrison's Child Benefit transfers to Elliot, the CMS calculation for Harrison drops to zero, and only Oakley remains in scope. Going off the corrected current figure, the assessment for one child at the same income would be about thirty pounds a week — call it one hundred and thirty pounds a month. Annual saving against current: two thousand two hundred pounds, though this erodes when income recalc bumps the underlying figure up.
-
-**Worst case — band fix only:** The Child Benefit presumption survives all challenges, the case stays open, but the band correction sticks. Monthly saving: about a hundred pounds. Annual saving: twelve hundred. Locked in for however many months until the income recalc bumps the base figure back up to roughly three hundred pounds a month. So the saving could be as little as five or six hundred pounds depending on timing.
-
-In all three scenarios the band correction is the floor — a virtually certain win because it's a documentary error CMS will fix on production of the parenting plan. Everything above that is incremental upside from the Regulation 50 argument and Child Benefit manoeuvres.
+If any of the three is refused, the next step is mandatory reconsideration within thirty days, then appeal to the First-tier Tribunal. The appeal is free and the Tribunal hears the matter fresh.
 
 ---
 
-## Part Seven: The Watch-Outs
+## Part Six: Realistic Outcomes
 
-A few practical points worth flagging.
+Three scenarios.
 
-**Don't volunteer the higher income.** The current assessment uses forty-one thousand three hundred and seventy-five pounds. That figure will get recalculated upward to reflect fifty-nine thousand five hundred at the next annual review — but until then it stands. Reporting the shared-care correction does not require updating the income figure, and Elliot should be careful not to volunteer the new salary mid-cycle. The next annual review will bring it in anyway.
+**Best case — full Reg 50 success.** CMS accepts the equal-or-greater day-to-day care argument, the case closes, maintenance falls to zero. Annual saving against the current three hundred and fourteen pound monthly figure: three thousand seven hundred and seventy-two pounds. Probability moderate-to-strong, materially boosted by the disability evidence and the documented thirty-five-plus hours of autism-specific care.
 
-**Document the new arrangement.** The updated drop-off rule — weekend parent does Monday morning — should be in writing. Even a WhatsApp exchange confirming the change is enough. Without it, Leah's solicitor could insist the original Mills and Reeve plan still governs, which would weaken the day-to-day care argument.
+**Middle case — Harrison's Child Benefit transfers to Elliot, full Reg 50 fails.** The presumption flips for Harrison and the case for Harrison closes; Oakley's element remains. Single-child basic-rate calculation on the current historic income at twelve percent gives ninety-five pounds per week; halved for Band Equal and minus seven pounds for one child equals forty point five pounds per week, or one hundred and seventy-five pounds per month. Annual saving against current: just over sixteen hundred pounds.
 
-**Don't engage in retaliation.** The CMS and the Tribunal are highly alert to applications that look retaliatory or designed to score points in a wider family dispute. Frame everything as fact-based and child-focused. Regulation 50 succeeds on calm, documented evidence — not on argument.
+**Worst case — band fix only, both presumptions survive.** Monthly saving about a hundred pounds at current income. Locked in for as many months as pass before the income recalculation, then erodes substantially. Annual saving five hundred to twelve hundred pounds depending on timing.
 
-**Right to challenge.** If the CMS refuses the Regulation 50 application, the next step is mandatory reconsideration — a request that a different decision-maker review the file. That has to be done within thirty days of the original decision. If that's refused, appeal to the First-tier Tribunal is free, and the Tribunal hears the matter fresh with both parties having the right to attend.
-
-**The household arrears.** The six thousand one hundred and eighty pounds owed on water, council tax and gas/electric have no bearing on the CMS calculation and cannot be offset against maintenance. They should be addressed separately. The gas and electric bill at forty-five hundred carries the most aggressive enforcement risk including warrants of entry, and that should be the priority for the household arrears plan.
+The floor in every case is the band correction — that's a virtually certain win because it's a documentary error CMS will fix on production of the parenting plan. Everything above is incremental upside, with the disability evidence acting as a multiplier on the probability of the best and middle cases succeeding.
 
 ---
 
-## Part Eight: The Recommended Action Plan in Three Weeks
+## Part Seven: Watch-Outs
 
-**This week:** Log onto the CMS online account. Report a change to shared care, uploading the Mills and Reeve plan and a written summary showing the fortnightly seven-nights-out-of-fourteen cycle. Request that Shared Care Band Equal be applied. Confirm receipt and ask for a target decision date.
+A handful of practical points.
 
-**Next two weeks:** Open a manila file. Start collecting every document on the day-to-day care evidence list — school confirmation, GP records, dental records, parenting calendar, receipts, parents' evening notes. Save WhatsApp screenshots showing handovers, sick-day discussions, school-run arrangements. Open a parenting app if one isn't already running, to start a clean log going forward.
+**Don't volunteer the higher income mid-cycle.** The current assessment uses forty-one thousand three hundred and seventy-five. Until the annual review, that figure stands. Reporting the shared-care correction does not require updating the income figure. Don't volunteer it.
 
-**Week three:** Draft and send a written application to the CMS citing Regulation 50, attaching the evidence file, and asking for the case to be closed on the basis of equal day-to-day care. In parallel, file a Child Benefit claim for Harrison with HMRC. Inform Leah in writing of both applications, in factual terms.
+**Document the updated drop-off rule.** The weekend-parent-does-Monday-drop arrangement should be in writing. A WhatsApp confirmation is enough. Without it, Leah's solicitor could insist the original Mills and Reeve plan governs.
 
-**Watch and wait:** CMS decisions take six to twelve weeks. The Child Benefit decision can take similar timeframes. If either is refused, immediately file a mandatory reconsideration with additional evidence within the thirty-day window.
+**Don't characterise applications as retaliatory.** The CMS and Tribunal are alert to anything that looks like a points-scoring exercise in a wider family dispute. Every application — CMS, HMRC, DWP — should be framed factually and focused on the children's interests.
 
-**Get a paid review.** Before sending the Regulation 50 application, spend two to four hundred pounds on a one-hour consultation with a family-law solicitor who has specifically handled CMS variations and Regulation 50 cases. They will stress-test the evidence file and the wording of the application. The leading family law firms in this space publish on Regulation 50 — Stowe Family Law, JMW Solicitors, and the specialist outfit CMSAS, which exists specifically to help people through this process. The fee is dwarfed by the potential annual saving.
+**Take care with the DLA application.** Asking to be substituted as Harrison's DLA appointee will be perceived by Leah as a financial attack on her. It's the highest-friction move in the playbook. Consider whether it's worth the relational cost relative to the modest probability of success. The evidence-generation value can largely be achieved by other means: subject access requests for DLA correspondence, EHCP documentation, autism service records.
+
+**The household arrears are separate.** Six thousand one hundred and eighty pounds on water, council tax and gas/electric have no bearing on CMS and cannot be offset. Address them in a parallel budget. Prioritise the gas and electric at forty-five hundred pounds — enforcement risk including warrants of entry is highest there.
+
+**Subject Access Requests are your friend.** You have rights under data protection law to request copies of all records held about you and (in your capacity as parent) about your children, from the school, the GP, the Local Authority SEN team, and DWP. These produce documentary evidence at no cost beyond the time to send the requests.
 
 ---
 
-## Part Nine: A Word on the Spirit of the Law
+## Part Eight: Three-Week Action Plan
 
-The Child Maintenance Service exists to ensure that children whose parents live apart are financially supported. Nothing in this briefing is about avoiding that responsibility. Regulation 50 exists precisely because the legislators recognised that in a genuine fifty-fifty shared care arrangement, both parents are already providing for the children directly — through their homes, their food, their clothes, their time. Imposing a maintenance assessment on top of that means the paying parent contributes twice, which the regulations explicitly intend to avoid.
+**This week.** Log onto the CMS online account. Report a change to shared care, upload the Mills and Reeve plan and a written summary of the fortnightly cycle. Request Shared Care Band Equal. Send subject access requests to: the school (records of emergency contacts, parents' evening attendance, SEN correspondence), the GP and dental practices (appointment records), the Local Authority SEN team (EHCP draft, all correspondence about Harrison), and DWP (Harrison's DLA award letter and any correspondence).
 
-Elliot's case looks like exactly the situation Regulation 50 was written for. The children spend equal nights with both parents. He covers half the food bills, half the bath nights, half the school runs, half the cuddles when they fall over. He attends parents' evenings, takes them to the dentist, pays for their swimming lessons. His financial contribution to their lives is already substantial and ongoing — it just doesn't pass through Leah's bank account.
+**Weeks two and three.** Build the evidence file as set out in Move Two above. Open a parenting calendar app if one isn't already running. Collect receipts. Take photographs of the autism-adapted space at home. Write a one-page summary of the structured routines you maintain. Get a short witness statement from one teacher, one clinician, and one family member.
 
-Regulation 50 says, in those circumstances, the CMS shouldn't be in the middle of it. This briefing is the roadmap to making that argument formally.
+**Week three.** Book a one-hour paid consultation with a family law solicitor who has specifically handled CMS Regulation 50 cases. Expect to spend two to four hundred pounds. Take the evidence file. Ask them to review the draft of the Reg 50 application before sending. CMSAS is the specialist firm in this space; Stowe Family Law and JMW Solicitors also have published expertise.
+
+**Week four.** Send the Reg 50 application to CMS, the Child Benefit application for Harrison to HMRC, and (subject to the solicitor's advice on relational cost) the DLA appointee request to DWP. Inform Leah in writing of each, in factual terms.
+
+**Watch and wait.** Decisions take six to twelve weeks. If any is refused, file mandatory reconsideration within thirty days with additional evidence.
+
+---
+
+## Part Nine: The Spirit of the Law
+
+The Child Maintenance Service exists to ensure that children whose parents live apart are financially supported. Nothing in this briefing is about avoiding that responsibility.
+
+Regulation 50 exists because the legislators recognised that in a genuine fifty-fifty shared care arrangement, both parents are already providing for the children directly — through their homes, their food, their clothes, their time, their attention. Imposing a maintenance assessment on top of that means the paying parent contributes twice. The regulations explicitly intend to avoid that double-contribution.
+
+Elliot's case looks like exactly the situation Regulation 50 was written for. The children spend equal nights with both parents. He covers half the food bills, half the bath nights, half the school runs on his days, half the cuddles when they fall over. He attends parents' evenings, takes them to the dentist, pays for their swimming lessons. He maintains an autism-adapted environment for Harrison out of his own pocket while every penny of Harrison's DLA goes to Leah. His financial contribution to the children's lives is already substantial and ongoing — it just doesn't pass through Leah's bank account.
+
+Regulation 50 says, in those circumstances, the CMS shouldn't be in the middle of it.
 
 ---
 
@@ -233,17 +268,24 @@ Regulation 50 says, in those circumstances, the CMS shouldn't be in the middle o
 
 Primary legislation and official guidance referenced throughout:
 
-- Child Support Maintenance Calculation Regulations 2012, Statutory Instrument 2012/2677 — Regulations 34, 35, 36, 38, 47, 50, 69 and 71
+- Child Support Maintenance Calculation Regulations 2012, Statutory Instrument 2012/2677 — Regulations 34, 35, 36, 38, 47, 50, 63, 65, 67, 69, 71
 - Child Support Act 1991, Schedule 1
 - Social Security Contributions and Benefits Act 1992, Schedule 10 — Child Benefit priority rules
-- Department for Work and Pensions Child Maintenance Decision Makers' Guide, Volume 3, Chapters 27 to 36
-- Department for Work and Pensions guidance on Diversion of Income
+- Social Security (Claims and Payments) Regulations 1987, Regulation 43 — DLA appointee for children
+- Social Security (Invalid Care Allowance) Regulations 1976
+- *PG v HMRC and NG* [2016] UKUT 216 (AAC) — main responsibility test
+- *R (Barber) v Secretary of State for Work and Pensions* [2002] EWHC 1915 (Admin) — DLA cannot be split
+- DWP Child Maintenance Decision Makers' Guide, Volume 3, Chapters 27 to 36
+- DWP Decision Makers' Guide Chapter 60 — Carer's Allowance
+- DWP Advice for Decision Making Chapter F1 — UC Child element
+- HMRC Child Benefit Technical Manual CBTM08001 and CBTM08030
 - House of Commons Library briefings CBP-7770 and CBP-7773
-- CMSAS published commentary on 50/50 Equal Shared Care and Regulation 50, January and October 2024
-- Financial Remedies Journal — Child Maintenance in Cases of Equal Shared Care
-- gov.uk: Calculate your child maintenance, Variations explained for receiving parents
-- HMRC: Child Benefit — Claim Child Benefit if you live abroad / when both parents claim
+- gov.uk: Calculate your child maintenance, Variations explained for receiving parents, Carer's Allowance eligibility, DLA for children
+- CMSAS published commentary on 50/50 Equal Shared Care and Regulation 50
+- Citizens Advice — DLA appeals, CMS variation grounds
+- AdviceNow — Challenging a DLA decision
+- Child Poverty Action Group — Refusal to split Child Benefit (template letter)
 
 ---
 
-**Note for the listener:** This briefing is a research synthesis based on the documents and facts the subject has provided. It is not regulated legal advice. The interplay between the Child Benefit presumption and the Regulation 50 test is fact-sensitive, and a paid one-hour consultation with a family-law specialist before submitting the Regulation 50 application is strongly recommended. The cost of that consultation is in the low hundreds of pounds against potential annual savings in the low thousands.
+**Note for the listener:** This briefing is a research synthesis based on the documents and facts the subject has provided. It is not regulated legal advice. The interplay between the Child Benefit presumption, the Regulation 50 test, and the disability dimension is fact-sensitive. A paid one-hour consultation with a family-law specialist who has handled Regulation 50 cases involving disabled children is strongly recommended before submitting the application. The cost is in the low hundreds of pounds against potential annual savings approaching four thousand pounds.
