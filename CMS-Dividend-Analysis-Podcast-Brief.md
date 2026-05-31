@@ -1,179 +1,231 @@
-# Should I Switch from PAYE to Dividends to Cut My Child Maintenance?
+# Cutting My Child Maintenance to Zero: The Regulation 50 Playbook
 
-## A Deep-Dive Briefing for a UK Limited Company Director
+## A Deep-Dive Briefing on UK Child Maintenance, 50/50 Shared Care, and the Single Legal Provision That Could Close My Case
 
 **Prepared:** 31 May 2026
-**Subject:** A real-world analysis of whether restructuring remuneration from salary to dividends reduces Child Maintenance Service liability in the UK, and whether it's worth doing.
+**Subject:** A real-world analysis of how a UK paying parent on a genuine 50/50 shared-care arrangement can use Regulation 50 of the Child Support Maintenance Calculation Regulations 2012 to reduce, and potentially eliminate, Child Maintenance Service liability — combined with an immediate band-correction worth about a hundred pounds a month.
 
 ---
 
 ## The Situation in Plain English
 
-Meet Elliot. He's a director-shareholder of a UK limited company called Select Lifestyles Limited. Every month his payslip looks like this: gross salary of four thousand nine hundred and fifty-eight pounds and thirty-three pence. That works out to a fifty-nine thousand five hundred pound annual salary. He gets a vehicle benefit on top — a company car worth about two thousand two hundred pounds a year as a taxable benefit in kind. His tax code is twelve fifty-seven L, meaning he gets the full personal allowance. After PAYE tax of just over a thousand pounds, National Insurance of two hundred and sixty-six pounds, a small pension contribution and a thirty-pound charity donation, his take-home pay lands at three thousand five hundred and seventy-one pounds and sixty-three pence per month.
+Meet Elliot. He's a director of a UK limited company called Select Lifestyles Limited. He is not a shareholder of that company. That distinction matters enormously and it changes the shape of this whole analysis. Because he holds no shares, he cannot legally receive dividends from Select Lifestyles, and that means the classic director's tax-restructuring trick — paying yourself a small salary and topping up with dividends — simply isn't available to him at his current employer. Anyone telling him to "go dividend" without first checking whether he owns shares has skipped the most basic step in the planning.
 
-He has two children. The custody arrangement is fifty-fifty — equal shared care. He picks them up, drops them off, has them overnight half the time. His ex-partner currently receives Child Benefit for both children, and the Child Maintenance Service has assessed him to pay three hundred and fifteen pounds and twelve pence per month. He also has historic household arrears to clear — four hundred and eighty pounds on a water bill, twelve hundred on council tax, and forty-five hundred on gas and electric. Six thousand one hundred and eighty pounds in total, all of it relating to the former family home.
+Elliot's gross salary is fifty-nine thousand five hundred pounds a year, paid as straight PAYE through Select Lifestyles. He also gets a company car valued at two thousand two hundred pounds a year as a benefit in kind. His tax code is twelve fifty-seven L. After tax, National Insurance, a small pension contribution and a charity donation, his take-home pay is three thousand five hundred and seventy-one pounds and sixty-three pence per month.
 
-The question Elliot wants answered is simple to ask but devilishly complex to answer: **if he restructured his pay — keeping a small salary and taking most of his income as dividends from his own company — would that lower his Child Maintenance payments? And is it worth doing?**
+He has two children: Oakley, born thirty-first of March 2019 — currently seven years old — and Harrison, born twelfth of February 2021, currently five. His former partner is Leah. The custody arrangement is fifty-fifty in nights, formalised in a written agreement drafted by Mills and Reeve solicitors and signed by both parents.
 
-This briefing walks through every angle of that question using UK legislation, HMRC guidance, official Department for Work and Pensions decision-makers' guidance, Upper Tribunal case law, and the post-April-2025 tax landscape.
+The Child Maintenance Service has assessed Elliot at seventy-two pounds and fifty-five pence per week, which is three hundred and fourteen pounds and thirty-eight pence per month. That assessment was effective from twentieth of January 2026 and is on what the CMS calls Direct Pay — Elliot pays Leah directly into her bank account each month with no CMS collection charge.
 
----
+He also has historic household arrears: four hundred and eighty pounds on a water bill, twelve hundred on council tax, and forty-five hundred on gas and electric. Six thousand one hundred and eighty pounds total, all relating to the former family home.
 
-## Part One: How Child Maintenance Service Actually Calculates Income
-
-Most people assume the CMS looks at someone's total income — everything they earn from every source — and applies a percentage. That assumption is wrong, and the gap between that assumption and reality is the entire reason this analysis exists.
-
-The CMS calculation is governed by the Child Support Maintenance Calculation Regulations 2012, statutory instrument number two-six-seven-seven. Under Regulation thirty-six, the standard calculation looks only at what's called "historic income" reported by HMRC. And critically, that historic income figure is restricted to just four categories: employment income, pension income, certain taxable social security benefits, and trading income from self-employment.
-
-Dividends are not in that list.
-
-Dividends fall under Part Four of the Income Tax (Trading and Other Income) Act 2005, which the CMS classifies as "unearned income". And unearned income is not captured by the default calculation. It can only be brought into the maintenance assessment through a separate process called a "variation" under Regulation sixty-nine.
-
-Here's how a Regulation sixty-nine variation works. The receiving parent — in Elliot's case, his ex — has to actually know about the dividend income and apply for it to be considered. The CMS does not automatically reach into HMRC's database and pull dividend figures. They only request that data after a receiving parent has lodged a variation application. There's a threshold too: the unearned income has to be at least two thousand five hundred pounds a year. Below that, even a successful application doesn't change the calculation.
-
-The application process itself is now very accessible. The twenty-pound fee was abolished in February 2024. Applications can be made by phone or in writing. So while it's not automatic, it's not hard either — if the receiving parent knows the dividends exist.
-
-There is one important caveat on the horizon. The UK government has announced plans to legislate so that unearned income gets captured automatically, removing the need for the variation application altogether. Timing is unconfirmed but the direction of travel is clear: the dividend gap is closing within the next two to three years.
+This briefing answers one question: how does he get to zero — or as close to zero as the law allows — on his Child Maintenance payment? And it answers a closely related second question: where can he fix mistakes in the existing calculation today?
 
 ---
 
-## Part Two: Verifying the Three Hundred and Fifteen Pound Figure
+## Part One: There Are Two Errors in the Current CMS Assessment
 
-Before we restructure anything, let's confirm Elliot's current Child Maintenance figure actually makes sense. This matters because if the calculation is wrong, that's the first thing to fix.
+Before discussing any strategy, we have to start with what's already wrong on the file. Reading Elliot's CMS letter dated twenty-ninth of January 2026 alongside his actual shared-care schedule reveals two separate errors. One of them is worth roughly a hundred pounds a month, and the other is going to cost him at the next annual review unless he does something now.
 
-His gross annual salary is fifty-nine thousand five hundred pounds. Divide that by fifty-two weeks and you get a weekly gross income of one thousand one hundred and forty-four pounds and twenty-three pence.
+### Error one: the night count is wrong
 
-The CMS has five income bands. Below seven pounds a week is the nil rate. From seven to a hundred is the flat rate of seven pounds. From one hundred to two hundred is the reduced rate. From two hundred and one to eight hundred is what's called the basic rate. And from eight hundred and one to three thousand is the basic-plus rate. Anything over three thousand a week is capped — that's where applications go to court for top-up orders.
+The CMS letter at Step Six — "shared care" — states that Oakley stays with Elliot "three nights a week, a hundred and fifty-six to a hundred and seventy-four nights a year". The letter says the same for Harrison. Based on that count, the CMS has applied the **three-sevenths reduction** to the pre-shared-care figure.
 
-Elliot's weekly income sits firmly in the basic-plus band. For two qualifying children, the calculation has two layers. The first layer is sixteen percent on the first eight hundred pounds of weekly income. That gives one hundred and twenty-eight pounds. The second layer is twelve percent on the slice between eight hundred and his actual income — that's three hundred and forty-four pounds and twenty-three pence — which produces forty-one pounds and thirty-one pence. Add those together and the pre-shared-care figure is one hundred and sixty-nine pounds and thirty-one pence per week.
+But the actual schedule, as both parents now operate it, runs on a fortnightly cycle. In Week One — when it's Dad's weekend — Elliot has the children Wednesday night, Thursday night, Friday night, Saturday night, and Sunday night. That's five nights. He then drops them at school on Monday morning. In Week Two — when it's Mum's weekend — Elliot has Wednesday night and Thursday night. That's two nights. So across fourteen days Elliot has seven nights and Leah has seven nights. That's exactly fifty-fifty.
 
-Now the shared care adjustment. The CMS has four bands depending on how many nights per year the paying parent has the children. Fifty-two to a hundred and three nights reduces the figure by one-seventh. A hundred and four to a hundred and fifty-five nights reduces by two-sevenths. A hundred and fifty-six to a hundred and seventy-four nights reduces by three-sevenths. And one hundred and seventy-five nights or more — which is what equal fifty-fifty care produces — halves the figure and then deducts a further seven pounds per child per week.
+Annually, seven divided by fourteen multiplied by three hundred and sixty-five point two five days gives one hundred and eighty-two and a half nights. That is decisively above the one hundred and seventy-five night threshold for what the CMS calls "Shared Care Band Equal". The correct reduction is **one half plus a further seven pounds per child per week**, not three-sevenths.
 
-Apply that to Elliot. Halve one hundred and sixty-nine pounds and thirty-one pence and you get eighty-four pounds and sixty-five pence. Subtract fourteen pounds for the two-child further reduction and you land at seventy pounds and sixty-five pence per week. Multiply by fifty-two and divide by twelve and the monthly equivalent is about three hundred and six pounds.
+Let's work out what that does to the figure. The CMS used a yearly gross income of forty-one thousand three hundred and seventy-four pounds and ninety-eight pence — which is Elliot's historic 2024/25 income from HMRC. Divide by fifty-two and the gross weekly income is seven hundred and ninety-three pounds and forty-nine pence, sitting just inside the basic rate band of two hundred to eight hundred pounds. For two children the basic rate is sixteen percent. Sixteen percent of seven hundred and ninety-three pounds and forty-nine pence is one hundred and twenty-six pounds and ninety-six pence per week — that's the pre-shared-care figure.
 
-Elliot is paying three hundred and fifteen pounds and twelve pence — about nine pounds more per month than this calculation predicts. The gap is almost certainly down to the way CMS uses weekly pay figures from HMRC's real-time information feed rather than dividing annual salary by fifty-two. The taxable vehicle benefit of two thousand two hundred pounds a year may also be partially included. Bottom line: his assessment is correct. The maths checks out.
+Currently CMS applies the three-sevenths reduction: one hundred and twenty-six pounds and ninety-six pence times four-sevenths equals seventy-two pounds and fifty-five pence per week, which matches the letter exactly.
 
----
+Under the correct Band Equal reduction: halve to sixty-three pounds and forty-eight pence, then subtract fourteen pounds for the two children, giving forty-nine pounds and forty-eight pence per week. That's two hundred and fourteen pounds and forty-one pence per month.
 
-## Part Three: The Hidden Lever — Regulation Fifty
+So fixing the band alone — without arguing any new principle, just by reporting that the night count is wrong — saves about a hundred pounds a month. The mechanism is the "Report a change to shared care" link on the CMS online account. Elliot uploads the parenting plan, draws the CMS's attention to the fortnightly cycle producing seven nights out of fourteen, and the assessment gets revised.
 
-This is the most important section of the entire briefing, and it has nothing to do with dividends.
+### Error two: the income figure is stale and about to bite
 
-Under Regulation fifty of the same 2012 regulations, a person is only treated as the non-resident parent — the one who pays maintenance — if they provide day-to-day care "to a lesser extent" than the other parent. If care is genuinely, demonstrably equal in both overnight stays and day-to-day responsibility, no maintenance is payable. The CMS case can be closed entirely.
+The CMS letter says yearly gross income of forty-one thousand three hundred and seventy-five pounds. But Elliot's current payslip shows a fifty-nine thousand five hundred pound salary. The CMS uses historic income from HMRC — typically the latest fully reported tax year. The 2024/25 figure of forty-one thousand is what's on file now.
 
-The catch is the Child Benefit presumption. The parent who receives Child Benefit is presumed, in the absence of evidence to the contrary, to provide greater day-to-day care. Elliot's ex receives Child Benefit, which is why he's classified as the non-resident parent despite the fifty-fifty arrangement. But that presumption is rebuttable.
+Under Regulation thirty-five of the calculation regulations, if current income differs from historic by twenty-five percent or more, the CMS switches to current income. Fifty-nine thousand five hundred is forty-four percent higher than forty-one thousand three hundred and seventy-five — well over the trigger.
 
-If Elliot can either negotiate to receive Child Benefit himself for one or both children, or produce evidence demonstrating equal day-to-day care — school registration, GP records, school pickup logs, after-school activity arrangements, doctor appointments, parents' evenings, who handles uniforms and supplies — there's a real argument that the CMS case should be closed.
+That means as soon as Leah, or HMRC's annual data feed, prompts a reconsideration, Elliot's CMS will move up to reflect his current salary. At fifty-nine thousand five hundred his gross weekly is eleven hundred and forty-four pounds and twenty-three pence, putting him in the basic-plus band. The full calculation runs: sixteen percent of eight hundred is one hundred and twenty-eight pounds; twelve percent of the three hundred and forty-four pound and twenty-three pence slice above eight hundred is forty-one pounds and thirty-one pence; total pre-shared-care one hundred and sixty-nine pounds and thirty-one pence. Under correct Band Equal: halve to eighty-four pounds and sixty-five pence, minus fourteen for the two children, equals seventy pounds and sixty-five pence per week — or three hundred and six pounds per month.
 
-This is potentially worth three thousand seven hundred and eighty pounds a year — the entire current annual payment — and it requires no tax restructuring, no exposure to anti-avoidance rules, no engagement with company law. A single consultation with a family law solicitor specialising in shared-care arrangements would establish whether this is viable. It should be the first thing Elliot explores, before anything else in this briefing.
-
----
-
-## Part Four: The April 2025 Tax Landscape
-
-If Regulation fifty isn't viable and Elliot still wants to explore restructuring, here's the tax environment he's working in.
-
-The April 2025 changes were significant for company directors. The employer National Insurance threshold dropped from nine thousand one hundred to five thousand pounds. The employer NI rate rose from thirteen point eight percent to fifteen percent. The Employment Allowance, which would otherwise let small employers offset ten thousand five hundred pounds of employer NI, is explicitly unavailable to companies whose only employee is a sole director. That's Elliot's situation.
-
-Personal allowance remains frozen at twelve thousand five hundred and seventy pounds. Employee NI starts at the same threshold and runs at eight percent up to fifty thousand two hundred and seventy, then two percent above that. The Lower Earnings Limit — the salary level needed to bank a qualifying year for the state pension — is six thousand five hundred pounds.
-
-Dividend tax has a five hundred pound allowance, then runs at eight point seven five percent in the basic rate band, thirty-three point seven five percent in the higher rate band, and thirty-nine point three five percent in the additional rate band. Note that from April 2026, the basic and higher rates each go up by two percentage points to ten point seven five percent and thirty-five point seven five percent respectively.
-
-Corporation tax has a small profits rate of nineteen percent up to fifty thousand pounds of taxable profit, marginal relief between fifty thousand and two hundred and fifty thousand at an effective twenty-six point five percent on each marginal pound, and the main rate of twenty-five percent above two hundred and fifty thousand. Elliot's company, if profits sit below fifty thousand after extraction, pays nineteen percent.
+So the corrected figure at his actual current income is roughly three hundred pounds a month. The "saving" from fixing the band is real now — it brings him from three hundred and fourteen to two hundred and fourteen pounds — but it disappears as soon as CMS catches up with his new salary. The window to lock in the lower figure is short. He should report the shared-care change now to bank the hundred-pound-a-month saving for as many months as he can before the income recalc.
 
 ---
 
-## Part Five: Three Extraction Scenarios
+## Part Two: Why the Dividend Strategy Is Off the Table
 
-Let's compare three ways of getting roughly the same amount of money out of the company.
+Earlier drafts of this analysis assumed Elliot was a director-shareholder of Select Lifestyles, and on that assumption a salary-to-dividend restructure looked very attractive — saving roughly nine and a half thousand pounds a year in tax. That whole analysis collapses when you know Elliot is a director only, with no shareholding.
 
-**Scenario A is the status quo.** Pure salary of fifty-nine thousand five hundred pounds. The company pays employer NI of eight thousand one hundred and seventy-five pounds on the slice above five thousand. The whole package is deductible against corporation tax so there's no CT on the extracted portion. Elliot personally pays income tax of eleven thousand two hundred and thirty-two pounds and employee NI of three thousand two hundred and one pounds. His net is forty-five thousand and sixty-seven pounds. Total tax leakage across the company and personal returns is twenty-two thousand six hundred and eight pounds. The effective tax wedge is thirty-three point four percent.
+Dividends are payments out of company profits to **shareholders**. A director who doesn't hold shares has no legal entitlement to dividends, full stop. There is no workaround at Select Lifestyles unless the owner of the company agrees to issue him shares — and Elliot has confirmed there is no realistic path to that happening.
 
-**Scenario B is the recommended hybrid.** Salary of twelve thousand five hundred and seventy pounds, dividends taking the rest. The company pays employer NI of one thousand one hundred and thirty-six pounds. The remaining profit pot of forty-five thousand seven hundred and ninety-four pounds incurs corporation tax of eight thousand seven hundred and one pounds, leaving thirty-seven thousand and ninety-three pounds available as dividends. Personally, Elliot pays no income tax on the salary (it's covered by personal allowance), no employee NI (right at the threshold), and dividend tax of three thousand two hundred and two pounds. His net is forty-six thousand four hundred and sixty-one pounds. Total tax leakage is thirteen thousand and thirty-nine pounds. Effective tax wedge: twenty-one point nine percent.
+The alternative — leaving Select Lifestyles, setting up his own limited company, and contracting back to Select Lifestyles as a personal-service company — is theoretically possible but practically a minefield. He'd be the sole worker for a single end-client, which is the textbook profile for an off-payroll-working determination under IR35. If HMRC found him inside IR35, his company would owe back income tax, employer NI and employee NI on the deemed employment income, and the whole point of the exercise — paying himself in low-tax dividends — would be reversed retrospectively.
 
-**Scenario C drops the salary to five thousand pounds** to eliminate all employer NI. Corporation tax on the remaining fifty-four thousand five hundred is ten thousand three hundred and fifty-five pounds, leaving forty-four thousand one hundred and forty-five as dividends. Dividend tax is three thousand one hundred and fifty-seven pounds. Net is forty-five thousand nine hundred and eighty-eight pounds. Total leakage thirteen thousand five hundred and twelve. Slightly worse than Scenario B by about four hundred and seventy-three pounds annually, **and** it sits below the Lower Earnings Limit so Elliot doesn't bank a state pension qualifying year. Every missed qualifying year is worth around three hundred and twenty-nine pounds a year of state pension for life.
-
-The winner is Scenario B. It saves nine thousand five hundred and sixty-nine pounds a year compared to the status quo, puts roughly one hundred and sixteen pounds more in his pocket each month, and preserves state pension entitlement.
+So for the rest of this briefing, the tax restructure is parked. We focus entirely on what Elliot can do with the Child Maintenance system as it applies to him now: a PAYE employee on fifty-nine thousand five hundred pounds with a fifty-fifty shared care arrangement and a Child Benefit problem.
 
 ---
 
-## Part Six: What Happens to Child Maintenance Under Each Scenario
+## Part Three: The Legal Architecture of Regulation Fifty
 
-This is where it gets interesting.
+This is the centre of gravity for the whole analysis, so it's worth slowing down on the law.
 
-Under Scenario A — pure salary — CMS stays at three hundred and fifteen pounds per month. Nothing changes.
+The Child Support Maintenance Calculation Regulations 2012 — statutory instrument number two-six-seven-seven — is the rulebook the CMS works to. Within that rulebook, Regulation 50 is titled "Persons treated as non-resident parents in shared care cases". It does something very specific. It tells the CMS when a parent who is *physically* sharing care should still be *legally* treated as the non-resident parent for the purposes of being asked to pay maintenance.
 
-Under Scenario B — twelve thousand five hundred and seventy salary plus dividends — the default CMS calculation looks only at the salary. Twelve thousand five hundred and seventy divided by fifty-two is two hundred and forty-two pounds per week. That sits in the basic rate band. Sixteen percent of two hundred and forty-two is thirty-eight pounds seventy-two per week. Halve for equal shared care — nineteen pounds thirty-six. Subtract fourteen pounds for the two-child further reduction — five pounds thirty-six. But the seven-pound-per-week floor kicks in, so the actual figure is seven pounds per week, or about thirty pounds a month.
+The key wording is this: a person is to be treated as a non-resident parent "if, and only if, that person provides day-to-day care to a lesser extent" than the parent with care.
 
-That's a drop from three hundred and fifteen pounds to thirty pounds — a saving of two hundred and eighty-five pounds a month, or three thousand four hundred and twenty pounds a year.
+Read that carefully. "If and only if" is a strong legal formulation. It means both directions are true. If you provide day-to-day care to a lesser extent than the other parent, you're the non-resident parent and you pay. But if you provide day-to-day care to an *equal or greater* extent than the other parent, you are **not** the non-resident parent — and the CMS has no jurisdiction to assess you. The case closes.
 
-Combined with the tax savings, that's a best-case improvement of around five hundred and eighty-five pounds a month — seven thousand and twenty pounds a year better off.
+That's the door we're trying to open. To zero out maintenance under Regulation 50, Elliot doesn't need to argue that Leah is a bad parent or that he's a better one. He just needs to show that his provision of day-to-day care is *not lesser* than hers. Equal is enough. Greater is also enough.
 
-But that's the best case. It assumes Elliot's ex never applies for a Regulation sixty-nine variation. If she does apply, and if her application succeeds, the dividend gets added back into the gross weekly income calculation. Twelve thousand five hundred and seventy in salary plus thirty-seven thousand and ninety-three in dividends equals forty-nine thousand six hundred and sixty-three a year, or nine hundred and fifty-five pounds a week. The calculation jumps right back up to around two hundred and ninety-five pounds a month.
+### The Child Benefit presumption
 
-In that scenario the net improvement is just twenty pounds a month on CMS plus the tax saving of three hundred a month, so roughly three hundred and twenty pounds a month better off — about three thousand eight hundred and forty a year. Still positive, but with a sting.
+The reason this isn't already happening — the reason the CMS has accepted that Elliot is the non-resident parent despite the fifty-fifty shared care — comes from a related provision. The regulations contain a rebuttable presumption: the parent who receives Child Benefit is *presumed*, in the absence of evidence to the contrary, to provide day-to-day care to a greater extent than the other parent.
 
-**The sting is backdating.** Variations are backdated to the effective date of the application. If Elliot restructures in June 2026 and his ex applies in September 2027, a successful variation gets backdated all the way to September 2027. He'd suddenly owe arrears for every month in between at the higher figure. In the leading case on this — PP versus Secretary of State for Work and Pensions, 2022, Upper Tribunal — the arrears bill ran to fifty-five thousand two hundred and eight pounds.
+Leah currently receives Child Benefit for both Oakley and Harrison. That presumption is doing the heavy lifting in keeping Elliot classified as the non-resident parent. And Leah has indicated she will not agree to split Child Benefit or transfer it to him.
 
----
+Two things to note about that presumption. First, it is explicitly rebuttable. The regulation says "in the absence of evidence to the contrary". With sufficient evidence of equal day-to-day care, the presumption can be defeated. Second, the law treats an election *not* to receive Child Benefit as if you do receive it — so simply refusing the benefit isn't a workaround.
 
-## Part Seven: The Diversion of Income Risk — Regulation Seventy-One
+### What "day-to-day care" actually means
 
-Beyond Regulation sixty-nine, there's a separate and more aggressive provision called Regulation seventy-one. It catches what's known as "diversion of income".
+The regulations don't give a precise statutory definition of day-to-day care, which is good and bad for Elliot. Good because there's no rigid checklist to fail. Bad because the CMS caseworker — and, if it goes there, the First-tier Tribunal Social Entitlement Chamber — has discretion.
 
-Two limbs must be satisfied. First, the paying parent must have the ability to control their income. A sole director-shareholder obviously does. Second, the Secretary of State must be satisfied that the parent has "unreasonably reduced" their income by diverting it elsewhere — to other people, into pension contributions, into retained company profits, into capital expenditure.
+In practice, the factors that the CMS, the Department for Work and Pensions decision-makers' guide, and the case law treat as relevant include:
 
-The official CMS decision-makers' guidance recognises three classic diversion patterns. One: paying a new partner or family member a salary disproportionate to actual work done. Two: leaving profits in the company rather than distributing them. Three: making excessive employer pension contributions.
+- Number of overnight stays
+- School drop-offs and pick-ups
+- Morning routine and breakfast
+- After-school care and tea
+- Bedtime routine
+- Sick days — who takes time off work when a child is unwell
+- Doctor, dentist, optician and other medical appointments
+- School emergency contact arrangements
+- Parents' evenings, school correspondence, homework supervision
+- Activities, sports, clubs and hobbies — booking, ferrying, attending
+- Clothing, school uniforms, equipment, shoes
+- Holiday care and time off
+- Decision-making on education, healthcare and religion
+- Emotional availability and the child's day-to-day relationship
 
-Critically, the guidance is explicit that legitimate tax planning is not automatically diversion. "It is perfectly acceptable for a non-resident parent to make high pension contributions or accept a minimal wage to help their business." The test is whether the structure unreasonably understates the parent's ability to pay maintenance — not whether there's a deliberate motive to evade.
-
-The leading case is PP versus the Secretary of State, decided by the Upper Tribunal in 2022. The father in that case was sole director of a haulage business. The company's post-tax profit was a hundred and forty-five thousand pounds but he paid himself a seven thousand eight hundred pound salary and a thirty thousand pound dividend. The First Tier Tribunal hit him with a Regulation seventy-one variation adding back a hundred and thirty-four thousand pounds. The Upper Tribunal overturned this, finding the lower tribunal had wrongly treated the maximum possible dividend as the only "reasonable" one and had failed to weigh up legitimate business needs like fleet capital expenditure.
-
-The principle from PP is that Regulation seventy-one is not a one-way ratchet. A trading company with genuine business reasons for retaining profits — equipment purchases, working capital, planned expansion — can defend retention. But the director must produce evidence: detailed accounts, capex schedules, business plans. A pure personal-service company with no plausible capital needs that retains large profits is very exposed.
-
-For Elliot, this means the Scenario B switch is reasonably defensible if he extracts most of the profit each year as dividends rather than letting it pile up in the company. Trying to be too clever — leaving forty thousand sitting on the company balance sheet to artificially depress the dividend reported to HMRC — would invite a Regulation seventy-one finding.
-
----
-
-## Part Eight: Other Practical Risks
-
-A handful of secondary issues to be aware of.
-
-**IR35 and off-payroll working.** If Select Lifestyles is essentially Elliot serving a single end-client, off-payroll rules could engage. The dividend switch doesn't trigger IR35, but it amplifies the cost of being caught inside it. If the company has multiple genuine clients and Elliot has real business risk, the risk is low.
-
-**Mortgage capacity.** Lenders typically want two to three years of SA302 self-assessment forms to evidence dividend income. A switch now creates a window of one to two years where mortgage capacity is reduced because the historical paperwork doesn't yet reflect the new structure. Any planned remortgage should happen before the restructure, not after.
-
-**Self-Assessment cashflow.** The first big tax bill lands on the thirty-first of January 2027, and HMRC will also demand a fifty percent payment on account for the following year on the same date. That's one hundred and fifty percent of one year's liability in a single month. Ring-fence cash.
-
-**Director's loan account and section 455.** Dividends can only legally be paid out of accumulated realised profits under section 830 of the Companies Act 2006. If Elliot takes money out beyond available reserves it becomes a director's loan, and if it isn't repaid within nine months of the company year-end, a thirty-three point seven five percent corporation tax charge under section 455 applies on the overdrawn balance. Formal dividend vouchers and board minutes are essential.
-
-**Spouse shareholders.** If Elliot has or acquires a partner and wants to share dividend income, the Arctic Systems case from 2007 confirms that gifting ordinary shares to a spouse or civil partner is safe under the settlements legislation exemption. But the shares must carry full rights — capital, voting and dividend. Stripped-down "alphabet" shares carrying dividend rights only are vulnerable to attack.
+If most of these factors are equal or weighted toward Elliot, the Child Benefit presumption falls.
 
 ---
 
-## Part Nine: The Numbers Side By Side
+## Part Four: Elliot's Evidence Base for Rebutting the Presumption
 
-Comparing the status quo to Scenario B in both the best case and the worst case:
+Going through that list against the facts Elliot has provided:
 
-In the **best case**, where Elliot's ex never applies for a Regulation sixty-nine variation, take-home pay rises from three thousand five hundred and seventy-two to three thousand eight hundred and seventy-two pounds a month. That's a three hundred pound monthly improvement. CMS drops from three hundred and fifteen to thirty pounds — a two hundred and eighty-five pound monthly reduction. Combined gain: five hundred and eighty-five pounds a month, or seven thousand and twenty pounds a year.
+**Overnight stays:** Exactly fifty-fifty. Seven nights out of fourteen, documented in the parenting plan. **Equal.**
 
-In the **worst case**, where his ex applies for a variation and succeeds, take-home pay still rises by three hundred a month. But CMS only drops from three hundred and fifteen to two hundred and ninety-five — a twenty-pound monthly reduction. Combined gain: three hundred and twenty pounds a month, or three thousand eight hundred and forty pounds a year. Plus a retrospective arrears bill that could run into thousands depending on how long the restructured arrangement was in place before the variation took effect.
+**School drop-offs:** Originally the Mills and Reeve plan stated that Leah would manage all school drop-offs. That term has since been updated. The current operating arrangement is that whoever has the children on the weekend drops them at school on Monday morning, alternating between parents. Combined with the weekday split — Mum has Monday and Tuesday nights, Dad has Wednesday and Thursday — that means Dad does drop-offs on Thursday and Friday mornings on his nights, plus Monday mornings on his weekend, plus pick-ups on his contact days. **Close to equal.**
 
-So the range of outcomes is roughly between three and a half thousand and seven thousand pounds a year better off. The downside is bounded — Elliot doesn't end up worse than the status quo even in the worst case, because the tax savings alone exceed the CMS exposure.
+**Morning routine:** Updated in line with school drop-offs. On Elliot's nights and Elliot's mornings, he runs the morning routine. **Close to equal.**
+
+**Emergency contact:** Elliot is listed at the school as emergency contact equal to Mum. **Equal.**
+
+**Medical appointments — GP and dental:** Handled by Elliot. **Weighted to Dad.**
+
+**Parents' evenings:** Attended by Elliot. **Weighted to Dad.**
+
+**Activities and clubs:** Handled by Elliot — bookings, ferrying, attendance. **Weighted to Dad.**
+
+**Documentation:** A solicitor-drafted written parenting agreement on Mills and Reeve LLP letterhead, signed by both parents. **Strong.**
+
+The picture from these confirmed facts is of a genuine fifty-fifty arrangement in which day-to-day care responsibilities are split roughly evenly, with several major day-to-day-care categories actually weighted toward Elliot. That's a strong evidential platform for a Regulation 50 argument.
+
+What's still to firm up are the remaining categories: who takes time off when a child is sick, how the school holidays divide, who handles homework and bedtime on their respective nights, who buys school uniforms and equipment. Each of these is worth pinning down with text-message screenshots, calendar entries, receipts and bank statements, because the rebuttal of a presumption is won on cumulative documentary evidence rather than on assertion.
 
 ---
 
-## Part Ten: The Recommendation
+## Part Five: How to Run the Regulation Fifty Argument
 
-The dividend switch makes sense on tax grounds alone, before considering Child Maintenance at all. Even in the worst CMS scenario, Elliot is roughly three thousand pounds a year better off purely from the tax restructure.
+There are three sequential moves to make, in this order.
 
-But there's a smarter starting point: explore Regulation fifty first. If the fifty-fifty care arrangement genuinely involves equal day-to-day responsibility and the Child Benefit presumption can be rebutted — either through evidence or by negotiating to receive Child Benefit himself — the entire CMS case could close. That's worth three thousand seven hundred and eighty pounds a year and requires no tax engineering at all.
+### Move one: fix the band today
 
-If Regulation fifty isn't available, the tax restructure to Scenario B is the right move. Plan it carefully. Time any mortgage applications before the switch. Set the salary at twelve thousand five hundred and seventy, not five thousand, to bank the state pension qualifying year. Pay out most of the profit each year as dividends rather than building up retained earnings that could invite a Regulation seventy-one finding. Consider employer pension contributions as a third leg of the extraction strategy — they're deductible, NI-free, and at sensible levels (around twelve percent of gross) won't flag as diversion.
+Go onto the CMS online account, use the "Report a change to shared care" function, and submit the corrected night count. Upload the Mills and Reeve parenting plan. Spell out the fortnightly cycle: Week One five nights, Week Two two nights, seven nights out of fourteen, one hundred and eighty-two and a half nights per year, which is in the "a hundred and seventy-five or more" band. Ask for the calculation to be redone using Shared Care Band Equal, which is the half-plus-seven-pounds-per-child reduction.
 
-The six thousand one hundred and eighty pounds of household arrears don't affect Child Maintenance and can't be offset against it. They should be paid out of current take-home, prioritising the gas and electric arrears because those carry the most aggressive enforcement risk including warrants of entry.
+This is administrative, not legal. The CMS caseworker should action it on the documents alone. The new assessment should land within four to six weeks at around two hundred and fourteen pounds per month, banking roughly a hundred pounds a month for as long as the historic income figure stays at forty-one thousand three hundred and seventy-five pounds.
 
-Before pulling the trigger, two paid consultations are essential. A chartered accountant will cost three to five hundred pounds to model the restructure precisely against the company's actual cashflow. A family law solicitor will cost two to four hundred pounds for an opinion on the Regulation fifty argument and Regulation seventy-one exposure. Combined spend of around eight hundred pounds against an annual benefit of three to seven thousand pounds is a clear-cut investment.
+### Move two: build the day-to-day care file
+
+This is paperwork, not legal argument. Before the next move, Elliot needs to assemble a file that any CMS caseworker or tribunal judge can flip through and reach the obvious conclusion. The file should contain:
+
+- The signed parenting plan from Mills and Reeve
+- Any updates to the plan in writing, even if just in WhatsApp form
+- A letter from the school confirming both parents listed as equal emergency contacts and stating who attends parents' evenings
+- GP and dental records confirming Elliot's address and that he brings the children to appointments
+- A twelve-month calendar showing actual overnight stays — most easily done as a screenshot of a shared parenting app or Google Calendar
+- Receipts and bank statements showing Elliot's expenditure on the children: school uniforms, shoes, activities, food at his house, holidays
+- Photographs date-stamped showing him doing day-to-day care activities
+- A short witness statement from any third party who can confirm equal involvement — a teacher, club coach, GP, or family member
+
+This is mundane work but it's the difference between a successful Regulation 50 application and a refused one.
+
+### Move three: apply for Regulation 50 case closure or apply for Child Benefit
+
+There are two parallel routes from here, and they can be pursued together.
+
+The first route is to write to the CMS directly, asking them to treat Elliot as a person with care under Regulation 50 on the basis that he provides day-to-day care to an equal extent as Leah. The application should reference Regulation 50 by name, attach the evidence file, and request that the maintenance assessment be ended. The decision lies with the caseworker, with a right of mandatory reconsideration if refused, and then a right of appeal to the First-tier Tribunal Social Entitlement Chamber.
+
+The second route is to apply to HM Revenue and Customs for Child Benefit for the children — or for one of them. Either parent can claim Child Benefit; where both parents claim for the same child, HMRC applies the "priority" rules in Schedule 10 of the Social Security Contributions and Benefits Act 1992. Under those rules, where care is equal, HMRC examines the facts and decides. Because Leah currently claims, she has the existing claim, but if Elliot files a competing claim, HMRC will reconsider — and even if HMRC ultimately leaves the existing arrangement undisturbed, the application generates a paper trail showing that the Child Benefit position is contested rather than settled, which itself weakens the CMS presumption that flows from Leah's receipt.
+
+A pragmatic variation worth considering: applying for Child Benefit for the younger child only — Harrison — and leaving Oakley's claim with Leah. A split position like this is consistent with the fifty-fifty care reality and is harder for Leah to resist than a full transfer. It also has the side effect that, for CMS purposes, if Elliot becomes the Child Benefit recipient for Harrison, the presumption flips for that child and the maintenance for Harrison drops to roughly zero, with only the Oakley element remaining.
+
+---
+
+## Part Six: The Realistic Range of Outcomes
+
+Putting it all together, Elliot is looking at one of three end-state outcomes.
+
+**Best case — full Regulation 50 success:** CMS accepts the equal day-to-day care argument, the case closes, maintenance falls to zero. Annual saving against the current three hundred and fourteen pound monthly assessment: three thousand seven hundred and seventy-two pounds. Probability: moderate. Depends entirely on the strength of the evidence file and whether the Child Benefit position can be rebutted or split.
+
+**Middle case — band fix plus partial Child Benefit transfer:** The night-count error is corrected, immediately saving a hundred pounds a month. Harrison's Child Benefit transfers to Elliot, the CMS calculation for Harrison drops to zero, and only Oakley remains in scope. Going off the corrected current figure, the assessment for one child at the same income would be about thirty pounds a week — call it one hundred and thirty pounds a month. Annual saving against current: two thousand two hundred pounds, though this erodes when income recalc bumps the underlying figure up.
+
+**Worst case — band fix only:** The Child Benefit presumption survives all challenges, the case stays open, but the band correction sticks. Monthly saving: about a hundred pounds. Annual saving: twelve hundred. Locked in for however many months until the income recalc bumps the base figure back up to roughly three hundred pounds a month. So the saving could be as little as five or six hundred pounds depending on timing.
+
+In all three scenarios the band correction is the floor — a virtually certain win because it's a documentary error CMS will fix on production of the parenting plan. Everything above that is incremental upside from the Regulation 50 argument and Child Benefit manoeuvres.
+
+---
+
+## Part Seven: The Watch-Outs
+
+A few practical points worth flagging.
+
+**Don't volunteer the higher income.** The current assessment uses forty-one thousand three hundred and seventy-five pounds. That figure will get recalculated upward to reflect fifty-nine thousand five hundred at the next annual review — but until then it stands. Reporting the shared-care correction does not require updating the income figure, and Elliot should be careful not to volunteer the new salary mid-cycle. The next annual review will bring it in anyway.
+
+**Document the new arrangement.** The updated drop-off rule — weekend parent does Monday morning — should be in writing. Even a WhatsApp exchange confirming the change is enough. Without it, Leah's solicitor could insist the original Mills and Reeve plan still governs, which would weaken the day-to-day care argument.
+
+**Don't engage in retaliation.** The CMS and the Tribunal are highly alert to applications that look retaliatory or designed to score points in a wider family dispute. Frame everything as fact-based and child-focused. Regulation 50 succeeds on calm, documented evidence — not on argument.
+
+**Right to challenge.** If the CMS refuses the Regulation 50 application, the next step is mandatory reconsideration — a request that a different decision-maker review the file. That has to be done within thirty days of the original decision. If that's refused, appeal to the First-tier Tribunal is free, and the Tribunal hears the matter fresh with both parties having the right to attend.
+
+**The household arrears.** The six thousand one hundred and eighty pounds owed on water, council tax and gas/electric have no bearing on the CMS calculation and cannot be offset against maintenance. They should be addressed separately. The gas and electric bill at forty-five hundred carries the most aggressive enforcement risk including warrants of entry, and that should be the priority for the household arrears plan.
+
+---
+
+## Part Eight: The Recommended Action Plan in Three Weeks
+
+**This week:** Log onto the CMS online account. Report a change to shared care, uploading the Mills and Reeve plan and a written summary showing the fortnightly seven-nights-out-of-fourteen cycle. Request that Shared Care Band Equal be applied. Confirm receipt and ask for a target decision date.
+
+**Next two weeks:** Open a manila file. Start collecting every document on the day-to-day care evidence list — school confirmation, GP records, dental records, parenting calendar, receipts, parents' evening notes. Save WhatsApp screenshots showing handovers, sick-day discussions, school-run arrangements. Open a parenting app if one isn't already running, to start a clean log going forward.
+
+**Week three:** Draft and send a written application to the CMS citing Regulation 50, attaching the evidence file, and asking for the case to be closed on the basis of equal day-to-day care. In parallel, file a Child Benefit claim for Harrison with HMRC. Inform Leah in writing of both applications, in factual terms.
+
+**Watch and wait:** CMS decisions take six to twelve weeks. The Child Benefit decision can take similar timeframes. If either is refused, immediately file a mandatory reconsideration with additional evidence within the thirty-day window.
+
+**Get a paid review.** Before sending the Regulation 50 application, spend two to four hundred pounds on a one-hour consultation with a family-law solicitor who has specifically handled CMS variations and Regulation 50 cases. They will stress-test the evidence file and the wording of the application. The leading family law firms in this space publish on Regulation 50 — Stowe Family Law, JMW Solicitors, and the specialist outfit CMSAS, which exists specifically to help people through this process. The fee is dwarfed by the potential annual saving.
+
+---
+
+## Part Nine: A Word on the Spirit of the Law
+
+The Child Maintenance Service exists to ensure that children whose parents live apart are financially supported. Nothing in this briefing is about avoiding that responsibility. Regulation 50 exists precisely because the legislators recognised that in a genuine fifty-fifty shared care arrangement, both parents are already providing for the children directly — through their homes, their food, their clothes, their time. Imposing a maintenance assessment on top of that means the paying parent contributes twice, which the regulations explicitly intend to avoid.
+
+Elliot's case looks like exactly the situation Regulation 50 was written for. The children spend equal nights with both parents. He covers half the food bills, half the bath nights, half the school runs, half the cuddles when they fall over. He attends parents' evenings, takes them to the dentist, pays for their swimming lessons. His financial contribution to their lives is already substantial and ongoing — it just doesn't pass through Leah's bank account.
+
+Regulation 50 says, in those circumstances, the CMS shouldn't be in the middle of it. This briefing is the roadmap to making that argument formally.
 
 ---
 
@@ -181,18 +233,17 @@ Before pulling the trigger, two paid consultations are essential. A chartered ac
 
 Primary legislation and official guidance referenced throughout:
 
-- Child Support Maintenance Calculation Regulations 2012, Statutory Instrument 2012/2677 — Regulations 34, 36, 38, 50, 69 and 71
+- Child Support Maintenance Calculation Regulations 2012, Statutory Instrument 2012/2677 — Regulations 34, 35, 36, 38, 47, 50, 69 and 71
 - Child Support Act 1991, Schedule 1
+- Social Security Contributions and Benefits Act 1992, Schedule 10 — Child Benefit priority rules
 - Department for Work and Pensions Child Maintenance Decision Makers' Guide, Volume 3, Chapters 27 to 36
-- Department for Work and Pensions internal guidance on Diversion of Income
-- PP versus Secretary of State for Work and Pensions and SP, 2022, Upper Tribunal Administrative Appeals Chamber, decision 286
+- Department for Work and Pensions guidance on Diversion of Income
 - House of Commons Library briefings CBP-7770 and CBP-7773
-- HMRC published rates and thresholds for employers 2025/26
-- HMRC National Insurance Manual NIM06545 on Employment Allowance for single-director companies
-- HMRC corporation tax marginal relief guidance
-- HMRC dividend taxation guidance
-- Jones v Garnett (Arctic Systems), House of Lords, 2007
+- CMSAS published commentary on 50/50 Equal Shared Care and Regulation 50, January and October 2024
+- Financial Remedies Journal — Child Maintenance in Cases of Equal Shared Care
+- gov.uk: Calculate your child maintenance, Variations explained for receiving parents
+- HMRC: Child Benefit — Claim Child Benefit if you live abroad / when both parents claim
 
 ---
 
-**Note for the listener:** This briefing is a research synthesis. It is not regulated tax advice or legal advice. Anyone considering a restructure along these lines should commission paid professional advice from a chartered accountant and a family law solicitor before acting. The CMS rules around director income are fact-sensitive and the consequences of getting them wrong include backdated arrears assessments and, in extreme cases, anti-avoidance findings.
+**Note for the listener:** This briefing is a research synthesis based on the documents and facts the subject has provided. It is not regulated legal advice. The interplay between the Child Benefit presumption and the Regulation 50 test is fact-sensitive, and a paid one-hour consultation with a family-law specialist before submitting the Regulation 50 application is strongly recommended. The cost of that consultation is in the low hundreds of pounds against potential annual savings in the low thousands.
