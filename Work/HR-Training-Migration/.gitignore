@@ -1,0 +1,15 @@
+# NEVER commit real employee data or credentials
+.env
+*.env
+output/
+input/
+real_data/
+
+# Allow the tiny synthetic sample so the demo runs
+!sample_data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
