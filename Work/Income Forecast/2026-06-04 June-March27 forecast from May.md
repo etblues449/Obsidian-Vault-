@@ -62,7 +62,7 @@ Every payer active in April is also active in May at the **identical per-payment
 
 | Month | Total |
 | --- | --- |
-| May 26 (basis, actual) | £3,244,525.86 *(as-entered; contains 4-weekly payers shown weekly — see note)* |
+| May 26 (basis) | £1,806,573.78 *(rebuilt to the same 4-weekly cadence)* |
 | June 26 | £1,798,661.31 |
 | July 26 | £1,907,281.81 |
 | August 26 | £1,902,245.36 |
@@ -77,5 +77,5 @@ Every payer active in April is also active in May at the **identical per-payment
 > Variation comes from the 28-day cycles drifting through the calendar — some months catch a second payment for a 4-weekly payer (e.g. March 27 catches a second Walsall SL, Kirklees, Hillingdon and Walsall Respite), which is the correct behaviour of "every 4 weeks" (≈13 payments/year).
 
 ## Open items
-- **May 26 itself** still shows the 4-weekly payers on every week (inflated to £3.24M). It was left as the as-entered basis month; say the word and I'll correct May to the same cadence too.
+- **May 26** has now been rebuilt to the same 4-weekly cadence (£1,806,573.78). Note: this changes a few May dates from the as-entered version (e.g. Sandwell SL 4→11 May) as a side effect of anchoring strictly to the cadence.
 - Six lines on your wider schedule are **not rows** in the workbook and have no amount basis: `West Northants SL`, `People Plus - Respite`, `Walsall - HB`, `Birmingham - HB`, `Other Respite`, `HB and SC`. Provide a recent actual for any and I'll add them.
