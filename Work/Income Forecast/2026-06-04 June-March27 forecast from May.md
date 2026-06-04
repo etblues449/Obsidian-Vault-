@@ -1,6 +1,6 @@
 ---
 name: Income Forecast — June 2026 to March 2027 (forecast from May actuals)
-description: Extended the Income_forecast_2026.xlsx forecast through March 2027, based on May payments, with an April sense-check for missed payments.
+description: Forecast June 2026 -> March 2027 in Income_forecast_2026.xlsx, based on May payments, using the literal payment schedule (weeks until next payment). April used as a sense-check.
 type: working-note
 created_at: 2026-06-04T00:00:00Z
 updated_at: 2026-06-04T00:00:00Z
@@ -13,53 +13,69 @@ tags:
 # Income Forecast — June 2026 → March 2027
 
 **Workbook:** `Income_forecast_2026.xlsx` (repo root)
-**Basis:** May 2026 actual payments, replicated forward. April 2026 used as a sense-check for any payment missed in May.
+**Basis:** May 2026 payments, projected forward. April used as a sense-check for any payment missed in May.
 
-## What was done
+## Cadence rule (confirmed) — "weeks until next payment"
 
-1. **Confirmed the forecasting rule** from the existing populated months. Each payer's May payment pattern (same weekday, same amount, same cadence) is repeated into every forward month. The rule was reverse-engineered and **reproduces the existing June→December sheets exactly** (verified cell-by-cell, all 7 months match).
-2. **Extended the forecast to March 2027** by adding three new tabs — `January 27`, `February 27`, `March 27` — built with the identical rule. (The workbook previously stopped at `December 26`.)
-3. **Ran the April vs May sense-check** — no missed payments found.
+The schedule number = **weeks between payments**, taken literally:
 
-## Forecasting rule (per payer)
-
-| Cadence | Payers | How it's placed |
+| Schedule no. | Meaning | Payment lands |
 | --- | --- | --- |
-| **Weekly** (every occurrence of a fixed weekday) | Birmingham CC SL (Thu £59,419.08), Wolv Daycare (Thu £5,606.30), Walsall Respite (Tue £11,460.80), Ideal (Fri £4,131.62), Kirklees (Tue £5,458.48), Hillingdon (Wed £5,203.80), NHS B&S (Thu £7,814.17), NHS Black Country (Thu £5,499.45), Solihull SL (Sun £33,031.60), Walsall SL (Tue £319,655.76), Wolv SL (Thu £132,264.95), People Plus (Thu £21,527.20), Middlesbrough (Thu £6,115.40) | Same weekday, every week |
-| **Fortnightly** (specific weekday ordinals) | Sandwell Respite (1st & 3rd Mon £41,250.75), Sandwell Daycare (1st & 3rd Fri £6,585.35), Sandwell SL (1st & 4th Mon £132,834.80) | Same ordinal weekday positions as May |
-| **Daily flat £4,000** | Sandwell HB, Wolverhampton CC HB, Other HB and SC | £4,000 every calendar day |
-| **One-off (carried forward)** | Chasing (1st Fri £5,266.40) | First Friday of each month |
-| **No payments** | Haringey, Wolverhampton Respite, Walsall Daycare | Left blank (no basis in April or May) |
+| **4** | every 4 weeks | once every 28 days (~monthly, occasionally 2 in a month) |
+| **2** | every 2 weeks | fortnightly (2–3 per month) |
+| **1** | weekly | every week (4–5 per month) |
 
-## April vs May sense-check — RESULT: no missed payments
+Each payer is **anchored to its last payment in May** and stepped forward by its cadence. Amounts equal the previous payment. HB rows are a flat **£4,000/day**. The "Chasing" line (not in the schedule) is carried as £5,266.40 on the first Friday of each month.
 
-Every payer that appears in April also appears in May at the **identical per-payment rate**. The only month-to-month differences are:
-- the number of times a weekday lands in the month (e.g. 5 Thursdays in April vs 4 in May), and
-- the daily £4,000 rows (30 days in April vs 31 in May).
+> **Correction made this session:** the months previously in the workbook (and an earlier draft of these new tabs) placed the **4-weekly** payers on *every* week — inflating monthly totals to ~£3.2M. That has been corrected to the literal "every 4 weeks", bringing totals to ~£1.7–1.9M, consistent with the reconciled actuals (March 2026 = £1.47M; prior forecasts £1.7–2.0M). **June 2026 → March 2027 were all rebuilt.**
 
-The three payers with no May payment — **Haringey, Wolverhampton Respite, Walsall Daycare** — are also empty in April, so nothing was missed; they simply have no recurring payment to forecast.
+## Per-payer cadence & amount (anchored to last May payment)
+
+| Payer | Cadence | Per payment | Last May payment |
+| --- | --- | --- | --- |
+| Birmingham CC – SL | every 4 wks | £59,419.08 | 28 May |
+| Walsall – SL | every 4 wks | £319,655.76 | 26 May |
+| Walsall – Respite | every 4 wks | £11,460.80 | 26 May |
+| Kirklees – SL | every 4 wks | £5,458.48 | 26 May |
+| LB Hillingdon – SL | every 4 wks | £5,203.80 | 27 May |
+| NHS Birmingham & Solihull ICB | every 4 wks | £7,814.17 | 28 May |
+| NHS Black Country ICB | every 4 wks | £5,499.45 | 28 May |
+| Solihull MBC – SL | every 4 wks | £33,031.60 | 31 May |
+| People Plus – DP | every 4 wks | £21,527.20 | 28 May |
+| Middlesbrough – SL | every 4 wks | £6,115.40 | 28 May |
+| Ideal for All – DP | every 4 wks | £4,131.62 | 29 May |
+| Sandwell MBC – Respite | fortnightly | £41,250.75 | 18 May |
+| Sandwell MBC – Daycare | fortnightly | £6,585.35 | 15 May |
+| Sandwell MBC – SL | fortnightly | £132,834.80 | 25 May |
+| Wolverhampton – SL | weekly (Thu) | £132,264.95 | weekly |
+| Wolverhampton – Daycare | weekly (Thu) | £5,606.30 | weekly |
+| Sandwell – HB | daily | £4,000/day | flat |
+| Wolverhampton CC – HB | daily | £4,000/day | flat |
+| Other HB and SC | daily | £4,000/day | flat |
+| Haringey / Wolv Respite / Walsall Daycare | — | none | empty in Apr & May |
+
+## April vs May sense-check — no missed payments
+
+Every payer active in April is also active in May at the **identical per-payment rate**. The three empty payers (Haringey, Wolverhampton Respite, Walsall Daycare) are empty in both months, so nothing was missed.
 
 ## Forecast monthly totals (rows 3–25, incl. HB & SC)
 
 | Month | Total |
 | --- | --- |
-| May 26 (actual basis) | £3,244,525.86 |
-| June 26 | £3,531,937.68 |
-| July 26 | £3,454,944.61 |
-| August 26 | £3,240,394.24 |
-| September 26 | £3,537,141.48 |
-| October 26 | £3,449,740.81 |
-| November 26 | £3,228,394.24 |
-| December 26 | £3,787,388.03 |
-| **January 27** | **£3,244,525.86** |
-| **February 27** | **£3,171,362.64** |
-| **March 27** | **£3,549,141.48** |
+| May 26 (basis, actual) | £3,244,525.86 *(as-entered; contains 4-weekly payers shown weekly — see note)* |
+| June 26 | £1,798,661.31 |
+| July 26 | £1,907,281.81 |
+| August 26 | £1,902,245.36 |
+| September 26 | £1,757,410.56 |
+| October 26 | £1,913,867.16 |
+| November 26 | £1,798,661.31 |
+| December 26 | £1,907,281.81 |
+| January 27 | £1,769,410.56 |
+| February 27 | £1,733,410.56 |
+| March 27 | £2,244,024.20 |
 
-> Month-to-month variation is driven entirely by how many of each weekday fall in the month (4 vs 5) and the number of days (28/30/31). Cross-check: **January 27 = May 26 to the penny** — both are 31-day months starting on a Friday, so they share the same weekday layout and therefore the same forecast.
+> Variation comes from the 28-day cycles drifting through the calendar — some months catch a second payment for a 4-weekly payer (e.g. March 27 catches a second Walsall SL, Kirklees, Hillingdon and Walsall Respite), which is the correct behaviour of "every 4 weeks" (≈13 payments/year).
 
-## Note on the wider payment schedule
-
-The schedule you provided lists several lines that are **not tracked as rows** in this workbook and therefore have no amount basis to forecast from:
-`West Northants - Supported Living`, `People Plus - Respite`, `Walsall - HB`, `Birmingham - HB`, `Other Respite`, `HB and SC`.
-
-These were left out rather than inventing figures. If they should be forecast, supply (or point to) a recent actual payment for each and I'll add them with the same method. The "weeks until next payment" numbers you listed match the cadence already in the sheet (4 = weekly, 2 = fortnightly, 1 = the weekly Wolverhampton lines).
+## Open items
+- **May 26 itself** still shows the 4-weekly payers on every week (inflated to £3.24M). It was left as the as-entered basis month; say the word and I'll correct May to the same cadence too.
+- Six lines on your wider schedule are **not rows** in the workbook and have no amount basis: `West Northants SL`, `People Plus - Respite`, `Walsall - HB`, `Birmingham - HB`, `Other Respite`, `HB and SC`. Provide a recent actual for any and I'll add them.
