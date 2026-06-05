@@ -112,11 +112,12 @@ Set `MQTT_PASSWORD` in the environment first.
 ## My deployment plan (6× ESP32-S3 mini)
 
 ### Hardware
-- On-hand: **6× ESP32-S3 mini** (all RuView-capable — S3). Photo-confirmed ESP32-S3-Zero form factor; genuine Waveshare = **ESP32-S3FH4R2: 4 MB flash + 2 MB PSRAM**.
-- Use the **4 MB firmware**: `release_bins/esp32-csi-node-4mb.bin` + `partition-table-4mb.bin`, `--flash_size 4MB`.
-- 2 MB PSRAM is below the 8 MB spec but WASM arenas only need ~640 KB; core sensing (CSI, presence, breathing, HR, fall) unaffected.
-- [ ] **Definitive check** — `python -m esptool --port COM7 flash_id` confirms chip + flash size (clones vary).
-- All 6 become **dedicated RuView nodes** (CSI firmware replaces ESPHome — keep separate from ESPHome radar/BLE boards).
+- On-hand: **6× ESP32-S3**. HA ESPHome Builder identified one as **Espressif ESP32-S3-DevKitM-1** (S3-MINI-1 module), reporting **`flash_size: 8MB`** — so these are **8 MB**, not the 4 MB Zero originally assumed.
+- Use the **8 MB firmware** (filenames have **no** `-8mb` suffix): `release_bins/esp32-csi-node.bin` + `bootloader.bin` + `partition-table.bin` + `ota_data_initial.bin`, `--flash_size 8MB`.
+- ⚠️ **PSRAM is required** by RuView (WASM sensing tiers live in PSRAM, ~640 KB). The plain DevKitM-1 / **S3-MINI-1 "N8" has 8 MB flash but 0 PSRAM**; only **N8R2 / N8R8** have PSRAM. The ESPHome config had no `psram:` block → may be a no-PSRAM board.
+  - [ ] **Confirm PSRAM** — check the metal module label (`N8` = none, `N8R8` = 8 MB) or watch the RuView boot log over serial for SPIRAM detection. If N8: core CSI/presence/breathing may run, WASM tiers won't.
+- [ ] **Definitive flash check** — `python -m esptool --port COM20 flash_id` confirms chip + flash size.
+- These boards are **dedicated RuView nodes** — do NOT set them up in ESPHome Device Builder / click Install; RuView CSI firmware replaces ESPHome.
 
 ### Strategy: reuse existing presence, add vitals + falls
 Lounge automations and the bedroom LD2410C already handle **presence**. RuView's job is the *extra* layer — **breathing/HR, sleep, fall** — which are single-zone (a bed, a sofa, the stair-top) and work on 1–2 nodes. Presence is NOT the goal.
@@ -143,24 +144,25 @@ Lounge automations and the bedroom LD2410C already handle **presence**. RuView's
 - Consider `--privacy-mode` on the **kids bed** publisher path if you don't want biometrics exposed over MQTT/Matter.
 
 ### Flashing (verified from RuView repo — run at PC over USB-C)
-Bins live in `firmware/esp32-csi-node/release_bins/`. **4-file flash, no merged bin** for 4 MB boards. App is at `0x20000` (OTA layout). My boards = **COM19**.
+Bins live in `firmware/esp32-csi-node/release_bins/`. **4-file flash, no merged bin.** App at `0x20000` (OTA layout). Boards are **8 MB DevKitM-1** → use the **8 MB** bins (plain names, no `-8mb`). Current board = **COM20**.
 ```bash
-# 1. Identify
-python -m esptool --port COM19 flash_id
+# 1. Identify (confirms S3 + 8 MB)
+python -m esptool --port COM20 flash_id
 # 2. Erase
-python -m esptool --chip esp32s3 --port COM19 erase_flash
-# 3. Flash
-python -m esptool --chip esp32s3 --port COM19 --baud 460800 \
-  write_flash --flash_mode dio --flash_size 4MB \
+python -m esptool --chip esp32s3 --port COM20 erase_flash
+# 3. Flash (8 MB)
+python -m esptool --chip esp32s3 --port COM20 --baud 460800 \
+  write_flash --flash_mode dio --flash_size 8MB \
   0x0     bootloader.bin \
-  0x8000  partition-table-4mb.bin \
+  0x8000  partition-table.bin \
   0xf000  ota_data_initial.bin \
-  0x20000 esp32-csi-node-4mb.bin
+  0x20000 esp32-csi-node.bin
 # 4. Provision WiFi + publisher IP (no reflash)
-python provision.py --port COM19 --ssid "SSID" --password "PASS" --target-ip 192.168.0.XXX
+python provision.py --port COM20 --ssid "SSID" --password "PASS" --target-ip 192.168.0.200
 ```
-- `--target-ip` = **publisher host** (HA Green / LAN PC running Docker), NOT the node's own static IP.
+- `--target-ip` = **publisher host**. HA is at **192.168.0.200** (seen in browser) — use that if the RuView publisher/MQTT runs on the HA box; NOT the node's own static IP.
 - Node static IPs (`.181–.186`) are set separately; avoid `.171`.
+- COM port changes per board/cable — re-run `flash_id` to confirm for each node.
 
 ### Bring-up order
 1. Flash + provision **one** node (4 MB firmware) → confirm it appears in HA via MQTT.
