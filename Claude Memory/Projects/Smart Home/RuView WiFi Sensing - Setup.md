@@ -111,13 +111,14 @@ Set `MQTT_PASSWORD` in the environment first.
 
 ## My deployment plan (6× ESP32-S3 mini)
 
-### Hardware
-- On-hand: **6× ESP32-S3**. HA ESPHome Builder identified one as **Espressif ESP32-S3-DevKitM-1** (S3-MINI-1 module), reporting **`flash_size: 8MB`** — so these are **8 MB**, not the 4 MB Zero originally assumed.
-- Use the **8 MB firmware** (filenames have **no** `-8mb` suffix): `release_bins/esp32-csi-node.bin` + `bootloader.bin` + `partition-table.bin` + `ota_data_initial.bin`, `--flash_size 8MB`.
-- ⚠️ **PSRAM is required** by RuView (WASM sensing tiers live in PSRAM, ~640 KB). The plain DevKitM-1 / **S3-MINI-1 "N8" has 8 MB flash but 0 PSRAM**; only **N8R2 / N8R8** have PSRAM. The ESPHome config had no `psram:` block → may be a no-PSRAM board.
-  - [ ] **Confirm PSRAM** — check the metal module label (`N8` = none, `N8R8` = 8 MB) or watch the RuView boot log over serial for SPIRAM detection. If N8: core CSI/presence/breathing may run, WASM tiers won't.
-- [ ] **Definitive flash check** — `python -m esptool --port COM20 flash_id` confirms chip + flash size.
-- These boards are **dedicated RuView nodes** — do NOT set them up in ESPHome Device Builder / click Install; RuView CSI firmware replaces ESPHome.
+### Hardware — CONFIRMED via esptool flash_id (COM20)
+- Real chip: **ESP32-S3 (QFN56) rev v0.2**, `MAC 20:6e:f1:b1:05:c8`. Verbatim features:
+  **Embedded Flash 4 MB (XMC) + Embedded PSRAM 2 MB (AP_3v3)**, dual-core 240 MHz, USB-Serial/JTAG.
+- ⚠️ ESPHome Builder's "8 MB DevKitM-1" was just the **selected board profile, not the real silicon** — esptool confirms **4 MB flash / 2 MB PSRAM** (≈ ESP32-S3FH4R2). Trust `flash_id`, not the builder.
+- ✅ Use the **4 MB firmware**: `release_bins/esp32-csi-node-4mb.bin` + `partition-table-4mb.bin` + `bootloader.bin` + `ota_data_initial.bin`, `--flash_size 4MB`.
+- ✅ **PSRAM confirmed: 2 MB** — above RuView's ~640 KB WASM-arena need. Below the 8 MB "spec" but fine for core CSI/presence/breathing/HR/fall. **No PSRAM blocker.**
+- These boards are **dedicated RuView nodes** — do NOT set up in ESPHome Device Builder / click Install; RuView CSI firmware replaces ESPHome.
+- ⚠️ **Port lock:** only one app can hold COM20. Fully close the web.esphome.io / esptool-js browser tab before running esptool, or you get `Access is denied (PermissionError)`.
 
 ### Strategy: reuse existing presence, add vitals + falls
 Lounge automations and the bedroom LD2410C already handle **presence**. RuView's job is the *extra* layer — **breathing/HR, sleep, fall** — which are single-zone (a bed, a sofa, the stair-top) and work on 1–2 nodes. Presence is NOT the goal.
@@ -144,22 +145,23 @@ Lounge automations and the bedroom LD2410C already handle **presence**. RuView's
 - Consider `--privacy-mode` on the **kids bed** publisher path if you don't want biometrics exposed over MQTT/Matter.
 
 ### Flashing (verified from RuView repo — run at PC over USB-C)
-Bins live in `firmware/esp32-csi-node/release_bins/`. **4-file flash, no merged bin.** App at `0x20000` (OTA layout). Boards are **8 MB DevKitM-1** → use the **8 MB** bins (plain names, no `-8mb`). Current board = **COM20**.
+Bins live in `firmware/esp32-csi-node/release_bins/`. **4-file flash, no merged bin.** App at `0x20000` (OTA layout). Confirmed **4 MB** chip → use the **4 MB** bins. Board = **COM20** (esptool v5 works; `flash_id` is now `flash-id`). Close any browser serial tab first.
 ```bash
-# 1. Identify (confirms S3 + 8 MB)
-python -m esptool --port COM20 flash_id
+# 1. Identify (confirms S3 + 4 MB)
+python -m esptool --port COM20 flash-id
 # 2. Erase
-python -m esptool --chip esp32s3 --port COM20 erase_flash
-# 3. Flash (8 MB)
+python -m esptool --chip esp32s3 --port COM20 erase-flash
+# 3. Flash (4 MB)
 python -m esptool --chip esp32s3 --port COM20 --baud 460800 \
-  write_flash --flash_mode dio --flash_size 8MB \
+  write-flash --flash-mode dio --flash-size 4MB \
   0x0     bootloader.bin \
-  0x8000  partition-table.bin \
+  0x8000  partition-table-4mb.bin \
   0xf000  ota_data_initial.bin \
-  0x20000 esp32-csi-node.bin
+  0x20000 esp32-csi-node-4mb.bin
 # 4. Provision WiFi + publisher IP (no reflash)
 python provision.py --port COM20 --ssid "SSID" --password "PASS" --target-ip 192.168.0.200
 ```
+- esptool v5 prints a deprecation note for the old underscore commands (`flash_id`, `write_flash`); both still work, hyphen form is current.
 - `--target-ip` = **publisher host**. HA is at **192.168.0.200** (seen in browser) — use that if the RuView publisher/MQTT runs on the HA box; NOT the node's own static IP.
 - Node static IPs (`.181–.186`) are set separately; avoid `.171`.
 - COM port changes per board/cable — re-run `flash_id` to confirm for each node.
