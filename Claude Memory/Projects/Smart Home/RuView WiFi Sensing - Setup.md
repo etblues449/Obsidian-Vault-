@@ -170,8 +170,54 @@ python provision.py --port COM19 --ssid "SSID" --password "PASS" --target-ip 192
 
 ### First HA automations to wire
 - **Beds:** `someone_sleeping` → night scene / lights-off confirm; `breathing_rate`/`heart_rate` → log for sleep trends; `bed_exit` + night window → gentle pathway light.
-- **Landing:** `fall` / `fall_risk_elevated` → alert notification.
+- **Landing:** `fall` → critical alert + stairs light (paste-ready YAML below).
 - **Lounge:** `room_active` / `person_count` → enrich existing presence automations (occupancy-aware media/lighting).
+
+### Automations (paste-ready)
+
+**Landing — fall detected → critical alert + stairs light.** Matches existing new-style convention
+(`triggers/conditions/actions`) and `notify.mobile_app_jelly_bean_s_phone`.
+```yaml
+# Landing fall detection (RuView) — critical alert + stairs light
+- id: landing_fall_detected
+  alias: Landing - Fall Detected
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.landing_fall   # confirm exact id after MQTT discovery
+      to: "on"
+  conditions: []
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: light.stairs_smart_bulb
+    - action: notify.mobile_app_jelly_bean_s_phone
+      data:
+        title: "🚨 FALL DETECTED — Landing"
+        message: "Possible fall on the landing/stairs. Check now."
+        data:           # iOS critical alert (bypasses silent + DND)
+          push:
+            sound:
+              name: default
+              critical: 1
+              volume: 1.0
+  mode: single
+```
+- **iOS vs Android:** the `push: sound: critical: 1` block is the **iOS** form. If the phone is
+  **Android**, swap the inner `data:` for:
+  ```yaml
+        data:
+          ttl: 0
+          priority: high
+          channel: alarm_stream
+  ```
+- **Entity id is provisional** — `binary_sensor.landing_fall` is the expected name; RuView generates
+  the real id from the publisher's zone/room config. Confirm in HA → Developer Tools → States and
+  update `entity_id` if it differs.
+- **Optional debounce:** add `for: "00:00:02"` under the trigger if tuning shows brief false `fall` blips.
+
+**Test it:** Developer Tools → States, set `binary_sensor.landing_fall` to `on` (or use the
+automation's *Run*) → confirm the critical push lands (bypassing silent) and `light.stairs_smart_bulb`
+turns on.
 
 ### Open questions / TODO
 - [ ] Verify S3 flash size on a board (`flash_id`).
