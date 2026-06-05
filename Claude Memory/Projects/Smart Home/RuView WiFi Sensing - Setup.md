@@ -124,28 +124,28 @@ Lounge automations and the bedroom LD2410C already handle **presence**. RuView's
 ### Allocation (6 nodes)
 | Zone | Nodes | Purpose | Notes |
 |---|---|---|---|
-| **Lounge** | **3** | Multi-person tracking + activity/pose (full mesh) | Big/RF-busy room → expect tuning; whole-room pose is best-effort |
+| **Lounge** | **2** | Multi-person presence + activity (bistatic line) | 2-node bistatic; loses full 3-node pose triangulation, fine for activity in a big RF-busy room |
 | **My bed** | **1** | Breathing/HR + sleep tracking | Single node aimed at bed = textbook vitals setup ✅ |
 | **Kids bed** | **1** | Breathing/HR + sleep (kid safety layer) | Same — line-of-sight to the bed |
-| **Landing** | **1** | Fall detection on stairs | ⚠️ Weakest link — 1 node = line-of-sight only; not safety-critical. Upgrade to 2 (steal from lounge) if it misses |
+| **Landing** | **2** | Fall detection on stairs | Bistatic pair (node each side of stair-top, facing each other) — far more reliable than 1 node for the safety-relevant fall signal ✅ |
 
 ### Node placement
-- **Lounge (3):** spread around the main sitting area at different angles (e.g. behind TV + two opposite corners) for multistatic coverage.
+- **Lounge (2):** opposite sides of the main sitting area, facing each other (bistatic line through the room).
 - **Beds (1 each):** mount on the headboard wall or a nightstand, line-of-sight across the sleeper's torso.
-- **Landing (1):** aim at the top-of-stairs / walkway zone.
+- **Landing (2):** one each side of the top-of-stairs, facing each other across the fall zone.
 - All mains-powered via USB — CSI streams continuously ~20 Hz.
 
 ### Networking
 - 6 **unique static IPs**, e.g. `192.168.0.181–.186`.
   - ⚠️ Avoid `192.168.0.171` — known conflict (bedroom vs upstairs in notes).
-- One **publisher** handles all nodes; map MAC → friendly room name in the zones config so HA devices are named "Lounge / My Bed / Kids Bed / Landing".
+- One **publisher** handles all nodes; map MAC → friendly room name in the zones config (Lounge ×2, My Bed, Kids Bed, Landing ×2).
 - `--target-ip` (set at provisioning) = the publisher host (HA Green or a LAN PC running Docker).
 - Consider `--privacy-mode` on the **kids bed** publisher path if you don't want biometrics exposed over MQTT/Matter.
 
 ### Bring-up order
 1. Flash + provision **one** node (4 MB firmware) → confirm it appears in HA via MQTT.
 2. Validate breathing/HR lying still (~30–60 s calibration).
-3. Roll out the rest: **my bed → kids bed → landing → lounge ×3**, unique IP each.
+3. Roll out the rest: **my bed → kids bed → landing ×2 → lounge ×2**, unique IP each.
 4. Wire automations (below).
 
 ### First HA automations to wire
@@ -158,7 +158,7 @@ Lounge automations and the bedroom LD2410C already handle **presence**. RuView's
 - [ ] Confirm 4 MB firmware streams CSI (test node #1 first).
 - [ ] Decide publisher host: HA Green (add-on/Docker) vs separate LAN PC.
 - [ ] Resolve `.171` IP conflict before assigning `.181–.186`.
-- [ ] Validate landing single-node fall reliability; upgrade to 2 if weak.
+- [ ] Tune landing bistatic pair facing-geometry for fall detection coverage.
 - [ ] 3× ESP32-C3 (separate boards, if still on hand) → ESPHome BLE proxies for the upstairs contention TODO.
 
 ---
