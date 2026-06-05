@@ -219,6 +219,78 @@ python provision.py --port COM19 --ssid "SSID" --password "PASS" --target-ip 192
 automation's *Run*) → confirm the critical push lands (bypassing silent) and `light.stairs_smart_bulb`
 turns on.
 
+**My bed — sleep + night bed-exit.** Vitals sensors (`sensor.my_bed_breathing_rate`,
+`sensor.my_bed_heart_rate`) auto-log to HA Recorder/history — no automation needed; just chart them
+for sleep trends.
+```yaml
+# My bed — asleep → confirm bedroom lights off (pairs with existing 23:59 off)
+- id: my_bed_sleeping_lights_off
+  alias: My Bed - Asleep, Lights Off
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.my_bed_sleeping   # confirm id after MQTT discovery
+      to: "on"
+      for: "00:02:00"                             # asleep ≥2 min before acting
+  conditions:
+    - condition: time
+      after: "21:30:00"
+      before: "06:00:00"
+  actions:
+    - action: light.turn_off
+      target:
+        entity_id:
+          - light.left_smart_bulb
+          - light.right_smart_bulb
+  mode: single
+
+# My bed — bed exit at night → gentle pathway light, auto-off after 3 min
+- id: my_bed_exit_pathway
+  alias: My Bed - Night Bed-Exit Pathway Light
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.my_bed_bed_exit    # confirm id after MQTT discovery
+      to: "on"
+  conditions:
+    - condition: time
+      after: "22:00:00"
+      before: "06:30:00"
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: light.stairs_smart_bulb
+      data:
+        brightness_pct: 15
+    - delay: "00:03:00"
+    - action: light.turn_off
+      target:
+        entity_id: light.stairs_smart_bulb
+  mode: restart   # re-trigger resets the 3-min timer
+```
+
+**Kids bed — distress heads-up.** Standard alert (upgrade to the critical `push` block from the
+landing automation if you want it to bypass silent). Vitals also auto-log.
+```yaml
+# Kids bed — possible distress → notify parent phone
+- id: kids_bed_distress_alert
+  alias: Kids Bed - Possible Distress
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.kids_bed_possible_distress   # confirm id after MQTT discovery
+      to: "on"
+  conditions: []
+  actions:
+    - action: notify.mobile_app_jelly_bean_s_phone
+      data:
+        title: "⚠️ Kids Bed — Possible Distress"
+        message: "RuView flagged possible distress at the kids' bed. Check on them."
+  mode: single
+```
+- All `binary_sensor.my_bed_*` / `binary_sensor.kids_bed_*` ids are **provisional** — RuView mints
+  them from each node's zone name; confirm in Developer Tools → States and adjust.
+- `light.left_smart_bulb` / `light.right_smart_bulb` are assumed to be the master-bedroom pair; swap
+  if the bed sits in a different room. Kids' room light entity unknown — add a `light.turn_off` there
+  if you want the same sleep behaviour for them.
+
 ### Open questions / TODO
 - [ ] Verify S3 flash size on a board (`flash_id`).
 - [ ] Confirm 4 MB firmware streams CSI (test node #1 first).
