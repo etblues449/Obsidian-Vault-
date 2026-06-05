@@ -142,6 +142,26 @@ Lounge automations and the bedroom LD2410C already handle **presence**. RuView's
 - `--target-ip` (set at provisioning) = the publisher host (HA Green or a LAN PC running Docker).
 - Consider `--privacy-mode` on the **kids bed** publisher path if you don't want biometrics exposed over MQTT/Matter.
 
+### Flashing (verified from RuView repo — run at PC over USB-C)
+Bins live in `firmware/esp32-csi-node/release_bins/`. **4-file flash, no merged bin** for 4 MB boards. App is at `0x20000` (OTA layout). My boards = **COM19**.
+```bash
+# 1. Identify
+python -m esptool --port COM19 flash_id
+# 2. Erase
+python -m esptool --chip esp32s3 --port COM19 erase_flash
+# 3. Flash
+python -m esptool --chip esp32s3 --port COM19 --baud 460800 \
+  write_flash --flash_mode dio --flash_size 4MB \
+  0x0     bootloader.bin \
+  0x8000  partition-table-4mb.bin \
+  0xf000  ota_data_initial.bin \
+  0x20000 esp32-csi-node-4mb.bin
+# 4. Provision WiFi + publisher IP (no reflash)
+python provision.py --port COM19 --ssid "SSID" --password "PASS" --target-ip 192.168.0.XXX
+```
+- `--target-ip` = **publisher host** (HA Green / LAN PC running Docker), NOT the node's own static IP.
+- Node static IPs (`.181–.186`) are set separately; avoid `.171`.
+
 ### Bring-up order
 1. Flash + provision **one** node (4 MB firmware) → confirm it appears in HA via MQTT.
 2. Validate breathing/HR lying still (~30–60 s calibration).
