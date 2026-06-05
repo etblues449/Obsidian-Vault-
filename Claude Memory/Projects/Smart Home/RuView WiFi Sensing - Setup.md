@@ -190,7 +190,10 @@ Until this is running at `192.168.0.200`, a provisioned node joins WiFi but **no
   - Flashed via esptool-js (browser). Chip ESP32-S3, 4 MB flash + 2 MB PSRAM, MAC `20:6e:f1:b1:05:c8`.
   - Provisioned: SSID `JB's Smart 2.4G`, target-ip `192.168.0.200`, node-id 1, edge-tier 2 (vitals).
     NVS written @ `0x9000`, hard reset. State file: `…\AppData\Roaming\wifi-densepose\esp32-provision-state\COM20.json`.
-  - **Aggregator host decided:** HA box via **Portainer** (HA OS can't run the container directly).
+  - **Aggregator host decided:** HA box via **Portainer** — *informed choice, risk accepted*: HA OS will
+    flag as **"unsupported"** (3rd-party container, protection mode off); container unmanaged by Supervisor.
+    Mitigate with restart policy `unless-stopped`. MQTT broker already present on HA.
+    Repo for Portainer add-on: `https://github.com/alexbelgium/hassio-addons`.
   - NEXT: (a) confirm node joined WiFi (router DHCP list, MAC above), (b) MQTT broker + integration,
     (c) run `ruvnet/wifi-densepose:0.7.0` container via Portainer → entities auto-discover.
 
