@@ -117,7 +117,8 @@ Set `MQTT_PASSWORD` in the environment first.
   - Use the **4 MB firmware**: `release_bins/esp32-csi-node-4mb.bin` + `partition-table-4mb.bin`, flash with `--flash_size 4MB`.
   - 2 MB PSRAM is below spec but WASM arenas only need ~640 KB; core sensing (CSI, presence, breathing, HR, fall = Tiers 0–2) is unaffected.
 - [ ] **Definitive check** — plug one into PC and run `python -m esptool --port COM7 flash_id` → confirms chip + flash size (clones vary).
-- Count: photo shows **6 boards** (3 with headers soldered, 3 bare) — confirm how many are usable.
+- **Inventory clarified:** 3× **ESP32-S3 dev mini** (✅ RuView nodes) + 3× **ESP32-C3** (❌ NOT RuView-capable — C3 has no usable CSI; S3/C6 only).
+  - The 3 C3s → repurpose as **dedicated ESPHome BLE proxies**. Solves the open upstairs TODO (BLE + mmWave contention on one ESP32 → split BLE onto a C3 node). 1 upstairs + 2 spare.
 
 ### Where: all 3 nodes = bedroom mesh
 - 3 nodes = minimum for a **multistatic mesh** (3D pose, breathing/HR, fall) — much stronger than 1 node line-of-sight.
