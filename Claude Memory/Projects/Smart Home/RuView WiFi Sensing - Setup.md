@@ -107,6 +107,52 @@ Set `MQTT_PASSWORD` in the environment first.
 - A single node is line-of-sight only; meaningful room coverage wants 3–6 nodes.
 - Firmware flashing + provisioning need a **PC** (can't be done from phone).
 
+---
+
+## My deployment plan (3× ESP32-S3-Zero)
+
+### Hardware compatibility — VERIFY FIRST
+- On-hand boards: **ESP32-S3-Zero**. RuView spec wants S3 + 8 MB flash + 8 MB PSRAM, but:
+  - **PSRAM is only used for the WASM/programmable-sensing tier (Tier 3).** Core sensing (CSI, presence, breathing, heart rate, fall = Tiers 0–2) runs without it.
+  - Use the **4 MB firmware**: `release_bins/esp32-csi-node-4mb.bin` + `partition-table-4mb.bin`, flash with `--flash_size 4MB`.
+- [ ] Confirm the actual board is a genuine S3 with ≥4 MB flash before committing (Zero clones vary).
+- Trade-off accepted: no hot-loadable WASM modules. Not needed for presence/vitals/fall.
+
+### Where: all 3 nodes = bedroom mesh
+- 3 nodes = minimum for a **multistatic mesh** (3D pose, breathing/HR, fall) — much stronger than 1 node line-of-sight.
+- Spreading 1-per-room gives only weak presence, which is **already covered** by LD2410C radars + lounge automations. RuView's *unique* value = **vitals + sleep + fall** → most useful in the **bedroom**.
+- RuView **complements** the existing bedroom LD2410C (`bedroom-2.yaml`), doesn't replace it.
+
+### Node placement (bedroom)
+- Spread the 3 nodes around the bed at different angles (e.g. headboard wall + two opposite corners) for multistatic coverage of the sleeping area.
+- Mains-powered (USB) — CSI streaming runs continuously ~20 Hz.
+
+### Networking
+- These 3 S3-Zeros become **dedicated RuView nodes** (RuView CSI firmware replaces ESPHome — don't use boards needed for ESPHome radar/BLE).
+- Assign 3 **unique static IPs**, e.g. `192.168.0.181 / .182 / .183`.
+  - ⚠️ Avoid `192.168.0.171` — already a known conflict (bedroom vs upstairs in notes).
+- `--target-ip` in provisioning = the host running the publisher (HA Green or a LAN PC running Docker).
+
+### Bring-up order
+1. Flash + provision **one** node (4 MB firmware) → confirm it appears in HA via MQTT.
+2. Validate breathing/HR while lying still (~30–60 s calibration).
+3. Flash the other two, give unique IPs, confirm the 3-device mesh.
+4. Wire first automations (see below).
+
+### First HA automations to wire (bedroom)
+- `someone_sleeping` → night scene / confirm lights off (pairs with existing 23:59 off).
+- `fall` / `fall_risk_elevated` → alert notification.
+- `bed_exit` + time window → gentle pathway lighting.
+- `breathing_rate` / `heart_rate` → log to HA history for sleep trends (treat as trend, not medical).
+
+### Open questions / TODO
+- [ ] Verify S3-Zero flash size + that it's a true S3.
+- [ ] Confirm 4 MB firmware streams CSI on a PSRAM-less board (test node #1 first).
+- [ ] Decide publisher host: HA Green (add-on/Docker) vs separate LAN PC.
+- [ ] Resolve `.171` IP conflict before adding new static IPs.
+
+---
+
 ## Reference
 - Repo: https://github.com/ruvnet/RuView
 - HA integration doc: `docs/integrations/home-assistant.md`
