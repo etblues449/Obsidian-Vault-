@@ -145,6 +145,10 @@ Lounge automations and the bedroom LD2410C already handle **presence**. RuView's
 - Consider `--privacy-mode` on the **kids bed** publisher path if you don't want biometrics exposed over MQTT/Matter.
 
 ### Flashing (verified from RuView repo — run at PC over USB-C)
+**Get the files:** bins are in the repo tree (not release assets). Download whole repo ZIP
+`https://github.com/ruvnet/RuView/archive/refs/heads/main.zip` → extract → bins +`provision.py`
+under `RuView-main\firmware\esp32-csi-node\`. (Direct raw files also work:
+`github.com/ruvnet/RuView/raw/main/firmware/esp32-csi-node/release_bins/<file>`.)
 Bins live in `firmware/esp32-csi-node/release_bins/`. **4-file flash, no merged bin.** App at `0x20000` (OTA layout). Confirmed **4 MB** chip → use the **4 MB** bins. Board = **COM20** (esptool v5 works; `flash_id` is now `flash-id`). Close any browser serial tab first.
 ```bash
 # 1. Identify (confirms S3 + 4 MB)
