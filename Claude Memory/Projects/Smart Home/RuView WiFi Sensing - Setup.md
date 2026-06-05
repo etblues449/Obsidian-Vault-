@@ -178,12 +178,11 @@ python provision.py --port COM20 --ssid "SSID" --password "PASS" --target-ip 192
 ### Aggregator / publisher — the receiving end (REQUIRED)
 Nodes stream CSI over **UDP → aggregator host : 5005**; a **publisher** turns that into **MQTT** for HA.
 Until this is running at `192.168.0.200`, a provisioned node joins WiFi but **nothing appears in HA**.
-- Runs as the **`ghcr.io/ruvnet/RuView` Docker image** (from GitHub releases).
-- **Decided host: HA box (192.168.0.200).** HA OS can't `docker run` arbitrary images directly →
-  use the **Portainer** or **Advanced SSH & Web Terminal** add-on (Docker access), or a local add-on wrapper.
-- Publisher MQTT flags: `--mqtt --mqtt-host 192.168.0.200 --mqtt-username homeassistant --mqtt-password-env MQTT_PASSWORD`
-  (needs Mosquitto add-on + MQTT integration). Entities then auto-discover (~17–21/node).
-- [ ] **NEXT INFRA STEP:** stand up the aggregator+publisher container on HA.
+- Image: **`ruvnet/wifi-densepose:latest`** — HA box is **ARM64** (Portainer log: `arm64`), and `latest`/v0.9.0+
+  publish arm64; the docs' `0.7.0` is amd64-only → would NOT run here. Use `latest`.
+- Run via **Portainer** add-on container: network **host**, env `MQTT_PASSWORD=…`, restart **unless-stopped**,
+  command `--source esp32 --mqtt --mqtt-host 192.168.0.200 --mqtt-username <USER> --mqtt-password-env MQTT_PASSWORD`.
+- Needs Mosquitto add-on + MQTT integration (present). Entities then auto-discover (~17–21/node, ~5 s).
 
 ### Progress log
 - **2026-06-05 — Node #1 FLASHED + PROVISIONED** ✅
