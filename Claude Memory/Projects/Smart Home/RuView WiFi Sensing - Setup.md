@@ -194,22 +194,17 @@ python provision.py --port COM19 --ssid "SSID" --password "PASS" --target-ip 192
       data:
         title: "🚨 FALL DETECTED — Landing"
         message: "Possible fall on the landing/stairs. Check now."
-        data:           # iOS critical alert (bypasses silent + DND)
-          push:
+        data:           # cross-platform critical alert (bypasses silent + DND)
+          push:         # iOS keys (Android ignores these)
             sound:
               name: default
               critical: 1
               volume: 1.0
-  mode: single
-```
-- **iOS vs Android:** the `push: sound: critical: 1` block is the **iOS** form. If the phone is
-  **Android**, swap the inner `data:` for:
-  ```yaml
-        data:
-          ttl: 0
+          ttl: 0        # Android keys (iOS ignores these)
           priority: high
           channel: alarm_stream
-  ```
+  mode: single
+```
 - **Entity id is provisional** — `binary_sensor.landing_fall` is the expected name; RuView generates
   the real id from the publisher's zone/room config. Confirm in HA → Developer Tools → States and
   update `entity_id` if it differs.
@@ -290,6 +285,22 @@ landing automation if you want it to bypass silent). Vitals also auto-log.
 - `light.left_smart_bulb` / `light.right_smart_bulb` are assumed to be the master-bedroom pair; swap
   if the bed sits in a different room. Kids' room light entity unknown — add a `light.turn_off` there
   if you want the same sleep behaviour for them.
+
+### Go-live checklist — drafts → all 4 firing
+The YAML is correct, but automations can't fire until the RuView entities exist in HA. Path:
+1. **Flash + provision** the nodes (PC, COM19) — at minimum the landing pair + both beds.
+2. **MQTT prerequisites:** Mosquitto add-on running + MQTT integration enabled; run the publisher with
+   `--mqtt --mqtt-host <HA_IP> ...`. Entities appear via auto-discovery (~17–21/node).
+3. **Confirm real entity ids** in HA → Developer Tools → States (search `landing`, `my_bed`, `kids`).
+   Patch the `entity_id:` lines if they differ from the provisional names. *This is the #1 reason an
+   automation silently won't fire.*
+4. **Paste** the YAML (Settings → Automations → ⋮ → Edit in YAML, or `automations.yaml`) → reload automations.
+5. **Test each** with Developer Tools → States (force the trigger sensor `on`) or the automation's *Run*:
+   - Landing fall → critical push lands (bypasses silent) + stairs light on.
+   - My bed asleep (night) → bedroom bulbs off.
+   - My bed exit (night) → stairs light @15%, off after 3 min.
+   - Kids distress → phone notification.
+6. **Tune:** watch a day for false positives; add the `for:` debounce if a sensor flaps.
 
 ### Open questions / TODO
 - [ ] Verify S3 flash size on a board (`flash_id`).
