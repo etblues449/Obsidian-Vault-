@@ -162,13 +162,32 @@ python -m esptool --chip esp32s3 --port COM20 --baud 460800 \
   0x8000  partition-table-4mb.bin \
   0xf000  ota_data_initial.bin \
   0x20000 esp32-csi-node-4mb.bin
-# 4. Provision WiFi + publisher IP (no reflash)
-python provision.py --port COM20 --ssid "SSID" --password "PASS" --target-ip 192.168.0.200
+# 4. Provision WiFi + aggregator IP (writes NVS over serial — free the port first)
+python provision.py --port COM20 --ssid "SSID" --password "PASS" --target-ip 192.168.0.200 --node-id 1 --edge-tier 2
 ```
+- **Easiest flash route = browser, no command line:** `espressif.github.io/esptool-js` → Connect COM20 →
+  add the 4 bins at their offsets → Program. ✅ Used successfully for node #1.
+  - 🔴 **Bootloader offset on S3 = `0x0`** (esptool-js defaults the box to `0x1000`, which is wrong for S3 — change it).
 - esptool v5 prints a deprecation note for the old underscore commands (`flash_id`, `write_flash`); both still work, hyphen form is current.
-- `--target-ip` = **publisher host**. HA is at **192.168.0.200** (seen in browser) — use that if the RuView publisher/MQTT runs on the HA box; NOT the node's own static IP.
-- Node static IPs (`.181–.186`) are set separately; avoid `.171`.
-- COM port changes per board/cable — re-run `flash_id` to confirm for each node.
+- **`--target-ip` = aggregator host = `192.168.0.200` (HA box)** — NOT the node's own IP. Decided: aggregator runs on HA.
+- `--edge-tier 2` = full vitals (breathing/HR/fall); `--node-id` 1–6 per node. Mesh pairs (landing ×2, lounge ×2)
+  also need `--tdm-slot` / `--tdm-total` so they share the channel — set when provisioning those.
+- Node static IPs (`.181–.186`) set separately; avoid `.171`.
+- COM port changes per board/cable — re-check for each node.
+
+### Aggregator / publisher — the receiving end (REQUIRED)
+Nodes stream CSI over **UDP → aggregator host : 5005**; a **publisher** turns that into **MQTT** for HA.
+Until this is running at `192.168.0.200`, a provisioned node joins WiFi but **nothing appears in HA**.
+- Runs as the **`ghcr.io/ruvnet/RuView` Docker image** (from GitHub releases).
+- **Decided host: HA box (192.168.0.200).** HA OS can't `docker run` arbitrary images directly →
+  use the **Portainer** or **Advanced SSH & Web Terminal** add-on (Docker access), or a local add-on wrapper.
+- Publisher MQTT flags: `--mqtt --mqtt-host 192.168.0.200 --mqtt-username homeassistant --mqtt-password-env MQTT_PASSWORD`
+  (needs Mosquitto add-on + MQTT integration). Entities then auto-discover (~17–21/node).
+- [ ] **NEXT INFRA STEP:** stand up the aggregator+publisher container on HA.
+
+### Progress log
+- **2026-06-05 — Node #1 FLASHED** ✅ via esptool-js (browser). Chip confirmed ESP32-S3, 4 MB flash + 2 MB PSRAM,
+  MAC `20:6e:f1:b1:05:c8`. Hash verified, hard reset into RuView firmware. Next: provision WiFi, then aggregator.
 
 ### Bring-up order
 1. Flash + provision **one** node (4 MB firmware) → confirm it appears in HA via MQTT.
