@@ -109,49 +109,57 @@ Set `MQTT_PASSWORD` in the environment first.
 
 ---
 
-## My deployment plan (3× ESP32-S3-Zero)
+## My deployment plan (6× ESP32-S3 mini)
 
-### Hardware compatibility — VERIFY FIRST
-- On-hand boards: **ESP32-S3-Zero** (photo confirmed — Waveshare form factor or clone, USB-C, PCB antenna). Genuine Waveshare = **ESP32-S3FH4R2: 4 MB flash + 2 MB PSRAM**.
-- RuView spec wants 8 MB flash + 8 MB PSRAM, but:
-  - Use the **4 MB firmware**: `release_bins/esp32-csi-node-4mb.bin` + `partition-table-4mb.bin`, flash with `--flash_size 4MB`.
-  - 2 MB PSRAM is below spec but WASM arenas only need ~640 KB; core sensing (CSI, presence, breathing, HR, fall = Tiers 0–2) is unaffected.
-- [ ] **Definitive check** — plug one into PC and run `python -m esptool --port COM7 flash_id` → confirms chip + flash size (clones vary).
-- **Inventory clarified:** 3× **ESP32-S3 dev mini** (✅ RuView nodes) + 3× **ESP32-C3** (❌ NOT RuView-capable — C3 has no usable CSI; S3/C6 only).
-  - The 3 C3s → repurpose as **dedicated ESPHome BLE proxies**. Solves the open upstairs TODO (BLE + mmWave contention on one ESP32 → split BLE onto a C3 node). 1 upstairs + 2 spare.
+### Hardware
+- On-hand: **6× ESP32-S3 mini** (all RuView-capable — S3). Photo-confirmed ESP32-S3-Zero form factor; genuine Waveshare = **ESP32-S3FH4R2: 4 MB flash + 2 MB PSRAM**.
+- Use the **4 MB firmware**: `release_bins/esp32-csi-node-4mb.bin` + `partition-table-4mb.bin`, `--flash_size 4MB`.
+- 2 MB PSRAM is below the 8 MB spec but WASM arenas only need ~640 KB; core sensing (CSI, presence, breathing, HR, fall) unaffected.
+- [ ] **Definitive check** — `python -m esptool --port COM7 flash_id` confirms chip + flash size (clones vary).
+- All 6 become **dedicated RuView nodes** (CSI firmware replaces ESPHome — keep separate from ESPHome radar/BLE boards).
 
-### Where: all 3 nodes = bedroom mesh
-- 3 nodes = minimum for a **multistatic mesh** (3D pose, breathing/HR, fall) — much stronger than 1 node line-of-sight.
-- Spreading 1-per-room gives only weak presence, which is **already covered** by LD2410C radars + lounge automations. RuView's *unique* value = **vitals + sleep + fall** → most useful in the **bedroom**.
-- RuView **complements** the existing bedroom LD2410C (`bedroom-2.yaml`), doesn't replace it.
+### Strategy: reuse existing presence, add vitals + falls
+Lounge automations and the bedroom LD2410C already handle **presence**. RuView's job is the *extra* layer — **breathing/HR, sleep, fall** — which are single-zone (a bed, a sofa, the stair-top) and work on 1–2 nodes. Presence is NOT the goal.
 
-### Node placement (bedroom)
-- Spread the 3 nodes around the bed at different angles (e.g. headboard wall + two opposite corners) for multistatic coverage of the sleeping area.
-- Mains-powered (USB) — CSI streaming runs continuously ~20 Hz.
+### Allocation (6 nodes)
+| Zone | Nodes | Purpose | Notes |
+|---|---|---|---|
+| **Lounge** | **3** | Multi-person tracking + activity/pose (full mesh) | Big/RF-busy room → expect tuning; whole-room pose is best-effort |
+| **My bed** | **1** | Breathing/HR + sleep tracking | Single node aimed at bed = textbook vitals setup ✅ |
+| **Kids bed** | **1** | Breathing/HR + sleep (kid safety layer) | Same — line-of-sight to the bed |
+| **Landing** | **1** | Fall detection on stairs | ⚠️ Weakest link — 1 node = line-of-sight only; not safety-critical. Upgrade to 2 (steal from lounge) if it misses |
+
+### Node placement
+- **Lounge (3):** spread around the main sitting area at different angles (e.g. behind TV + two opposite corners) for multistatic coverage.
+- **Beds (1 each):** mount on the headboard wall or a nightstand, line-of-sight across the sleeper's torso.
+- **Landing (1):** aim at the top-of-stairs / walkway zone.
+- All mains-powered via USB — CSI streams continuously ~20 Hz.
 
 ### Networking
-- These 3 S3-Zeros become **dedicated RuView nodes** (RuView CSI firmware replaces ESPHome — don't use boards needed for ESPHome radar/BLE).
-- Assign 3 **unique static IPs**, e.g. `192.168.0.181 / .182 / .183`.
-  - ⚠️ Avoid `192.168.0.171` — already a known conflict (bedroom vs upstairs in notes).
-- `--target-ip` in provisioning = the host running the publisher (HA Green or a LAN PC running Docker).
+- 6 **unique static IPs**, e.g. `192.168.0.181–.186`.
+  - ⚠️ Avoid `192.168.0.171` — known conflict (bedroom vs upstairs in notes).
+- One **publisher** handles all nodes; map MAC → friendly room name in the zones config so HA devices are named "Lounge / My Bed / Kids Bed / Landing".
+- `--target-ip` (set at provisioning) = the publisher host (HA Green or a LAN PC running Docker).
+- Consider `--privacy-mode` on the **kids bed** publisher path if you don't want biometrics exposed over MQTT/Matter.
 
 ### Bring-up order
 1. Flash + provision **one** node (4 MB firmware) → confirm it appears in HA via MQTT.
-2. Validate breathing/HR while lying still (~30–60 s calibration).
-3. Flash the other two, give unique IPs, confirm the 3-device mesh.
-4. Wire first automations (see below).
+2. Validate breathing/HR lying still (~30–60 s calibration).
+3. Roll out the rest: **my bed → kids bed → landing → lounge ×3**, unique IP each.
+4. Wire automations (below).
 
-### First HA automations to wire (bedroom)
-- `someone_sleeping` → night scene / confirm lights off (pairs with existing 23:59 off).
-- `fall` / `fall_risk_elevated` → alert notification.
-- `bed_exit` + time window → gentle pathway lighting.
-- `breathing_rate` / `heart_rate` → log to HA history for sleep trends (treat as trend, not medical).
+### First HA automations to wire
+- **Beds:** `someone_sleeping` → night scene / lights-off confirm; `breathing_rate`/`heart_rate` → log for sleep trends; `bed_exit` + night window → gentle pathway light.
+- **Landing:** `fall` / `fall_risk_elevated` → alert notification.
+- **Lounge:** `room_active` / `person_count` → enrich existing presence automations (occupancy-aware media/lighting).
 
 ### Open questions / TODO
-- [ ] Verify S3-Zero flash size + that it's a true S3.
-- [ ] Confirm 4 MB firmware streams CSI on a PSRAM-less board (test node #1 first).
+- [ ] Verify S3 flash size on a board (`flash_id`).
+- [ ] Confirm 4 MB firmware streams CSI (test node #1 first).
 - [ ] Decide publisher host: HA Green (add-on/Docker) vs separate LAN PC.
-- [ ] Resolve `.171` IP conflict before adding new static IPs.
+- [ ] Resolve `.171` IP conflict before assigning `.181–.186`.
+- [ ] Validate landing single-node fall reliability; upgrade to 2 if weak.
+- [ ] 3× ESP32-C3 (separate boards, if still on hand) → ESPHome BLE proxies for the upstairs contention TODO.
 
 ---
 
