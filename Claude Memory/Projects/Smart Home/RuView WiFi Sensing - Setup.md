@@ -112,11 +112,12 @@ Set `MQTT_PASSWORD` in the environment first.
 ## My deployment plan (3× ESP32-S3-Zero)
 
 ### Hardware compatibility — VERIFY FIRST
-- On-hand boards: **ESP32-S3-Zero**. RuView spec wants S3 + 8 MB flash + 8 MB PSRAM, but:
-  - **PSRAM is only used for the WASM/programmable-sensing tier (Tier 3).** Core sensing (CSI, presence, breathing, heart rate, fall = Tiers 0–2) runs without it.
+- On-hand boards: **ESP32-S3-Zero** (photo confirmed — Waveshare form factor or clone, USB-C, PCB antenna). Genuine Waveshare = **ESP32-S3FH4R2: 4 MB flash + 2 MB PSRAM**.
+- RuView spec wants 8 MB flash + 8 MB PSRAM, but:
   - Use the **4 MB firmware**: `release_bins/esp32-csi-node-4mb.bin` + `partition-table-4mb.bin`, flash with `--flash_size 4MB`.
-- [ ] Confirm the actual board is a genuine S3 with ≥4 MB flash before committing (Zero clones vary).
-- Trade-off accepted: no hot-loadable WASM modules. Not needed for presence/vitals/fall.
+  - 2 MB PSRAM is below spec but WASM arenas only need ~640 KB; core sensing (CSI, presence, breathing, HR, fall = Tiers 0–2) is unaffected.
+- [ ] **Definitive check** — plug one into PC and run `python -m esptool --port COM7 flash_id` → confirms chip + flash size (clones vary).
+- Count: photo shows **6 boards** (3 with headers soldered, 3 bare) — confirm how many are usable.
 
 ### Where: all 3 nodes = bedroom mesh
 - 3 nodes = minimum for a **multistatic mesh** (3D pose, breathing/HR, fall) — much stronger than 1 node line-of-sight.
