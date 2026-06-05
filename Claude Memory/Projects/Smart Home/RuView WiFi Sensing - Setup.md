@@ -186,8 +186,13 @@ Until this is running at `192.168.0.200`, a provisioned node joins WiFi but **no
 - [ ] **NEXT INFRA STEP:** stand up the aggregator+publisher container on HA.
 
 ### Progress log
-- **2026-06-05 — Node #1 FLASHED** ✅ via esptool-js (browser). Chip confirmed ESP32-S3, 4 MB flash + 2 MB PSRAM,
-  MAC `20:6e:f1:b1:05:c8`. Hash verified, hard reset into RuView firmware. Next: provision WiFi, then aggregator.
+- **2026-06-05 — Node #1 FLASHED + PROVISIONED** ✅
+  - Flashed via esptool-js (browser). Chip ESP32-S3, 4 MB flash + 2 MB PSRAM, MAC `20:6e:f1:b1:05:c8`.
+  - Provisioned: SSID `JB's Smart 2.4G`, target-ip `192.168.0.200`, node-id 1, edge-tier 2 (vitals).
+    NVS written @ `0x9000`, hard reset. State file: `…\AppData\Roaming\wifi-densepose\esp32-provision-state\COM20.json`.
+  - **Aggregator host decided:** HA box via **Portainer** (HA OS can't run the container directly).
+  - NEXT: (a) confirm node joined WiFi (router DHCP list, MAC above), (b) MQTT broker + integration,
+    (c) run `ruvnet/wifi-densepose:0.7.0` container via Portainer → entities auto-discover.
 
 ### Bring-up order
 1. Flash + provision **one** node (4 MB firmware) → confirm it appears in HA via MQTT.
