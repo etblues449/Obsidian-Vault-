@@ -17,7 +17,7 @@ Decision tree for routing input. Try rules top-to-bottom, first match wins.
 
 | Keywords | Destination |
 |---|---|
-| smart home, HA, home assistant, ESPHome, lounge, bedroom node, upstairs node, presence, mmWave, govee, DreamView | `Claude Memory/project_smart_home.md` |
+| smart home, HA, home assistant, ESPHome, lounge, bedroom node, upstairs node, presence, mmWave, govee, DreamView | `Claude Memory/Projects/Smart Home/_inbox.md` (entity catalog reference: `Claude Memory/project_smart_home.md`) |
 | TV, lights, scene, movie mode, automation | ha_action (if imperative verb) or smart_home note (if declarative) |
 | video, thumbnail, script, hook, faceless finance, content, channel | `Claude Memory/Projects/Faceless Finance/_inbox.md` |
 | studying, course, lesson, learn, exam | `Claude Memory/project_studying_instructions.md` |

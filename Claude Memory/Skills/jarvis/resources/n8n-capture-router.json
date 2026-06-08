@@ -1,0 +1,126 @@
+{
+  "name": "Jarvis Capture Router",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jarvis-capture",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-capture",
+      "name": "Phone Capture Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 400],
+      "webhookId": "jarvis-capture"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-opus-4-7\",\n  \"max_tokens\": 1024,\n  \"system\": \"You are the Jarvis classifier for an Obsidian vault. Read the user's spoken/typed input and return ONE valid JSON object only (no prose, no markdown fence) with keys: type (note|task|idea|journal|ha_action|inbox), project (smart_home|faceless_finance|studying|debt|skills|fincast|none), destination_file (vault-relative path), content (cleaned markdown), tags (array), ha_action (object with service, entity_id, data — only if type=ha_action), due (YYYY-MM-DD or null), confidence (0-1). Routing: smart home/HA/lights/ESPHome -> Claude Memory/Projects/Smart Home/_inbox.md ; imperative device commands (turn on/off, play, dim, movie mode) -> type ha_action using canonical entities (lounge TV media_player.tv_jelly_beans_tv_2, lights light.living_room_light/light.left_smart_bulb/light.right_smart_bulb, Spotify via media_player.select_source source 'Spotify - Music and Podcasts') ; video/thumbnail/script/finance content -> Claude Memory/Projects/Faceless Finance/_inbox.md ; studying/course/lesson -> Claude Memory/project_studying_instructions.md ; debt/budget -> Claude Memory/project_debt_instructions.md ; skill/plugin/MCP -> Claude Memory/project_skills_instructions.md ; reminder/todo/time-bound -> type task, Tasks/open.md ; journal/feeling -> type journal, Journal/<date>.md ; anything below 0.7 confidence -> type inbox, Inbox/quick-capture.md.\",\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify($json.body.text) }} }]\n}",
+        "options": {}
+      },
+      "id": "classify",
+      "name": "Classify (Claude)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude's JSON reply, tolerate stray fences/whitespace.\nconst raw = $json.content?.[0]?.text ?? $json.content ?? '{}';\nlet cleaned = String(raw).trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();\nlet parsed;\ntry { parsed = JSON.parse(cleaned); }\ncatch (e) {\n  parsed = { type: 'inbox', project: 'none', destination_file: 'Inbox/quick-capture.md', content: $('Phone Capture Webhook').item.json.body.text, tags: [], due: null, confidence: 0 };\n}\nif ((parsed.confidence ?? 0) < 0.7 && parsed.type !== 'ha_action') {\n  parsed.type = 'inbox';\n  parsed.destination_file = 'Inbox/quick-capture.md';\n}\nparsed.ts = new Date().toISOString();\nreturn { json: parsed };"
+      },
+      "id": "parse",
+      "name": "Parse Classification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 400]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            { "conditions": { "options": { "caseSensitive": false }, "conditions": [ { "leftValue": "={{ $json.type }}", "rightValue": "ha_action", "operator": { "type": "string", "operation": "equals" } } ] }, "outputKey": "ha_action" }
+          ]
+        },
+        "options": { "fallbackOutput": "extra" }
+      },
+      "id": "switch",
+      "name": "Route by Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [960, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=={{ $env.HA_URL }}/api/services/{{ $json.ha_action.service.split('.')[0] }}/{{ $json.ha_action.service.split('.')[1] }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.HA_TOKEN }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify(Object.assign({ entity_id: $json.ha_action.entity_id }, $json.ha_action.data || {})) }}",
+        "options": {}
+      },
+      "id": "ha-call",
+      "name": "Call Home Assistant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 280]
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "file",
+        "operation": "edit",
+        "owner": "etblues449",
+        "repository": "Obsidian-Vault-",
+        "filePath": "={{ $json.destination_file }}",
+        "fileContent": "=\\n\\n- {{ $json.ts }} :: {{ $json.content }}{{ ($json.tags && $json.tags.length) ? ' ' + $json.tags.map(t => '#'+t).join(' ') : '' }}",
+        "commitMessage": "=jarvis: capture -> {{ $json.type }} ({{ $json.project }})",
+        "additionalParameters": { "branch": { "branch": "claude/adoring-allen-LY2kF" } }
+      },
+      "id": "write-vault",
+      "name": "Append to Vault (GitHub)",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [1200, 460],
+      "notes": "GitHub 'edit file' replaces content; for true append, swap to a Get File -> Code (concat) -> Edit File trio, or use a Filesystem node if n8n runs on the same box as the synced vault."
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ JSON.stringify({ ok: true, routed_to: $json.destination_file || $json.ha_action?.entity_id, type: $json.type }) }}" },
+      "id": "respond",
+      "name": "Confirm to Phone",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1460, 400]
+    }
+  ],
+  "connections": {
+    "Phone Capture Webhook": { "main": [[{ "node": "Classify (Claude)", "type": "main", "index": 0 }]] },
+    "Classify (Claude)": { "main": [[{ "node": "Parse Classification", "type": "main", "index": 0 }]] },
+    "Parse Classification": { "main": [[{ "node": "Route by Type", "type": "main", "index": 0 }]] },
+    "Route by Type": { "main": [[{ "node": "Call Home Assistant", "type": "main", "index": 0 }], [{ "node": "Append to Vault (GitHub)", "type": "main", "index": 0 }]] },
+    "Call Home Assistant": { "main": [[{ "node": "Confirm to Phone", "type": "main", "index": 0 }]] },
+    "Append to Vault (GitHub)": { "main": [[{ "node": "Confirm to Phone", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "_jarvis_import_notes": "Import via n8n: Workflows -> ... -> Import from File. Then set env vars ANTHROPIC_KEY, HA_URL, HA_TOKEN (Settings -> Variables) and add GitHub credentials to the 'Append to Vault' node. The classifier system prompt mirrors resources/classification.md — keep them in sync. GitHub 'edit' overwrites; see the note on the Append node to switch to true-append before relying on it."
+}

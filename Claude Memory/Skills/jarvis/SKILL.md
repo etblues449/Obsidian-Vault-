@@ -35,8 +35,8 @@ Never ask follow-up questions for trivial captures — make a reasonable call an
 
 | Trigger words / topics | Destination file |
 |---|---|
-| smart home, HA, lights, TV automation, ESPHome, lounge, bedroom node | `Claude Memory/project_smart_home.md` (append under correct section) |
-| video idea, faceless finance, thumbnail, script, hook | `Claude Memory/Projects/Faceless Finance/_inbox.md` (create if missing) |
+| smart home, HA, lights, TV automation, ESPHome, lounge, bedroom node | `Claude Memory/Projects/Smart Home/_inbox.md` (notes) — entity catalog stays in `Claude Memory/project_smart_home.md` (reference only) |
+| video idea, faceless finance, thumbnail, script, hook | `Claude Memory/Projects/Faceless Finance/_inbox.md` |
 | studying, course, lesson, learning | `Claude Memory/project_studying_instructions.md` |
 | debt, payoff, budget | `Claude Memory/project_debt_instructions.md` |
 | skill idea, claude skill, plugin | `Claude Memory/project_skills_instructions.md` |
@@ -94,6 +94,7 @@ State tracked in: `Inbox/.jarvis-state.yaml` (created by `scripts/setup.sh` on f
 - `resources/classification.md` — Routing decision rules (read this when classifying)
 - `resources/roadmap.md` — 5-day setup checklist (read in BUILD mode)
 - `resources/config.example.yaml` — Config template (HA URL/token, n8n webhook, paths)
+- `resources/n8n-capture-router.json` — Ready-to-import n8n workflow (phone → classify → route → confirm)
 - `resources/templates/` — Markdown templates for note/task/journal/idea/inbox-item
 - `docs/PHONE_SETUP.md` — Fold 7 setup: Obsidian Quick Capture, Tasker action, widget
 - `docs/HA_INTEGRATION.md` — HA entities, REST patterns, webhooks

@@ -2,6 +2,8 @@
 
 Two workflows make Jarvis run: **Capture Router** (phone → routed file) and **Event Logger** (HA → event log).
 
+> **Shortcut:** `resources/n8n-capture-router.json` is a ready-to-import version of the Capture Router. In n8n: Workflows → ⋯ → **Import from File**. Then set env vars (`ANTHROPIC_KEY`, `HA_URL`, `HA_TOKEN`), add GitHub credentials to the "Append to Vault" node, and read the note on that node about true-append vs overwrite. The sections below explain how it works and how to build the Event Logger by hand.
+
 ## Workflow 1: Jarvis Capture Router
 
 **Trigger:** Webhook — `POST /webhook/jarvis-capture` — body `{"text": "...", "source": "...", "ts": "..."}`
