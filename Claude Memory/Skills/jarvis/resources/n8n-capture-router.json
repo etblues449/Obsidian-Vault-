@@ -87,22 +87,27 @@
     },
     {
       "parameters": {
-        "authentication": "accessToken",
-        "resource": "file",
-        "operation": "edit",
-        "owner": "etblues449",
-        "repository": "Obsidian-Vault-",
-        "filePath": "={{ $json.destination_file }}",
-        "fileContent": "=\\n\\n- {{ $json.ts }} :: {{ $json.content }}{{ ($json.tags && $json.tags.length) ? ' ' + $json.tags.map(t => '#'+t).join(' ') : '' }}",
-        "commitMessage": "=jarvis: capture -> {{ $json.type }} ({{ $json.project }})",
-        "additionalParameters": { "branch": { "branch": "claude/adoring-allen-LY2kF" } }
+        "method": "POST",
+        "url": "=={{ $env.OBSIDIAN_REST_URL }}/vault/{{ encodeURI($json.destination_file) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.OBSIDIAN_REST_TOKEN }}" },
+            { "name": "Content-Type", "value": "text/markdown" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/markdown",
+        "body": "=\n- {{ $json.ts }} :: {{ $json.content }}{{ ($json.tags && $json.tags.length) ? ' ' + $json.tags.map(t => '#'+t).join(' ') : '' }}\n",
+        "options": { "allowUnauthorizedCerts": true }
       },
       "id": "write-vault",
-      "name": "Append to Vault (GitHub)",
-      "type": "n8n-nodes-base.github",
-      "typeVersion": 1,
+      "name": "Append to Vault (Local REST API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [1200, 460],
-      "notes": "GitHub 'edit file' replaces content; for true append, swap to a Get File -> Code (concat) -> Edit File trio, or use a Filesystem node if n8n runs on the same box as the synced vault."
+      "notes": "POST /vault/<path> APPENDS to the note via desktop Obsidian on the PC; Obsidian Sync then fans out to all devices. allowUnauthorizedCerts=true because the Local REST API plugin uses a self-signed cert on :27124 (or use http://PC:27123). Requires desktop Obsidian running with the Local REST API plugin. RECOMMENDED over the GitHub node: git + Obsidian Sync conflict and mobile git is unreliable. Fallback: wire a Filesystem node on the error output for when the PC/Obsidian is off."
     },
     {
       "parameters": { "respondWith": "json", "responseBody": "={{ JSON.stringify({ ok: true, routed_to: $json.destination_file || $json.ha_action?.entity_id, type: $json.type }) }}" },
@@ -117,10 +122,10 @@
     "Phone Capture Webhook": { "main": [[{ "node": "Classify (Claude)", "type": "main", "index": 0 }]] },
     "Classify (Claude)": { "main": [[{ "node": "Parse Classification", "type": "main", "index": 0 }]] },
     "Parse Classification": { "main": [[{ "node": "Route by Type", "type": "main", "index": 0 }]] },
-    "Route by Type": { "main": [[{ "node": "Call Home Assistant", "type": "main", "index": 0 }], [{ "node": "Append to Vault (GitHub)", "type": "main", "index": 0 }]] },
+    "Route by Type": { "main": [[{ "node": "Call Home Assistant", "type": "main", "index": 0 }], [{ "node": "Append to Vault (Local REST API)", "type": "main", "index": 0 }]] },
     "Call Home Assistant": { "main": [[{ "node": "Confirm to Phone", "type": "main", "index": 0 }]] },
-    "Append to Vault (GitHub)": { "main": [[{ "node": "Confirm to Phone", "type": "main", "index": 0 }]] }
+    "Append to Vault (Local REST API)": { "main": [[{ "node": "Confirm to Phone", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1" },
-  "_jarvis_import_notes": "Import via n8n: Workflows -> ... -> Import from File. Then set env vars ANTHROPIC_KEY, HA_URL, HA_TOKEN (Settings -> Variables) and add GitHub credentials to the 'Append to Vault' node. The classifier system prompt mirrors resources/classification.md — keep them in sync. GitHub 'edit' overwrites; see the note on the Append node to switch to true-append before relying on it."
+  "_jarvis_import_notes": "Import via n8n: Workflows -> ... -> Import from File. Then set env vars ANTHROPIC_KEY, HA_URL, HA_TOKEN, OBSIDIAN_REST_URL (e.g. https://PC-IP:27124), OBSIDIAN_REST_TOKEN (Settings -> Variables). The vault writer uses the Obsidian Local REST API plugin running in desktop Obsidian on the PC (NOT git) — Obsidian Sync then delivers to all devices. Install the plugin and enable it before importing. The classifier system prompt mirrors resources/classification.md — keep them in sync. Add a Filesystem-node fallback on the Append node's error output for when the PC/Obsidian is off."
 }

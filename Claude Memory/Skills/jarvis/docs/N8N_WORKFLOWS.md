@@ -2,7 +2,7 @@
 
 Two workflows make Jarvis run: **Capture Router** (phone → routed file) and **Event Logger** (HA → event log).
 
-> **Shortcut:** `resources/n8n-capture-router.json` is a ready-to-import version of the Capture Router. In n8n: Workflows → ⋯ → **Import from File**. Then set env vars (`ANTHROPIC_KEY`, `HA_URL`, `HA_TOKEN`), add GitHub credentials to the "Append to Vault" node, and read the note on that node about true-append vs overwrite. The sections below explain how it works and how to build the Event Logger by hand.
+> **Shortcut:** `resources/n8n-capture-router.json` is a ready-to-import version of the Capture Router. In n8n: Workflows → ⋯ → **Import from File**. Then set env vars (`ANTHROPIC_KEY`, `HA_URL`, `HA_TOKEN`, `OBSIDIAN_REST_URL`, `OBSIDIAN_REST_TOKEN`). The vault-write node uses the **Obsidian Local REST API** (see verified recommendation below) — not git. The sections below explain how it works and how to build the Event Logger by hand.
 
 ## Workflow 1: Jarvis Capture Router
 
@@ -43,15 +43,19 @@ Route on `{{ $json.type }}`:
 - `ha_action` → Call HA branch
 - `inbox` (or confidence < 0.7) → Append Inbox branch
 
-### Write to vault — three options
+### Write to vault — VERIFIED recommendation (corrected 2026-06-08)
 
 | Option | Pros | Cons |
 |---|---|---|
-| **GitHub node** — commit to `etblues449/Obsidian-Vault-` branch | Cross-device, auditable, free | 5-10s delay before phone sees it via Obsidian Git plugin pull |
-| **Filesystem node** (write to local synced folder) | Instant on PC | Only works on the device n8n runs on |
-| **Webhook to a small Flask/Express receiver on the PC** | Instant + flexible | Extra moving part |
+| **Obsidian Local REST API plugin (on the PC)** — n8n `POST /vault/<path>` (append) or `PATCH` (target a heading/block) | Writes *through* desktop Obsidian → **Obsidian Sync** fans out to phone+laptop; no sync-engine conflict; surgical heading/block targeting | PC + desktop Obsidian must be running (vault open); plugin is desktop-only (`:27123`/`:27124`, bearer token) |
+| **Filesystem node** (write to local synced folder) | Instant on PC, no plugin | Obsidian may not see externally-written file until re-scan; slightly more conflict-prone — **use only as fallback** |
+| **GitHub node** — commit to the vault repo | Auditable history | ⚠️ git + Obsidian Sync on the same vault **conflict**; mobile git (isomorphic-git) is "highly unstable on mobile" per its maintainer, so the Fold 7 may never get the change — **AVOID as primary** |
 
-**Recommended:** GitHub node — single source, no extra infra. The Obsidian Git plugin on the Fold 7 pulls every few minutes.
+**Recommended:** **Obsidian Local REST API plugin on the always-on PC**, then let Obsidian Sync deliver to all devices. Don't make the phone depend on a git pull. Add a **fallback branch**: if the REST call errors (PC/Obsidian off), write via the **Filesystem node** to the synced vault folder, or queue + retry.
+
+Two maintained community nodes save you hand-rolling HTTP: `Wade11s/n8n-nodes-obsidian` (Note Get/Create/Update/Delete/**Append**, Periodic notes, run Obsidian Commands) and `j-shelfwood/n8n-nodes-obsidian-local-rest-api` (full OpenAPI incl. PATCH section-targeting). Both require the Local REST API plugin running.
+
+> **git's actual role:** backup + audit history + Claude's desktop read/write — run it **only on PC/laptop** (native git), as a periodic commit/push *after* Sync settles. Gitignore `.obsidian/workspace*.json`, `.trash`, and conflict files. Never install Obsidian Git on the Fold 7.
 
 ### HA Action branch
 
@@ -76,7 +80,7 @@ POST to a Pushover / ntfy / phone notification endpoint with the result. Or retu
 **Flow:**
 
 ```
-Webhook → Format markdown row → GitHub: append to Claude Memory/Projects/Smart Home/event_log.md
+Webhook → Format markdown row → Obsidian Local REST API: append to Claude Memory/Projects/Smart Home/event_log.md
 ```
 
 ### Format node (Code/Set)
@@ -86,13 +90,17 @@ const row = `- ${$json.ts} | ${$json.event} | ${$json.entity} | ${$json.from} �
 return { row };
 ```
 
-### GitHub node
+### Append node (Obsidian Local REST API)
 
-- Repo: `etblues449/Obsidian-Vault-`
-- Branch: `claude/adoring-allen-LY2kF`
-- File: `Claude Memory/Projects/Smart Home/event_log.md`
-- Mode: **Append** (read file, append row, commit back)
-- Commit message: `jarvis: log ${{$json.event}}`
+```
+POST {{ $env.OBSIDIAN_REST_URL }}/vault/Claude Memory/Projects/Smart Home/event_log.md
+Headers:
+  Authorization: Bearer {{ $env.OBSIDIAN_REST_TOKEN }}
+  Content-Type: text/markdown
+Body: {{ $json.row }}\n
+```
+
+(`POST /vault/<path>` appends. Obsidian Sync then delivers the updated `event_log.md` to all devices. Fallback: Filesystem node append if the PC/Obsidian is off.)
 
 ## Environment variables (n8n)
 
@@ -101,7 +109,9 @@ Set in n8n → Settings → Variables (or `.env` if self-hosting):
 - `ANTHROPIC_KEY` — your Anthropic API key
 - `HA_URL` — `http://192.168.0.50:8123`
 - `HA_TOKEN` — long-lived token
-- `GH_TOKEN` — GitHub PAT with repo scope on `etblues449/Obsidian-Vault-`
+- `OBSIDIAN_REST_URL` — `https://<PC-IP>:27124` (Local REST API plugin; or `http://<PC-IP>:27123`)
+- `OBSIDIAN_REST_TOKEN` — bearer token from the Local REST API plugin settings
+- `GH_TOKEN` — *(optional)* GitHub PAT, only if you run the PC/laptop backup commits from n8n
 
 ## Testing each workflow
 

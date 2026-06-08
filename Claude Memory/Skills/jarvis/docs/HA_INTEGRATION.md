@@ -2,7 +2,13 @@
 
 HA Green at `http://192.168.0.50:8123`. Long-lived token in `config.yaml`.
 
-## Action direction: voice → HA
+## Two control brains (verified 2026-06-08) — use the right one
+
+- **Live house control → HA built-in Assist + LLM agent.** Since the 2025 releases, HA Assist does real LLM tool-calling against the **Assist API** over your *exposed entities* (turn on lights, set climate, run scenes/scripts), with hybrid fast-path fallback, per-device room context, streaming TTS, and proactive prompts. This is faster and more reliable than routing "turn on the lights" through n8n. Assign an Anthropic/OpenAI agent (or Ollama for local). Feed it the broken-entity list below so it never selects a dead entity.
+- **Captured commands → n8n `ha_action` branch (REST).** When a *capture* turns out to be a device command ("play Spotify on lounge TV"), the n8n router calls HA REST as below. Also the path for Claude-Code one-offs via `scripts/ha-call.sh`.
+- *(Optional)* If you want ONE n8n brain for both chat + control, the `webhook-conversation` HA integration makes an n8n workflow be HA's conversation agent — but it requires **HA ≥ 2026.4** and still executes via HA service calls. Only worth it if you specifically want unified n8n.
+
+## Action direction: voice → HA (captured `ha_action` path)
 
 Pattern: voice captured → n8n classifies as `ha_action` → n8n (or this skill via `scripts/ha-call.sh`) calls HA REST.
 
@@ -35,6 +41,13 @@ bash scripts/ha-call.sh light.turn_on light.bedroom_light '{"brightness_pct":30}
 **Upstairs node** — BLE + radar contention issue, see project file. Don't trust state until fixed.
 
 **Movie mode settings:** `brightness_pct: 100`, `rgb_color: [255, 255, 255]`, `color_temp_kelvin: 6500`
+
+## Casting to TVs & pushing to PC (verified caveats)
+
+- **Samsung TVs:** native media-cast/DLNA is widely reported broken. Use the SamsungTV integration only for power / app-launch / source (`media_player.select_source`) / volume.
+- **"Show this on the TV":** render the note/dashboard as a Lovelace view, then `cast.show_lovelace_view` to a **Chromecast / Google TV**. Cast sessions die, so for an always-on display use the **Continuously Casting Dashboards** HACS integration or **CATT** to re-cast every ~9 min.
+- **Media/URL to a Chromecast:** `media_player.play_media` with `media_content_type: url`.
+- **Push to Windows PC:** **ntfy** (self-hostable, HA has a native integration) — PC subscribes to a topic; n8n/HA POST links/text/alerts. For files: drop into a synced folder (vault via Obsidian Sync, or Syncthing) and ntfy a link. **Pushover** is the alternative if you want file attachments.
 
 ## Action direction: HA → vault (event logging)
 
