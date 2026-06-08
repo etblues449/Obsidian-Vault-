@@ -17,3 +17,7 @@ Thumbs.db
 
 # Backup files
 *.bak
+
+# Jarvis skill — secrets and state
+Claude Memory/Skills/jarvis/config.yaml
+Inbox/.jarvis-state.yaml
