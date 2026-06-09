@@ -17,3 +17,6 @@ Thumbs.db
 
 # Backup files
 *.bak
+
+# External projects
+ECC/
