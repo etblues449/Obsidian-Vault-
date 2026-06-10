@@ -42,6 +42,8 @@ If any of 1–4 is a no, stop and resolve it before spinning up the swarm.
 | `QA_VERIFICATION.md` | Post-entry verification + reconciliation checklist |
 | `work_queue.csv` / `.json` | The 1,358-record claimable task list (source of truth for progress) |
 | `PORTAL_WALKTHROUGH_TEMPLATE.md` | Fill this in from ONE manual entry to capture the real selectors before launch |
+| `LOGIN_FLOW.md` | Azure B2C login flow — confirmed step-1 selectors, expected password/MFA, session-reuse strategy |
+| `portal-captures/` | Live screenshots/DOM captures of the portal (login page captured 2026-06-10) |
 
 ---
 

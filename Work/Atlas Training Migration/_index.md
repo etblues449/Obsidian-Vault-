@@ -74,6 +74,15 @@ The old `*_SUPERSEDED.*` files in `source-docs/` are kept for history only —
 - **Assumption flag:** Makaton, Record Keeping, Risk Assessment, Driver Safety
   → defaulted to 3yr (see open item 3)
 
+## Two entry paths prepared
+
+1. **Citation onboarding bulk-load** (sanctioned, preferred) → `citation-onboarding/`
+   — clean import-ready `Citation_Bulk_Load.xlsx`/`.csv` (1,351 records; 7 held)
+   plus `COVER_NOTE.md` with the questions Citation must answer (can they set
+   arbitrary expiry dates, format, staff/course matching). Send this first.
+2. **Agent swarm** (DIY fallback) → `agent-swarm/` (see below). Only if Citation
+   can't bulk-load in time, and subject to the ToS/authorisation check.
+
 ## Agent-swarm entry package
 
 ➡️ `agent-swarm/` — everything needed to drive a swarm of browser agents to
