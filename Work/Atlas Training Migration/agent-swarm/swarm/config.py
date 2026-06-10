@@ -27,15 +27,17 @@ SEL_LOGIN_PASS_SUBMIT = "#next"       # TODO confirm
 SEL_LOGGED_IN = "TODO_authenticated_only_element"
 
 # ---- Add Training form selectors (CAPTURED 2026-06-10) ----------------------
-# Form is the "Add training" bulk-mode dialog reached from Employees → Manage →
-# ⋮ → ADD TRAINING.  NOTE: this form has NO expiry field — Atlas derives expiry
-# from each course's configured renewal interval (see ../EXPIRY_FINDING.md).
-SEL_DISTRIBUTE_TO = "#ddlDistributeTo"     # "Add training to" — picks worker(s)
-SEL_DISTRIBUTE_OPTION = "TODO"             # how a specific worker is chosen — CONFIRM
+# Form: Employees → Manage → ⋮ → ADD TRAINING ("Add training history details").
+# Flow: set "Add training to" = Employee → pick the person → course → dates → Add.
+SEL_DISTRIBUTE_TO = "#ddlDistributeTo"     # "Add training to" dropdown
+DISTRIBUTE_VALUE = "Employee"               # select this option to target one person
+SEL_EMPLOYEE_PICKER = "TODO"                # control that appears after "Employee" — CONFIRM
+SEL_EMPLOYEE_OPTION = "TODO"                # the matching person option — CONFIRM
 SEL_COURSE_INPUT = "#SelectedCourse"       # autocomplete: type then pick
 SEL_COURSE_OPTION = "TODO"                  # course autocomplete option — CONFIRM
 SEL_START_DATE = "#add-training-bulk-mode_AeDatetimePicker_1_ae-input_3"
 SEL_COMPLETED_DATE = "#add-training-bulk-mode_AeDatetimePicker_2_ae-input_3"
+SEL_EXPIRY_DATE = "#add-training-bulk-mode_AeDatetimePicker_3_ae-input_3"  # CONFIRM _3_
 SEL_SAVE = "#add-training-bulk-mode_AeButton_1_aeButton_1"
 SEL_SAVE_SUCCESS = "TODO"                   # success toast/element — CONFIRM on pilot
 # Optional fields on the form (not used for migration unless you want them):
