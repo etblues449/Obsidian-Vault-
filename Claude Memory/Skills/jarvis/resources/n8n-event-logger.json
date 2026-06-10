@@ -1,0 +1,76 @@
+{
+  "name": "Jarvis Event Logger",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jarvis-event",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-event",
+      "name": "HA Event Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 400],
+      "webhookId": "jarvis-event",
+      "notes": "POST /webhook/jarvis-event with body {event, entity, from, to, ts}. Trigger from an HA automation via rest_command.jarvis_event."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Format one markdown table/list row from the HA event payload.\n// Normalize: clients/tests may send fields on body or directly on $json.\nconst b = $json.body ?? $json;\nconst ts = b.ts ?? new Date().toISOString();\nconst event = b.event ?? 'unknown';\nconst entity = b.entity ?? 'unknown';\nconst from = b.from ?? '';\nconst to = b.to ?? '';\nconst row = `- ${ts} | ${event} | ${entity} | ${from} \\u2192 ${to}`;\nreturn [{ json: { row, ts, event, entity, from, to } }];"
+      },
+      "id": "format",
+      "name": "Format Event Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OBSIDIAN_REST_URL }}/vault/{{ encodeURI('Claude Memory/Projects/Smart Home/event_log.md') }}",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.OBSIDIAN_REST_TOKEN }}" },
+            { "name": "Content-Type", "value": "text/markdown" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "specifyBody": "string",
+        "rawContentType": "text/markdown",
+        "body": "={{ $json.row }}\n",
+        "options": { "allowUnauthorizedCerts": true }
+      },
+      "id": "append-log",
+      "name": "Append to Event Log (Local REST API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [720, 400],
+      "notes": "POST /vault/Claude Memory/Projects/Smart Home/event_log.md APPENDS the row via desktop Obsidian on the PC; Obsidian Sync then delivers the updated event_log.md to all devices. allowUnauthorizedCerts=true for the plugin's self-signed cert on :27124 (or use http://PC:27123). Requires desktop Obsidian running with the Local REST API plugin. NOT git. Fallback: wire a Filesystem node on the error output for when the PC/Obsidian is off."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, logged: $('Format Event Row').item.json.row }) }}"
+      },
+      "id": "respond",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [960, 400]
+    }
+  ],
+  "connections": {
+    "HA Event Webhook": { "main": [[{ "node": "Format Event Row", "type": "main", "index": 0 }]] },
+    "Format Event Row": { "main": [[{ "node": "Append to Event Log (Local REST API)", "type": "main", "index": 0 }]] },
+    "Append to Event Log (Local REST API)": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "_jarvis_import_notes": "Import via n8n: Workflows -> ... -> Import from File. Then set env vars OBSIDIAN_REST_URL (e.g. https://PC-IP:27124) and OBSIDIAN_REST_TOKEN (Settings -> Variables, or .env if self-hosting). The event logger appends a markdown row to 'Claude Memory/Projects/Smart Home/event_log.md' through the Obsidian Local REST API plugin running in desktop Obsidian on the PC (NOT git) — Obsidian Sync then delivers the updated file to all devices. Install + enable the plugin before importing. Node versions verified against current n8n via the n8n MCP get_node_types: webhook 2.1, code 2 (mode runOnceForAllItems), httpRequest 4.4, respondToWebhook 1.5. The raw-body append uses contentType 'raw' + specifyBody 'string' + rawContentType 'text/markdown' (n8n's raw-body shape). Trigger it from an HA automation calling rest_command.jarvis_event with {event, entity, from, to, ts}. Add a Filesystem-node fallback on the append node's error output for when the PC/Obsidian is off."
+}

@@ -11,7 +11,7 @@
       "id": "webhook-capture",
       "name": "Phone Capture Webhook",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
+      "typeVersion": 2.1,
       "position": [240, 400],
       "webhookId": "jarvis-capture"
     },
@@ -20,6 +20,7 @@
         "method": "POST",
         "url": "https://api.anthropic.com/v1/messages",
         "sendHeaders": true,
+        "specifyHeaders": "keypair",
         "headerParameters": {
           "parameters": [
             { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_KEY }}" },
@@ -28,6 +29,7 @@
           ]
         },
         "sendBody": true,
+        "contentType": "json",
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"claude-opus-4-7\",\n  \"max_tokens\": 1024,\n  \"system\": \"You are the Jarvis classifier for an Obsidian vault. Read the user's spoken/typed input and return ONE valid JSON object only (no prose, no markdown fence) with keys: type (note|task|idea|journal|ha_action|inbox), project (smart_home|faceless_finance|studying|debt|skills|fincast|none), destination_file (vault-relative path), content (cleaned markdown), tags (array), ha_action (object with service, entity_id, data — only if type=ha_action), due (YYYY-MM-DD or null), confidence (0-1). Routing: smart home/HA/lights/ESPHome -> Claude Memory/Projects/Smart Home/_inbox.md ; imperative device commands (turn on/off, play, dim, movie mode) -> type ha_action using canonical entities (lounge TV media_player.tv_jelly_beans_tv_2, lights light.living_room_light/light.left_smart_bulb/light.right_smart_bulb, Spotify via media_player.select_source source 'Spotify - Music and Podcasts') ; video/thumbnail/script/finance content -> Claude Memory/Projects/Faceless Finance/_inbox.md ; studying/course/lesson -> Claude Memory/project_studying_instructions.md ; debt/budget -> Claude Memory/project_debt_instructions.md ; skill/plugin/MCP -> Claude Memory/project_skills_instructions.md ; reminder/todo/time-bound -> type task, Tasks/open.md ; journal/feeling -> type journal, Journal/<date>.md ; anything below 0.7 confidence -> type inbox, Inbox/quick-capture.md.\",\n  \"messages\": [{\"role\": \"user\", \"content\": {{ JSON.stringify($json.body.text) }} }]\n}",
         "options": {}
@@ -35,12 +37,15 @@
       "id": "classify",
       "name": "Classify (Claude)",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [480, 400]
+      "typeVersion": 4.4,
+      "position": [480, 400],
+      "notes": "Anthropic Messages API. x-api-key uses env var ANTHROPIC_KEY. Swap the model id for the current Anthropic model at build time. The system prompt mirrors resources/classification.md — keep them in sync."
     },
     {
       "parameters": {
-        "jsCode": "// Parse Claude's JSON reply, tolerate stray fences/whitespace.\nconst raw = $json.content?.[0]?.text ?? $json.content ?? '{}';\nlet cleaned = String(raw).trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();\nlet parsed;\ntry { parsed = JSON.parse(cleaned); }\ncatch (e) {\n  parsed = { type: 'inbox', project: 'none', destination_file: 'Inbox/quick-capture.md', content: $('Phone Capture Webhook').item.json.body.text, tags: [], due: null, confidence: 0 };\n}\nif ((parsed.confidence ?? 0) < 0.7 && parsed.type !== 'ha_action') {\n  parsed.type = 'inbox';\n  parsed.destination_file = 'Inbox/quick-capture.md';\n}\nparsed.ts = new Date().toISOString();\nreturn { json: parsed };"
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Parse Claude's JSON reply, tolerate stray fences/whitespace.\nconst raw = $json.content?.[0]?.text ?? $json.content ?? '{}';\nlet cleaned = String(raw).trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();\nlet parsed;\ntry { parsed = JSON.parse(cleaned); }\ncatch (e) {\n  parsed = { type: 'inbox', project: 'none', destination_file: 'Inbox/quick-capture.md', content: $('Phone Capture Webhook').item.json.body.text, tags: [], due: null, confidence: 0 };\n}\nif ((parsed.confidence ?? 0) < 0.7 && parsed.type !== 'ha_action') {\n  parsed.type = 'inbox';\n  parsed.destination_file = 'Inbox/quick-capture.md';\n}\nparsed.ts = new Date().toISOString();\nreturn [{ json: parsed }];"
       },
       "id": "parse",
       "name": "Parse Classification",
@@ -50,24 +55,37 @@
     },
     {
       "parameters": {
+        "mode": "rules",
         "rules": {
           "values": [
-            { "conditions": { "options": { "caseSensitive": false }, "conditions": [ { "leftValue": "={{ $json.type }}", "rightValue": "ha_action", "operator": { "type": "string", "operation": "equals" } } ] }, "outputKey": "ha_action" }
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "conditions": [
+                  { "leftValue": "={{ $json.type }}", "rightValue": "ha_action", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ha_action"
+            }
           ]
         },
-        "options": { "fallbackOutput": "extra" }
+        "options": { "fallbackOutput": "extra", "renameFallbackOutput": "vault" }
       },
       "id": "switch",
       "name": "Route by Type",
       "type": "n8n-nodes-base.switch",
-      "typeVersion": 3,
-      "position": [960, 400]
+      "typeVersion": 3.4,
+      "position": [960, 400],
+      "notes": "Output 0 = ha_action (rule match). Output 1 = vault (fallback 'extra') for note/task/idea/journal/inbox — everything that isn't an HA command."
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=={{ $env.HA_URL }}/api/services/{{ $json.ha_action.service.split('.')[0] }}/{{ $json.ha_action.service.split('.')[1] }}",
+        "url": "={{ $env.HA_URL }}/api/services/{{ $json.ha_action.service.split('.')[0] }}/{{ $json.ha_action.service.split('.')[1] }}",
         "sendHeaders": true,
+        "specifyHeaders": "keypair",
         "headerParameters": {
           "parameters": [
             { "name": "Authorization", "value": "=Bearer {{ $env.HA_TOKEN }}" },
@@ -75,6 +93,7 @@
           ]
         },
         "sendBody": true,
+        "contentType": "json",
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify(Object.assign({ entity_id: $json.ha_action.entity_id }, $json.ha_action.data || {})) }}",
         "options": {}
@@ -82,14 +101,16 @@
       "id": "ha-call",
       "name": "Call Home Assistant",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1200, 280]
+      "typeVersion": 4.4,
+      "position": [1200, 280],
+      "notes": "Calls HA REST /api/services/<domain>/<service>. Domain/service are split from ha_action.service (e.g. 'light.turn_on'). Body merges entity_id with ha_action.data."
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=={{ $env.OBSIDIAN_REST_URL }}/vault/{{ encodeURI($json.destination_file) }}",
+        "url": "={{ $env.OBSIDIAN_REST_URL }}/vault/{{ encodeURI($json.destination_file) }}",
         "sendHeaders": true,
+        "specifyHeaders": "keypair",
         "headerParameters": {
           "parameters": [
             { "name": "Authorization", "value": "=Bearer {{ $env.OBSIDIAN_REST_TOKEN }}" },
@@ -98,6 +119,7 @@
         },
         "sendBody": true,
         "contentType": "raw",
+        "specifyBody": "string",
         "rawContentType": "text/markdown",
         "body": "=\n- {{ $json.ts }} :: {{ $json.content }}{{ ($json.tags && $json.tags.length) ? ' ' + $json.tags.map(t => '#'+t).join(' ') : '' }}\n",
         "options": { "allowUnauthorizedCerts": true }
@@ -105,16 +127,19 @@
       "id": "write-vault",
       "name": "Append to Vault (Local REST API)",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "typeVersion": 4.4,
       "position": [1200, 460],
       "notes": "POST /vault/<path> APPENDS to the note via desktop Obsidian on the PC; Obsidian Sync then fans out to all devices. allowUnauthorizedCerts=true because the Local REST API plugin uses a self-signed cert on :27124 (or use http://PC:27123). Requires desktop Obsidian running with the Local REST API plugin. RECOMMENDED over the GitHub node: git + Obsidian Sync conflict and mobile git is unreliable. Fallback: wire a Filesystem node on the error output for when the PC/Obsidian is off."
     },
     {
-      "parameters": { "respondWith": "json", "responseBody": "={{ JSON.stringify({ ok: true, routed_to: $json.destination_file || $json.ha_action?.entity_id, type: $json.type }) }}" },
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, routed_to: ($json.destination_file ?? $json.ha_action?.entity_id), type: $json.type }) }}"
+      },
       "id": "respond",
       "name": "Confirm to Phone",
       "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
+      "typeVersion": 1.5,
       "position": [1460, 400]
     }
   ],
@@ -127,5 +152,5 @@
     "Append to Vault (Local REST API)": { "main": [[{ "node": "Confirm to Phone", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1" },
-  "_jarvis_import_notes": "Import via n8n: Workflows -> ... -> Import from File. Then set env vars ANTHROPIC_KEY, HA_URL, HA_TOKEN, OBSIDIAN_REST_URL (e.g. https://PC-IP:27124), OBSIDIAN_REST_TOKEN (Settings -> Variables). The vault writer uses the Obsidian Local REST API plugin running in desktop Obsidian on the PC (NOT git) — Obsidian Sync then delivers to all devices. Install the plugin and enable it before importing. The classifier system prompt mirrors resources/classification.md — keep them in sync. Add a Filesystem-node fallback on the Append node's error output for when the PC/Obsidian is off."
+  "_jarvis_import_notes": "Import via n8n: Workflows -> ... -> Import from File. Then set env vars ANTHROPIC_KEY, HA_URL (e.g. http://192.168.0.50:8123), HA_TOKEN, OBSIDIAN_REST_URL (e.g. https://PC-IP:27124), OBSIDIAN_REST_TOKEN (Settings -> Variables, or .env if self-hosting). The vault writer uses the Obsidian Local REST API plugin running in desktop Obsidian on the PC (NOT git) — Obsidian Sync then delivers to all devices. Install + enable the plugin before importing. Node versions verified against current n8n via the n8n MCP get_node_types: webhook 2.1, httpRequest 4.4, code 2 (mode runOnceForAllItems), switch 3.4 (mode rules), respondToWebhook 1.5. The raw-body vault writer uses contentType 'raw' + specifyBody 'string' + rawContentType 'text/markdown' (n8n's raw-body shape). The Switch sends ha_action to output 0 and everything else to the renamed fallback output 1 ('vault'). The classifier system prompt mirrors resources/classification.md — keep them in sync. Pick the current Anthropic model id at build time. Add a Filesystem-node fallback on the Append node's error output for when the PC/Obsidian is off."
 }
