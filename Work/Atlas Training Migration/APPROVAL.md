@@ -37,9 +37,8 @@ swarm. Everything referenced is in this folder.
 ## 3. Decisions needed BEFORE go-live  (tick to approve)
 
 - [ ] **Data is correct** — the 296 OVERDUE and overall figures match expectation.
-- [ ] **Interval policy** — Makaton, Record Keeping, Risk Assessment, Driver
-      Safety (168 records) default to **3-year** expiry. ☐ Confirm 3yr  /
-      ☐ change to: __________ (fix in `work_queue.csv` first if changed).
+- [x] **Interval policy** — Makaton, Record Keeping, Risk Assessment, Driver
+      Safety (168 records) default to **3-year** expiry. **CONFIRMED 3yr (Elliot, 2026-06-10).**
 - [ ] **Unknown course** — PDF1 p25 (17/10/2025): identify or accept it's excluded.
 - [ ] **7 HELD names** — accept they're entered later once HR confirms spelling.
 - [ ] **Authorisation / ToS** — automated owner-driven entry into Atlas is
