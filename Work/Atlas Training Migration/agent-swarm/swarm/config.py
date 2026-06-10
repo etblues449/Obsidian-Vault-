@@ -26,17 +26,25 @@ SEL_LOGIN_PASS_SUBMIT = "#next"       # TODO confirm
 # A selector that only exists once authenticated (used to detect "logged in").
 SEL_LOGGED_IN = "TODO_authenticated_only_element"
 
-# ---- Add-result form selectors (TODO from walkthrough) ----------------------
-SEL_STAFF_INPUT = "TODO"      # staff name search/select
-SEL_STAFF_OPTION = "TODO"     # template for the matching dropdown option
-SEL_COURSE_INPUT = "TODO"     # course select/search
-SEL_COURSE_OPTION = "TODO"
-SEL_COMPLETED_DATE = "TODO"
-SEL_EXPIRY_DATE = "TODO"
-SEL_STATUS = "TODO"           # may not exist if status is auto-derived
-SEL_SAVE = "TODO"
-SEL_SAVE_SUCCESS = "TODO"     # element/text confirming the save
-# Where existing results for a staff+course are listed (dedupe check).
+# ---- Add Training form selectors (CAPTURED 2026-06-10) ----------------------
+# Form is the "Add training" bulk-mode dialog reached from Employees → Manage →
+# ⋮ → ADD TRAINING.  NOTE: this form has NO expiry field — Atlas derives expiry
+# from each course's configured renewal interval (see ../EXPIRY_FINDING.md).
+SEL_DISTRIBUTE_TO = "#ddlDistributeTo"     # "Add training to" — picks worker(s)
+SEL_DISTRIBUTE_OPTION = "TODO"             # how a specific worker is chosen — CONFIRM
+SEL_COURSE_INPUT = "#SelectedCourse"       # autocomplete: type then pick
+SEL_COURSE_OPTION = "TODO"                  # course autocomplete option — CONFIRM
+SEL_START_DATE = "#add-training-bulk-mode_AeDatetimePicker_1_ae-input_3"
+SEL_COMPLETED_DATE = "#add-training-bulk-mode_AeDatetimePicker_2_ae-input_3"
+SEL_SAVE = "#add-training-bulk-mode_AeButton_1_aeButton_1"
+SEL_SAVE_SUCCESS = "TODO"                   # success toast/element — CONFIRM on pilot
+# Optional fields on the form (not used for migration unless you want them):
+SEL_COURSE_CODE = "#CourseCode"
+SEL_CPD_MINUTES = "#CPDMinutes"
+SEL_COURSE_GRADE = "#CourseGrade"
+SEL_PROVIDER = "#Provider"
+SEL_DESCRIPTION = "#Description"
+# Where existing results for a worker+course are listed (dedupe check).
 SEL_EXISTING_RESULTS = "TODO"
 
 # ---- Behaviour --------------------------------------------------------------
