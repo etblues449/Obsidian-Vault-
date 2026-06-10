@@ -74,10 +74,20 @@ The old `*_SUPERSEDED.*` files in `source-docs/` are kept for history only —
 - **Assumption flag:** Makaton, Record Keeping, Risk Assessment, Driver Safety
   → defaulted to 3yr (see open item 3)
 
+## Agent-swarm entry package
+
+➡️ `agent-swarm/` — everything needed to drive a swarm of browser agents to
+enter the 1,358 records into the Atlas portal. Start at
+`agent-swarm/ORCHESTRATION.md`. Contains: claimable `work_queue.csv` (1,358
+rows, priority-sorted, 7 HOLD + 168 interval-caution pre-flagged), per-agent
+runbook, field mapping, exceptions, QA/reconciliation, and a portal-walkthrough
+template to capture the real selectors before launch.
+
 ## Files in this folder
 
 - `Atlas_Training_Master_VERIFIED.xlsx` — ✅ authoritative master (Summary,
   Discrepancy Report, Atlas Training Master sheets)
+- `agent-swarm/` — swarm entry package (see above)
 - `source-docs/` — superseded history:
   - `Atlas_Training_Master_CQC_Compliant_SUPERSEDED.xlsx`
   - `Course_Interval_Mapping_Reference_SUPERSEDED.xlsx`
