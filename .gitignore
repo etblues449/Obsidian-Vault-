@@ -20,3 +20,6 @@ Thumbs.db
 
 # External projects
 ECC/
+
+# Playwright MCP session artifacts
+.playwright-mcp/
