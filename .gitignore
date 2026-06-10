@@ -29,3 +29,7 @@ Work/Atlas Training Migration/agent-swarm/swarm/auth_state.json
 Work/Atlas Training Migration/agent-swarm/swarm/results/
 Work/Atlas Training Migration/agent-swarm/swarm/screenshots/
 Work/Atlas Training Migration/agent-swarm/swarm/work_queue_status.csv
+
+# Python bytecode
+__pycache__/
+*.pyc
