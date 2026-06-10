@@ -82,6 +82,11 @@ The old `*_SUPERSEDED.*` files in `source-docs/` are kept for history only —
    arbitrary expiry dates, format, staff/course matching). Send this first.
 2. **Agent swarm** (DIY fallback) → `agent-swarm/` (see below). Only if Citation
    can't bulk-load in time, and subject to the ToS/authorisation check.
+   **Runnable harness:** `agent-swarm/swarm/` — parallel Playwright workers
+   (`login_bootstrap.py` → `run_worker.py` → `merge_results.py`). Compiles and
+   runs in `--dry-run`; needs the form selectors from one authenticated
+   walkthrough + a login session before a live run. Start at
+   `agent-swarm/swarm/README.md`.
 
 ## Agent-swarm entry package
 
