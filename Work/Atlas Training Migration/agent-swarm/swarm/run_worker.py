@@ -24,8 +24,7 @@ import sys
 import time
 from datetime import datetime
 
-from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
-import config
+import config  # playwright is imported lazily so --dry-run needs no browser libs
 
 QUEUE = os.path.join(os.path.dirname(__file__), "..", "work_queue.csv")
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
@@ -58,6 +57,7 @@ def enter_record(page, rec, worker, dry_run):
     if dry_run:
         return "DRYRUN", "selectors ok" if selectors_ready() else "selectors not set"
 
+    from playwright.sync_api import TimeoutError as PWTimeoutError  # lazy
     name, course = rec["full_name"], rec["training_course"]
     page.goto(config.ADD_RESULT_URL, timeout=config.NAV_TIMEOUT_MS)
     if "auth.atlas-hub.co.uk" in page.url:
@@ -68,7 +68,7 @@ def enter_record(page, rec, worker, dry_run):
     opt = config.SEL_STAFF_OPTION.format(name=name)
     try:
         page.click(opt, timeout=5000)
-    except PWTimeout:
+    except PWTimeoutError:
         return "ERROR", f"staff not found/ambiguous: {name}"
 
     # 2. Course (must match an existing Atlas course)
@@ -76,7 +76,7 @@ def enter_record(page, rec, worker, dry_run):
     copt = config.SEL_COURSE_OPTION.format(course=course)
     try:
         page.click(copt, timeout=5000)
-    except PWTimeout:
+    except PWTimeoutError:
         return "ERROR", f"course missing in Atlas: {course}"
 
     # 3. Dedupe: skip if a result with the same completed date already exists
@@ -100,7 +100,7 @@ def enter_record(page, rec, worker, dry_run):
     page.click(config.SEL_SAVE)
     try:
         page.wait_for_selector(config.SEL_SAVE_SUCCESS, timeout=10000)
-    except PWTimeout:
+    except PWTimeoutError:
         return "ERROR", "save not confirmed"
 
     shot = os.path.join(SHOTS_DIR, f"{rec['record_id']}.png")
@@ -130,15 +130,21 @@ def main():
     consec_err = 0
     counts = {}
 
-    with sync_playwright() as p, open(out_path, "w", newline="") as out:
-        w = csv.writer(out)
-        w.writerow(["record_id", "result", "note", "timestamp", "worker"])
-        browser = p.chromium.launch(headless=config.HEADLESS)
-        ctx = (browser.new_context(storage_state=config.AUTH_STATE)
-               if not args.dry_run else browser.new_context())
+    out = open(out_path, "w", newline="")
+    w = csv.writer(out)
+    w.writerow(["record_id", "result", "note", "timestamp", "worker"])
+
+    # Browser only for live runs; --dry-run needs no playwright at all.
+    page = browser = pw = None
+    if not args.dry_run:
+        from playwright.sync_api import sync_playwright  # lazy import
+        pw = sync_playwright().start()
+        browser = pw.chromium.launch(headless=config.HEADLESS)
+        ctx = browser.new_context(storage_state=config.AUTH_STATE)
         page = ctx.new_page()
         page.set_default_timeout(config.NAV_TIMEOUT_MS)
 
+    try:
         for rec in shard:
             try:
                 status, note = enter_record(page, rec, args.worker, args.dry_run)
@@ -159,8 +165,12 @@ def main():
                 break
             if status not in ("HOLD", "SKIPPED", "DRYRUN"):
                 throttle()
-
-        browser.close()
+    finally:
+        out.close()
+        if browser:
+            browser.close()
+        if pw:
+            pw.stop()
 
     print(f"[{args.worker}] done: {counts} -> {out_path}")
 
