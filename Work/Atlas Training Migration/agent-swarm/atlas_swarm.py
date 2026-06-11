@@ -82,11 +82,23 @@ def open_dialog(pg):
     if "auth.atlas-hub.co.uk" in pg.url:
         raise RuntimeError("session expired - run: python atlas_swarm.py login")
     pg.wait_for_load_state("domcontentloaded")
-    try:
-        pg.get_by_role("button", name=re.compile(r"more|options|menu", re.I)).first.click(timeout=3000)
-    except Exception:
-        pass
-    pg.get_by_text("ADD TRAINING", exact=False).first.click(timeout=8000)
+    # The "Add Training" item lives in the ⋮ menu next to "Add Employee / Worker"
+    # and is hidden until that menu is opened. Open it, then click the item.
+    item = pg.locator("#addTraining_txtSpan_1")
+    if not item.is_visible():
+        for sel in (
+            "button:right-of(:text('Add Employee / Worker'))",
+            "xpath=//*[contains(normalize-space(.),'Add Employee')]/following::button[1]",
+            "[class*='dropdown-toggle']", "[class*='kebab']",
+            "[class*='ellipsis']", "[class*='more-option']", "[class*='three']",
+        ):
+            try:
+                pg.locator(sel).first.click(timeout=1500)
+                item.wait_for(state="visible", timeout=1500)
+                break
+            except Exception:
+                continue
+    item.click(timeout=8000)
     pg.wait_for_selector(SEL_DISTRIBUTE_TO, timeout=10000)
 
 
