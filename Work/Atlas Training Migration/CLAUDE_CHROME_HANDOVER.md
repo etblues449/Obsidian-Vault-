@@ -51,10 +51,19 @@ A side panel titled **"Add training history details"** opens.
 2. **"Add training to"** → select **Employee**.
 3. **Employee** box → type `full_name`, wait for suggestions, click the matching
    person.
-   - If it shows **"No Result Found"** → outcome = **ERROR**, note "staff not
-     found", close the panel, move on. **Never create a new employee.**
-   - If several people share the name and you can't tell which → **ERROR**,
-     "ambiguous staff", move on.
+   - **If "No Result Found", try search variants before giving up:** surname
+     only; first name only; obvious spelling variants (e.g. Renae→Renee,
+     Jo→Joanne, Eliott→Elliot). Most "not found" cases are spelling/format
+     mismatches, not a missing person.
+   - **If a variant matches the same person, use them.** (You're finding an
+     existing record, not creating one.)
+   - **If still genuinely not found after variants → add the record to a
+     "MISSING — needs checking" list (record_id + name + course), mark it
+     MISSING in the log, and move on. Do NOT create a new employee.** Creating
+     staff from an uncertain name makes duplicate/wrong HR records; Elliot will
+     review the MISSING list and add anyone real, properly, himself.
+   - If several different people genuinely match and you can't tell which →
+     MISSING, note "ambiguous", move on.
 4. **Course** → type `training_course`, pick the matching course.
    - No match in Atlas's list → **ERROR**, "course missing", move on. Don't
      guess or pick a near-name. (See §7 on course-name differences.)
