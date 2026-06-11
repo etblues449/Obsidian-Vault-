@@ -5,6 +5,21 @@ Atlas browser tab, attach `work_queue.csv`, and tell it to begin.
 
 ---
 
+## 0. SAFETY — READ FIRST (non-negotiable; see SAFETY_PROTOCOL.md)
+This is a **live production** care-compliance system.
+1. **Add-only.** Use the Add Training panel + **Add** button. **Never** Edit,
+   Delete, Remove, Import, or "Update Employees" — and never click any
+   delete/remove icon on an existing record.
+2. **"Add training to" = Employee, ALWAYS.** Never pick *All employees*, *Site*,
+   *Employee group*, or *Department or team* — those apply a course to **many
+   people at once** and are extremely hard to undo. If "Employee" is not
+   selected, **do not click Add**.
+3. **One named, correct person per record.** Verify the person before saving.
+4. **Verify every save** (right person, right dates). Don't assume.
+5. **Export a backup first** (⋮ → EXPORT) before entering anything.
+6. **When unsure, STOP and ask Elliot.** Any "are you sure" / delete /
+   confirmation dialog → do not click through.
+
 ## 1. Who you are / what you're doing
 You are operating **inside Elliot's logged-in Citation Atlas tab**
 (`hrhs.atlas-hub.co.uk`, org: **Select Lifestyles Limited**, a Learning
@@ -95,12 +110,21 @@ and list the course names for Elliot rather than forcing a wrong match.
 - A course is missing for many records (needs admin to add it).
 - Anything that would require guessing a person's identity.
 
-## 9. Reporting & reconciliation
+## 9. Work in batches (don't do all 1,358 in one go)
+- **Batch 1 = the 296 OVERDUE only (rows 1–296). Then STOP and report**, and
+  wait for Elliot to spot-check ~5 in Atlas before continuing.
+- After that, proceed in **blocks of ~100–200**, pausing to report after each.
+- This catches any systematic mistake early (before it repeats 1,000 times) and
+  lets the work resume across sittings. Don't run unattended on Batch 1 — the
+  first ~10 should be watched live.
+
+## 10. Reporting & reconciliation
 - After **every 25 records**, post a running tally:
   **DONE / SKIPPED / HOLD / ERROR**, plus the `record_id`s of any ERRORs.
 - Keep `entry_log.csv` updated so the final state is auditable.
+- After each batch, **EXPORT from Atlas** and confirm the training count rose by
+  your DONE count (catches silent failures).
 - **Target reconciliation:** `DONE + SKIPPED + HOLD(7) + ERROR = 1,358`.
-- Address the **296 OVERDUE** first — those are the compliance priority.
 
 ## 10. Authority for the data (already agreed — no need to re-decide)
 Intervals from Skills for Care Statutory & Mandatory Training Guide (2025) +
