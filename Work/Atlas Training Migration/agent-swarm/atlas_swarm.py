@@ -82,37 +82,51 @@ def open_dialog(pg):
     if "auth.atlas-hub.co.uk" in pg.url:
         raise RuntimeError("session expired - run: python atlas_swarm.py login")
     pg.wait_for_load_state("domcontentloaded")
-    item = pg.locator("#addTraining_txtSpan_1")
-    # The "Add Training" item is hidden until the ⋮ menu next to "Add Employee /
-    # Worker" is opened. Find and click that icon button in-page (no need to know
-    # its exact selector), then click the now-visible item.
-    if not item.is_visible():
-        pg.wait_for_timeout(600)
-        pg.evaluate(
-            """() => {
-                const add = [...document.querySelectorAll('button,a')]
-                    .find(b => /add employee/i.test(b.innerText||''));
-                if (!add) return;
-                const scopes = [add.parentElement,
-                                add.parentElement && add.parentElement.parentElement]
-                    .filter(Boolean);
-                const seen = new Set();
-                for (const s of scopes) {
-                    for (const c of s.querySelectorAll('button,[role=button]')) {
-                        if (c === add || seen.has(c)) continue;
-                        seen.add(c);
-                        if ((c.innerText||'').trim().length <= 2) c.click();
-                    }
+    pg.wait_for_timeout(900)
+    # Strategy 1: fire the Add Training menu item's own click handler in-page,
+    # even though it's hidden inside the collapsed ⋮ menu.
+    pg.evaluate(
+        """() => {
+            const span = document.querySelector('#addTraining_txtSpan_1');
+            if (!span) return;
+            let el = span;
+            for (let i = 0; i < 6 && el; i++) {
+                const tag = el.tagName;
+                if (tag === 'A' || tag === 'BUTTON' ||
+                    el.getAttribute('role') === 'menuitem' || el.onclick) break;
+                el = el.parentElement;
+            }
+            (el || span).click();
+        }"""
+    )
+    try:
+        pg.wait_for_selector(SEL_DISTRIBUTE_TO, timeout=6000)
+        return
+    except Exception:
+        pass
+    # Strategy 2: open the ⋮ menu by clicking icon-only buttons near Add Employee.
+    pg.evaluate(
+        """() => {
+            const add = [...document.querySelectorAll('button,a')]
+                .find(b => /add employee/i.test(b.innerText||''));
+            if (!add) return;
+            let n = add, scopes = [];
+            for (let i = 0; i < 4 && n; i++) { scopes.push(n); n = n.parentElement; }
+            const seen = new Set();
+            for (const s of scopes)
+                for (const c of s.querySelectorAll('button,[role=button],[class*=dropdown] *,[class*=menu] *')) {
+                    if (c === add || seen.has(c)) continue;
+                    seen.add(c);
+                    if ((c.innerText||'').trim().length <= 2) { try { c.click(); } catch (e) {} }
                 }
-            }"""
-        )
-        try:
-            item.wait_for(state="visible", timeout=4000)
-        except Exception:
-            raise RuntimeError(
-                "could not open the ⋮ menu automatically - send the console-snippet "
-                "table so the kebab selector can be hard-set")
-    item.click(timeout=8000)
+        }"""
+    )
+    item = pg.locator("#addTraining_txtSpan_1")
+    try:
+        item.wait_for(state="visible", timeout=3000)
+        item.click(timeout=5000)
+    except Exception:
+        raise RuntimeError("could not open Add Training menu automatically")
     pg.wait_for_selector(SEL_DISTRIBUTE_TO, timeout=10000)
 
 
