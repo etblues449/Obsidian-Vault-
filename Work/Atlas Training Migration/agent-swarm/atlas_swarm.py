@@ -82,22 +82,36 @@ def open_dialog(pg):
     if "auth.atlas-hub.co.uk" in pg.url:
         raise RuntimeError("session expired - run: python atlas_swarm.py login")
     pg.wait_for_load_state("domcontentloaded")
-    # The "Add Training" item lives in the ⋮ menu next to "Add Employee / Worker"
-    # and is hidden until that menu is opened. Open it, then click the item.
     item = pg.locator("#addTraining_txtSpan_1")
+    # The "Add Training" item is hidden until the ⋮ menu next to "Add Employee /
+    # Worker" is opened. Find and click that icon button in-page (no need to know
+    # its exact selector), then click the now-visible item.
     if not item.is_visible():
-        for sel in (
-            "button:right-of(:text('Add Employee / Worker'))",
-            "xpath=//*[contains(normalize-space(.),'Add Employee')]/following::button[1]",
-            "[class*='dropdown-toggle']", "[class*='kebab']",
-            "[class*='ellipsis']", "[class*='more-option']", "[class*='three']",
-        ):
-            try:
-                pg.locator(sel).first.click(timeout=1500)
-                item.wait_for(state="visible", timeout=1500)
-                break
-            except Exception:
-                continue
+        pg.wait_for_timeout(600)
+        pg.evaluate(
+            """() => {
+                const add = [...document.querySelectorAll('button,a')]
+                    .find(b => /add employee/i.test(b.innerText||''));
+                if (!add) return;
+                const scopes = [add.parentElement,
+                                add.parentElement && add.parentElement.parentElement]
+                    .filter(Boolean);
+                const seen = new Set();
+                for (const s of scopes) {
+                    for (const c of s.querySelectorAll('button,[role=button]')) {
+                        if (c === add || seen.has(c)) continue;
+                        seen.add(c);
+                        if ((c.innerText||'').trim().length <= 2) c.click();
+                    }
+                }
+            }"""
+        )
+        try:
+            item.wait_for(state="visible", timeout=4000)
+        except Exception:
+            raise RuntimeError(
+                "could not open the ⋮ menu automatically - send the console-snippet "
+                "table so the kebab selector can be hard-set")
     item.click(timeout=8000)
     pg.wait_for_selector(SEL_DISTRIBUTE_TO, timeout=10000)
 
