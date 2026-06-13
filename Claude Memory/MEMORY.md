@@ -1,6 +1,6 @@
 # Memory Index
 
-Last updated: 2026-05-04
+Last updated: 2026-06-13
 
 ## Profile
 → [[Profile/user_profile]] — Jelly Bean: paralegal/support for Elliot, AI tooling enthusiast, CA, PowerShell + Gemini familiarity
