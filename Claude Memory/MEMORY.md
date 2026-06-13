@@ -10,6 +10,7 @@ Last updated: 2026-05-04
 → [[Projects/Faceless Finance/_index]] — CA-credentialed faceless channel; Wed/Fri/Sun, Wed 4PM priority
 → [[Projects/Doc to Learning/_index]] — single-file HTML, Anthropic API, editorial design, Cost Management notes
 → [[Projects/Other Workspaces/_index]] — Debt, Studying, Linux PC on Android, Select Website, Code/skills
+→ [[Projects/Work Financial Forecasting/_index]] — Select Lifestyles income forecast .xlsm; Feb 26 → Mar 27; Elliot acts as financial director
 
 ## Instructions (Claude.ai project custom instructions)
 → [[Instructions/shared_claude_md_instructions]] — shared CLAUDE.md block used across Studying, Code, Faceless Financial, Notebook lm, Smart Home
