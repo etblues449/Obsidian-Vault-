@@ -1,2 +1,0 @@
-# Claude-Github
-Claude code
