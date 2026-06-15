@@ -1,0 +1,254 @@
+{
+  "main": {
+    "id": "5a8c5b272b1bf160",
+    "type": "split",
+    "children": [
+      {
+        "id": "30ed51b85f69a223",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "c8fbb568de51402f",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Mini Notes/2026-06-06 214315 JARVIS live test — Phase 0 complete.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "2026-06-06 214315 JARVIS live test — Phase 0 complete"
+            }
+          },
+          {
+            "id": "01b14c20731ec0c6",
+            "type": "leaf",
+            "state": {
+              "type": "claudian-view",
+              "state": {},
+              "icon": "lucide-ghost",
+              "title": "claudian-view"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "e705d489a403e090",
+    "type": "split",
+    "children": [
+      {
+        "id": "1d63f2262cc31637",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "2db88ff7b75bdc38",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "dfbe561e9564108a",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "6df045f5754fc94a",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 315.5
+  },
+  "right": {
+    "id": "b3b4ca102804d498",
+    "type": "split",
+    "children": [
+      {
+        "id": "750e482f7354602b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ced5b0a488244360",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "421afe3fbde0d3f5",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "c598ed6341136b1e",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": true,
+                "showSearch": true,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          },
+          {
+            "id": "429b9708c2abd68a",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "9e830cc1770f4b40",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "horizontal",
+    "width": 757.5
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "workspaces:Manage workspace layouts": false,
+      "smart-connections:Smart Connections: Open connections view": false,
+      "smart-connections:Smart Connections: Open random connection": false,
+      "smart-lookup:Smart Lookup: Open lookup view": false,
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "obsidian42-brat:BRAT": false,
+      "obsidian-git:Open Git source control": false,
+      "obsidian-importer:Open Importer": false,
+      "remotely-save:Remotely Save": false
+    }
+  },
+  "active": "01b14c20731ec0c6",
+  "lastOpenFiles": [
+    "BRAT-log.md",
+    "Jarvis/Inbox/quick-notes.md/2026-06-06 214603 JARVIS live test — Phase 0 complete.md",
+    "Claude Memory/capture_queue.md",
+    "20260602134642622.pdf",
+    "20260602134715997 1.pdf",
+    "20260602134715997.pdf",
+    "stitch_faceless_finance_app_pipeline_dashboard/stitch_faceless_finance_app_pipeline_dashboard/real_time_debug_log_overlay_1/screen.png",
+    "stitch_faceless_finance_app_pipeline_dashboard/stitch_faceless_finance_app_pipeline_dashboard/channel_roi_analytics_dashboard/screen.png",
+    "stitch_faceless_finance_app_pipeline_dashboard/stitch_faceless_finance_app_pipeline_dashboard/ai_provider_performance_analytics/screen.png",
+    "stitch_faceless_finance_app_pipeline_dashboard/stitch_faceless_finance_app_pipeline_dashboard/production_workspace_timeline/screen.png",
+    "stitch_faceless_finance_app_pipeline_dashboard/stitch_faceless_finance_app_pipeline_dashboard/video_approval_review/screen.png",
+    "stitch_faceless_finance_app_pipeline_dashboard/stitch_faceless_finance_app_pipeline_dashboard/bulk_production_pipeline_manager/screen.png",
+    "stitch_faceless_finance_app_pipeline_dashboard/stitch_faceless_finance_app_pipeline_dashboard/script_editor_storyboard_tune/screen.png",
+    "stitch_faceless_finance_app_pipeline_dashboard/stitch_faceless_finance_app_pipeline_dashboard/fallback_logic_sandbox/screen.png",
+    "stitch_faceless_finance_app_pipeline_dashboard/stitch_faceless_finance_app_pipeline_dashboard/smart_fallback_rule_builder/screen.png",
+    "stitch_faceless_finance_app_pipeline_dashboard/stitch_faceless_finance_app_pipeline_dashboard/content_calendar_publishing/screen.png",
+    "10-Legal/tenancy_agreement - 184 Goosemoor lane.pdf",
+    "JB's Vault/tenancy_agreement - 184 Goosemoor lane.pdf",
+    "tenancy_agreement - 184 Goosemoor lane.pdf",
+    "Claude Memory 1/conversations/039-2026-04-11-notebooklm-integration-continuation-81e979f7.md",
+    "JB's Vault/Claude Memory/conversations/039-2026-04-11-notebooklm-integration-continuation-81e979f7.md",
+    "Claude Memory 1/conversations/018-2026-03-31-hardware-build-list-with-components-bb8c3713.md",
+    "JB's Vault/Claude Memory/conversations/018-2026-03-31-hardware-build-list-with-components-bb8c3713.md",
+    "Claude Memory 1/conversations/004-2026-03-24-bedroom-radar-configuration-d6258088.md",
+    "JB's Vault/Claude Memory/conversations/004-2026-03-24-bedroom-radar-configuration-d6258088.md",
+    "Claude Memory 1/conversations/031-2026-04-06-upstairs-sensor-config-411f6134.md",
+    "JB's Vault/Claude Memory/conversations/031-2026-04-06-upstairs-sensor-config-411f6134.md",
+    "Claude Memory 1/conversations/037-2026-04-10-android-studio-on-mobile-with-gemini-804052d6.md",
+    "JB's Vault/Claude Memory/conversations/037-2026-04-10-android-studio-on-mobile-with-gemini-804052d6.md",
+    "Claude Memory/conversations/097-2026-05-04-organizing-obsidian-vault-with-project-structure-ef51f446.md",
+    "Claude Memory 1/conversations/097-2026-05-04-organizing-obsidian-vault-with-project-structure-ef51f446.md",
+    "Claude Memory 1/conversations/019-2026-03-31-lounge-presence-sensor-3c2d332e.md",
+    "JB's Vault/Claude Memory/conversations/019-2026-03-31-lounge-presence-sensor-3c2d332e.md",
+    "Claude Memory 1/conversations/033-2026-04-07-adding-smartthings-sensor-to-lounge-automations-f1daa992.md",
+    "JB's Vault/Claude Memory/conversations/033-2026-04-07-adding-smartthings-sensor-to-lounge-auto-f1daa992.md",
+    "JB's Vault/Claude Memory/conversations/033-2026-04-07-adding-smartthings-sensor-to-lounge-automations-f1daa992.md",
+    "Claude Memory/conversations/096-2026-05-01-syncing-claude-apps-with-obsidian-vault-c292f2c1.md",
+    "Claude Memory 1/conversations/096-2026-05-01-syncing-claude-apps-with-obsidian-vault-c292f2c1.md",
+    "Claude Memory 1/conversations/017-2026-03-30-optimizing-ld2410-presence-sensor-in-home-assistant-4055691e.md",
+    "JB's Vault/Claude Memory/conversations/017-2026-03-30-optimizing-ld2410-presence-sensor-in-hom-4055691e.md",
+    "JB's Vault/Claude Memory/conversations/017-2026-03-30-optimizing-ld2410-presence-sensor-in-home-assistant-4055691e.md",
+    "Claude Memory 1/conversations/049-2026-04-14-email-snippet-review-52e84608.md",
+    "10-Legal/Mine_vs_Amy_May_26.pdf",
+    "Mine_vs_Amy_May_26.pdf",
+    "JB's Vault/Untitled.canvas",
+    "Untitled 1.canvas",
+    "stitch_faceless_finance_app_pipeline_dashboard/stitch_faceless_finance_app_pipeline_dashboard/batch_approval_review_feed_refined",
+    "stitch_faceless_finance_app_pipeline_dashboard/stitch_faceless_finance_app_pipeline_dashboard/ai_provider_performance_analytics",
+    "Untitled.canvas"
+  ]
+}
