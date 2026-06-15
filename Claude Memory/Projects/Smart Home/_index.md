@@ -22,13 +22,9 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 ## Next Actions
 - [x] **GitHub PAT rotated** (2026-06-15) — old exposed token revoked, new fine-grained token in Windows Credential Manager
 - [ ] Fix upstairs BLE/radar contention
-<<<<<<< HEAD
 - [ ] **Apply .171 IP collision fix** — upstairs → .207 via ESPHome OTA. Full plan: [[fixes/2026-06-14-ip-collision-fix]]
-=======
 - [ ] DHCP reservation: RuView node MAC e0:72:a1:e7:03:60 → .227
 - [ ] Delete ghost "Upstairs" (.207) config in ESPHome Builder (board now runs CSI firmware)
-- [ ] Clarify IP conflict (upstairs vs bedroom both 192.168.0.171)
->>>>>>> 40f80853b9442e0df6c77d2a7c66a4f59ff789a6
 - [ ] Order: 18650 cells, ESP32-S3-CAM, 5V servo rail
 - [ ] Install Termux:Widget + add JARVIS home-screen launcher icon (final tap-to-launch step)
 - [ ] Copy `JARVIS-CHEATSHEET.md` into `~/jarvis`
