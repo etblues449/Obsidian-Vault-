@@ -4,8 +4,8 @@
   "title": "Session start",
   "titleGenerationStatus": "success",
   "createdAt": 1781560687979,
-  "updatedAt": 1781562074436,
-  "lastResponseAt": 1781562074436,
+  "updatedAt": 1781562940442,
+  "lastResponseAt": 1781562940442,
   "sessionId": "daae3f17-36b7-4fa6-89ae-5cd880e4f319",
   "providerState": {
     "providerSessionId": "daae3f17-36b7-4fa6-89ae-5cd880e4f319"
@@ -13,11 +13,11 @@
   "usage": {
     "model": "claude-sonnet-4-6",
     "inputTokens": 1,
-    "cacheCreationInputTokens": 845,
-    "cacheReadInputTokens": 55761,
+    "cacheCreationInputTokens": 3716,
+    "cacheReadInputTokens": 79626,
     "contextWindow": 200000,
-    "contextTokens": 56607,
-    "percentage": 28,
+    "contextTokens": 83343,
+    "percentage": 42,
     "contextWindowIsAuthoritative": true
   }
 }
