@@ -33,7 +33,10 @@ Work/Atlas Training Migration/agent-swarm/swarm/work_queue_status.csv
 # Python bytecode
 __pycache__/
 *.pyc
+<<<<<<< HEAD
 
 # Jarvis skill secrets
 Claude Memory/Skills/jarvis/config.yaml
 Inbox/.jarvis-state.yaml
+=======
+>>>>>>> origin/main
