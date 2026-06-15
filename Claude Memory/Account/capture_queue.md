@@ -55,6 +55,7 @@ Export ends ~2026-03-24. Newer chats to capture:
 
 ## 4. Security follow-ups
 
+- [x] **GitHub PAT rotated** (2026-06-15) — old exposed token (pasted in chat 2026-06-08) revoked; new fine-grained token stored in Windows Credential Manager. Verified: obsidian-git auto-push succeeded.
 - [x] Fly.io org token revoked (2026-05-01)
 - [x] Audit all captured instruction files for secrets → **Clean.** Fly.io token correctly redacted in [[Instructions/shared_claude_md_instructions]]. No other secrets found. *(audited 2026-05-04)*
 - [ ] **Reissue Fly.io token** (if still needed for `etblues449/App` or Termux agent) → store in password manager only, never in project instructions

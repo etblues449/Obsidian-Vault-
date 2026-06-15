@@ -1,0 +1,53 @@
+# Jarvis config — copy to config.yaml and fill in.
+# config.yaml is gitignored — never commit it.
+
+vault:
+  root: "/home/user/Obsidian-Vault-"            # Linux/WSL
+  # root: "C:/Users/<you>/Obsidian-Vault-"      # Windows
+  # root: "/storage/emulated/0/Obsidian-Vault-" # Android (Termux)
+  inbox: "Inbox"
+  tasks: "Tasks/open.md"
+  journal_dir: "Journal"
+
+home_assistant:
+  url: "http://192.168.0.50:8123"
+  long_lived_token: "REPLACE_ME"                # Profile → Security → Long-lived tokens
+  webhooks:
+    lounge_motion: "http://192.168.0.50:8123/api/webhook/lounge_motion"
+    jarvis_event:  "http://<PC_IP>:5678/webhook/jarvis-event"
+
+n8n:
+  base_url: "http://<PC_IP>:5678"
+  webhooks:
+    capture: "/webhook/jarvis-capture"          # Phone → n8n entry
+    event:   "/webhook/jarvis-event"            # HA → n8n event log
+
+anthropic:
+  api_key: "REPLACE_ME"                         # For n8n classification node
+  model: "claude-opus-4-7"
+
+phone:
+  device: "Samsung Fold 7"
+  tasker:
+    voice_task_name: "Jarvis Voice"
+
+devices:
+  pcs:
+    - name: "main_pc"
+      ip: "192.168.0.X"
+      sync_folder: "C:/JarvisDrop"              # Files routed to PC land here
+    - name: "laptop"
+      ip: "192.168.0.Y"
+  tvs:
+    - name: "lounge"
+      ha_entity: "media_player.tv_jelly_beans_tv_2"
+    # add others
+
+# Project file map — override Project Map in SKILL.md if your layout differs
+project_files:
+  smart_home: "Claude Memory/project_smart_home.md"
+  faceless_finance: "Claude Memory/Projects/Faceless Finance/_inbox.md"
+  studying: "Claude Memory/project_studying_instructions.md"
+  debt: "Claude Memory/project_debt_instructions.md"
+  skills: "Claude Memory/project_skills_instructions.md"
+  fincast: "fincast-suite/notes.md"

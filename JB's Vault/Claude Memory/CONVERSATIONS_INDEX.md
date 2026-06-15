@@ -1,0 +1,98 @@
+# Conversations Index (imported from Claude.ai 2026-05-01)
+
+94 conversations. Sorted oldest → newest.
+
+- [2026-03-23 — Linking to home assistant](conversations/001-2026-03-23-linking-to-home-assistant-1f54476c.md) — 82 msgs
+- [2026-03-24 — Untitled](conversations/002-2026-03-24-untitled-3d1f80b3.md) — 0 msgs
+- [2026-03-24 — Docker AI overview documentation](conversations/003-2026-03-24-docker-ai-overview-documentation-aee7fec3.md) — 4 msgs
+- [2026-03-24 — Bedroom radar configuration](conversations/004-2026-03-24-bedroom-radar-configuration-d6258088.md) — 184 msgs
+- [2026-03-24 — Untitled](conversations/005-2026-03-24-untitled-20cffc91.md) — 2 msgs
+- [2026-03-27 — Untitled](conversations/006-2026-03-27-untitled-f654d995.md) — 6 msgs
+- [2026-03-27 — Untitled](conversations/007-2026-03-27-untitled-e06345f5.md) — 4 msgs
+- [2026-03-28 — Untitled](conversations/008-2026-03-28-untitled-b762aa86.md) — 0 msgs
+- [2026-03-28 — LD2410 radar sensor configuration for bedroom](conversations/009-2026-03-28-ld2410-radar-sensor-configuration-for-be-14a6019d.md) — 8 msgs
+- [2026-03-29 — Best projector for games and TV](conversations/010-2026-03-29-best-projector-for-games-and-tv-329722bb.md) — 14 msgs
+- [2026-03-29 — Memory update review](conversations/011-2026-03-29-memory-update-review-94b627cf.md) — 2 msgs
+- [2026-03-29 — Claude documentation overview](conversations/012-2026-03-29-claude-documentation-overview-5dcb583b.md) — 2 msgs
+- [2026-03-29 — Linking GitHub account](conversations/013-2026-03-29-linking-github-account-c9331b80.md) — 76 msgs
+- [2026-03-30 — Untitled](conversations/014-2026-03-30-untitled-05817853.md) — 0 msgs
+- [2026-03-30 — Adding Composio MCP integration](conversations/015-2026-03-30-adding-composio-mcp-integration-f99042cf.md) — 0 msgs
+- [2026-03-30 — Cloning Claude-Github repository](conversations/016-2026-03-30-cloning-claude-github-repository-714ae760.md) — 20 msgs
+- [2026-03-30 — Optimizing LD2410 presence sensor in Home Assistant](conversations/017-2026-03-30-optimizing-ld2410-presence-sensor-in-hom-4055691e.md) — 34 msgs
+- [2026-03-31 — Hardware build list with components](conversations/018-2026-03-31-hardware-build-list-with-components-bb8c3713.md) — 484 msgs
+- [2026-03-31 — Lounge presence sensor ](conversations/019-2026-03-31-lounge-presence-sensor-3c2d332e.md) — 138 msgs
+- [2026-03-31 — How compound interest works](conversations/020-2026-03-31-how-compound-interest-works-92dd0663.md) — 2 msgs
+- [2026-04-01 — Easy guide needed](conversations/021-2026-04-01-easy-guide-needed-6f1c1396.md) — 8 msgs
+- [2026-04-01 — Installing OpenRouter SDK](conversations/022-2026-04-01-installing-openrouter-sdk-525ee716.md) — 98 msgs
+- [2026-04-01 — OpenRouter SDK import setup](conversations/023-2026-04-01-openrouter-sdk-import-setup-4a600be7.md) — 134 msgs
+- [2026-04-01 — Installing notebooklm-py from GitHub](conversations/024-2026-04-01-installing-notebooklm-py-from-github-39d98052.md) — 22 msgs
+- [2026-04-02 — Cloning the superpowers repository](conversations/025-2026-04-02-cloning-the-superpowers-repository-c677cfa7.md) — 2 msgs
+- [2026-04-02 — Building a custom skill together](conversations/026-2026-04-02-building-a-custom-skill-together-88414312.md) — 12 msgs
+- [2026-04-04 — Untitled](conversations/027-2026-04-04-untitled-0c76c743.md) — 2 msgs
+- [2026-04-04 — Untitled](conversations/028-2026-04-04-untitled-0f823e3b.md) — 13 msgs
+- [2026-04-04 — 26 April 26 New HA ](conversations/029-2026-04-04-26-april-26-new-ha-adda387e.md) — 118 msgs
+- [2026-04-05 — Home Assistant add-ons not visible](conversations/030-2026-04-05-home-assistant-add-ons-not-visible-5eab7974.md) — 84 msgs
+- [2026-04-06 — Upstairs Sensor config](conversations/031-2026-04-06-upstairs-sensor-config-411f6134.md) — 286 msgs
+- [2026-04-07 — Samsung TV Home Assistant setup guide](conversations/032-2026-04-07-samsung-tv-home-assistant-setup-guide-3ac3adea.md) — 2 msgs
+- [2026-04-07 — Adding SmartThings sensor to lounge automations](conversations/033-2026-04-07-adding-smartthings-sensor-to-lounge-auto-f1daa992.md) — 206 msgs
+- [2026-04-07 — SSH configuration setup](conversations/034-2026-04-07-ssh-configuration-setup-6cb9257c.md) — 4 msgs
+- [2026-04-08 — Home Assistant visibility](conversations/035-2026-04-08-home-assistant-visibility-48be155a.md) — 4 msgs
+- [2026-04-08 — Home Assistant visibility](conversations/036-2026-04-08-home-assistant-visibility-6fdc3a18.md) — 4 msgs
+- [2026-04-10 — Android Studio on mobile with Gemini](conversations/037-2026-04-10-android-studio-on-mobile-with-gemini-804052d6.md) — 290 msgs
+- [2026-04-11 — Installing on Android phone](conversations/038-2026-04-11-installing-on-android-phone-e625e83b.md) — 2 msgs
+- [2026-04-11 — NotebookLM integration continuation](conversations/039-2026-04-11-notebooklm-integration-continuation-81e979f7.md) — 142 msgs
+- [2026-04-11 — MQTT IO configuration with YAML](conversations/040-2026-04-11-mqtt-io-configuration-with-yaml-82828891.md) — 44 msgs
+- [2026-04-12 — Home automation dashboard configuration](conversations/041-2026-04-12-home-automation-dashboard-configuration-c4725889.md) — 16 msgs
+- [2026-04-13 — File folder verification](conversations/042-2026-04-13-file-folder-verification-00706ceb.md) — 10 msgs
+- [2026-04-13 — Claude code extension not working in VS Code](conversations/043-2026-04-13-claude-code-extension-not-working-in-vs--c15cf517.md) — 64 msgs
+- [2026-04-14 — Finding generativelanguage JSON files](conversations/044-2026-04-14-finding-generativelanguage-json-files-16cc2cbe.md) — 2 msgs
+- [2026-04-14 — Clearing Claude Code extension data](conversations/045-2026-04-14-clearing-claude-code-extension-data-93647b40.md) — 4 msgs
+- [2026-04-14 — Work assessment](conversations/046-2026-04-14-work-assessment-d0d0b9ba.md) — 2 msgs
+- [2026-04-14 — Organizing bank statements and lawyer correspondence](conversations/047-2026-04-14-organizing-bank-statements-and-lawyer-co-5081d306.md) — 13 msgs
+- [2026-04-14 — Installing and starting Ruflo MCP](conversations/048-2026-04-14-installing-and-starting-ruflo-mcp-e3741470.md) — 8 msgs
+- [2026-04-14 — Email snippet review](conversations/049-2026-04-14-email-snippet-review-52e84608.md) — 76 msgs
+- [2026-04-14 — Starting from scratch](conversations/050-2026-04-14-starting-from-scratch-3934158d.md) — 8 msgs
+- [2026-04-14 — Barclaycard statement analysis options](conversations/051-2026-04-14-barclaycard-statement-analysis-options-d1167bf3.md) — 16 msgs
+- [2026-04-14 — Installing Podcastfy for notebook LM](conversations/052-2026-04-14-installing-podcastfy-for-notebook-lm-ce806330.md) — 4 msgs
+- [2026-04-14 — Adding ComposioHQ skills with NPX](conversations/053-2026-04-14-adding-composiohq-skills-with-npx-2891f96e.md) — 2 msgs
+- [2026-04-14 — Adding remotion best practices skill](conversations/054-2026-04-14-adding-remotion-best-practices-skill-49ec9c80.md) — 8 msgs
+- [2026-04-14 — Learning Remotion through video resources](conversations/055-2026-04-14-learning-remotion-through-video-resource-c24ab6d6.md) — 24 msgs
+- [2026-04-14 — Product costing and lifecycle cost management](conversations/056-2026-04-14-product-costing-and-lifecycle-cost-manag-7ba2424e.md) — 6 msgs
+- [2026-04-15 — Automations and apps overview](conversations/057-2026-04-15-automations-and-apps-overview-2aead9d7.md) — 34 msgs
+- [2026-04-17 — Google Compute Engine VM selection](conversations/058-2026-04-17-google-compute-engine-vm-selection-dae8890e.md) — 122 msgs
+- [2026-04-18 — Conversation history unavailable](conversations/059-2026-04-18-conversation-history-unavailable-89a60978.md) — 184 msgs
+- [2026-04-18 — Mench GitLab repository](conversations/060-2026-04-18-mench-gitlab-repository-8b6d2b76.md) — 4 msgs
+- [2026-04-18 — ESPHome OTA upload failed device not found](conversations/061-2026-04-18-esphome-ota-upload-failed-device-not-fou-8e40fac0.md) — 2 msgs
+- [2026-04-20 — Linux dotfiles repository setup guide](conversations/062-2026-04-20-linux-dotfiles-repository-setup-guide-ed8b48bd.md) — 146 msgs
+- [2026-04-20 — ESP factory reset and Home Assistant reinstall](conversations/063-2026-04-20-esp-factory-reset-and-home-assistant-rei-f74052af.md) — 46 msgs
+- [2026-04-20 — AI use in military targeting](conversations/064-2026-04-20-ai-use-in-military-targeting-bc78c68d.md) — 8 msgs
+- [2026-04-21 — Linux PC remote access from Android](conversations/065-2026-04-21-linux-pc-remote-access-from-android-c0ff1728.md) — 28 msgs
+- [2026-04-21 — Home automation system handover summary](conversations/066-2026-04-21-home-automation-system-handover-summary-dd9774bc.md) — 20 msgs
+- [2026-04-21 — NAS and Home Assistant credentials](conversations/067-2026-04-21-nas-and-home-assistant-credentials-4bdc84a9.md) — 2 msgs
+- [2026-04-21 — Adding Claude to Warp](conversations/068-2026-04-21-adding-claude-to-warp-78179a61.md) — 6 msgs
+- [2026-04-21 — Bulk download with mcp-builder](conversations/069-2026-04-21-bulk-download-with-mcp-builder-3f923cb1.md) — 2 msgs
+- [2026-04-21 — Bulk download with mcp-builder](conversations/070-2026-04-21-bulk-download-with-mcp-builder-1b0c5ce3.md) — 4 msgs
+- [2026-04-21 — FULL Home assistant green not appearing in app](conversations/071-2026-04-21-full-home-assistant-green-not-appearing--7449787b.md) — 264 msgs
+- [2026-04-22 — Smart home dashboard artifact](conversations/072-2026-04-22-smart-home-dashboard-artifact-1aae4883.md) — 6 msgs
+- [2026-04-22 — 💬 I want you to build a persiste...](conversations/073-2026-04-22-i-want-you-to-build-a-persiste-79828144.md) — 14 msgs
+- [2026-04-22 — Using multiple repositories](conversations/074-2026-04-22-using-multiple-repositories-809c6331.md) — 2 msgs
+- [2026-04-22 — Top financial influencer and investment niches](conversations/075-2026-04-22-top-financial-influencer-and-investment--4eb082de.md) — 21 msgs
+- [2026-04-22 — Untitled](conversations/076-2026-04-22-untitled-7eb62cd2.md) — 4 msgs
+- [2026-04-22 — Finance YouTube channel app development](conversations/077-2026-04-22-finance-youtube-channel-app-development-b2a051b8.md) — 10 msgs
+- [2026-04-22 — Apps and websites](conversations/078-2026-04-22-apps-and-websites-176b07f7.md) — 20 msgs
+- [2026-04-22 — Faceless project completion](conversations/079-2026-04-22-faceless-project-completion-78e17b8b.md) — 2 msgs
+- [2026-04-24 — Soul trance singles artwork playlist](conversations/080-2026-04-24-soul-trance-singles-artwork-playlist-f8a93652.md) — 4 msgs
+- [2026-04-24 — Best app creating agent](conversations/081-2026-04-24-best-app-creating-agent-3d04885c.md) — 10 msgs
+- [2026-04-24 — Remix of FinCast – Finance Channel App](conversations/082-2026-04-24-remix-of-fincast-finance-channel-app-e8b7d80c.md) — 1 msgs
+- [2026-04-24 — Remix of FinCast – Finance Channel App](conversations/083-2026-04-24-remix-of-fincast-finance-channel-app-f735370d.md) — 1 msgs
+- [2026-04-26 — 26 April new HA](conversations/084-2026-04-26-26-april-new-ha-deff599d.md) — 8 msgs
+- [2026-04-26 — Linking project folders to code](conversations/085-2026-04-26-linking-project-folders-to-code-94ca5582.md) — 4 msgs
+- [2026-04-27 — Home assistant diagnostic and setup](conversations/086-2026-04-27-home-assistant-diagnostic-and-setup-2f3a1fa6.md) — 32 msgs
+- [2026-04-27 — Personalized certification recommendations with video extraction](conversations/087-2026-04-27-personalized-certification-recommendatio-1f14c6cb.md) — 26 msgs
+- [2026-04-27 — Converting Anthropic courses into video content](conversations/088-2026-04-27-converting-anthropic-courses-into-video--16b97129.md) — 4 msgs
+- [2026-04-28 — Home Assistant system diagnostic](conversations/089-2026-04-28-home-assistant-system-diagnostic-53d55b17.md) — 26 msgs
+- [2026-04-28 — ESP32 S3 switch node setup](conversations/090-2026-04-28-esp32-s3-switch-node-setup-dccab61e.md) — 34 msgs
+- [2026-04-28 — Dashboard setup](conversations/091-2026-04-28-dashboard-setup-83cef663.md) — 28 msgs
+- [2026-04-28 — Import GitHub project files](conversations/092-2026-04-28-import-github-project-files-21c78e85.md) — 54 msgs
+- [2026-04-28 — Starting from scratch](conversations/093-2026-04-28-starting-from-scratch-ef3aa1c0.md) — 2 msgs
+- [2026-04-30 — Untitled](conversations/094-2026-04-30-untitled-bae6f1c0.md) — 0 msgs

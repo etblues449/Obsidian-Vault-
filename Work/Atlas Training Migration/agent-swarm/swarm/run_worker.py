@@ -20,6 +20,7 @@ import argparse
 import csv
 import os
 import random
+import re
 import sys
 import time
 from datetime import datetime
@@ -43,9 +44,55 @@ def throttle():
 
 
 def selectors_ready():
-    must = [config.SEL_STAFF_INPUT, config.SEL_COURSE_INPUT,
-            config.SEL_COMPLETED_DATE, config.SEL_SAVE, config.SEL_SAVE_SUCCESS]
-    return all(s and s != "TODO" for s in must)
+    # Known-good captured selectors. Employee/course options and the success
+    # signal are handled by text/label locators + dialog-close, so they don't
+    # need ids here.
+    must = [config.SEL_DISTRIBUTE_TO, config.SEL_COURSE_INPUT,
+            config.SEL_START_DATE, config.SEL_COMPLETED_DATE, config.SEL_SAVE]
+    return all(s and "TODO" not in str(s) for s in must)
+
+
+def _open_add_training(page):
+    """From the Manage employees page, open the Add-training dialog."""
+    page.goto(config.ADD_RESULT_URL, timeout=config.NAV_TIMEOUT_MS)
+    if "auth.atlas-hub.co.uk" in page.url:
+        raise RuntimeError("session expired - re-run login_bootstrap.py")
+    page.wait_for_load_state("domcontentloaded")
+    # Open the ⋮ menu next to "Add Employee / Worker", then click ADD TRAINING.
+    try:
+        page.get_by_role("button", name=re.compile(r"more|options|menu", re.I)).first.click(timeout=3000)
+    except Exception:  # noqa: BLE001 - menu may already be reachable
+        pass
+    page.get_by_text("ADD TRAINING", exact=False).first.click(timeout=8000)
+    page.wait_for_selector(config.SEL_DISTRIBUTE_TO, timeout=10000)
+
+
+def _pick_autocomplete(page, locator, text, what):
+    """Type into an autocomplete field and click the option matching `text`."""
+    locator.click()
+    locator.fill("")
+    locator.type(text, delay=40)
+    page.wait_for_timeout(900)
+    if page.get_by_text("No Result Found", exact=False).count() > 0:
+        raise LookupError(f"{what} not found in Atlas: {text}")
+    # Prefer an explicit listbox option, else any exact-text match, else keyboard.
+    for cand in (page.get_by_role("option", name=text),
+                 page.get_by_text(text, exact=True)):
+        try:
+            cand.first.click(timeout=2500)
+            return
+        except Exception:  # noqa: BLE001
+            continue
+    locator.press("ArrowDown")
+    locator.press("Enter")
+
+
+def _set_date(page, selector, value):
+    el = page.locator(selector)
+    el.click()
+    el.fill("")
+    el.type(value, delay=30)
+    el.press("Escape")  # close the calendar popup
 
 
 def enter_record(page, rec, worker, dry_run):
@@ -57,51 +104,51 @@ def enter_record(page, rec, worker, dry_run):
     if dry_run:
         return "DRYRUN", "selectors ok" if selectors_ready() else "selectors not set"
 
-    from playwright.sync_api import TimeoutError as PWTimeoutError  # lazy
     name, course = rec["full_name"], rec["training_course"]
-    page.goto(config.ADD_RESULT_URL, timeout=config.NAV_TIMEOUT_MS)
-    if "auth.atlas-hub.co.uk" in page.url:
-        return "ERROR", "session expired - re-run login_bootstrap.py"
-
-    # 1. Staff (must match existing; never create new)
-    page.fill(config.SEL_STAFF_INPUT, name)
-    opt = config.SEL_STAFF_OPTION.format(name=name)
     try:
-        page.click(opt, timeout=5000)
-    except PWTimeoutError:
-        return "ERROR", f"staff not found/ambiguous: {name}"
+        _open_add_training(page)
+    except RuntimeError as e:
+        return "ERROR", str(e)
 
-    # 2. Course (must match an existing Atlas course)
-    page.fill(config.SEL_COURSE_INPUT, course)
-    copt = config.SEL_COURSE_OPTION.format(course=course)
+    # 1. Add training to -> Employee
+    page.select_option(config.SEL_DISTRIBUTE_TO, label=config.DISTRIBUTE_VALUE)
+
+    # 2. Employee (type-to-search; located by its "Employee" label)
     try:
-        page.click(copt, timeout=5000)
-    except PWTimeoutError:
-        return "ERROR", f"course missing in Atlas: {course}"
+        emp = page.get_by_label("Employee", exact=True)
+        _pick_autocomplete(page, emp, name, "staff member")
+    except LookupError as e:
+        return "ERROR", str(e)
 
-    # 3. Dedupe: skip if a result with the same completed date already exists
-    if config.SEL_EXISTING_RESULTS and config.SEL_EXISTING_RESULTS != "TODO":
-        existing = page.locator(config.SEL_EXISTING_RESULTS).all_inner_texts()
-        if any(rec["completed_date"] in e for e in existing):
-            return "SKIPPED", "already in Atlas (same completed date)"
+    # 3. Course (autocomplete by id)
+    try:
+        _pick_autocomplete(page, page.locator(config.SEL_COURSE_INPUT), course, "course")
+    except LookupError as e:
+        return "ERROR", str(e)
 
-    # 4. Dates
-    page.fill(config.SEL_COMPLETED_DATE, rec["completed_date"])
-    if rec["has_expiry"] == "YES" and config.SEL_EXPIRY_DATE != "TODO":
-        page.fill(config.SEL_EXPIRY_DATE, rec["expiry_date"])
+    # 4. Dates. We only hold a completion date, and Start is required, so
+    #    Start = Completed = our completed_date. Expiry from our master.
+    _set_date(page, config.SEL_START_DATE, rec["completed_date"])
+    _set_date(page, config.SEL_COMPLETED_DATE, rec["completed_date"])
+    if rec["has_expiry"] == "YES" and rec["expiry_date"]:
+        _set_date(page, config.SEL_EXPIRY_DATE, rec["expiry_date"])
 
-    # 5. Status (only if the form requires it; usually auto-derived)
-    if config.SEL_STATUS and config.SEL_STATUS != "TODO":
-        mapped = config.STATUS_MAP.get(rec["status"], "")
-        if mapped:
-            page.select_option(config.SEL_STATUS, label=mapped)
-
-    # 6. Save + confirm
+    # 5. Submit
     page.click(config.SEL_SAVE)
+
+    # 6. Success = the dialog closes (title detaches), else a configured toast.
+    from playwright.sync_api import TimeoutError as PWTimeoutError  # lazy
     try:
-        page.wait_for_selector(config.SEL_SAVE_SUCCESS, timeout=10000)
+        page.wait_for_selector("text=Add training history details",
+                               state="detached", timeout=10000)
     except PWTimeoutError:
-        return "ERROR", "save not confirmed"
+        if config.SEL_SAVE_SUCCESS and "TODO" not in config.SEL_SAVE_SUCCESS:
+            try:
+                page.wait_for_selector(config.SEL_SAVE_SUCCESS, timeout=4000)
+            except PWTimeoutError:
+                return "ERROR", "save not confirmed"
+        else:
+            return "ERROR", "save not confirmed (dialog stayed open - check validation)"
 
     shot = os.path.join(SHOTS_DIR, f"{rec['record_id']}.png")
     page.screenshot(path=shot)
@@ -114,6 +161,8 @@ def main():
     ap.add_argument("--start", type=int, required=True)
     ap.add_argument("--end", type=int, required=True)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--headed", action="store_true",
+                    help="show the browser (use for the pilot to watch/debug)")
     args = ap.parse_args()
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -139,7 +188,7 @@ def main():
     if not args.dry_run:
         from playwright.sync_api import sync_playwright  # lazy import
         pw = sync_playwright().start()
-        browser = pw.chromium.launch(headless=config.HEADLESS)
+        browser = pw.chromium.launch(headless=config.HEADLESS and not args.headed)
         ctx = browser.new_context(storage_state=config.AUTH_STATE)
         page = ctx.new_page()
         page.set_default_timeout(config.NAV_TIMEOUT_MS)

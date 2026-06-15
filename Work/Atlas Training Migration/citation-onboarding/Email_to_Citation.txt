@@ -1,0 +1,37 @@
+Subject: Bulk upload of historical training records — Select Lifestyles Limited
+
+Hi [Citation onboarding contact],
+
+We'd like to bulk-load our historical staff training records into Atlas, rather
+than key in 1,300+ records by hand. I've attached a cleaned, verified
+spreadsheet ready for import.
+
+Summary:
+- Organisation: Select Lifestyles Limited (Learning Disability provider)
+- Records to load: 1,351 (training completions with dates)
+- Unique staff: ~408   Courses: ~34
+- Date range: 2024–2026; 296 are currently overdue (priority)
+- File: Citation_Bulk_Load.xlsx — sheet "Bulk Load" is the data; sheet
+  "Held - needs HR name check" lists 7 we're holding back pending a spelling check
+- Columns: Full Name | Training Course | Completed Date | Expiry Date |
+  Interval (yrs) | Status   (dates are DD/MM/YYYY)
+
+Could you confirm:
+1. Can your team bulk-load historical results with our own completion AND expiry
+   dates (including back-dated and "no expiry" one-time courses), rather than
+   Atlas auto-calculating expiry from the course interval?
+2. What exact template/format do you need? We can match it (column order, dates,
+   staff/course IDs vs names, separate files per course — whatever you require).
+3. How do you match staff and courses — by name, email, or an Atlas ID? If by
+   ID/email we'll map to your list.
+4. Can any of our course names that don't exactly match the Atlas library be
+   created as part of onboarding? I can supply the list.
+5. Turnaround — and can the 296 overdue records be prioritised if a staged load
+   is easier?
+
+If a bulk import isn't possible, please let me know and we'll arrange manual
+entry for the overdue ones first.
+
+Thanks very much,
+Elliot Horton
+Select Lifestyles Limited
