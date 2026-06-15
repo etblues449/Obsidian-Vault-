@@ -1,0 +1,9 @@
+{
+  "id": "claude-code-bridge",
+  "name": "Claude Code Bridge",
+  "version": "0.1.1",
+  "minAppVersion": "1.5.0",
+  "description": "Bridge selected text to Claude Code CLI for real-time context sharing.",
+  "author": "OthnielSu",
+  "isDesktopOnly": true
+}

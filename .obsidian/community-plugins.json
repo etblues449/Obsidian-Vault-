@@ -10,5 +10,6 @@
   "shell-path-copy",
   "obsidian-tasks-plugin",
   "obsidian-style-settings",
-  "claudian"
+  "claudian",
+  "claude-code-bridge"
 ]
