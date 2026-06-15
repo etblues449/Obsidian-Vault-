@@ -20,7 +20,7 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 
 ## Next Actions
 - [ ] Fix upstairs BLE/radar contention
-- [ ] Clarify IP conflict (upstairs vs bedroom both 192.168.0.171)
+- [ ] **Apply .171 IP collision fix** — upstairs → .207 via ESPHome OTA. Full plan: [[fixes/2026-06-14-ip-collision-fix]]
 - [ ] Order: 18650 cells, ESP32-S3-CAM, 5V servo rail
 - [ ] Install Termux:Widget + add JARVIS home-screen launcher icon (final tap-to-launch step)
 - [ ] Copy `JARVIS-CHEATSHEET.md` into `~/jarvis`
