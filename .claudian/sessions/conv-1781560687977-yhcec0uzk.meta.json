@@ -1,0 +1,23 @@
+{
+  "id": "conv-1781560687977-yhcec0uzk",
+  "providerId": "claude",
+  "title": "Session start",
+  "titleGenerationStatus": "success",
+  "createdAt": 1781560687979,
+  "updatedAt": 1781560721970,
+  "lastResponseAt": 1781560721970,
+  "sessionId": "daae3f17-36b7-4fa6-89ae-5cd880e4f319",
+  "providerState": {
+    "providerSessionId": "daae3f17-36b7-4fa6-89ae-5cd880e4f319"
+  },
+  "usage": {
+    "model": "claude-sonnet-4-6",
+    "inputTokens": 1,
+    "cacheCreationInputTokens": 6856,
+    "cacheReadInputTokens": 41139,
+    "contextWindow": 200000,
+    "contextTokens": 47996,
+    "percentage": 24,
+    "contextWindowIsAuthoritative": true
+  }
+}
