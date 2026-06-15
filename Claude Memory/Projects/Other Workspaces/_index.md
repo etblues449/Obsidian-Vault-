@@ -12,6 +12,13 @@ N/A — these are reference pointers, not active build projects.
 ## Next Actions
 - [ ] Expand individual workspace notes as needed
 
+## Vault maintenance (2026-06-15 session)
+Vault recovered, consolidated & de-duplicated. See [[sessions/2026-06-15]]. Remaining user actions:
+- [ ] Copy 2 binary work spreadsheets into `Work/Atlas Training Migration/source-docs/` (commands in chat)
+- [ ] Remove "Obsidian Vault — primary" from the Obsidian launcher (⋮ → Remove from list)
+- [ ] (Optional) Reinstall Claudian from official store as `realclaudian` to stop BRAT id-mismatch recurring
+- [ ] Reconnect the GitHub connector in Settings → Connectors (MCP tool currently erroring; git pushing unaffected)
+
 ---
 
 | Project | What it's about |
