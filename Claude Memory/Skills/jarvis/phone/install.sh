@@ -52,7 +52,7 @@ echo "[2/8] Checking vault clone..."
 
 # Derive vault dir from this script's location: $VAULT/Claude Memory/Skills/jarvis/phone/install.sh
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VAULT_DIR="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
+VAULT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 
 if [[ ! -d "$VAULT_DIR/.git" ]]; then
     echo "Vault not found at $VAULT_DIR. Cloning from GitHub..."

@@ -6,7 +6,8 @@
 
 set -euo pipefail
 
-VAULT_DIR="$HOME/jarvis"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VAULT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 RESOURCES_DIR="$VAULT_DIR/Claude Memory/Skills/jarvis/resources"
 CLASSIFICATION_MD="$RESOURCES_DIR/classification.md"
 INBOX_DIR="$VAULT_DIR/Inbox"
@@ -64,7 +65,7 @@ EOF
 CLASSIFIER_PROMPT="${CLASSIFIER_PROMPT//\$\(cat \$CLASSIFICATION_MD\)/$(cat "$CLASSIFICATION_MD")}"
 
 # Call Claude Haiku (fast, cheap)
-CLASSIFY_RESPONSE=$(claude -p haiku "$CLASSIFIER_PROMPT
+CLASSIFY_RESPONSE=$(claude -p --model haiku "$CLASSIFIER_PROMPT
 
 $INPUT_TEXT" 2>/dev/null || echo '{"action":"decline","error":"claude_call_failed"}')
 

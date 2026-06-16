@@ -70,7 +70,7 @@ RESPONSE=$(curl \
     -s \
     --max-time 5 \
     -X POST \
-    "$HA_URL:8123/api/services/$DOMAIN/$ACTION" \
+    "$HA_URL/api/services/$DOMAIN/$ACTION" \
     -H "Authorization: Bearer $HA_TOKEN" \
     -H "Content-Type: application/json" \
     -d "$PAYLOAD" \

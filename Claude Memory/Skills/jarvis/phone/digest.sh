@@ -4,7 +4,8 @@
 
 set -euo pipefail
 
-VAULT_DIR="$HOME/jarvis"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VAULT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 INBOX_DIR="$VAULT_DIR/Inbox"
 JOURNAL_DIR="$VAULT_DIR/Journal"
 
@@ -53,7 +54,7 @@ $INBOX_CONTENT
 
 OUTPUT (bullet points only, no intro):"
 
-DIGEST_OUTPUT=$(claude -p sonnet "$DIGEST_PROMPT" 2>/dev/null || echo "ERROR: Claude call failed.")
+DIGEST_OUTPUT=$(claude -p --model sonnet "$DIGEST_PROMPT" 2>/dev/null || echo "ERROR: Claude call failed.")
 
 # Write to today's Journal
 {
