@@ -64,10 +64,31 @@ EOF
 # Read classification.md into the prompt (bash substitution)
 CLASSIFIER_PROMPT="${CLASSIFIER_PROMPT//\$\(cat \$CLASSIFICATION_MD\)/$(cat "$CLASSIFICATION_MD")}"
 
-# Call Claude Haiku (fast, cheap)
-CLASSIFY_RESPONSE=$(claude -p --model haiku "$CLASSIFIER_PROMPT
+# Classify: try Anthropic Haiku online; fall back to local Ollama if offline.
+FULL_PROMPT="$CLASSIFIER_PROMPT
 
-$INPUT_TEXT" 2>/dev/null || echo '{"action":"decline","error":"claude_call_failed"}')
+$INPUT_TEXT"
+
+if bash "$SCRIPT_DIR/network-check.sh" 2>/dev/null; then
+    CLASSIFY_RESPONSE=$(claude -p --model haiku "$FULL_PROMPT" 2>/dev/null \
+        || echo '{"action":"decline","error":"claude_call_failed"}')
+else
+    # Offline path: ensure Ollama daemon, ask llama3.2:1b in JSON mode.
+    if ! curl -sf http://127.0.0.1:11434/ >/dev/null 2>&1; then
+        proot-distro login debian -- bash -c \
+            'nohup ollama serve >/tmp/ollama.log 2>&1 &' 2>/dev/null || true
+        for _ in $(seq 1 30); do
+            curl -sf http://127.0.0.1:11434/ >/dev/null 2>&1 && break
+            sleep 1
+        done
+    fi
+    OLLAMA_BODY=$(jq -nc --arg p "$FULL_PROMPT" \
+        '{model:"llama3.2:1b", prompt:$p, format:"json", stream:false}')
+    CLASSIFY_RESPONSE=$(curl -s --max-time 60 \
+        http://127.0.0.1:11434/api/generate -d "$OLLAMA_BODY" \
+        | jq -r '.response' 2>/dev/null \
+        || echo '{"action":"decline","error":"ollama_call_failed"}')
+fi
 
 # Parse JSON response (extract action, category, entity, value)
 ACTION=$(echo "$CLASSIFY_RESPONSE" | grep -o '"action"[^,}]*' | cut -d'"' -f4 || echo "decline")
