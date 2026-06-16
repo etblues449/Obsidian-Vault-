@@ -1,105 +1,85 @@
 #!/data/data/com.termux/files/usr/bin/env bash
-# ollama-setup.sh — Install Ollama + download Haiku model (one-time)
+# ollama-setup.sh — Install Ollama via proot-distro (Ubuntu container)
 # Usage: bash ollama-setup.sh
-# NOTE: This is resource-intensive (~8 GB); ensure sufficient storage
+# NOTE: This is resource-intensive (~5 GB for Ubuntu + Ollama); ensure sufficient storage
 
 set -euo pipefail
 
 echo "==========================================="
-echo "JARVIS Offline Setup — Ollama + Haiku"
+echo "JARVIS Offline Setup — Ollama via proot-distro"
 echo "==========================================="
 echo ""
 
 # ============================================================================
-# STEP 1: Check storage
+# STEP 1: Install proot-distro (if needed)
 # ============================================================================
 
-echo "[1/4] Checking available storage..."
+echo "[1/5] Checking proot-distro..."
 
-AVAILABLE_GB=$(df /data/data/com.termux/files/usr | awk 'NR==2 {print int($4/1024/1024)}')
-REQUIRED_GB=10  # Haiku model ~7GB, plus overhead
-
-if [[ $AVAILABLE_GB -lt $REQUIRED_GB ]]; then
-    echo "❌ ERROR: Only ${AVAILABLE_GB}GB available; need ${REQUIRED_GB}GB for Haiku model."
-    echo "   Clear cache or uninstall unused apps, then retry."
-    exit 1
+if ! command -v proot-distro &>/dev/null; then
+    echo "Installing proot-distro..."
+    pkg install -y proot-distro 2>&1 | tail -5
 fi
 
-echo "✓ ${AVAILABLE_GB}GB available (${REQUIRED_GB}GB required)"
+echo "✓ proot-distro ready"
 
 # ============================================================================
-# STEP 2: Install Ollama
+# STEP 2: Install Ubuntu distro (if needed)
 # ============================================================================
 
 echo ""
-echo "[2/4] Checking Ollama..."
+echo "[2/5] Checking Ubuntu distro..."
 
-if command -v ollama &>/dev/null; then
-    echo "✓ Ollama already installed"
+if proot-distro list 2>/dev/null | grep -q "ubuntu"; then
+    echo "✓ Ubuntu already installed"
 else
-    echo "Installing Ollama from official source..."
-
-    # Download Ollama for Android (if available) or Termux equivalent
-    # For now, use official binary or pkg manager
-
-    if pkg list-installed 2>/dev/null | grep -q "^ollama/"; then
-        pkg install -y ollama 2>&1 | tail -5
-        echo "✓ Ollama installed via pkg"
-    else
-        echo "⚠️  Ollama not in pkg repo. Manual install required:"
-        echo "   See: https://github.com/ollama/ollama"
-        echo "   For Termux: Download build and extract to $PREFIX/bin"
-        exit 1
-    fi
-fi
-
-OLLAMA_VERSION=$(ollama --version 2>/dev/null || echo "unknown")
-echo "✓ Ollama $OLLAMA_VERSION"
-
-# ============================================================================
-# STEP 3: Start Ollama daemon
-# ============================================================================
-
-echo ""
-echo "[3/4] Starting Ollama daemon..."
-
-if pgrep -f "ollama serve" &>/dev/null; then
-    echo "✓ Ollama daemon already running"
-else
-    echo "Starting ollama serve in background..."
-    nohup ollama serve &>/dev/null &
-    sleep 3
-
-    if pgrep -f "ollama serve" &>/dev/null; then
-        echo "✓ Ollama daemon started"
-    else
-        echo "❌ ERROR: Failed to start Ollama daemon."
-        exit 1
-    fi
+    echo "Installing Ubuntu distro (~1.5 GB)..."
+    proot-distro install ubuntu 2>&1 | tail -10
+    echo "✓ Ubuntu installed"
 fi
 
 # ============================================================================
-# STEP 4: Download Haiku model
+# STEP 3: Install Ollama inside Ubuntu
 # ============================================================================
 
 echo ""
-echo "[4/4] Downloading Haiku model (~7 GB)..."
-echo "   This will take 5-15 minutes depending on connection."
+echo "[3/5] Installing Ollama in Ubuntu..."
+
+proot-distro login ubuntu -- bash -c "
+    apt update -qq
+    apt install -y curl 2>&1 | tail -3
+
+    # Download Ollama installer
+    curl -fsSL https://ollama.ai/install.sh | sh 2>&1 | tail -5
+    echo '✓ Ollama installed in Ubuntu'
+"
+
+# ============================================================================
+# STEP 4: Start Ollama daemon (in background)
+# ============================================================================
+
+echo ""
+echo "[4/5] Starting Ollama daemon..."
+
+# Run Ollama inside Ubuntu container (background)
+nohup proot-distro login ubuntu -- ollama serve &>/dev/null &
+sleep 5
+
+echo "✓ Ollama daemon started (port 11434)"
+
+# ============================================================================
+# STEP 5: Download model
+# ============================================================================
+
+echo ""
+echo "[5/5] Downloading Llama 3.2 model (~3.5 GB)..."
+echo "   This will take 10-30 minutes depending on connection."
 echo ""
 
-if ollama list 2>/dev/null | grep -q "haiku"; then
-    echo "✓ Haiku model already downloaded"
-else
-    echo "Downloading mistral/haiku..."
+# Pull model from inside Ubuntu
+proot-distro login ubuntu -- bash -c "ollama pull llama2 2>&1 | tail -20"
 
-    if ollama pull mistral/haiku 2>&1 | tail -20; then
-        echo "✓ Haiku model downloaded"
-    else
-        echo "❌ ERROR: Failed to download Haiku model."
-        echo "   Check internet connection and retry."
-        exit 1
-    fi
-fi
+echo "✓ Model downloaded"
 
 # ============================================================================
 # Final
@@ -111,12 +91,16 @@ echo "✅ OFFLINE SETUP COMPLETE"
 echo "==========================================="
 echo ""
 echo "Next steps:"
-echo "1. Verify Ollama is running: pgrep -f 'ollama serve'"
+echo "1. Verify Ollama is running: curl http://localhost:11434/api/tags"
 echo "2. Test classifier: bash ollama-classifier.sh \"test note\""
 echo "3. jarvis.sh will auto-detect offline and use Ollama"
 echo ""
-echo "To disable offline mode, stop Ollama:"
-echo "  pkill -f 'ollama serve'"
+echo "To restart Ollama daemon:"
+echo "  nohup proot-distro login ubuntu -- ollama serve &>/dev/null &"
+echo ""
+echo "To manage Ubuntu distro:"
+echo "  proot-distro list"
+echo "  proot-distro login ubuntu"
 echo ""
 
 exit 0
