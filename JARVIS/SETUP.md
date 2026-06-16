@@ -23,11 +23,11 @@ Settings → Community plugins → Browse, install + enable:
 
 ## 2. Tell QuickAdd where the scripts live
 
-The four scripts are in `Claude Memory/Skills/jarvis/obsidian/scripts/`.
+The four scripts are in `JARVIS/scripts/`.
 
 QuickAdd needs a **user-scripts folder**. Either:
 - Point QuickAdd at that folder directly: Settings → QuickAdd → *(top)* set the
-  scripts folder to `Claude Memory/Skills/jarvis/obsidian/scripts`, **or**
+  scripts folder to `JARVIS/scripts`, **or**
 - If QuickAdd's scripts folder is elsewhere, copy the four `.js` files into it.
 
 Files: `jarvis.js`, `jarvis_setup.js`, `jarvis_digest.js`, `jarvis_ask.js`.
@@ -85,7 +85,7 @@ vault, never synced, never committed. Repeat on each device.
 
 ## 6. Configure HA entities (once)
 
-Open `scripts/jarvis.js`, edit `CONFIG.haEntities` to list the real entities
+Open `JARVIS/scripts/jarvis.js`, edit `CONFIG.haEntities` to list the real entities
 JARVIS may control. Anything not listed is treated as a note, never guessed.
 
 ---
@@ -93,7 +93,7 @@ JARVIS may control. Anything not listed is treated as a note, never guessed.
 ## 7. Smoke test
 
 1. Run **JARVIS Capture** → type `remind me to buy milk` → expect a notice
-   *"JARVIS ✓ Task: Buy milk"* and a new file in `Inbox/`.
+   *"JARVIS ✓ Task: Buy milk"* and a new file in `JARVIS/Inbox/`.
 2. Run it again → `turn on the lounge lights` → expect *"JARVIS ✓ light.turn_on
    → light.lounge_main"* and the light comes on.
 3. Open **JARVIS Dashboard** → the capture appears under Recent Captures.
@@ -117,4 +117,4 @@ created. Or just tap the **JARVIS Digest** shortcut each morning.
 | HA error / nothing happens | Check HA URL + token in Setup; confirm entity is in `CONFIG.haEntities`; you're on the LAN |
 | Capture saved but wrong kind | The model classified it — rephrase, or tune the system prompt in `jarvis.js` |
 | Dashboard empty | Enable Dataview; captures need the frontmatter `jarvis.js` writes |
-| Script not found in QuickAdd | Point QuickAdd's scripts folder at the `scripts/` dir (step 2) |
+| Script not found in QuickAdd | Point QuickAdd's scripts folder at `JARVIS/scripts/` (step 2) |

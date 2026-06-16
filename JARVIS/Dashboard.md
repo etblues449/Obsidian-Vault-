@@ -10,7 +10,7 @@ source: jarvis
 ## ✅ Open Tasks
 ```dataview
 TASK
-FROM "Inbox"
+FROM "JARVIS/Inbox"
 WHERE !completed AND type = "task"
 SORT created DESC
 ```
@@ -22,7 +22,7 @@ TABLE WITHOUT ID
   type AS "Kind",
   project AS "Project",
   created AS "When"
-FROM "Inbox"
+FROM "JARVIS/Inbox"
 WHERE created >= date(today) - dur(7 days)
 SORT created DESC
 ```
@@ -30,7 +30,7 @@ SORT created DESC
 ## 💡 Ideas
 ```dataview
 LIST
-FROM "Inbox"
+FROM "JARVIS/Inbox"
 WHERE type = "idea"
 SORT created DESC
 LIMIT 15
@@ -39,7 +39,7 @@ LIMIT 15
 ## ❓ Open Questions
 ```dataview
 LIST
-FROM "Inbox"
+FROM "JARVIS/Inbox"
 WHERE type = "question"
 SORT created DESC
 LIMIT 15
@@ -56,7 +56,7 @@ LIMIT 10
 ## 📊 Captures by Project
 ```dataview
 TABLE length(rows) AS "Count"
-FROM "Inbox"
+FROM "JARVIS/Inbox"
 GROUP BY project
 SORT length(rows) DESC
 ```

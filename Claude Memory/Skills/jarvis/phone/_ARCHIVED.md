@@ -9,8 +9,8 @@ JARVIS moved to an **Obsidian-native** architecture. The intelligence now runs
 *inside* Obsidian (QuickAdd user scripts calling the Claude API), with the vault
 as the brain — no Termux focal point, no PC server, no tunnel.
 
-➡️ **Current system:** `../obsidian/` — start with `../obsidian/README.md` and
-`../obsidian/ARCHITECTURE.md`.
+➡️ **Current system:** `/JARVIS/` — start with `JARVIS/README.md` and
+`JARVIS/ARCHITECTURE.md`.
 
 ## What's in this folder
 

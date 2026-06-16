@@ -26,11 +26,11 @@ const CONFIG = {
 
   // Where each kind of capture is filed (folders are created if missing).
   folders: {
-    note: "Inbox",
-    task: "Inbox",
-    idea: "Inbox",
+    note: "JARVIS/Inbox",
+    task: "JARVIS/Inbox",
+    idea: "JARVIS/Inbox",
     journal: "Journal",
-    question: "Inbox",
+    question: "JARVIS/Inbox",
   },
 
   // Projects JARVIS may tag a capture with. Keep in sync with your vault.
