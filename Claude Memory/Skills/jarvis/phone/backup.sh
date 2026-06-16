@@ -31,11 +31,11 @@ load_config() {
 backup_nextcloud() {
     echo "[$(date)] Backing up to Nextcloud..." >> "$LOG_FILE"
 
-    # Extract Nextcloud config (simplified)
-    NC_URL=$(grep "url:" "$CONFIG_FILE" | cut -d'"' -f2)
-    NC_USER=$(grep "username:" "$CONFIG_FILE" | cut -d'"' -f2)
-    NC_PASS=$(grep "app_password:" "$CONFIG_FILE" | cut -d'"' -f2)
-    NC_FOLDER=$(grep "remote_folder:" "$CONFIG_FILE" | cut -d'"' -f2)
+    # Extract Nextcloud config (handle indented YAML)
+    NC_URL=$(grep "^  url:" "$CONFIG_FILE" | cut -d'"' -f2)
+    NC_USER=$(grep "^  username:" "$CONFIG_FILE" | cut -d'"' -f2)
+    NC_PASS=$(grep "^  app_password:" "$CONFIG_FILE" | cut -d'"' -f2)
+    NC_FOLDER=$(grep "^  remote_folder:" "$CONFIG_FILE" | cut -d'"' -f2)
 
     if [[ -z "$NC_URL" || -z "$NC_USER" || -z "$NC_PASS" ]]; then
         echo "[$(date)] ERROR: Nextcloud config incomplete" >> "$LOG_FILE"
@@ -76,10 +76,10 @@ backup_nextcloud() {
 backup_rsync() {
     echo "[$(date)] Backing up via rsync..." >> "$LOG_FILE"
 
-    # Extract rsync config
-    RSYNC_REMOTE=$(grep "remote_path:" "$CONFIG_FILE" | cut -d'"' -f2)
-    RSYNC_KEY=$(grep "ssh_key:" "$CONFIG_FILE" | cut -d'"' -f2)
-    RSYNC_PORT=$(grep "port:" "$CONFIG_FILE" | cut -d':' -f2 | head -1 || echo "22")
+    # Extract rsync config (handle indented YAML)
+    RSYNC_REMOTE=$(grep "^  remote_path:" "$CONFIG_FILE" | cut -d'"' -f2)
+    RSYNC_KEY=$(grep "^  ssh_key:" "$CONFIG_FILE" | cut -d'"' -f2)
+    RSYNC_PORT=$(grep "^  port:" "$CONFIG_FILE" | sed 's/.*: *//' | head -1 || echo "22")
 
     if [[ -z "$RSYNC_REMOTE" ]]; then
         echo "[$(date)] ERROR: rsync config incomplete" >> "$LOG_FILE"

@@ -2,8 +2,9 @@
 # Secondary backup beyond GitHub (Nextcloud or rsync)
 
 # Backup target: "nextcloud" or "rsync"
-# Recommended: nextcloud (easier setup)
-backup_method: "nextcloud"
+# For testing: use rsync with remote_path: "/tmp/jarvis-backup-test"
+# For production: nextcloud (easiest) or rsync to NAS/server
+backup_method: "rsync"
 
 # ============================================================================
 # Nextcloud target (if backup_method: nextcloud)
@@ -28,13 +29,14 @@ nextcloud:
 # ============================================================================
 
 rsync:
-  # NAS/server SSH address (e.g., user@192.168.1.100:/backup/jarvis)
-  remote_path: "user@192.168.1.100:/backup/jarvis"
+  # For testing: local path (create directory first: mkdir -p /tmp/jarvis-backup-test)
+  # For production: NAS/server SSH address (e.g., user@192.168.1.100:/backup/jarvis)
+  remote_path: "/tmp/jarvis-backup-test"
 
-  # SSH key location (e.g., ~/.ssh/id_rsa)
-  ssh_key: "~/.ssh/id_rsa"
+  # SSH key location (e.g., ~/.ssh/id_rsa) — leave empty for local paths
+  ssh_key: ""
 
-  # rsync port (default: 22)
+  # rsync port (default: 22, ignored for local paths)
   port: 22
 
 # ============================================================================
