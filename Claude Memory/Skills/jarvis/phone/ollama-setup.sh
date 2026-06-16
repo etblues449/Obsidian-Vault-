@@ -38,9 +38,9 @@ Steps:
   1. pkg install proot-distro          (~30 MB)
   2. proot-distro install debian       (~500 MB)
   3. apt install curl + ollama install (~250 MB)
-  4. ollama pull $MODEL                (~700 MB for 1b, ~2 GB for 3b)
+  4. ollama pull $MODEL                (~1.3 GB for 1b, ~2 GB for 3b)
 
-Total disk: ~1.5–3 GB depending on model.
+Total disk: ~2–3 GB depending on model.
 Persistent: stays installed across reboots.
 
 EOF
@@ -58,7 +58,7 @@ else
 fi
 
 echo "[2/4] Installing Debian container..."
-if ! proot-distro list --installed 2>/dev/null | grep -q debian; then
+if ! proot-distro list -q 2>/dev/null | grep -qx debian; then
     proot-distro install debian
 else
     echo "✓ already installed"
@@ -79,10 +79,20 @@ proot-distro login debian -- bash -c '
 echo "[4/4] Pulling model $MODEL..."
 proot-distro login debian -- bash -c "
     set -euo pipefail
-    # Start daemon if not running; needed so 'ollama pull' can write to it
-    if ! pgrep -f 'ollama serve' >/dev/null; then
+    # Start daemon if not already responding on 11434
+    if ! curl -sf http://127.0.0.1:11434/ >/dev/null 2>&1; then
         nohup ollama serve >/tmp/ollama.log 2>&1 &
-        sleep 3
+        # Poll up to 30s for daemon readiness
+        for i in \$(seq 1 30); do
+            if curl -sf http://127.0.0.1:11434/ >/dev/null 2>&1; then
+                break
+            fi
+            sleep 1
+        done
+        if ! curl -sf http://127.0.0.1:11434/ >/dev/null 2>&1; then
+            echo 'ERROR: ollama serve never became ready. See /tmp/ollama.log inside debian.' >&2
+            exit 1
+        fi
     fi
     ollama pull $MODEL
 "
