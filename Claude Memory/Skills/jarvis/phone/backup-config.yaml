@@ -1,0 +1,60 @@
+# JARVIS Vault Backup Configuration
+# Secondary backup beyond GitHub (Nextcloud or rsync)
+
+# Backup target: "nextcloud" or "rsync"
+# Recommended: nextcloud (easier setup)
+backup_method: "nextcloud"
+
+# ============================================================================
+# Nextcloud target (if backup_method: nextcloud)
+# ============================================================================
+
+nextcloud:
+  # Nextcloud instance URL (e.g., https://cloud.example.com)
+  url: "https://your-nextcloud-instance.com"
+
+  # Nextcloud username
+  username: "your-username"
+
+  # Nextcloud app password (generate in Settings → Security)
+  # WARNING: Store in Android Keystore or plaintext (v1)
+  app_password: "your-app-password"
+
+  # Remote folder on Nextcloud (e.g., /JARVIS-Backup)
+  remote_folder: "/JARVIS-Backup"
+
+# ============================================================================
+# rsync target (if backup_method: rsync)
+# ============================================================================
+
+rsync:
+  # NAS/server SSH address (e.g., user@192.168.1.100:/backup/jarvis)
+  remote_path: "user@192.168.1.100:/backup/jarvis"
+
+  # SSH key location (e.g., ~/.ssh/id_rsa)
+  ssh_key: "~/.ssh/id_rsa"
+
+  # rsync port (default: 22)
+  port: 22
+
+# ============================================================================
+# Backup schedule
+# ============================================================================
+
+# Cron schedule for daily backup (e.g., 2 AM)
+# Format: "minute hour * * *" (5-field cron)
+schedule: "0 2 * * *"
+
+# Encryption (v2): encrypt backup before upload
+encryption: false
+# encryption_gpg_key: "your-key-id"
+
+# ============================================================================
+# Logging
+# ============================================================================
+
+log_level: "info"  # debug, info, warn, error
+log_file: "~/.jarvis/backup.log"
+
+# Keep last N backups on remote (0 = keep all)
+retention_days: 30

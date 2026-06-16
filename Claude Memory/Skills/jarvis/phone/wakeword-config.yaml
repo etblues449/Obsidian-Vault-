@@ -1,0 +1,30 @@
+# JARVIS Wake Word Configuration
+# Tuning for "hey jarvis" detection on Android Termux
+
+# Wake word phrase to listen for
+wake_word: "hey jarvis"
+
+# Sensitivity: 0.0 (lenient, false positives) to 1.0 (strict, misses)
+# Recommended: 0.5-0.7
+sensitivity: 0.6
+
+# Silence timeout: seconds of quiet before daemon sleeps to save battery
+# Recommended: 10-30
+silence_timeout: 10
+
+# Audio threshold: dB level to detect mic activity
+# Recommended: 500-1000 (higher = ignore background noise)
+audio_threshold: 500
+
+# Enable battery optimization (disable listening during screen-off)
+battery_optimize: true
+
+# Logging
+log_level: "info"  # debug, info, warn, error
+log_file: "~/.jarvis/wakeword.log"
+
+# Optional: wake word alternatives (v2)
+# alternatives:
+#   - "jarvis"
+#   - "hey"
+#   - "assistant"
