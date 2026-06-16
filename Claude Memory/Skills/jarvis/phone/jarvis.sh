@@ -12,12 +12,21 @@ RESOURCES_DIR="$VAULT_DIR/Claude Memory/Skills/jarvis/resources"
 CLASSIFICATION_MD="$RESOURCES_DIR/classification.md"
 INBOX_DIR="$VAULT_DIR/Inbox"
 
-# Load secrets
-if [[ ! -f ~/.jarvis/.env ]]; then
-    echo "ERROR: ~/.jarvis/.env not found. Run install.sh first."
+# Load secrets (v2: from Keystore with fallback to .env)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ ! -f "$SCRIPT_DIR/keystore-get.sh" ]]; then
+    echo "ERROR: keystore-get.sh not found." >&2
     exit 1
 fi
-source ~/.jarvis/.env
+
+ANTHROPIC_API_KEY=$(bash "$SCRIPT_DIR/keystore-get.sh" ANTHROPIC_API_KEY 2>/dev/null || echo "")
+HA_URL=$(bash "$SCRIPT_DIR/keystore-get.sh" HA_URL 2>/dev/null || echo "")
+HA_TOKEN=$(bash "$SCRIPT_DIR/keystore-get.sh" HA_TOKEN 2>/dev/null || echo "")
+
+if [[ -z "$ANTHROPIC_API_KEY" || -z "$HA_URL" || -z "$HA_TOKEN" ]]; then
+    echo "ERROR: Failed to load secrets. Check ~/.jarvis/.env or Keystore." >&2
+    exit 1
+fi
 
 # Get input text
 if [[ $# -gt 0 ]]; then
@@ -64,10 +73,18 @@ EOF
 # Read classification.md into the prompt (bash substitution)
 CLASSIFIER_PROMPT="${CLASSIFIER_PROMPT//\$\(cat \$CLASSIFICATION_MD\)/$(cat "$CLASSIFICATION_MD")}"
 
-# Call Claude Haiku (fast, cheap)
-CLASSIFY_RESPONSE=$(claude -p --model haiku "$CLASSIFIER_PROMPT
+# Check network state (v2: offline fallback to local Ollama)
+if bash "$SCRIPT_DIR/network-check.sh" 2>/dev/null; then
+    # Online: use cloud Claude
+    CLASSIFY_RESPONSE=$(claude -p --model haiku "$CLASSIFIER_PROMPT
 
 $INPUT_TEXT" 2>/dev/null || echo '{"action":"decline","error":"claude_call_failed"}')
+else
+    # Offline: use local Ollama if available
+    CLASSIFY_RESPONSE=$(bash "$SCRIPT_DIR/ollama-classifier.sh" "$CLASSIFIER_PROMPT
+
+$INPUT_TEXT" 2>/dev/null || echo '{"action":"decline","error":"ollama_unavailable"}')
+fi
 
 # Parse JSON response (extract action, category, entity, value)
 ACTION=$(echo "$CLASSIFY_RESPONSE" | grep -o '"action"[^,}]*' | cut -d'"' -f4 || echo "decline")

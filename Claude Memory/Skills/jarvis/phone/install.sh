@@ -166,6 +166,14 @@ else
     echo "✓ Added cron entry: 9 AM daily"
 fi
 
+# Add cron entry for backup (v2: 2 AM daily)
+if crontab -l 2>/dev/null | grep -q "backup.sh"; then
+    echo "✓ Cron entry for backup already present"
+else
+    (crontab -l 2>/dev/null || true; echo "0 2 * * * /data/data/com.termux/files/usr/bin/bash $VAULT_DIR/Claude\\ Memory/Skills/jarvis/phone/backup.sh") | crontab -
+    echo "✓ Added cron entry: 2 AM daily backup"
+fi
+
 # ============================================================================
 # STEP 7: Verify native git
 # ============================================================================
@@ -211,8 +219,11 @@ echo "5. [ ] Tomorrow at 9 AM, check if digest cron ran:"
 echo "       tail ~/jarvis/.sync-log"
 echo ""
 echo "OPTIONAL (v2 features):"
+echo "   - Offline mode: bash \"$VAULT_DIR/Claude Memory/Skills/jarvis/phone/ollama-setup.sh\""
+echo "   - Secrets hardening: Keystore support (requires Java SDK)"
+echo "   - Backup: Edit $HOME/.jarvis/backup-config.yaml (Nextcloud or rsync)"
+echo "   - Wake word: bash \"$VAULT_DIR/Claude Memory/Skills/jarvis/phone/wakeword.sh\" (background daemon)"
 echo "   - Tailscale: pkg install tailscale; tailscale up"
-echo "   - Voice: espeak + local detection (roadmap)"
 echo ""
 
 exit 0

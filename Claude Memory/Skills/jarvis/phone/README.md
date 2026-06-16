@@ -335,6 +335,27 @@ Summarize Inbox → Journal/YYYY-MM-DD.md → git push → notify
 
 ---
 
+## HA Assist as Complement (v2+)
+
+Home Assistant's native voice assistant (HA Assist) is a complementary tool, not a replacement.
+
+**Key differences:**
+- **HA Assist:** Hub-native, YAML automations, cloud STT (or local)
+- **Phone JARVIS:** Phone-native, Claude classification, offline Ollama
+
+**Recommendation:**
+- Use **Phone JARVIS** for: wake word on phone, offline capture, personal actions, Keystore secrets
+- Use **HA Assist** for: hub automations, group commands, always-on listening
+
+**Integration (v2.1+):**
+- Optional bridge script (`ha-assist-integration.sh`) to delegate intents between systems
+- Run both in parallel; choose tool per task
+- See `docs/HA_ASSIST_V2.md` for full evaluation
+
+**Status:** HA Assist improving; re-evaluate Q3 2026 for deeper integration.
+
+---
+
 ## Support
 
 If stuck, check:

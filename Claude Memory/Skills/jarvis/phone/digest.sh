@@ -9,12 +9,18 @@ VAULT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 INBOX_DIR="$VAULT_DIR/Inbox"
 JOURNAL_DIR="$VAULT_DIR/Journal"
 
-# Load secrets
-if [[ ! -f ~/.jarvis/.env ]]; then
-    echo "ERROR: ~/.jarvis/.env not found."
+# Load secrets (v2: from Keystore with fallback to .env)
+if [[ ! -f "$SCRIPT_DIR/keystore-get.sh" ]]; then
+    echo "ERROR: keystore-get.sh not found." >&2
     exit 1
 fi
-source ~/.jarvis/.env
+
+ANTHROPIC_API_KEY=$(bash "$SCRIPT_DIR/keystore-get.sh" ANTHROPIC_API_KEY 2>/dev/null || echo "")
+
+if [[ -z "$ANTHROPIC_API_KEY" ]]; then
+    echo "ERROR: Failed to load ANTHROPIC_API_KEY. Check ~/.jarvis/.env or Keystore." >&2
+    exit 1
+fi
 
 # Dates (yesterday for inbox, today for journal)
 YESTERDAY=$(date -d "yesterday" +%Y-%m-%d)

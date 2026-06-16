@@ -5,12 +5,20 @@
 
 set -euo pipefail
 
-# Load secrets
-if [[ ! -f ~/.jarvis/.env ]]; then
-    echo "ERROR: ~/.jarvis/.env not found. Run install.sh first."
+# Load secrets (v2: from Keystore with fallback to .env)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ ! -f "$SCRIPT_DIR/keystore-get.sh" ]]; then
+    echo "ERROR: keystore-get.sh not found." >&2
     exit 1
 fi
-source ~/.jarvis/.env
+
+HA_URL=$(bash "$SCRIPT_DIR/keystore-get.sh" HA_URL 2>/dev/null || echo "")
+HA_TOKEN=$(bash "$SCRIPT_DIR/keystore-get.sh" HA_TOKEN 2>/dev/null || echo "")
+
+if [[ -z "$HA_URL" || -z "$HA_TOKEN" ]]; then
+    echo "ERROR: Failed to load HA secrets. Check ~/.jarvis/.env or Keystore." >&2
+    exit 1
+fi
 
 # Args
 ACTION="$1"
