@@ -9,6 +9,7 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - Upstairs: BLE/radar contention unresolved
 - **On-device JARVIS terminal (Fold 7): operational** — Claude Code pinned to v2.1.112 in Termux, auto mode, filesystem MCP scoped to `~/jarvis`, vault cloned on-device, Termux:API hardware tools live (battery + notification verified). See [[sessions/2026-06-13]].
 - **JARVIS Phone-Native v1: complete & merged** — Capture (text→Inbox), HA control (REST wrapper), git sync (branch-aware), daily digest (cron), one-tap Termux:Widget. Smoke-tested end-to-end on Fold 7, all 4 bugs fixed. PR #50 merged to master 2026-06-16. See [[sessions/2026-06-16]].
+- **JARVIS Phone-Native v2: built & partially tested** — Phase 1 (secrets hardening + network detection), Phase 2 (wake word + backup), Phase 3 (HA Assist research). Online path verified (cloud Claude). Ollama offline deferred to v2.1 (aarch64 build needed). See [[sessions/2026-06-16]] + SPEC.md.
 - **RuView WiFi-CSI sensing: live & phone-free** — ESP32-S3 node 3 (192.168.0.227) streams CSI; local HA add-on "RuView CSI Bridge" on the hub publishes 6 MQTT entities (presence, breathing, heart-rate, motion, persons, anomaly) on the Smart Home dashboard. HA hub real IP = **192.168.0.200**. See [[sessions/2026-06-08]].
 
 ## Key Decisions
