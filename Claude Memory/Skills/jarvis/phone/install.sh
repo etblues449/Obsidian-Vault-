@@ -50,14 +50,16 @@ echo "✓ cronie"
 echo ""
 echo "[2/8] Checking vault clone..."
 
-VAULT_DIR="$HOME/jarvis"
+# Derive vault dir from this script's location: $VAULT/Claude Memory/Skills/jarvis/phone/install.sh
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VAULT_DIR="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
 
 if [[ ! -d "$VAULT_DIR/.git" ]]; then
-    echo "Vault not found. Cloning from GitHub..."
+    echo "Vault not found at $VAULT_DIR. Cloning from GitHub..."
     git clone https://github.com/etblues449/Obsidian-Vault- "$VAULT_DIR" 2>&1 | grep -E "^Cloning|done"
     echo "✓ Vault cloned to $VAULT_DIR"
 else
-    echo "✓ Vault already cloned to $VAULT_DIR"
+    echo "✓ Vault already present at $VAULT_DIR"
 fi
 
 # ============================================================================
@@ -109,29 +111,29 @@ SHORTCUTS_DIR="$HOME/.shortcuts"
 mkdir -p "$SHORTCUTS_DIR"
 
 # Shortcut 1: JARVIS (capture)
-cat > "$SHORTCUTS_DIR/jarvis.sh" <<'SHORTCUT'
+cat > "$SHORTCUTS_DIR/jarvis.sh" <<SHORTCUT
 #!/data/data/com.termux/files/usr/bin/env bash
 # Quick capture via one-tap widget
-read -p "JARVIS: " -t 5 INPUT || INPUT="$@"
-[[ -z "$INPUT" ]] && exit 0
-bash $HOME/jarvis/Claude\ Memory/Skills/jarvis/phone/jarvis.sh "$INPUT"
+read -p "JARVIS: " -t 5 INPUT || INPUT="\$@"
+[[ -z "\$INPUT" ]] && exit 0
+bash "$VAULT_DIR/Claude Memory/Skills/jarvis/phone/jarvis.sh" "\$INPUT"
 SHORTCUT
 chmod +x "$SHORTCUTS_DIR/jarvis.sh"
 
 # Shortcut 2: SYNC (manual sync)
-cat > "$SHORTCUTS_DIR/sync.sh" <<'SHORTCUT'
+cat > "$SHORTCUTS_DIR/sync.sh" <<SHORTCUT
 #!/data/data/com.termux/files/usr/bin/env bash
 # Manual sync: git pull + commit + push
-bash $HOME/jarvis/Claude\ Memory/Skills/jarvis/phone/sync.sh
+bash "$VAULT_DIR/Claude Memory/Skills/jarvis/phone/sync.sh"
 echo "✓ Sync complete"
 SHORTCUT
 chmod +x "$SHORTCUTS_DIR/sync.sh"
 
 # Shortcut 3: DIGEST (run digest now)
-cat > "$SHORTCUTS_DIR/digest.sh" <<'SHORTCUT'
+cat > "$SHORTCUTS_DIR/digest.sh" <<SHORTCUT
 #!/data/data/com.termux/files/usr/bin/env bash
 # Manual digest: summarize Inbox into Journal
-bash $HOME/jarvis/Claude\ Memory/Skills/jarvis/phone/digest.sh
+bash "$VAULT_DIR/Claude Memory/Skills/jarvis/phone/digest.sh"
 echo "✓ Digest complete"
 SHORTCUT
 chmod +x "$SHORTCUTS_DIR/digest.sh"
@@ -197,10 +199,10 @@ echo "1. [ ] Edit ~/.jarvis/.env with your secrets:"
 echo "       nano ~/.jarvis/.env"
 echo ""
 echo "2. [ ] Test JARVIS:"
-echo "       bash ~/jarvis/Claude\\ Memory/Skills/jarvis/phone/jarvis.sh \"test note\""
+echo "       bash \"$VAULT_DIR/Claude Memory/Skills/jarvis/phone/jarvis.sh\" \"test note\""
 echo ""
 echo "3. [ ] Test HA control:"
-echo "       bash ~/jarvis/Claude\\ Memory/Skills/jarvis/phone/ha-call.sh turn_on light.lounge_main"
+echo "       bash \"$VAULT_DIR/Claude Memory/Skills/jarvis/phone/ha-call.sh\" turn_on light.lounge_main"
 echo ""
 echo "4. [ ] Install Termux:Widget from Play Store"
 echo "       Add 'jarvis', 'sync', 'digest' buttons to home screen"
