@@ -22,8 +22,11 @@ termux-wake-lock 2>/dev/null || true
 
     cd "$VAULT_DIR" || exit 1
 
-    # Pull
-    if ! git pull origin master --quiet 2>&1; then
+    # Get current branch
+    BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+    # Pull current branch
+    if ! git pull origin "$BRANCH" --quiet 2>&1; then
         echo "[$(date)] WARNING: git pull failed (network?). Will retry next sync."
     fi
 
@@ -37,11 +40,11 @@ termux-wake-lock 2>/dev/null || true
         echo "[$(date)] Committed."
     fi
 
-    # Push (quiet, don't fail if network is down — retry next sync)
-    if ! git push origin master --quiet 2>&1; then
+    # Push current branch (quiet, don't fail if network is down — retry next sync)
+    if ! git push origin "$BRANCH" --quiet 2>&1; then
         echo "[$(date)] WARNING: git push failed (network?). Will retry next sync."
     else
-        echo "[$(date)] Pushed."
+        echo "[$(date)] Pushed to $BRANCH."
     fi
 
     echo "[$(date)] Sync complete."
