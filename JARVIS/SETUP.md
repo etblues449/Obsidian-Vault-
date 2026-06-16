@@ -118,3 +118,4 @@ created. Or just tap the **JARVIS Digest** shortcut each morning.
 | Capture saved but wrong kind | The model classified it — rephrase, or tune the system prompt in `jarvis.js` |
 | Dashboard empty | Enable Dataview; captures need the frontmatter `jarvis.js` writes |
 | Script not found in QuickAdd | Point QuickAdd's scripts folder at `JARVIS/scripts/` (step 2) |
+| "Cannot destructure … require(…)" / "window.require is not a function" | Old script version. The scripts must use `params.obsidian` (not `require("obsidian")`) — there is no `require` on mobile. Pull latest from Git. |

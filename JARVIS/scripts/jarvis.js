@@ -58,7 +58,9 @@ const CONFIG = {
 // ============================================================================
 module.exports = async (params) => {
   const { app, quickAddApi } = params;
-  const { requestUrl, Notice } = require("obsidian");
+  // QuickAdd hands us the obsidian module on params (works on mobile AND
+  // desktop). Never use require("obsidian") — there is no require on mobile.
+  const { requestUrl, Notice } = params.obsidian;
 
   const apiKey = window.localStorage.getItem("jarvis-anthropic-key");
   if (!apiKey) {
