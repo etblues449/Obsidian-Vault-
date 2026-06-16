@@ -10,7 +10,8 @@
  */
 module.exports = async (params) => {
   const { quickAddApi } = params;
-  const { Notice } = require("obsidian");
+  // QuickAdd hands us the obsidian module on params (mobile-safe; no require).
+  const { Notice } = params.obsidian;
 
   const ask = async (label, key, hint) => {
     const current = window.localStorage.getItem(key);

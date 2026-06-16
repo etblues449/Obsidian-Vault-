@@ -9,7 +9,8 @@
  */
 module.exports = async (params) => {
   const { app } = params;
-  const { requestUrl, Notice } = require("obsidian");
+  // QuickAdd hands us the obsidian module on params (mobile-safe; no require).
+  const { requestUrl, Notice } = params.obsidian;
 
   const MODEL = "claude-opus-4-8";
   const INBOX = "Inbox";
