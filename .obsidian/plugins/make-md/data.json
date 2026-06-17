@@ -38,6 +38,7 @@
   "vaultSelector": true,
   "deleteFileOption": "trash",
   "expandedSpaces": [
+    "//",
     "/",
     "//JARVIS"
   ],
