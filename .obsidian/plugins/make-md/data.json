@@ -39,14 +39,15 @@
   "deleteFileOption": "trash",
   "expandedSpaces": [
     "/",
-    "//JARVIS",
-    "//JARVIS/JARVIS/Scripts"
+    "//JARVIS"
   ],
   "expandFolderOnClick": true,
   "spacesFolder": "Tags",
   "suppressedWarnings": [],
   "spaceSubFolder": ".space",
-  "hiddenFiles": [],
+  "hiddenFiles": [
+    "JARVIS/Scripts/Untitled.md"
+  ],
   "hiddenExtensions": [
     ".mdb",
     "_assets",
