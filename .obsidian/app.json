@@ -1,5 +1,6 @@
 {
   "alwaysUpdateLinks": true,
   "showUnsupportedFiles": true,
-  "newFileLocation": "folder"
+  "newFileLocation": "folder",
+  "attachmentFolderPath": "_attachments"
 }
