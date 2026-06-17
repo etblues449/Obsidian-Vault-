@@ -38,9 +38,9 @@
   "vaultSelector": true,
   "deleteFileOption": "trash",
   "expandedSpaces": [
-    "//JARVIS/JARVIS/Scripts",
+    "/",
     "//JARVIS",
-    "/"
+    "//JARVIS/JARVIS/Scripts"
   ],
   "expandFolderOnClick": true,
   "spacesFolder": "Tags",
