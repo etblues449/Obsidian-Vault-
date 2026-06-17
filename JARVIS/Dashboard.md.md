@@ -1,5 +1,5 @@
 ---
-type: dashboard
+type: note
 source: jarvis
 ---
 # 🧠 JARVIS Dashboard
