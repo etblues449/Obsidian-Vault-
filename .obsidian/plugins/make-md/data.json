@@ -42,7 +42,8 @@
     "//docs/docs/plans",
     "//mk-core:",
     "//mk-core:/mk-core:/",
-    "/"
+    "/",
+    "//JARVIS"
   ],
   "expandFolderOnClick": true,
   "spacesFolder": "Tags",
@@ -57,7 +58,7 @@
     "_blocks"
   ],
   "newFileLocation": "folder",
-  "newFileFolderPath": "JARVIS",
+  "newFileFolderPath": "JARVIS/Inbox/quick-notes.md",
   "inlineBacklinks": false,
   "inlineContext": true,
   "inlineBacklinksExpanded": false,

@@ -27,32 +27,6 @@
       }
     },
     {
-      "id": "cb5ba448-1c2a-483f-8249-6b90f4cdc5f3",
-      "name": "Jarvis Digest",
-      "type": "Macro",
-      "command": true,
-      "runOnStartup": false,
-      "macro": {
-        "name": "Jarvis Digest",
-        "id": "726b7827-80c4-48c6-98f2-a19b3f2b9e99",
-        "commands": [
-          {
-            "name": "jarvis_digest",
-            "type": "UserScript",
-            "id": "b9c197b2-49ae-44ac-be8d-77e1cc020530",
-            "path": "JARVIS/Scripts/jarvis_digest.js",
-            "settings": {}
-          },
-          {
-            "name": "Jarvis Digest",
-            "type": "Choice",
-            "id": "d09a3d37-4b0d-4e3b-8ec9-e29b8ab6c449",
-            "choiceId": "cb5ba448-1c2a-483f-8249-6b90f4cdc5f3"
-          }
-        ]
-      }
-    },
-    {
       "id": "ffd3139a-2b9d-46d4-b8ff-2ebcbc13226f",
       "name": "Jarvis Ask",
       "type": "Macro",
@@ -139,16 +113,16 @@
         "id": "fcd78d1d-fa8b-45cb-852f-c4867fa625a3",
         "commands": [
           {
-            "name": "jarvis",
+            "name": "jarvis_digest_SIMPLE",
             "type": "UserScript",
-            "id": "2f15f188-836e-41c7-8281-5a63ab84e4cb",
-            "path": "JARVIS/Scripts/jarvis.js",
+            "id": "b7a280b9-80b3-452a-810e-f39e0c70672a",
+            "path": "JARVIS/Scripts/jarvis_digest_SIMPLE.js",
             "settings": {}
           },
           {
             "name": "Jarvis Capture macro ",
             "type": "Choice",
-            "id": "2c8a7c88-33b3-47a4-a262-ec1797b28b94",
+            "id": "ce617f6a-9885-43a7-9f57-daf1c374884e",
             "choiceId": "91655d29-7eb0-41e9-86af-f39bdea016ad"
           }
         ]
