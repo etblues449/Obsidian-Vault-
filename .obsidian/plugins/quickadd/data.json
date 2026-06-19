@@ -141,15 +141,29 @@
       }
     },
     {
-      "id": "69ecedb6-06cc-42b2-ad2d-d6eae0c4b0ce",
-      "name": "Jarvis",
+      "id": "91655d29-7eb0-41e9-86af-f39bdea016ad",
+      "name": "Jarvis Capture macro ",
       "type": "Macro",
       "command": true,
       "runOnStartup": false,
       "macro": {
-        "name": "Jarvis",
-        "id": "41ce0e57-df6f-4207-be83-d3627510b07a",
-        "commands": []
+        "name": "Jarvis Capture macro ",
+        "id": "fcd78d1d-fa8b-45cb-852f-c4867fa625a3",
+        "commands": [
+          {
+            "name": "jarvis",
+            "type": "UserScript",
+            "id": "2f15f188-836e-41c7-8281-5a63ab84e4cb",
+            "path": "JARVIS/Scripts/jarvis.js",
+            "settings": {}
+          },
+          {
+            "name": "Jarvis Capture macro ",
+            "type": "Choice",
+            "id": "2c8a7c88-33b3-47a4-a262-ec1797b28b94",
+            "choiceId": "91655d29-7eb0-41e9-86af-f39bdea016ad"
+          }
+        ]
       }
     }
   ],
