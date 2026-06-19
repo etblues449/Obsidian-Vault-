@@ -165,6 +165,18 @@
           }
         ]
       }
+    },
+    {
+      "id": "7f00a7e0-f581-4b36-bc17-81bea559bf8a",
+      "name": "Weekly ",
+      "type": "Macro",
+      "command": true,
+      "runOnStartup": false,
+      "macro": {
+        "name": "Weekly ",
+        "id": "f74bd75b-44ee-407a-ba35-db34e42d3b8f",
+        "commands": []
+      }
     }
   ],
   "inputPrompt": "single-line",
