@@ -137,7 +137,21 @@
       "macro": {
         "name": "Expense",
         "id": "675ae599-2003-49fa-aaf6-156b64dee4fd",
-        "commands": []
+        "commands": [
+          {
+            "name": "jarvis_expense_classifier",
+            "type": "UserScript",
+            "id": "8053b64d-ede7-41bc-9b99-2a6d4706a552",
+            "path": "JARVIS/Scripts/jarvis_expense_classifier.js",
+            "settings": {}
+          },
+          {
+            "name": "Expense",
+            "type": "Choice",
+            "id": "01af0045-3c40-40ed-8932-540f9ee54ab7",
+            "choiceId": "fdc6e339-12bc-4b1f-97b0-949aa27bbcce"
+          }
+        ]
       }
     },
     {
