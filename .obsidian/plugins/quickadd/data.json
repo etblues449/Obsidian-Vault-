@@ -165,17 +165,17 @@
         "id": "dc91f09c-18d7-44b6-90e3-816c31670f67",
         "commands": [
           {
-            "name": "jarvis_expense_classifier",
-            "type": "UserScript",
-            "id": "b7750226-4422-4756-8a51-677f1d442233",
-            "path": "JARVIS/Scripts/jarvis_expense_classifier.js",
-            "settings": {}
-          },
-          {
             "name": "Expenses ",
             "type": "Choice",
             "id": "9b09e76f-e9ec-45d4-bc34-c766caed7d8a",
             "choiceId": "0068478d-f218-4abd-add9-59acdc1f7151"
+          },
+          {
+            "name": "jarvis_expense_classifier_FIXED",
+            "type": "UserScript",
+            "id": "7b1929ca-67f9-4b55-8698-09a4da73c97c",
+            "path": "JARVIS/Scripts/jarvis_expense_classifier_FIXED.js",
+            "settings": {}
           }
         ]
       }
@@ -191,17 +191,17 @@
         "id": "c3272ada-d99e-449d-bcb5-a90de7ff28cc",
         "commands": [
           {
-            "name": "jarvis_weekly_trigger",
-            "type": "UserScript",
-            "id": "a3fdd63d-49f5-46e7-afd5-3034d03ed65f",
-            "path": "JARVIS/Scripts/jarvis_weekly_trigger.js",
-            "settings": {}
-          },
-          {
             "name": "Weekly ",
             "type": "Choice",
             "id": "89fc54ab-4c82-433a-9bbe-b2f25c9e1592",
             "choiceId": "bae442dc-f8fd-456f-a61e-4c31c5d22b41"
+          },
+          {
+            "name": "jarvis_weekly_trigger_FIXED",
+            "type": "UserScript",
+            "id": "690073af-4604-408f-b3fe-4c0d4e343202",
+            "path": "JARVIS/Scripts/jarvis_weekly_trigger_FIXED.js",
+            "settings": {}
           }
         ]
       }
