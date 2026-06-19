@@ -1,9 +1,9 @@
 {
   "userName": "Jelly Bean",
   "permissionMode": "yolo",
-  "model": "claude-sonnet-4-6",
+  "model": "claude-opus-4-6",
   "thinkingBudget": "medium",
-  "effortLevel": "high",
+  "effortLevel": "max",
   "serviceTier": "default",
   "enableAutoTitleGeneration": true,
   "titleGenerationModel": "haiku",
@@ -30,14 +30,14 @@
   "locale": "en",
   "providerConfigs": {
     "claude": {
-      "safeMode": "acceptEdits",
+      "safeMode": "auto",
       "cliPath": "",
       "cliPathsByHost": {
         "device:8b62dfae-20eb-4d36-9574-7ed9497f74f5": "C:\\Users\\ElliotHorton\\.local\\bin\\claude.exe"
       },
       "loadUserSettings": true,
       "enableChrome": true,
-      "enableBangBash": false,
+      "enableBangBash": true,
       "enableOpus1M": true,
       "enableSonnet1M": true,
       "customModels": "claude-opus-4-6\nclaude-sonnet-4-6\nclaude-haiku-4-5-20251001",
@@ -86,19 +86,17 @@
   },
   "settingsProvider": "claude",
   "savedProviderModel": {
-    "claude": "claude-sonnet-4-6"
+    "claude": "claude-opus-4-6"
   },
   "savedProviderEffort": {
-    "claude": "high"
+    "claude": "max"
   },
   "savedProviderServiceTier": {},
-  "savedProviderThinkingBudget": {
-    "claude": "medium"
-  },
+  "savedProviderThinkingBudget": {},
   "savedProviderPermissionMode": {
     "claude": "yolo"
   },
-  "lastCustomModel": "claude-sonnet-4-6",
+  "lastCustomModel": "claude-opus-4-6",
   "maxTabs": 4,
   "tabBarPosition": "input",
   "enableAutoScroll": true,

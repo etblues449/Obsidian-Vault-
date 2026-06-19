@@ -1,23 +1,23 @@
 {
   "id": "conv-1777921301194-4dmqw2g8m",
   "providerId": "claude",
-  "title": "have a look at my capture-queue",
-  "titleGenerationStatus": "failed",
+  "title": "Verify git commit attribution setup",
+  "titleGenerationStatus": "success",
   "createdAt": 1777921301195,
-  "updatedAt": 1781552536159,
-  "lastResponseAt": 1777924637504,
+  "updatedAt": 1781828174147,
+  "lastResponseAt": 1781828165613,
   "sessionId": "78c41121-c7e5-48d9-ab5e-3667ca863dc1",
   "providerState": {
     "providerSessionId": "78c41121-c7e5-48d9-ab5e-3667ca863dc1"
   },
   "usage": {
-    "model": "claude-sonnet-4-6",
+    "model": "claude-opus-4-6",
     "inputTokens": 1,
     "cacheCreationInputTokens": 251,
     "cacheReadInputTokens": 38104,
     "contextWindow": 200000,
     "contextTokens": 38356,
     "percentage": 19,
-    "contextWindowIsAuthoritative": true
+    "contextWindowIsAuthoritative": false
   }
 }
