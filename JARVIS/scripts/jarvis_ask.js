@@ -27,7 +27,7 @@ module.exports = async (params) => {
   // Ground on the 20 most recent Inbox + Journal notes (cheap, no embeddings).
   const recent = app.vault
     .getMarkdownFiles()
-    .filter((f) => f.path.startsWith("Inbox/") || f.path.startsWith("Journal/"))
+    .filter((f) => f.path.startsWith("JARVIS/Inbox/") || f.path.startsWith("Journal/"))
     .sort((a, b) => b.stat.mtime - a.stat.mtime)
     .slice(0, 20);
 

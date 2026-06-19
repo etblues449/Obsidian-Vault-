@@ -13,7 +13,7 @@ module.exports = async (params) => {
   const { requestUrl, Notice } = params.obsidian;
 
   const MODEL = "claude-opus-4-8";
-  const INBOX = "Inbox";
+  const INBOX = "JARVIS/Inbox";
   const JOURNAL = "Journal";
 
   const apiKey = window.localStorage.getItem("jarvis-anthropic-key");

@@ -1,7 +1,5 @@
 [
   "smart-templates",
-  "smart-connections",
-  "smart-context",
   "smart-lookup",
   "obsidian42-brat",
   "obsidian-importer",
@@ -9,13 +7,12 @@
   "shell-path-copy",
   "obsidian-tasks-plugin",
   "obsidian-style-settings",
-  "claude-code-bridge",
   "quickadd",
   "obsidian-advanced-uri",
   "dataview",
   "templater-obsidian",
   "make-md",
   "terminal",
-  "realclaudian",
-  "obsidian-git"
+  "obsidian-git",
+  "smart-connections"
 ]
