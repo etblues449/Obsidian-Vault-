@@ -2,5 +2,8 @@
   "alwaysUpdateLinks": true,
   "showUnsupportedFiles": true,
   "newFileLocation": "folder",
-  "attachmentFolderPath": "_attachments"
+  "attachmentFolderPath": "_attachments",
+  "uriCallbacks": true,
+  "showLineNumber": true,
+  "newFileFolderPath": "JARVIS"
 }

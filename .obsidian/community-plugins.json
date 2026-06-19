@@ -15,5 +15,7 @@
   "dataview",
   "templater-obsidian",
   "make-md",
-  "terminal"
+  "terminal",
+  "realclaudian",
+  "obsidian-git"
 ]

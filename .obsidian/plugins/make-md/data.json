@@ -39,8 +39,10 @@
   "deleteFileOption": "trash",
   "expandedSpaces": [
     "//",
-    "/",
-    "//JARVIS"
+    "//docs/docs/plans",
+    "//mk-core:",
+    "//mk-core:/mk-core:/",
+    "/"
   ],
   "expandFolderOnClick": true,
   "spacesFolder": "Tags",
@@ -55,6 +57,7 @@
     "_blocks"
   ],
   "newFileLocation": "folder",
+  "newFileFolderPath": "JARVIS",
   "inlineBacklinks": false,
   "inlineContext": true,
   "inlineBacklinksExpanded": false,
