@@ -1,0 +1,23 @@
+{
+  "id": "conv-1781829706845-yoc0c64ym",
+  "providerId": "claude",
+  "title": "Wrap up JARVIS v3 session and status",
+  "titleGenerationStatus": "success",
+  "createdAt": 1781829706846,
+  "updatedAt": 1781830119887,
+  "lastResponseAt": 1781830119887,
+  "sessionId": "7c58d7ce-fa27-4f29-8f1e-96b74dd66a79",
+  "providerState": {
+    "providerSessionId": "7c58d7ce-fa27-4f29-8f1e-96b74dd66a79"
+  },
+  "usage": {
+    "model": "claude-opus-4-6",
+    "inputTokens": 1,
+    "cacheCreationInputTokens": 2560,
+    "cacheReadInputTokens": 69641,
+    "contextWindow": 200000,
+    "contextTokens": 72202,
+    "percentage": 36,
+    "contextWindowIsAuthoritative": true
+  }
+}

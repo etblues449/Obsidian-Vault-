@@ -46,8 +46,12 @@ const CONFIG = {
   // natural language ("turn on the lounge lights") to one of these exactly.
   // Add yours here — anything not listed is treated as a note, never guessed.
   haEntities: [
-    "light.lounge_main",
-    "light.bedroom_main",
+    "light.right_smart_bulb",
+    "light.left_smart_bulb",
+    "light.living_room_light",
+    "light.rgbic_tv_backlight",
+    "light.stairs_smart_bulb",
+    "switch.rgbic_tv_backlight_dreamview",
     "climate.living_room",
     "media_player.tv_jelly_beans_tv_2",
   ],
