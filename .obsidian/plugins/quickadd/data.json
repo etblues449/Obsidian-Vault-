@@ -106,6 +106,24 @@
             "type": "Choice",
             "id": "aec652f4-75dd-4ed5-a397-feb8bc252021",
             "choiceId": "14f9b3fe-7a2d-4711-a3f8-e2b21bdf50ef"
+          },
+          {
+            "name": "AI Assistant",
+            "type": "AIAssistant",
+            "id": "967526c1-f334-4341-a264-4a7646a38bca",
+            "model": "claude-haiku-4-5",
+            "systemPrompt": "As an AI assistant within Obsidian, your primary goal is to help users manage their ideas and knowledge more effectively. Format your responses using Markdown syntax. Please use the [[Obsidian]] link format. You can write aliases for the links by writing [[Obsidian|the alias after the pipe symbol]]. To use mathematical notation, use LaTeX syntax. LaTeX syntax for larger equations should be on separate lines, surrounded with double dollar signs ($$). You can also inline math expressions by wrapping it in $ symbols. For example, use $$w_{ij}^{\\text{new}}:=w_{ij}^{\\text{current}}+\\eta\\cdot\\delta_j\\cdot x_{ij}$$ on a separate line, but you can write \"($\\eta$ = learning rate, $\\delta_j$ = error term, $x_{ij}$ = input)\" inline.",
+            "outputVariableName": "output",
+            "promptTemplate": {
+              "enable": true,
+              "name": "CLAUDE.md"
+            },
+            "modelParameters": {
+              "temperature": 1,
+              "top_p": 1,
+              "frequency_penalty": 0,
+              "presence_penalty": 0.5
+            }
           }
         ]
       }
