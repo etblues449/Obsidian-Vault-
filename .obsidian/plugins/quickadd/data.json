@@ -175,7 +175,21 @@
       "macro": {
         "name": "Weekly ",
         "id": "f74bd75b-44ee-407a-ba35-db34e42d3b8f",
-        "commands": []
+        "commands": [
+          {
+            "name": "jarvis_weekly_trigger",
+            "type": "UserScript",
+            "id": "11b850e2-0ed6-4e1a-b2d0-ecae2a9edd06",
+            "path": "JARVIS/Scripts/jarvis_weekly_trigger.js",
+            "settings": {}
+          },
+          {
+            "name": "Weekly ",
+            "type": "Choice",
+            "id": "568d6bc8-767b-4f84-baef-b6a61e58c456",
+            "choiceId": "7f00a7e0-f581-4b36-bc17-81bea559bf8a"
+          }
+        ]
       }
     }
   ],
