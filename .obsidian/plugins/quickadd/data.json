@@ -100,6 +100,12 @@
             "type": "Choice",
             "id": "6644813a-f58e-4e99-b945-0c5eaaeb3b74",
             "choiceId": "14f9b3fe-7a2d-4711-a3f8-e2b21bdf50ef"
+          },
+          {
+            "name": "Jarvis Capture ",
+            "type": "Choice",
+            "id": "aec652f4-75dd-4ed5-a397-feb8bc252021",
+            "choiceId": "14f9b3fe-7a2d-4711-a3f8-e2b21bdf50ef"
           }
         ]
       }
@@ -138,7 +144,7 @@
   "version": "2.12.3",
   "globalVariables": {},
   "onePageInputEnabled": false,
-  "disableOnlineFeatures": true,
+  "disableOnlineFeatures": false,
   "enableRibbonIcon": true,
   "showCaptureNotification": true,
   "showInputCancellationNotification": false,

@@ -22,7 +22,7 @@
   "autoBackupAfterFileChange": true,
   "treeStructure": false,
   "refreshSourceControl": true,
-  "basePath": "https://github.com/etblues449/Obsidian-Vault-.git",
+  "basePath": "",
   "differentIntervalCommitAndPush": false,
   "changedFilesInStatusBar": false,
   "showedMobileNotice": false,
