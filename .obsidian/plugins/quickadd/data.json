@@ -129,32 +129,6 @@
       }
     },
     {
-      "id": "fdc6e339-12bc-4b1f-97b0-949aa27bbcce",
-      "name": "Expense",
-      "type": "Macro",
-      "command": true,
-      "runOnStartup": false,
-      "macro": {
-        "name": "Expense",
-        "id": "675ae599-2003-49fa-aaf6-156b64dee4fd",
-        "commands": [
-          {
-            "name": "jarvis_expense_classifier",
-            "type": "UserScript",
-            "id": "8053b64d-ede7-41bc-9b99-2a6d4706a552",
-            "path": "JARVIS/Scripts/jarvis_expense_classifier.js",
-            "settings": {}
-          },
-          {
-            "name": "Expense",
-            "type": "Choice",
-            "id": "01af0045-3c40-40ed-8932-540f9ee54ab7",
-            "choiceId": "fdc6e339-12bc-4b1f-97b0-949aa27bbcce"
-          }
-        ]
-      }
-    },
-    {
       "id": "91655d29-7eb0-41e9-86af-f39bdea016ad",
       "name": "Jarvis Capture macro ",
       "type": "Macro",
@@ -181,27 +155,53 @@
       }
     },
     {
-      "id": "7f00a7e0-f581-4b36-bc17-81bea559bf8a",
+      "id": "0068478d-f218-4abd-add9-59acdc1f7151",
+      "name": "Expenses ",
+      "type": "Macro",
+      "command": true,
+      "runOnStartup": false,
+      "macro": {
+        "name": "Expenses ",
+        "id": "dc91f09c-18d7-44b6-90e3-816c31670f67",
+        "commands": [
+          {
+            "name": "jarvis_expense_classifier",
+            "type": "UserScript",
+            "id": "b7750226-4422-4756-8a51-677f1d442233",
+            "path": "JARVIS/Scripts/jarvis_expense_classifier.js",
+            "settings": {}
+          },
+          {
+            "name": "Expenses ",
+            "type": "Choice",
+            "id": "9b09e76f-e9ec-45d4-bc34-c766caed7d8a",
+            "choiceId": "0068478d-f218-4abd-add9-59acdc1f7151"
+          }
+        ]
+      }
+    },
+    {
+      "id": "bae442dc-f8fd-456f-a61e-4c31c5d22b41",
       "name": "Weekly ",
       "type": "Macro",
       "command": true,
       "runOnStartup": false,
       "macro": {
         "name": "Weekly ",
-        "id": "f74bd75b-44ee-407a-ba35-db34e42d3b8f",
+        "id": "c3272ada-d99e-449d-bcb5-a90de7ff28cc",
         "commands": [
           {
             "name": "jarvis_weekly_trigger",
             "type": "UserScript",
-            "id": "11b850e2-0ed6-4e1a-b2d0-ecae2a9edd06",
+            "id": "a3fdd63d-49f5-46e7-afd5-3034d03ed65f",
             "path": "JARVIS/Scripts/jarvis_weekly_trigger.js",
             "settings": {}
           },
           {
             "name": "Weekly ",
             "type": "Choice",
-            "id": "568d6bc8-767b-4f84-baef-b6a61e58c456",
-            "choiceId": "7f00a7e0-f581-4b36-bc17-81bea559bf8a"
+            "id": "89fc54ab-4c82-433a-9bbe-b2f25c9e1592",
+            "choiceId": "bae442dc-f8fd-456f-a61e-4c31c5d22b41"
           }
         ]
       }
