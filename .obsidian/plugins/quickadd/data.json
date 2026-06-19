@@ -113,17 +113,17 @@
         "id": "d9a44372-2e5f-459c-8e76-4bb0802aa2bf",
         "commands": [
           {
-            "name": "jarvis_digest_SIMPLE",
-            "type": "UserScript",
-            "id": "5b17e73a-10a3-4c3a-bf26-0d9270cdb082",
-            "path": "JARVIS/Scripts/jarvis_digest_SIMPLE.js",
-            "settings": {}
-          },
-          {
             "name": "Jarvis Digest ",
             "type": "Choice",
             "id": "4d10850d-ec31-4827-a31c-09c480c905ba",
             "choiceId": "59747c81-3bc5-47de-905b-1cdc696a0568"
+          },
+          {
+            "name": "jarvis_digest_WRAPPED",
+            "type": "UserScript",
+            "id": "523685a4-9f7f-4bb7-93bc-72d22c1f7bf4",
+            "path": "JARVIS/Scripts/jarvis_digest_WRAPPED.js",
+            "settings": {}
           }
         ]
       }
