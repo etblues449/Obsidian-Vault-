@@ -33,6 +33,8 @@ status: research-complete
 
 **The one honest trade-off:** it's a firm **woven-polyester** seat, not a plush foam-padded one. It's comfortable in a sun-lounger way (taut, supportive, breathable), but if you want extra cushioning you *can* throw a £10–15 seat pad on top — **optional, not required**; the chair is complete as a single unit.
 
+> **Footrest behaviour (chosen with eyes open):** the footrest is **mechanically linked to the recline** — leaning back raises it, sitting upright lowers it. You **cannot recline with the footrest stowed**; the two move together. The user weighed this against the alternatives and chose the single-unit simplicity anyway. The only chair that lets you recline *and* keep the footrest down independently is the **GCI Outdoor Legz-Up Lounger** (independent "Legz Up" leg rest, 4 recline positions, padded head pillow, 113 kg) — but it's **currently unavailable in the UK** (out of stock on Amazon.co.uk, discontinued at Alpinetrek). Worth re-checking for a restock if footrest independence ever becomes the priority; otherwise the detachable-footstool route (Vango Hampton DLX + clip-on footstool) is the only in-stock way to get it.
+
 ---
 
 ## Why this is the right call (the trade-off, explained)
