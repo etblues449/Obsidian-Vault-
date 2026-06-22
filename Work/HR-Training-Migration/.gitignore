@@ -5,6 +5,11 @@ output/
 input/
 real_data/
 
+# Handover: code + docs are committed, but the data folder (PDFs, Atlas export,
+# OCR with real names, reconciliation outputs) is PII and must NOT be committed.
+handover/data/
+handover/output/
+
 # Allow the tiny synthetic sample so the demo runs
 !sample_data/
 
