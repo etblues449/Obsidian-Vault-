@@ -14,6 +14,22 @@ status: research-complete
 
 > **v2 update:** Re-weighted for the user's actual measurements. At ~82.5 kg, **weight capacity is a non-issue** (every chair here clears it with huge margin), so the heavy-duty 180–200 kg framing from v1 no longer applies — lighter, comfier chairs are back in play. The body shape (**long torso + short legs**) makes a **tall backrest** the priority and a **footrest** a real ergonomic benefit, not just a bonus.
 
+> **v3 update — live Amazon.co.uk prices (accessed 22 Jun 2026):** see the table below. Headline: the **Vango Hampton DLX + footstool comes to ~£111 all-in** (cheaper than estimated), and the **Nemo Stargaze is ~£250 on Amazon UK — over budget** (drop it for an Amazon purchase).
+
+## 💷 Live Amazon.co.uk prices (22 Jun 2026)
+
+| Item | Amazon price | Notes | Link (ASIN) |
+|---|---|---|---|
+| **Vango Hampton DLX** (standard, Excalibur) ⭐ | **£70.61** | 140 kg · 116 cm back · 7-pos recline · padded · headrest cushion | B081G5R3MD |
+| **Vango Hampton Padded Footstool** | **~£40** (RRP) | The leg support for your short legs. *Out of stock at Vango direct — check Amazon/Winfields stock* | B0BQCFK85K |
+| **→ Top-pick bundle (chair + footstool)** | **≈ £110.61** | Tall back + recline + headrest + footrest + padded, ~£90 under budget | — |
+| **Outwell Catamarca Lounger** (Black) | **£73.99** | Built-in auto footrest + recline + cup holder · 125 kg | B0BWJY8JNQ |
+| **Outwell Acadia** (Black) | **from £163.99** | Padded · recline · removable headrest · cup-holder side table · 150 kg | B084SDQ7QY |
+| **Helinox Sunset Chair** (Black, w/ pockets) | **£189.00** (RRP £239; other offers from £143.83) | Tall back + headrest flap · 1.56 kg · 145 kg · **no recline/footrest** | B09N2DFFLM |
+| ~~Nemo Stargaze Recliner Luxury~~ (Oxide) | **~£250** ❌ over budget | Was my "comfort" pick — but Amazon UK price exceeds £200; only buy if you find the cheaper EVO-X variant elsewhere | B09PH6Q2L6 |
+
+*Amazon prices change frequently and vary by colourway — confirm at checkout. "Other offers from £143.83" on the Helinox = used/third-party sellers.*
+
 ---
 
 ## How your body shape changes the pick
@@ -127,7 +143,7 @@ Padded, adjustable + removable headrest, lockable recline (back 100–114 cm), s
 
 - **Best all-round for your shape (tall back + footrest + padded recline), great value →** **Vango Hampton DLX £95 + footrest** ⭐
 - **Cheapest chair that already nails the ergonomics →** **Outwell Catamarca Lounger £54–80** + seat pad
-- **Most luxurious + lightest to carry →** **Nemo Stargaze EVO-X £166** (add a small footstool for your legs)
+- **Most luxurious + lightest to carry →** **Nemo Stargaze** — *but ~£250 on Amazon UK (over budget)*; only if you find the cheaper EVO-X variant at a specialist retailer
 - **Plushest, mostly-car option →** **Outwell Acadia £165**
 
 ---
