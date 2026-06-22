@@ -5,173 +5,84 @@ updated: 2026-06-22
 status: research-complete
 ---
 
-# Camping Chair — Buying Report (June 2026, v2)
+# Camping Chair — Buying Report (June 2026, v5)
 
 **For:** Mix of car-camping / festivals / garden + occasional carrying. **Comfort is the #1 priority.**
-**Body:** 6 ft tall, **13 stone (~82.5 kg)**, with a **long torso relative to shorter legs**.
-**Wanted features:** reclining · padded headrest · footrest · cup holder/storage · padding/insulation.
-**Budget:** max **£200**.
+**Body:** 6 ft, **13 stone (~82.5 kg)**, **long torso / shorter legs**.
+**Requirement (firmed up):** a **single chair with the footrest BUILT IN** — *buy one unit, done*, not "chair + bolt-on footstool". Must also avoid the **twist-lock recline levers** on the user's current zero-gravity chair (found impractical). Tall back, comfortable, **max £200**, bought from **Amazon.co.uk**.
 
-> **v2 update:** Re-weighted for the user's actual measurements. At ~82.5 kg, **weight capacity is a non-issue** (every chair here clears it with huge margin), so the heavy-duty 180–200 kg framing from v1 no longer applies — lighter, comfier chairs are back in play. The body shape (**long torso + short legs**) makes a **tall backrest** the priority and a **footrest** a real ergonomic benefit, not just a bonus.
-
-> **v3 update — live Amazon.co.uk prices (accessed 22 Jun 2026):** see the table below. Headline: the **Vango Hampton DLX + footstool comes to ~£111 all-in** (cheaper than estimated), and the **Nemo Stargaze is ~£250 on Amazon UK — over budget** (drop it for an Amazon purchase).
-
-> **v4 update — recline mechanism + optional footrest:** User currently has a **zero-gravity recliner** and finds its **twist-lock recline levers impractical**. Footrest is now a confirmed **must**, but wanted as an **option you deploy when you choose** (not always attached). This *reinforces* the top pick: the **Vango Hampton DLX** reclines via a **7-position frame (no twist-lock knobs)**, and its **Padded Footstool is a separate clip-on** you add only when you want your feet up. Steer away from zero-gravity chairs (they nearly all use the same twist-lock levers).
-
-## 🔧 Your current chair & the recline mechanisms (why this matters)
-
-You've got a **zero-gravity lounger** with **twist-lock levers** on each armrest — you twist both to lock/release the recline. That's the pain point. Here's how the recline types compare, easiest-first:
-
-| Recline type | How it works | Verdict for you |
-|---|---|---|
-| **Hands-free lean-back** (Nemo Stargaze) | Just lean back, it holds your angle | Easiest of all — but **~£250, over budget** |
-| **Multi-position frame** (Vango Hampton DLX) | Lean/adjust the chair into 7 preset positions; hard armrests | ✅ **No levers/knobs** — fixes your gripe, in budget |
-| **Auto-rising lounger** (Outwell Catamarca Lounger) | Lean back and the footrest rises with you | ✅ Simple, footrest built-in (always there) |
-| **Slide/cam-lock** (Outwell Acadia) | Lockable slide positions | ⚠️ Has a locking action — better than twist levers but not lever-free |
-| **Twist-lock zero-gravity** (your current chair) | Twist both side levers to lock | ❌ What you're replacing — avoid |
-
-
-## 💷 Live Amazon.co.uk prices (22 Jun 2026)
-
-| Item | Amazon price | Notes | Link (ASIN) |
-|---|---|---|---|
-| **Vango Hampton DLX** (standard, Excalibur) ⭐ | **£70.61** | 140 kg · 116 cm back · 7-pos recline · padded · headrest cushion | B081G5R3MD |
-| **Vango Hampton Padded Footstool** | **~£40** (RRP) | The leg support for your short legs. *Out of stock at Vango direct — check Amazon/Winfields stock* | B0BQCFK85K |
-| **→ Top-pick bundle (chair + footstool)** | **≈ £110.61** | Tall back + recline + headrest + footrest + padded, ~£90 under budget | — |
-| **Outwell Catamarca Lounger** (Black) | **£73.99** | Built-in auto footrest + recline + cup holder · 125 kg | B0BWJY8JNQ |
-| **Outwell Acadia** (Black) | **from £163.99** | Padded · recline · removable headrest · cup-holder side table · 150 kg | B084SDQ7QY |
-| **Helinox Sunset Chair** (Black, w/ pockets) | **£189.00** (RRP £239; other offers from £143.83) | Tall back + headrest flap · 1.56 kg · 145 kg · **no recline/footrest** | B09N2DFFLM |
-| ~~Nemo Stargaze Recliner Luxury~~ (Oxide) | **~£250** ❌ over budget | Was my "comfort" pick — but Amazon UK price exceeds £200; only buy if you find the cheaper EVO-X variant elsewhere | B09PH6Q2L6 |
-
-*Amazon prices change frequently and vary by colourway — confirm at checkout. "Other offers from £143.83" on the Helinox = used/third-party sellers.*
+> **Why this version:** Earlier drafts recommended a Vango Hampton DLX **plus** a separate clip-on footstool. You've since said you want the footrest **integrated into the one chair**, not as an extra — so the pick has changed.
 
 ---
 
-## How your body shape changes the pick
+## 🏆 The single-unit answer: Outwell Catamarca Lounger — £73.99
 
-- **Long torso → tall backrest is essential.** You need the back to reach up to your shoulders/neck. Aim for a back height of **~110 cm+** (or a headrest flap/cushion) so your upper back and head are supported, not floating above the chair.
-- **Shorter legs → a footrest is genuinely worth it.** With shorter legs, an ordinary seat leaves your feet dangling or your calves unsupported. A **footrest/leg rest** lets your legs rest properly — this is the single biggest comfort upgrade for your shape.
-- **Avoid a deliberately *high* seat and a very *deep* seat.** A high seat (e.g. Helinox Chair One XL's 47 cm "easy to stand up" seat) leaves short legs dangling; a deep seat pan presses behind your knees. A **moderate seat height (~40–45 cm)** with a footrest, or a slightly lower seat, suits you better.
-- **Capacity: ignore it.** Anything rated 110 kg+ is fine — don't pay extra for 180–200 kg ratings you'll never use.
-
-➡️ **The ideal chair for you = TALL BACK + FOOTREST + RECLINE, in a comfy padded package.**
-
----
-
-## 🏆 My pick for you: Vango Hampton DLX (£95) + matching footrest
-
-The standard **Hampton DLX** (not the extra-wide "Grande" — you don't need the 59 cm girth or 180 kg rating now) is the best fit for your shape and brief:
+**One chair. Footrest built in. No levers. Nothing else to buy.**
 
 | Spec | Detail | Why it fits you |
 |---|---|---|
-| Back height | **116 cm (tall)** | Supports your long torso up to the shoulders/neck |
-| Recline | **7 positions** | Sit upright for food, lie back to relax |
-| Headrest | Adjustable cushion (headrest/lumbar) | Extra upper-back/neck support |
-| **Footrest** | **Separate clip-on footstool (~£40)** | Clips on *only when you want* your feet up, folds flat — exactly the "footrest if I choose" you asked for, and far better than your current twist-lever lounger |
-| Padding | Padded seat + back, steel frame | Max comfort, year-round |
-| Capacity / weight | 140 kg / ~5.9 kg | Huge margin over your 82.5 kg; fine for car + short carries |
-| Price | **£95** + footrest ≈ **£115–125 total** |  |
+| **Footrest** | **Built-in — rises automatically as you lean back** | Integrated into the one unit; **no twist-levers** like your current chair |
+| Recline | Lean-back lounger action (upright dining → reclined) | Simple, hands-free-ish — the mechanism gripe is gone |
+| Back height | **116 cm (tall)** | Supports your long torso up to the shoulders |
+| Seat height | 45 cm · capacity **125 kg** | Ample for 82.5 kg; easy in/out |
+| Extras | Cup holder, wide armrests, folds in seconds, carry feel ~6 kg | Festival/garden/car ready |
+| Fabric | 300×600D woven polyester (firm, **not foam-padded**) | The one compromise — see below |
+| Price | **£73.99** (Amazon.co.uk) · ASIN **B0BWJY8JNQ** | ~£126 under budget |
 
-**Why it wins:** it's the cheapest way to get a genuinely **tall, padded, reclining** chair **with a matching footrest** — the exact combination your body shape calls for — and the whole setup lands around £120, leaving budget to spare. In stock on Vango UK (unlike the often-sold-out Grande).
+🔗 [Outwell Catamarca Lounger — Amazon.co.uk](https://www.amazon.co.uk/CATAMARCA-Lounger-Black-OUTWELL/dp/B0BWJY8JNQ)
 
----
-
-## The three tiers (re-weighted for you)
-
-### 🟢 Budget — Outwell Catamarca **Lounger** · ~£54–80
-*The cheapest chair that already has a tall back AND a built-in footrest — a natural fit for your shape.*
-
-| Feature | Has it? |
-|---|---|
-| Back height | ✅ **116 cm** (tall — good for long torso) |
-| Recline | ✅ dining → full lounger |
-| **Footrest** | ✅ **built-in, rises automatically as you lean back** |
-| Cup holder | ✅ mesh holder |
-| Padding | ❌ sling fabric — add a £10–15 insulated seat pad |
-| Capacity / weight | 125 kg (ample) · ~6 kg |
-
-**Best for:** maximum ergonomic fit for the least money. The auto-rising footrest directly solves the short-leg dangle, and the tall back suits your torso. Add a fleece seat pad and you've effectively got the full feature set for under £80.
-⚠️ Buy the **Lounger** (footrest + recline), *not* the plain Catamarca / Catamarca XL armchairs (£25/£43, no recline/footrest).
+**The one honest trade-off:** it's a firm **woven-polyester** seat, not a plush foam-padded one. It's comfortable in a sun-lounger way (taut, supportive, breathable), but if you want extra cushioning you *can* throw a £10–15 seat pad on top — **optional, not required**; the chair is complete as a single unit.
 
 ---
 
-### 🟡 Mid — Vango Hampton DLX + footrest · ~£115–125  ⭐ *top pick (details above)*
+## Why this is the right call (the trade-off, explained)
 
-**Padded · tall back · recline · headrest · footrest add-on · ample capacity.** The all-round sweet spot for your shape and budget.
+You asked for three things at once: **(1) one integrated unit, (2) a footrest, (3) no twist-levers** — plus comfort and a tall back. Under £200, here's the lie of the land:
 
----
+| If you want… | You get… | Verdict |
+|---|---|---|
+| One unit + built-in footrest + **no levers** | **Outwell Catamarca Lounger** (firm woven fabric) | ✅ **The answer** |
+| One unit + built-in footrest + **plush foam padding** | …only **zero-gravity recliners** — which use the **twist-lock levers you're replacing** | ❌ Rejected |
+| **Foam-padded** + footrest + no levers | …a padded chair (Westfield/Vango Hampton) **+ a SEPARATE leg rest** | ❌ Two items, not one unit |
 
-### 🔴 Best under £200 — comfort-led, pick by use
-
-**Route A — premium comfort that you can carry: Nemo Stargaze EVO-X · ~£166**
-
-| Feature | Detail |
-|---|---|
-| Recline | ✅ **swinging auto-recline** — suspended seat finds your angle hands-free |
-| Headrest | ✅ adjustable padded headrest, "supports a wide range of heights" (good for a long torso) |
-| Cup holder | ✅ two integrated holders |
-| Footrest | ❌ none (legs can dangle — less ideal for short legs unless you add a small stool) |
-| Padding | ❌ cool mesh (breathable, not warm) |
-| Capacity / weight | 136 kg · **2.86 kg** (light enough to carry) |
-
-**Best for:** the most luxurious *comfort experience* and the lightest "best" option for your mixed/carry use. The suspended swing is superb for a long torso. **Caveat for your legs:** no footrest, so pair it with a tiny packable footstool if dangling bothers you; and the mesh isn't warm.
-
-**Route B — tallest back + plush, mostly car: Outwell Acadia · £165**
-Padded, adjustable + removable headrest, lockable recline (back 100–114 cm), side table + cup holder, 150 kg. No footrest (add a clip-on). Heaviest (8.4 kg) — best when you're mostly car-based and want the plushest seat.
-
-> **Packable tall-back alternative — Helinox Sunset (£150) / Savanna (£200):** Savanna has the tallest back (112 cm) + headrest pocket; Sunset is 97 cm + headrest flap, just 1.6 kg. Brilliant build and carry weight, and capacity is irrelevant now — but **no recline, no footrest**, so they're comfort-from-geometry rather than the lie-back-with-legs-up experience your shape benefits from.
+So a single, foam-padded, lever-free chair with a built-in footrest essentially **doesn't exist under £200** — the padded ones split the footrest off, and the integrated-footrest ones are lever-type zero-gravity. The **Catamarca Lounger is the cleanest real-world fit** for "buy this one unit."
 
 ---
 
-## Feature scorecard (re-ranked for your body shape)
+## Other single-unit options (footrest included in the one chair)
 
-| Chair | Price | Back height | Recline | Headrest | Footrest | Cup holder | Padding | Carry wt | Fit for you |
-|---|---|---|---|---|---|---|---|---|---|
-| **Vango Hampton DLX + footrest** ⭐ | ~£115–125 | 116 cm | ✅ 7-pos | ✅ | ✅ add-on | ➕ clip-on | ✅ | 5.9 kg | **Best all-round** |
-| **Outwell Catamarca Lounger** | £54–80 | 116 cm | ✅ | ✅ | ✅ built-in | ✅ | ❌ (+pad) | 6 kg | **Best value / ergonomics** |
-| **Nemo Stargaze EVO-X** | ~£166 | tall + headrest | ✅ swing | ✅ | ❌ | ✅✅ | ❌ mesh | 2.86 kg | Best comfort + carry |
-| Outwell Acadia | £165 | 100–114 cm | ✅ | ✅ | ❌ | ✅ | ✅ | 8.4 kg | Plushest, car-based |
-| Helinox Savanna | £200 | **112 cm** | ❌ | ✅ pocket | ❌ | ✅✅ | ❌ | 1.9 kg | Tall back, ultralight |
-| Helinox Sunset | £150 | 97 cm | fixed | ✅ flap | ❌ | ❌ | ❌ | 1.6 kg | Lightest tall-back |
-
-➕ = add as a cheap accessory.
+- **Vango Ventura Camping Chair with Foot Rest** — built-in (removable) footrest, cup holder, adjustable armrests. Older/simpler design with a **lower back** than the Catamarca, but a true one-unit-with-footrest. Price ~£60–80, verify live. 🔗 [Amazon.co.uk B0064M6FE8](https://www.amazon.co.uk/Vango-Ventura-Camping-Chair/dp/B0064M6FE8)
+- **EcoBargains Deluxe Reclining Camping Chair with Foot Rest** — single package: reclining backrest + adjustable leg rest, drink holder, magazine pocket, wide 57 cm seat, high back. Budget, lesser-known brand. 🔗 [EcoBargains](https://ecobargains.co.uk/product/reclining-camping-deck-chair-grey/)
+- **GCI Outdoor Legz-Up Lounger** — built-in folding footrest + 4 backrest positions in one unit, but ~113 kg rating and patchy UK stock. Worth a look if the Catamarca's fabric puts you off.
 
 ---
 
-## Complete-the-setup accessories
+## What I've dropped (and why)
 
-- **Footrest** (the big one for your legs): Vango Hampton matching footrest (~£20–30); or a universal/packable clip-on leg rest (Decathlon Quechua leg rest ~£17). For the Nemo, a small folding footstool.
-- **Seat pad** (warmth/cushion): fleece or insulated pad, £10–15 — turns the Catamarca Lounger or any mesh chair into a plush, year-round seat.
-- **Cup holder:** clip-on ~£5–8 if your chair lacks one.
-
----
-
-## What you can now ignore from v1
-
-- Heavy-duty 180–200 kg chairs (Outwell Grand Canyon XL, Vango Hampton **Grande** DLX) — **overkill at 82.5 kg**, and the extra-wide seats can feel sloppy for your frame. The standard Hampton DLX fits better.
-- The "high seat to stand up easily" advice — that suited a *tall-legged* user; for your **shorter legs**, a moderate seat + footrest is more comfortable.
-- Capacity warnings on the Quechua (110 kg), Nemo Moonlite (113 kg), Alpkit/Robens (120 kg) — **all now fine for you**, so judge them purely on comfort/back height instead.
+- **Vango Hampton DLX + footstool (the old top pick)** — lovely padded chair and a clip-on footrest, but that's **two items**. You ruled this out.
+- **Westfield Advancer ErgoFit (£99–145)** — properly padded (3D mesh), adjustable headrest, 7-position recline — but its footrest (Focus Leg Rest) is a **separate accessory**. Same problem.
+- **Zero-gravity recliners** (your current style) — built-in footrest, but the **twist-lock levers** are exactly what you're getting away from.
+- **Helinox / Nemo** — no footrest at all (Helinox), or over budget on Amazon UK (Nemo Stargaze ~£250).
 
 ---
 
 ## Decision shortcut
 
-- **Best all-round for your shape (tall back + footrest + padded recline), great value →** **Vango Hampton DLX £95 + footrest** ⭐
-- **Cheapest chair that already nails the ergonomics →** **Outwell Catamarca Lounger £54–80** + seat pad
-- **Most luxurious + lightest to carry →** **Nemo Stargaze** — *but ~£250 on Amazon UK (over budget)*; only if you find the cheaper EVO-X variant at a specialist retailer
-- **Plushest, mostly-car option →** **Outwell Acadia £165**
+- **Buy this one unit → Outwell Catamarca Lounger, £73.99.** Built-in auto-rising footrest, no levers, tall back, cup holder. Add a £10–15 seat pad later *only if* you want more cushion.
+- **If you specifically need foam padding and will accept it not being one unit →** go back to the Vango Hampton DLX (£70.61) + clip-on footstool (~£40) from v4.
+- **Tighter budget / simpler →** Vango Ventura (~£60–80).
 
 ---
 
 ## Caveats / confidence
 
-- Prices fluctuate; confirm at checkout. High-confidence (read direct): Vango Hampton DLX £95, Outwell Catamarca £25 / XL £43, Helinox Sunset £149.95 / Savanna £199.95, Nemo Stargaze EVO-X ~£166, Outwell Acadia £165.
-- **Verify before buying:** the price of the Vango Hampton **footrest** accessory (not published — check at point of sale); that you're getting the Catamarca **Lounger** (footrest) not the armchair; current stock on the Hampton DLX.
-- Back-height figures are manufacturer specs; if possible, sit in one at a Go Outdoors / Decathlon to confirm the back reaches your shoulders.
+- **Amazon prices move** — Catamarca Lounger confirmed **£73.99** (ASIN B0BWJY8JNQ); re-check at checkout.
+- **Fabric expectation:** the Catamarca Lounger is firm woven polyester, *not* foam-padded — set expectations accordingly; it's sun-lounger comfortable, not armchair-plush.
+- **Vango Ventura** live Amazon price wasn't pinned down this session — verify before buying.
+- Capacity is a non-issue for you (every option here clears 82.5 kg with large margin).
 
 ### Key sources
-- Vango Hampton DLX + footrest: vango.co.uk/hampton-dlx-chair
-- Outwell Catamarca Lounger / Acadia: outwell.com/en-gb/ecommerce/camping-furniture · millets.co.uk
-- Nemo Stargaze EVO-X: nemoequipment.com/products/stargaze-reclining-camp-chair · valleyandpeak.co.uk
-- Helinox Sunset/Savanna: helinox.co.uk/products/sunset-chair · /savanna-chair
-- Roundups: livefortheoutdoors.com/camping/accessories/best-camping-chairs · outdoorsmagic.com/article/best-camping-chairs
+- Outwell Catamarca Lounger (spec + footrest mechanism): outwell.com/en-gb/ecommerce/camping-furniture/camping-chairs/catamarca-lounger · amazon.co.uk/dp/B0BWJY8JNQ
+- Vango Ventura: amazon.co.uk/Vango-Ventura-Camping-Chair/dp/B0064M6FE8
+- Westfield Advancer ErgoFit (footrest is separate Focus Leg Rest): standartcaravans.com/product/westfield-performance-focus-leg-rest-for-performance-series-chairs
+- EcoBargains reclining chair w/ footrest: ecobargains.co.uk/product/reclining-camping-deck-chair-grey
