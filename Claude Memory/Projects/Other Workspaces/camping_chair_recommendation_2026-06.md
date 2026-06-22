@@ -16,6 +16,21 @@ status: research-complete
 
 > **v3 update — live Amazon.co.uk prices (accessed 22 Jun 2026):** see the table below. Headline: the **Vango Hampton DLX + footstool comes to ~£111 all-in** (cheaper than estimated), and the **Nemo Stargaze is ~£250 on Amazon UK — over budget** (drop it for an Amazon purchase).
 
+> **v4 update — recline mechanism + optional footrest:** User currently has a **zero-gravity recliner** and finds its **twist-lock recline levers impractical**. Footrest is now a confirmed **must**, but wanted as an **option you deploy when you choose** (not always attached). This *reinforces* the top pick: the **Vango Hampton DLX** reclines via a **7-position frame (no twist-lock knobs)**, and its **Padded Footstool is a separate clip-on** you add only when you want your feet up. Steer away from zero-gravity chairs (they nearly all use the same twist-lock levers).
+
+## 🔧 Your current chair & the recline mechanisms (why this matters)
+
+You've got a **zero-gravity lounger** with **twist-lock levers** on each armrest — you twist both to lock/release the recline. That's the pain point. Here's how the recline types compare, easiest-first:
+
+| Recline type | How it works | Verdict for you |
+|---|---|---|
+| **Hands-free lean-back** (Nemo Stargaze) | Just lean back, it holds your angle | Easiest of all — but **~£250, over budget** |
+| **Multi-position frame** (Vango Hampton DLX) | Lean/adjust the chair into 7 preset positions; hard armrests | ✅ **No levers/knobs** — fixes your gripe, in budget |
+| **Auto-rising lounger** (Outwell Catamarca Lounger) | Lean back and the footrest rises with you | ✅ Simple, footrest built-in (always there) |
+| **Slide/cam-lock** (Outwell Acadia) | Lockable slide positions | ⚠️ Has a locking action — better than twist levers but not lever-free |
+| **Twist-lock zero-gravity** (your current chair) | Twist both side levers to lock | ❌ What you're replacing — avoid |
+
+
 ## 💷 Live Amazon.co.uk prices (22 Jun 2026)
 
 | Item | Amazon price | Notes | Link (ASIN) |
@@ -52,7 +67,7 @@ The standard **Hampton DLX** (not the extra-wide "Grande" — you don't need the
 | Back height | **116 cm (tall)** | Supports your long torso up to the shoulders/neck |
 | Recline | **7 positions** | Sit upright for food, lie back to relax |
 | Headrest | Adjustable cushion (headrest/lumbar) | Extra upper-back/neck support |
-| **Footrest** | **Matching add-on (~£20–30)** | The key win for your shorter legs |
+| **Footrest** | **Separate clip-on footstool (~£40)** | Clips on *only when you want* your feet up, folds flat — exactly the "footrest if I choose" you asked for, and far better than your current twist-lever lounger |
 | Padding | Padded seat + back, steel frame | Max comfort, year-round |
 | Capacity / weight | 140 kg / ~5.9 kg | Huge margin over your 82.5 kg; fine for car + short carries |
 | Price | **£95** + footrest ≈ **£115–125 total** |  |
