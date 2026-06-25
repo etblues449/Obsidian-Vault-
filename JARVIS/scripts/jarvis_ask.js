@@ -76,18 +76,25 @@ module.exports = async (params) => {
       const input = block.input;
       answer += `\n✓ ${formatAction(tool, input)}`;
 
-      // Execute via Tasker HTTP API
-      try {
-        const execRes = await fetch("http://localhost:1337", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tool, input })
-        });
-        if (!execRes.ok) {
-          answer += ` (execution pending)`;
+      // Execute via Tasker
+      if (tool === "set_alarm") {
+        try {
+          const [hours, minutes] = input.time.split(":").map(x => parseInt(x));
+          const params = new URLSearchParams({
+            task: "Jarvis Handler",
+            par1: hours.toString(),
+            par2: minutes.toString(),
+            par3: input.label || "Alarm"
+          });
+          const execRes = await fetch(`http://localhost:1337/?${params.toString()}`, {
+            method: "GET"
+          });
+          if (execRes.ok) {
+            answer += ` ✓`;
+          }
+        } catch (e) {
+          answer += ` (pending)`;
         }
-      } catch (e) {
-        answer += ` (Tasker: ${e.message})`;
       }
     }
   }
