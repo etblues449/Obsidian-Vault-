@@ -221,4 +221,187 @@ Then trigger from JARVIS:
    Progress:
    - [ ] Milestone 1
    - [ ] Milestone 2
-         
+   ```
+
+3. When you work on it, **capture to JARVIS:**
+   - "Made progress on [project], did [task]"
+   - JARVIS tags it with project name
+   - **Weekly Review** shows all project captures
+
+### Track in Goals & Outcomes
+
+For major projects (Faceless Finance, Smart Home, Doc to Learning, Work Forecasting):
+
+- Define **milestones** with due dates
+- Update **status** in weekly review
+- Note **blockers** or **upcoming needs**
+- Check progress monthly
+
+---
+
+## 📚 Templates You Have
+
+| Template | Purpose | When to use |
+|----------|---------|------------|
+| **Daily Plan** | Today's priorities + energy blocks | Every morning (or copy weekly) |
+| **Weekly Review** | Weekly wins + reflections + next priorities | Every Sunday |
+| **Capture Templates** | Structured formats for different life areas | When capturing anything important |
+| **Habits** | Track daily/weekly/monthly habits + streaks | Daily logging + weekly review |
+| **Recurring Tasks** | Copy-paste tasks for each project | Weekly review planning |
+| **Finance Tracker** | Dashboard of expenses by category | Monthly review |
+| **Decision Journal** | Record major decisions + outcomes | After making a decision |
+| **Goals & Outcomes** | Project milestones + personal goals | Monthly/quarterly review |
+
+---
+
+## 🔧 Customization
+
+### Change Trigger Keys
+
+In **QuickAdd settings:**
+
+1. Go to Choices & Packages
+2. Find each macro (Capture, Ask, Digest, Expense, Weekly)
+3. Edit **Trigger** field
+4. Save
+
+Suggested triggers:
+- `Alt+J` — Capture (J = JARVIS)
+- `Alt+A` — Ask
+- `Alt+D` — Digest
+- `Alt+E` — Expense
+- `Alt+W` — Weekly Review
+
+### Customize HA Entities
+
+In `JARVIS/scripts/jarvis.js` (lines 39-50):
+
+```javascript
+haEntities: {
+  "light.living_room_light": "Living room main",
+  "light.left_smart_bulb": "Left bedroom bulb",
+  // Add your lights here
+}
+```
+
+Check Home Assistant UI for exact entity IDs.
+
+### Add Custom Capture Categories
+
+In `JARVIS/scripts/jarvis.js` (line 80), update Claude system prompt to recognize new types:
+
+```javascript
+Your categories are: journal, health, task, finance, decision, idea, question, smart-home, [YOUR_NEW_CATEGORY]
+```
+
+---
+
+## 🆘 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "API key not found" notice | Run JARVIS Setup again; make sure you pasted full key |
+| Captures appear in wrong folder | Check CONFIG.folders mapping in jarvis.js matches your JARVIS/ paths |
+| HA lights don't turn on | Verify entity IDs in CONFIG.haEntities match your HA setup |
+| Digest says "nothing captured" | Check captures exist in JARVIS/Inbox/ (check path spelling) |
+| Weekly review not creating | Make sure Weekly Review Template exists at that path |
+| Expense classifier returns "Misc" | Try longer/more detailed description; API key might be rate-limited |
+
+---
+
+## 📱 Mobile Setup (Fold 7)
+
+### Obsidian Sync
+
+1. Enable **Obsidian Sync** in settings
+2. Sign in with your Anthropic account
+3. Vault syncs automatically across devices
+4. Secrets stored locally (not synced) ✅
+
+### Quick Capture from Home Screen
+
+**Create Tasker task:**
+
+1. New Task: "JARVIS Capture"
+2. Action: Open Obsidian
+3. Load URL: `obsidian://new?vault=Obsidian-Vault-`
+4. Assign to home screen widget or gesture
+
+**Create Shortcut (Android):**
+
+1. App: Shortcut Maker
+2. URI: `obsidian://new?vault=Obsidian-Vault-&folder=JARVIS/Inbox`
+3. Save to home screen as "Capture"
+
+### Offline Support
+
+- Captures work fully offline
+- Syncs when connection returns
+- QuickAdd scripts run locally (no internet needed)
+- HA control needs internet (adjust in HA settings for remote access)
+
+---
+
+## 🎓 Learning Path
+
+**Week 1:**
+- [ ] Run Basic Setup
+- [ ] Capture 5-10 items
+- [ ] Do one Digest
+- [ ] Try one light control
+
+**Week 2:**
+- [ ] Create your first Weekly Review
+- [ ] Start daily habit logging
+- [ ] Capture expenses for 1 week
+- [ ] Read Capture Templates, try each one
+
+**Week 3:**
+- [ ] Complete first full week (daily plans + weekly review)
+- [ ] Set up Monthly Finance Review
+- [ ] Define 4 project milestones in Goals & Outcomes
+
+**Week 4:**
+- [ ] Complete first month
+- [ ] Monthly reflection (what worked, what to improve)
+- [ ] Add 2-3 HA automations
+- [ ] Try Advanced Setup (Expense Classifier, Weekly Trigger)
+
+---
+
+## 📞 Support
+
+**Errors with scripts?**
+- Check browser console (`Ctrl+Shift+I` in Obsidian)
+- Verify API key is valid
+- Restart Obsidian
+
+**HA integration not working?**
+- Test URL in browser: `http://your-ha-ip:8123/api/`
+- Verify bearer token is correct
+- Check entity IDs exist in HA
+
+**Questions about setup?**
+- Read `JARVIS/SETUP.md` for detailed setup
+- Check `JARVIS/Advanced Setup.md` for advanced features
+- All scripts documented in `JARVIS/scripts/` folder
+
+---
+
+## 🎉 You're Ready
+
+You now have:
+
+✅ A personal AI assistant (Claude) in Obsidian  
+✅ Automatic capture + categorization  
+✅ Smart home control (lights, climate, etc.)  
+✅ Life tracking (habits, goals, finances, decisions)  
+✅ Weekly reviews + dashboards  
+✅ Mobile sync + offline support  
+✅ Extensible (add automations, email integration, etc.)  
+
+**Start with:** Press your Capture trigger and describe what you're doing right now.
+
+JARVIS will learn from your captures, help you plan your week, track your projects, and eventually automate your entire life.
+
+**Welcome to JARVIS v3. 🚀**
