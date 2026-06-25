@@ -9,7 +9,7 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - Upstairs: BLE/radar contention unresolved
 - **On-device JARVIS terminal (Fold 7): operational** — Claude Code pinned to v2.1.112 in Termux, auto mode, filesystem MCP scoped to `~/jarvis`, vault cloned on-device, Termux:API hardware tools live (battery + notification verified). See [[sessions/2026-06-13]].
 - **JARVIS Phone-Native v1: complete & deployed** — Capture (text→Inbox), HA control (REST wrapper), git sync (branch-aware), daily digest (cron), one-tap Termux:Widget. Fully tested on Fold 7 (install.sh runs clean, capture + HA control working, cron scheduled). PR #52 merged to master 2026-06-16. See [[sessions/2026-06-16]] + QUICK_START.md.
-- **JARVIS v3: Obsidian-native (current direction)** — pivoted away from Termux as the focal point. The vault IS the brain: capture via Advanced URI → QuickAdd; classification/routing/HA/digest run *inside Obsidian* as QuickAdd user scripts calling the Claude API (`claude-opus-4-8`, structured outputs) via `requestUrl`; Smart Connections for vault-wide chat; Obsidian Sync primary + Git backup. Secrets device-local (localStorage), never committed. Built 2026-06-16 — code + docs in `Claude Memory/Skills/jarvis/obsidian/`. Next: install on Fold 7 per SETUP.md.
+- **JARVIS v3: Obsidian-native (PRODUCTION READY)** — pivoted away from Termux as the focal point. The vault IS the brain: capture via QuickAdd macros; classification/routing/HA/digest run *inside Obsidian* as QuickAdd user scripts calling the Claude API (`claude-opus-4-8`, structured outputs) via `requestUrl`; dashboards auto-update via Dataview; Obsidian Sync primary + Git backup. Secrets device-local (localStorage), never committed. **Built & tested 2026-06-19** — 14 docs + 6 scripts, all files copied to phone, git commits attributed to main account (etblues449). Ready for user setup per INSTALLATION CHECKLIST.md. See [[sessions/2026-06-19]].
 - **JARVIS Phone-Native v1/v2 (Termux/bash): ARCHIVED** — retired from the daily loop 2026-06-16, kept as emergency CLI only. See `Claude Memory/Skills/jarvis/phone/_ARCHIVED.md`.
 - **RuView WiFi-CSI sensing: live & phone-free** — ESP32-S3 node 3 (192.168.0.227) streams CSI; local HA add-on "RuView CSI Bridge" on the hub publishes 6 MQTT entities (presence, breathing, heart-rate, motion, persons, anomaly) on the Smart Home dashboard. HA hub real IP = **192.168.0.200**. See [[sessions/2026-06-08]].
 
@@ -24,6 +24,9 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 
 ## Next Actions
 - [x] **GitHub PAT rotated** (2026-06-15) — old exposed token revoked, new fine-grained token in Windows Credential Manager
+- [x] **JARVIS v3 Obsidian-native: complete** (2026-06-19) — all docs, scripts, config + phone setup ready
+- [ ] **User: Run INSTALLATION CHECKLIST.md on Fold 7** — steps 1-9, ~15 min total
+- [ ] **User: Test all 5 macros** — Capture, Ask, Digest, Expense, Weekly (per step 9 of checklist)
 - [ ] Fix upstairs BLE/radar contention
 - [ ] **Apply .171 IP collision fix** — upstairs → .207 via ESPHome OTA. Full plan: [[fixes/2026-06-14-ip-collision-fix]]
 - [ ] DHCP reservation: RuView node MAC e0:72:a1:e7:03:60 → .227
@@ -35,4 +38,4 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 
 ## Reference
 Full detail: [[smart_home]]
-Sessions: [[sessions/2026-06-16]] — JARVIS phone-native v1 complete + merged · [[sessions/2026-06-13]] — on-device JARVIS stand-up · [[sessions/2026-06-08]] — RuView CSI node fixed + WiFi sensing live
+Sessions: [[sessions/2026-06-19]] — JARVIS v3 Obsidian-native complete & production-ready · [[sessions/2026-06-16]] — JARVIS phone-native v1 complete + merged · [[sessions/2026-06-13]] — on-device JARVIS stand-up · [[sessions/2026-06-08]] — RuView CSI node fixed + WiFi sensing live
