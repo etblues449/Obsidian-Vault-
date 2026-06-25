@@ -24,7 +24,7 @@ module.exports = async (params) => {
   const question = await quickAddApi.inputPrompt("Ask JARVIS");
   if (!question || !question.trim()) return;
 
-  // Ground on the 20 most recent Inbox + Journal notes (cheap, no embeddings).
+  // Ground on the 20 most recent JARVIS captures + Journal notes (cheap, no embeddings).
   const recent = app.vault
     .getMarkdownFiles()
     .filter((f) => f.path.startsWith("JARVIS/Inbox/") || f.path.startsWith("Journal/"))
