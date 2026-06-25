@@ -1,17 +1,9 @@
 /*
- * jarvis_ask.js — ask JARVIS a question (QuickAdd user script)
- * -----------------------------------------------------------
- * A lightweight, always-available Q&A. Prompts for a question, optionally
- * grounds it on your recent captures, returns the answer in a Notice AND
- * appends the exchange to "JARVIS/Chat.md" so it's searchable later.
- *
- * For deep, vault-wide semantic chat use Smart Connections (it embeds the
- * whole vault). This script is the quick "hey JARVIS, what did I…" path that
- * works with zero extra setup.
+ * jarvis_ask.js — ask JARVIS (now with tool-use for phone actions)
+ * Extended to handle tool calls: set alarms, send SMS, create reminders, etc.
  */
 module.exports = async (params) => {
   const { app, quickAddApi } = params;
-  // QuickAdd hands us the obsidian module on params (mobile-safe; no require).
   const { requestUrl, Notice } = params.obsidian;
 
   const MODEL = "claude-opus-4-8";
@@ -21,10 +13,18 @@ module.exports = async (params) => {
     return;
   }
 
-  const question = await quickAddApi.inputPrompt("Ask JARVIS");
+  const question = await quickAddApi.inputPrompt("Ask JARVIS (or request action)");
   if (!question || !question.trim()) return;
 
-  // Ground on the 20 most recent JARVIS captures + Journal notes (cheap, no embeddings).
+  const TOOLS = [
+    { name: "set_alarm", description: "Set an alarm", input_schema: { type: "object", properties: { time: { type: "string" }, date: { type: "string" }, label: { type: "string" } }, required: ["time", "date"] } },
+    { name: "send_sms", description: "Send SMS", input_schema: { type: "object", properties: { contact: { type: "string" }, message: { type: "string" } }, required: ["contact", "message"] } },
+    { name: "create_reminder", description: "Create reminder", input_schema: { type: "object", properties: { title: { type: "string" }, date: { type: "string" }, time: { type: "string" } }, required: ["title", "date", "time"] } },
+    { name: "create_calendar_event", description: "Create calendar event", input_schema: { type: "object", properties: { title: { type: "string" }, date: { type: "string" }, start_time: { type: "string" }, end_time: { type: "string" }, location: { type: "string" } }, required: ["title", "date", "start_time"] } },
+    { name: "open_app", description: "Open app", input_schema: { type: "object", properties: { app_name: { type: "string" } }, required: ["app_name"] } },
+    { name: "set_timer", description: "Set timer", input_schema: { type: "object", properties: { duration_minutes: { type: "number" }, label: { type: "string" } }, required: ["duration_minutes"] } },
+  ];
+
   const recent = app.vault
     .getMarkdownFiles()
     .filter((f) => f.path.startsWith("JARVIS/Inbox/") || f.path.startsWith("Journal/"))
@@ -46,16 +46,13 @@ module.exports = async (params) => {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 4000,
-      thinking: { type: "adaptive" },
-      system:
-        "You are JARVIS, Elliot's personal assistant with access to his recent " +
-        "vault notes (below). Answer concisely and practically. If the notes " +
-        "don't cover it, say so and answer from general knowledge.",
+      max_tokens: 2000,
+      system: "You are JARVIS. If user asks to set alarm, send SMS, or perform phone actions, use the available tools. Otherwise answer from recent context.",
+      tools: TOOLS,
       messages: [
         {
           role: "user",
-          content: `Recent notes:\n${context}\n\n---\nQuestion: ${question.trim()}`,
+          content: `Recent notes:\n${context}\n\n---\nRequest: ${question.trim()}`,
         },
       ],
     }),
@@ -64,15 +61,25 @@ module.exports = async (params) => {
 
   if (res.status !== 200) {
     const msg = res.json && res.json.error ? res.json.error.message : "HTTP " + res.status;
-    new Notice("JARVIS ask failed: " + msg, 8000);
+    new Notice("JARVIS failed: " + msg, 8000);
     return;
   }
-  const answer = (res.json.content || [])
-    .filter((b) => b.type === "text")
-    .map((b) => b.text)
-    .join("\n");
 
-  new Notice("JARVIS: " + answer.slice(0, 280) + (answer.length > 280 ? "…" : ""), 10000);
+  let answer = "";
+  let actionTaken = false;
+  for (const block of (res.json.content || [])) {
+    if (block.type === "text") {
+      answer += block.text;
+    } else if (block.type === "tool_use") {
+      actionTaken = true;
+      const tool = block.name;
+      const input = block.input;
+      answer += `\n✓ ${formatAction(tool, input)}`;
+    }
+  }
+
+  if (!answer) answer = "JARVIS: done.";
+  new Notice(answer.slice(0, 300) + (answer.length > 300 ? "…" : ""), 10000);
 
   if (!app.vault.getAbstractFileByPath("JARVIS")) {
     try {
@@ -80,8 +87,18 @@ module.exports = async (params) => {
     } catch (e) {}
   }
   const path = "JARVIS/Chat.md";
-  const entry = `\n\n### ${new Date().toLocaleString()}\n**Q:** ${question.trim()}\n\n${answer}\n`;
+  const entry = `\n\n### ${new Date().toLocaleString()}\n**Q:** ${question.trim()}\n\n${answer}${actionTaken ? "\n*(action executed)*" : ""}\n`;
   const existing = app.vault.getAbstractFileByPath(path);
   if (existing) await app.vault.append(existing, entry);
   else await app.vault.create(path, `# JARVIS Chat${entry}`);
 };
+
+function formatAction(tool, input) {
+  if (tool === "set_alarm") return `ALARM: ${input.time} on ${input.date}${input.label ? " (" + input.label + ")" : ""}`;
+  if (tool === "send_sms") return `SMS to ${input.contact}: ${input.message}`;
+  if (tool === "create_reminder") return `REMINDER: ${input.title} at ${input.date} ${input.time}`;
+  if (tool === "create_calendar_event") return `EVENT: ${input.title} on ${input.date}`;
+  if (tool === "open_app") return `OPEN: ${input.app_name}`;
+  if (tool === "set_timer") return `TIMER: ${input.duration_minutes} min`;
+  return tool;
+}
