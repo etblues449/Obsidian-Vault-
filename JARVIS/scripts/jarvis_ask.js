@@ -80,18 +80,11 @@ module.exports = async (params) => {
       if (tool === "set_alarm") {
         try {
           const [hours, minutes] = input.time.split(":").map(x => parseInt(x));
-          const params = new URLSearchParams({
-            task: "Jarvis Handler",
-            par1: hours.toString(),
-            par2: minutes.toString(),
-            par3: input.label || "Alarm"
-          });
-          const execRes = await fetch(`http://localhost:1337/?${params.toString()}`, {
-            method: "GET"
-          });
-          if (execRes.ok) {
-            answer += ` ✓`;
-          }
+          const label = input.label || "Alarm";
+          // Call Tasker with task and parameters
+          const url = `http://localhost:1337/?task=Jarvis%20Handler&par1=${hours}&par2=${minutes}&par3=${encodeURIComponent(label)}`;
+          await fetch(url);
+          answer += ` ✓`;
         } catch (e) {
           answer += ` (pending)`;
         }
