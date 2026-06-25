@@ -75,6 +75,20 @@ module.exports = async (params) => {
       const tool = block.name;
       const input = block.input;
       answer += `\n✓ ${formatAction(tool, input)}`;
+
+      // Execute via Tasker HTTP API
+      try {
+        const execRes = await fetch("http://localhost:1337", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tool, input })
+        });
+        if (!execRes.ok) {
+          answer += ` (execution pending)`;
+        }
+      } catch (e) {
+        answer += ` (Tasker: ${e.message})`;
+      }
     }
   }
 
