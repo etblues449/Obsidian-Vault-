@@ -1,7 +1,6 @@
 /*
- * JARVIS Full Automatic Assistant — Complete tool-use implementation
- * Handles all phone actions: alarms, SMS, reminders, calendar, timers, apps, notifications
- * Auto-logs everything to vault with context and timestamps
+ * JARVIS Full Automatic Assistant v2 — Voice + Text + Full Integration
+ * Natural language requests → Claude AI → Phone actions + Vault logging
  */
 module.exports = async (params) => {
   const { app, quickAddApi } = params;
@@ -14,7 +13,26 @@ module.exports = async (params) => {
     return;
   }
 
-  const question = await quickAddApi.inputPrompt("Ask JARVIS (or request action)");
+  // Get user input: prompt for text or voice
+  const inputMethod = await quickAddApi.singleSelectPrompt(
+    ["Text", "Voice"],
+    "Ask JARVIS — Text or Voice?"
+  );
+
+  let question;
+  if (inputMethod === "Voice") {
+    // Voice input via browser speech recognition
+    question = await captureVoiceInput();
+    if (!question) {
+      new Notice("JARVIS: Voice input failed or cancelled");
+      return;
+    }
+    new Notice(`JARVIS: Heard — "${question}"`);
+  } else {
+    // Text input
+    question = await quickAddApi.inputPrompt("Ask JARVIS (or request action)");
+  }
+
   if (!question || !question.trim()) return;
 
   const TOOLS = [
@@ -251,4 +269,39 @@ function formatAction(tool, input) {
   if (tool === "send_notification") return `🔔 NOTIFY: ${input.title}`;
   if (tool === "log_event") return `📝 LOG: ${input.title} [${input.category}]`;
   return tool;
+}
+
+// Voice input capture (uses Web Speech API if available)
+async function captureVoiceInput() {
+  return new Promise((resolve) => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      resolve(null);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+
+    recognition.onstart = () => {
+      console.log("[JARVIS] Listening...");
+    };
+
+    recognition.onresult = (event) => {
+      let transcript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      resolve(transcript.trim());
+    };
+
+    recognition.onerror = () => {
+      resolve(null);
+    };
+
+    recognition.start();
+    setTimeout(() => recognition.stop(), 10000); // 10 second timeout
+  });
 }
