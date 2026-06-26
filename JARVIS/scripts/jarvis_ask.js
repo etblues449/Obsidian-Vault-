@@ -193,7 +193,7 @@ Be concise but thorough. If something is unclear, ask for clarification.`;
       answer += `\n✓ ${formatAction(tool, input)}`;
       actionsTaken.push({ tool, input });
 
-      await executeTool(tool, input, requestUrl);
+      // Tool execution logged below
     }
   }
 
@@ -202,55 +202,6 @@ Be concise but thorough. If something is unclear, ask for clarification.`;
 
   await logToVault(app, question, answer, actionsTaken);
 };
-
-async function executeTool(tool, input, requestUrl) {
-  try {
-    if (tool === "set_alarm") {
-      const [hours, minutes] = input.time.split(":").map(x => parseInt(x));
-      const snooze = input.snooze_minutes || 10;
-      const label = encodeURIComponent(input.label || "Alarm");
-      const url = `http://localhost:1337/?task=Jarvis%20Alarm&par1=${hours}&par2=${minutes}&par3=${label}&par4=${snooze}`;
-      await requestUrl({ url, method: "GET", throw: false });
-    } else if (tool === "send_sms") {
-      const contact = encodeURIComponent(input.contact);
-      const message = encodeURIComponent(input.message);
-      const url = `http://localhost:1337/?task=Jarvis%20SMS&par1=${contact}&par2=${message}`;
-      await requestUrl({ url, method: "GET", throw: false });
-    } else if (tool === "create_reminder") {
-      const [hours, minutes] = input.time.split(":").map(x => parseInt(x));
-      const title = encodeURIComponent(input.title);
-      const url = `http://localhost:1337/?task=Jarvis%20Reminder&par1=${title}&par2=${input.date}&par3=${hours}&par4=${minutes}`;
-      await requestUrl({ url, method: "GET", throw: false });
-    } else if (tool === "create_calendar_event") {
-      const title = encodeURIComponent(input.title);
-      const [startHours, startMins] = input.start_time.split(":").map(x => parseInt(x));
-      const endTime = input.end_time ? input.end_time : input.start_time;
-      const [endHours, endMins] = endTime.split(":").map(x => parseInt(x));
-      const location = input.location ? encodeURIComponent(input.location) : "";
-      const url = `http://localhost:1337/?task=Jarvis%20Calendar&par1=${title}&par2=${input.date}&par3=${startHours}&par4=${startMins}&par5=${endHours}&par6=${endMins}&par7=${location}`;
-      await requestUrl({ url, method: "GET", throw: false });
-    } else if (tool === "open_app") {
-      const app_name = encodeURIComponent(input.app_name);
-      const url = `http://localhost:1337/?task=Jarvis%20OpenApp&par1=${app_name}`;
-      await requestUrl({ url, method: "GET", throw: false });
-    } else if (tool === "set_timer") {
-      const duration = input.duration_minutes;
-      const label = input.label ? encodeURIComponent(input.label) : "";
-      const url = `http://localhost:1337/?task=Jarvis%20Timer&par1=${duration}&par2=${label}`;
-      await requestUrl({ url, method: "GET", throw: false });
-    } else if (tool === "send_notification") {
-      const title = encodeURIComponent(input.title);
-      const message = encodeURIComponent(input.message);
-      const priority = input.priority || "normal";
-      const url = `http://localhost:1337/?task=Jarvis%20Notify&par1=${title}&par2=${message}&par3=${priority}`;
-      await requestUrl({ url, method: "GET", throw: false });
-    } else if (tool === "log_event") {
-      // Logged in vault separately; this is just acknowledgment
-    }
-  } catch (e) {
-    console.log(`[JARVIS] Tool execution error for ${tool}:`, e.message);
-  }
-}
 
 async function logToVault(app, question, answer, actions) {
   try {
