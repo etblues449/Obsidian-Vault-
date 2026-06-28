@@ -137,3 +137,35 @@ point of putting the brain in the vault.
   `../phone/_ARCHIVED.md`. Kept only as an emergency CLI.
 - **n8n.cloud + Tasker + localtunnel pipeline** — replaced. No hosted workflow,
   no tunnel, no PC dependency in the daily loop.
+
+---
+
+## v4 addition (2026-06-29) — the conversational front-end: "Job"
+
+v3 above is the capture/routing brain that lives inside Obsidian. **v4 adds a voice front-end that lets you *talk to the vault and hear it answer*** — without a PC, a phone number, or any monthly cost.
+
+```
+   ┌────────────────────────────────────────────────────────────┐
+   │ VOICE FRONT-END  "Job" — tap-to-talk web app                │
+   │   Browser Web Speech API:                                   │
+   │     • webkitSpeechRecognition  (your voice → text)          │
+   │     • speechSynthesis          (reply → spoken audio)       │
+   │   Hosted as static index.html on Vercel Hobby (free)        │
+   └───────────────────────────┬────────────────────────────────┘
+                               │ POST {text}
+                               ▼
+   ┌────────────────────────────────────────────────────────────┐
+   │ READER/ANSWERER  api/voice-agent.js (Vercel serverless)     │
+   │   • reads vault from GitHub (@octokit/rest, branch master): │
+   │       JARVIS/Inbox + Claude Memory/MEMORY.md + today's note │
+   │   • sends context + question to Groq llama-3.1-8b-instant   │
+   │   • returns {reply, vault:"connected"|"unreachable"}        │
+   │   • fails gracefully — still answers if vault unreachable   │
+   └────────────────────────────────────────────────────────────┘
+```
+
+**Why this design.** The original intent was a Twilio phone call (the TikTok inspiration). Twilio proved unavoidably paid for UK/US numbers, so the front-end became a **browser tap-to-talk page** using the Web Speech API — free forever, no number, works in Chrome/Samsung Internet on the Fold 7. The LLM is **Groq** (free tier) rather than Claude (no free-forever tier), keeping the whole thing at £0/month.
+
+**Relationship to v3.** v4 is read-and-converse; v3 is capture-and-route. They share the same substrate (the vault on `master`). v4 currently *reads* the vault; the natural Phase 2 is to give Job the same `ha_action` path v3 already defines, so spoken commands can control Home Assistant.
+
+**Live:** `https://jarvis-voice-lovat.vercel.app` · Vercel project `jelly-bean-s-projects/jarvis-voice` · source `~/job-voice-agent` (Termux) · see `sessions/2026-06-29.md` for the full build log and gotchas.
