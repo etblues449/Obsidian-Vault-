@@ -1,0 +1,246 @@
+{
+  "name": "JARVIS - Connection Finder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 14 * * 0"
+            }
+          ]
+        }
+      },
+      "id": "cf1",
+      "name": "Every Sunday 2pm",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const paths = [\n  'Claude Memory/MEMORY.md',\n  'Claude Memory/Projects/Smart Home/_index.md',\n  'Claude Memory/Projects/Faceless Finance/_index.md',\n  'Claude Memory/Projects/Doc to Learning/_index.md',\n  'Claude Memory/Projects/Work Financial Forecasting/_index.md',\n  'Claude Memory/Projects/Other Workspaces/_index.md'\n];\nreturn paths.map(p => ({ json: { path: p, name: p } }));"
+      },
+      "id": "cf2",
+      "name": "Seed Vault Paths",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "etblues449"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Obsidian-Vault-"
+        },
+        "filePath": "={{ $json.path }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "id": "cf3",
+      "name": "Get File",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const parts = [];\nfor (const item of $input.all()) {\n  const j = item.json;\n  const name = j.name || j.path || 'file';\n  let text = '';\n  if (j.content) text = Buffer.from(j.content, 'base64').toString('utf8');\n  parts.push('## ' + name + '\\n' + text.slice(0, 4000));\n}\nreturn [{ json: { corpus: parts.join('\\n\\n---\\n\\n').slice(0, 45000) } }];"
+      },
+      "id": "cf4",
+      "name": "Aggregate Files",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const corpus = $input.first().json.corpus;\nconst body = {\n  model: 'claude-opus-4-8',\n  max_tokens: 2000,\n  system: \"You are JARVIS, a connection analyst for Elliot's Obsidian vault. Find non-obvious links across his projects. Sections: ## Surprising Links, ## Project Bridges, ## Missing Connections, ## Suggested Actions (numbered, concrete). Every claim must cite which note or project it came from. If the evidence is thin, say so rather than inventing links.\",\n  messages: [{ role: 'user', content: '=== VAULT CONTEXT ===\\n' + corpus + '\\n\\nFind the connections.' }]\n};\nreturn [{ json: { body } }];"
+      },
+      "id": "cf5",
+      "name": "Compose Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "cf6",
+      "name": "Claude - Find Connections",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.content[0].text;\nconst date = $now.setZone('Europe/London').toFormat('yyyy-MM-dd');\nconst markdown = '# Connections Found — ' + date + '\\n\\n' + text + '\\n\\n---\\n*Generated automatically by n8n (JARVIS Skill 3: Connection Finder).*\\n';\nreturn [{ json: { path: 'Claude Memory/connections/' + date + '.md', markdown: markdown, commit: 'Connection report ' + date + ' (automated)' } }];"
+      },
+      "id": "cf7",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "create",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "etblues449"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Obsidian-Vault-"
+        },
+        "filePath": "={{ $json.path }}",
+        "fileContent": "={{ $json.markdown }}",
+        "commitMessage": "={{ $json.commit }}"
+      },
+      "id": "cf8",
+      "name": "Write Report",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1400,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Every Sunday 2pm": {
+      "main": [
+        [
+          {
+            "node": "Seed Vault Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seed Vault Paths": {
+      "main": [
+        [
+          {
+            "node": "Get File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get File": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Files": {
+      "main": [
+        [
+          {
+            "node": "Compose Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose Request": {
+      "main": [
+        [
+          {
+            "node": "Claude - Find Connections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude - Find Connections": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output": {
+      "main": [
+        [
+          {
+            "node": "Write Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/London"
+  },
+  "pinData": {}
+}
