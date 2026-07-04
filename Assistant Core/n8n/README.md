@@ -66,6 +66,30 @@ Don't wait for the schedule — hit **Execute Workflow** once on each after impo
 
 ---
 
+## Note Router Add-ons (`note-router-addons.json`)
+
+Nine paste-ready nodes that upgrade the existing **JARVIS · Note Router**:
+
+- **Junk Filter** — drops empty/placeholder captures ("your note here", "test") before they reach Claude or the vault
+- **Belief Gate → Get/Append/Update Beliefs** — captures containing `#belief` get appended to `Claude Memory/beliefs.md` (Skill 5 auto-capture)
+- **Decision Gate → Get/Append/Update Decisions** — captures containing `#decision` get appended to `Claude Memory/decisions.md` (Skill 7 auto-capture)
+
+### Install (~3 min, on the Note Router canvas)
+
+1. Open the raw JSON file, **select all → copy**
+2. Open **JARVIS · Note Router** in n8n → click empty canvas → **paste** (Ctrl/Cmd+V). The 9 nodes appear with their internal wiring intact
+3. Make **three connections by hand**:
+   - Delete the existing **Normalize Note → Classify Note** connection
+   - Wire **Normalize Note → Junk Filter → Classify Note**
+   - Wire **Commit Note to Vault → Belief Gate** and **Commit Note to Vault → Decision Gate**
+4. Select your GitHub credential on the 4 new GitHub nodes (red triangles)
+5. **Test:** Execute with a capture containing `#belief` — check `beliefs.md` gains an entry. Execute with text "your note here" — check the run stops at Junk Filter and nothing commits
+6. **Publish**
+
+The gates are Code nodes that emit nothing unless the tag is present, so untagged captures flow through the normal path untouched.
+
+---
+
 ## Troubleshooting
 
 - **GitHub node fails with 404** → check the credential has repo access, and the path exists on `master`
