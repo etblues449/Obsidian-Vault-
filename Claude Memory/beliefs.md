@@ -41,3 +41,11 @@
 - Delivery standard in CLAUDE.md; sessions that ship artifacts (skills, workflows, carousel) move projects, sessions that plan don't
 
 **Status:** HOLDING
+
+---
+
+## Belief — 2026-07-04 20:27
+**Source:** api-test (auto-routed by Note Router)
+**Status:** NEW (unconfirmed)
+
+Tagged captures now file themselves — the vault routes beliefs and decisions automatically, verified end-to-end today
