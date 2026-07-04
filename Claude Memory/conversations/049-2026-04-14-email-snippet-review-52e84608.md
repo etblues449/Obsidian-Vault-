@@ -1250,80 +1250,80 @@ Two quick questions before I write the email:
 
 ## human — 2026-04-14 10:08:42
 
-Household Expenses:		
-Mortgage/rent		£21,600
-Ground rent/service charge		
-Insurance - buildings		
-Insurance - contents		
-Burglar alarm		
-Council tax + arrears	£3,684 + £1,776	£3,864
-Water rates + arrears	£504 + £484	£504
-Gas + arrears	£1,873.05 + TBC	£1,873
-Electricity + arrears	£1,873.05 + TBC	£1,873
-Coal		
-Telephone/internet/satellite	£383.88	£383.88
-Mobile telephone		
-TV licence	£174.50	£174.50
-Netflix	£227.88	£227.88
-Amazon Prime subscription and film renting	£95	£95
-Apple music/Spotify	£155.88	£155.88
-Other online subscriptions	£600	£600
-Cleaner	£1,560	£1,560
-Gardener		
-Window cleaner		
-App purchases		
-Cloud backup/anti-virus protection/storage	£50	£50
-Gadget/tech replacement (phone, laptop/printer, TV)		
-House repairs, upkeep, redecorating, maintenance		
-Appliance service, maintenance and replacement (white goods, boiler, etc.)		
-Housekeeping expenses		
-Food and groceries, including cleaning materials, stamps, postage, etc.	£3,140	£3,140
-Wines and spirits	£300	£300
-Newspapers		
-Magazines		
-Stationery and printer cartridges	£100	£100
-Chemist	£100	£100
-Garden (including window boxes, plants, seeds, sundries)		
-Personal Expenses:		
-Clothes, shoes, accessories	£300	£300
-Dry cleaning	£100	£100
-Shoe repairs		
-Hairdressing	£780	£780
-Cosmetics, perfume, etc.	£200	£200
-Toiletries, shampoo, henna, etc.	£500	£500
-Health and well-being	£500	£500
-Dentist	£840 (Kids)	£840 (Kids)
-Optician		
-Membership and club subscriptions	£2,676	£2,676
-Prescriptions		
-Gifts including birthdays	£400	£400
-Charity donations	£540	
-Pets (including food, vet's bills, insurance, cattery)		
-Theatre/music events/cinema	£420	
-Restaurants/eating out	£500	
-Books		
-Flowers		
-Evening classes		
-Sports (and equipment)	£420	£420
-Holidays, visiting friends and family, retreats, and related travel	£1,500	
-Hobbies		
-Christmas expenses	£500	£500
-Cash	£2,500	£2,500
-Expenses at work	£500	£500
-Training/CPD		
-Financial adviser/accountancy/professional fees		
-Car and Transport Expenses:		
-Lease payments		
-Insurance		
-Servicing/MOT/maintenance		
-Road tax		
-Electric/Diesel	£6,240	£6,240
-Parking permit/expenses/congestion charge		
-AA/RAC membership		
-Depreciation		
-Bus fares		
-Train fares		
-Taxis		
+Household Expenses:		
+Mortgage/rent		£21,600
+Ground rent/service charge		
+Insurance - buildings		
+Insurance - contents		
+Burglar alarm		
+Council tax + arrears	£3,684 + £1,776	£3,864
+Water rates + arrears	£504 + £484	£504
+Gas + arrears	£1,873.05 + TBC	£1,873
+Electricity + arrears	£1,873.05 + TBC	£1,873
+Coal		
+Telephone/internet/satellite	£383.88	£383.88
+Mobile telephone		
+TV licence	£174.50	£174.50
+Netflix	£227.88	£227.88
+Amazon Prime subscription and film renting	£95	£95
+Apple music/Spotify	£155.88	£155.88
+Other online subscriptions	£600	£600
+Cleaner	£1,560	£1,560
+Gardener		
+Window cleaner		
+App purchases		
+Cloud backup/anti-virus protection/storage	£50	£50
+Gadget/tech replacement (phone, laptop/printer, TV)		
+House repairs, upkeep, redecorating, maintenance		
+Appliance service, maintenance and replacement (white goods, boiler, etc.)		
+Housekeeping expenses		
+Food and groceries, including cleaning materials, stamps, postage, etc.	£3,140	£3,140
+Wines and spirits	£300	£300
+Newspapers		
+Magazines		
+Stationery and printer cartridges	£100	£100
+Chemist	£100	£100
+Garden (including window boxes, plants, seeds, sundries)		
+Personal Expenses:		
+Clothes, shoes, accessories	£300	£300
+Dry cleaning	£100	£100
+Shoe repairs		
+Hairdressing	£780	£780
+Cosmetics, perfume, etc.	£200	£200
+Toiletries, shampoo, henna, etc.	£500	£500
+Health and well-being	£500	£500
+Dentist	£840 (Kids)	£840 (Kids)
+Optician		
+Membership and club subscriptions	£2,676	£2,676
+Prescriptions		
+Gifts including birthdays	£400	£400
+Charity donations	£540	
+Pets (including food, vet's bills, insurance, cattery)		
+Theatre/music events/cinema	£420	
+Restaurants/eating out	£500	
+Books		
+Flowers		
+Evening classes		
+Sports (and equipment)	£420	£420
+Holidays, visiting friends and family, retreats, and related travel	£1,500	
+Hobbies		
+Christmas expenses	£500	£500
+Cash	£2,500	£2,500
+Expenses at work	£500	£500
+Training/CPD		
+Financial adviser/accountancy/professional fees		
+Car and Transport Expenses:		
+Lease payments		
+Insurance		
+Servicing/MOT/maintenance		
+Road tax		
+Electric/Diesel	£6,240	£6,240
+Parking permit/expenses/congestion charge		
+AA/RAC membership		
+Depreciation		
+Bus fares		
+Train fares		
+Taxis		
 Car wash/valet
 
 ## assistant — 2026-04-14 10:08:46
@@ -1831,33 +1831,33 @@ This whole process — the separation, the finances, the legal proceedings — h
 
 and i hhave the following expenses data. makre sure that you explain that the rent is already being paid via my mom and dad due to my situation.
 
-Item	Current Cost
-Rent / Future Mortgage	
-Council Tax	£185.00
-Water	£82.50
-Gas 	£220.00
-Electricity	£220.00
-Internet	£32.00
-TV License	£14.55
-Netflix	£19.00
-Amazon Prime	£8.00
-Apple / Spotify subscriptions	£13.00
-Other Entertainment / Subscriptions	£50.00
-Data storage & protection	£4.20
-Food, Groceries & Household supplies	£303.00
-Haircuts	£30.00
-Cosmetics	£17.00
-Toiletries, products	£42.00
-Health & Well-being	£42.00
-Dentist	£42.00
-Sports and Equipment	£35.00
-Emergency Cash	£200.00
-Car & fuel	£520.00
-Children's Items	
-Additional Food	£347.00
-Haircuts	£45.00
-Children's Hobbies & Sports	£77.00
-Marrital Debt	£1,664.00
+Item	Current Cost
+Rent / Future Mortgage	
+Council Tax	£185.00
+Water	£82.50
+Gas 	£220.00
+Electricity	£220.00
+Internet	£32.00
+TV License	£14.55
+Netflix	£19.00
+Amazon Prime	£8.00
+Apple / Spotify subscriptions	£13.00
+Other Entertainment / Subscriptions	£50.00
+Data storage & protection	£4.20
+Food, Groceries & Household supplies	£303.00
+Haircuts	£30.00
+Cosmetics	£17.00
+Toiletries, products	£42.00
+Health & Well-being	£42.00
+Dentist	£42.00
+Sports and Equipment	£35.00
+Emergency Cash	£200.00
+Car & fuel	£520.00
+Children's Items	
+Additional Food	£347.00
+Haircuts	£45.00
+Children's Hobbies & Sports	£77.00
+Marrital Debt	£1,664.00
 
 
 as you might expect the funds of mom and dad are limited and they help where they can along with paying for the divorce proceedings and help with the 3 boys from it.
@@ -1903,14 +1903,14 @@ dont put the rental figure into this. i need you to ask them if they can help me
 
 its going to these people but i need it to be blanket so i can send the same email to all of them.
 
-council tax
-water
-gas and elec
-Barclays
-virgin 
-zopa
-tescos
-v12
+council tax
+water
+gas and elec
+Barclays
+virgin 
+zopa
+tescos
+v12
 vanquis
 
 ## assistant — 2026-04-20 16:16:03

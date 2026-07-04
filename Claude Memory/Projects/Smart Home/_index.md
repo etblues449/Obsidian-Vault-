@@ -12,6 +12,8 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - **JARVIS v3: Obsidian-native (DEPLOYED & LIVE)** — Obsidian-native brain replacing Termux. The vault IS the system: Capture (Alt+J) → Claude classifies → routes to folder; Ask (Alt+A) → Q&A grounded in last 20 captures; Digest (Alt+D) → daily 24h summary to Journal/. All run *inside Obsidian* via QuickAdd scripts calling Claude API (`claude-opus-4-8`) via `requestUrl`. Dashboards (Master Dashboard, Finance Tracker, Projects Dashboard) auto-update via Dataview. Obsidian Sync + Git backup. Secrets device-local (localStorage), never synced. **Complete 2026-06-20**: 14 docs + 6 scripts + home-screen shortcuts; all 3 core macros tested & working on Fold 7; digest running daily; Ask returning grounded answers. See [[sessions/2026-06-19]].
 - **JARVIS Phone-Native v1/v2 (Termux/bash): ARCHIVED** — retired from the daily loop 2026-06-16, kept as emergency CLI only. See `Claude Memory/Skills/jarvis/phone/_ARCHIVED.md`.
 - **RuView WiFi-CSI sensing: live & phone-free** — ESP32-S3 node 3 (192.168.0.227) streams CSI; local HA add-on "RuView CSI Bridge" on the hub publishes 6 MQTT entities (presence, breathing, heart-rate, motion, persons, anomaly) on the Smart Home dashboard. HA hub real IP = **192.168.0.200**. See [[sessions/2026-06-08]].
+- **Seven-Skill Active Vault: LIVE (2026-07-04)** — all 5 n8n workflows published on jellybean1875.app.n8n.cloud: Note Router (capture, continuous), Morning Brief (daily 7am), Pattern Detector (Mon 8am), Connection Finder (Sun 2pm), Weekly Synthesis (Fri 6pm). Each: Schedule → GitHub reads → Claude Opus 4.8 → commit to vault, Europe/London tz. All four test-executed green — first automated reports committed (briefings/, connections/, synthesis/, patterns.md). Skills 5 & 7 (Belief Tracker, Decision Intelligence) manual via `#belief`/`#decision` tags → beliefs.md / decisions.md (both seeded). Importable JSONs: `Assistant Core/n8n/`. See [[sessions/2026-07-04]].
+- **JARVIS Carousel: deployed on Vercel** — 7-slide Next.js presentation (JARVIS-Carousel/ in vault, monorepo root dir on Vercel project `jarvis-carousel`). Production branch = master.
 
 ## Key Decisions
 - bedroom-2.yaml canonical (bedroom.yaml broken)
@@ -35,6 +37,10 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - [x] **Install Termux:Widget + JARVIS buttons** (2026-06-16) — jarvis, sync, digest shortcuts created; widget installed on home screen. Shortcut may need Termux:Widget rebuild if pointing to Obsidian instead of Termux.
 - [ ] Copy `JARVIS-CHEATSHEET.md` into `~/jarvis`
 - [ ] Optional later: upgrade Claude Code to native binary via the ferrum patcher, on wifi + wakelock
+- [x] **Seven-skill n8n automation: imported, tested, published** (2026-07-04)
+- [ ] **Fix empty Tasker captures** — "Ask JARVIS" shortcut has fired 3× with placeholder "your note here"; input variable not reaching the webhook
+- [ ] Verify first scheduled runs land: Synthesis Fri 6pm, Connection Sun 2pm, Patterns Mon 8am, Brief daily 7am
+- [ ] Optional: add `#belief`/`#decision` tag routing to Note Router (skills 5 & 7 auto-capture)
 
 ## Reference
 Full detail: [[smart_home]]

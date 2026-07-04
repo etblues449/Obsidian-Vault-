@@ -1,1 +1,1 @@
-![[Mine_vs_Amy_May_26.pdf]]
+[Mine_vs_Amy_May_26.pdf](attachments/Mine_vs_Amy_May_26.pdf)
