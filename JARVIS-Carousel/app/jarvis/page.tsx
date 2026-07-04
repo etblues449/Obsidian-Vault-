@@ -35,11 +35,53 @@ function loadLog(): LogEntry[] {
   }
 }
 
+const TASKER_BRIDGE = 'http://localhost:1337/'
+
+type PhoneAction = {
+  label: string
+  tasker: { task: string; par1: string; par2: string }
+  intent: string
+}
+
+function detectAction(text: string): PhoneAction | null {
+  let m = text.match(/alarm\s*(?:for|at)?\s*(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?/i)
+  if (m) {
+    let H = parseInt(m[1], 10)
+    const M = m[2] ? parseInt(m[2], 10) : 0
+    const ap = m[3]?.toLowerCase()
+    if (ap === 'pm' && H < 12) H += 12
+    if (ap === 'am' && H === 12) H = 0
+    if (H > 23 || M > 59) return null
+    const hh = String(H).padStart(2, '0')
+    const mm = String(M).padStart(2, '0')
+    return {
+      label: `ALARM ${hh}:${mm}`,
+      tasker: { task: 'Jarvis Alarm', par1: `${hh}:${mm}`, par2: 'JARVIS' },
+      intent: `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${H};i.android.intent.extra.alarm.MINUTES=${M};S.android.intent.extra.alarm.MESSAGE=JARVIS;end`,
+    }
+  }
+  m = text.match(/timer\s*(?:for)?\s*(\d+)\s*(hours?|hrs?|minutes?|mins?)?/i)
+  if (m) {
+    const n = parseInt(m[1], 10)
+    const mins = /h/i.test(m[2] || 'min') ? n * 60 : n
+    if (!mins || mins > 24 * 60) return null
+    return {
+      label: `TIMER ${mins} MIN`,
+      tasker: { task: 'Jarvis Timer', par1: String(mins), par2: 'JARVIS' },
+      intent: `intent:#Intent;action=android.intent.action.SET_TIMER;i.android.intent.extra.alarm.LENGTH=${mins * 60};S.android.intent.extra.alarm.MESSAGE=JARVIS;end`,
+    }
+  }
+  return null
+}
+
 export default function Vault() {
   const [clock, setClock] = useState('--:--:--')
   const [input, setInput] = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'dropped' | 'error'>('idle')
   const [lastResult, setLastResult] = useState<LogEntry | null>(null)
+  const [lastAction, setLastAction] = useState<
+    (PhoneAction & { outcome: 'tasker' | 'fallback' }) | null
+  >(null)
   const [log, setLog] = useState<LogEntry[]>([])
   const [listening, setListening] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -139,6 +181,30 @@ export default function Vault() {
     const text = input.trim()
     if (!text || status === 'sending') return
     setStatus('sending')
+    setLastAction(null)
+
+    // Phone action layer: try the Tasker HTTP bridge on this device,
+    // fall back to an Android system intent button if it's not running.
+    const action = detectAction(text)
+    const actionPromise = action
+      ? (async () => {
+          try {
+            const ctl = new AbortController()
+            const to = setTimeout(() => ctl.abort(), 2500)
+            await fetch(TASKER_BRIDGE, {
+              method: 'POST',
+              mode: 'no-cors',
+              body: JSON.stringify(action.tasker),
+              signal: ctl.signal,
+            })
+            clearTimeout(to)
+            setLastAction({ ...action, outcome: 'tasker' })
+          } catch {
+            setLastAction({ ...action, outcome: 'fallback' })
+          }
+        })()
+      : null
+
     try {
       const r = await fetch('/api/capture', {
         method: 'POST',
@@ -165,6 +231,7 @@ export default function Vault() {
       setStatus('error')
       setLastResult({ ts: Date.now(), text, ok: false })
     }
+    if (actionPromise) await actionPromise
   }, [input, status])
 
   const toggleMic = useCallback(() => {
@@ -269,6 +336,25 @@ export default function Vault() {
           )}
           {status === 'dropped' && '⚠ DROPPED BY JUNK FILTER (empty/placeholder)'}
           {status === 'error' && '✗ TRANSMISSION FAILED — RETRY'}
+        </div>
+      )}
+
+      {/* phone action banner */}
+      {lastAction && (
+        <div className={`banner ${lastAction.outcome === 'tasker' ? 'ok' : 'dropped'} mb-2`}>
+          {lastAction.outcome === 'tasker' ? (
+            <>⚡ {lastAction.label} → SENT TO TASKER</>
+          ) : (
+            <button
+              className="w-full text-left"
+              style={{ color: 'inherit', font: 'inherit', letterSpacing: 'inherit' }}
+              onClick={() => {
+                window.location.href = lastAction.intent
+              }}
+            >
+              ⚡ {lastAction.label} — BRIDGE OFFLINE · TAP TO SET VIA CLOCK APP
+            </button>
+          )}
         </div>
       )}
 
