@@ -1087,441 +1087,441 @@ Can you scroll up in SerialFlow and screenshot what you see at the start of the 
 
 ## human — 2026-04-20 02:12:21
 
-Connected to virtual_device
-Virtual Device Log #1: 2026-04-20 03:06:02
-temp=22.0[C] humi=60.0% volt=3.30V
-Virtual Device Log #2: 2026-04-20 03:06:03
-temp=22.6[C] humi=61.0% volt=3.38V
-Virtual Device Log #3: 2026-04-20 03:06:04
-temp=23.2[C] humi=62.0% volt=3.44V
-Virtual Device Log #4: 2026-04-20 03:06:04
-temp=23.7[C] humi=63.0% volt=3.49V
-      <+å
-Virtual Device Log #5: 2026-04-20 03:06:05
-temp=24.2[C] humi=63.9% volt=3.50V
-      
-  
-  
-Virtual Device Log #6: 2026-04-20 03:06:07
-temp=24.5[C] humi=64.8% volt=3.48V
-Virtual Device Log #7: 2026-04-20 03:06:07
-temp=24.8[C] humi=65.6% volt=3.44V
-Virtual Device Log #8: 2026-04-20 03:06:08
-temp=25.0[C] humi=66.4% volt=3.37V
-     ÿJ
-Virtual Device Log #9: 2026-04-20 03:06:09
-temp=25.0[C] humi=67.2% volt=3.29V
-Virtual Device Log #10: 2026-04-20 03:06:10
-temp=24.9[C] humi=67.8% volt=3.21V
-      
-  
-  
-Virtual Device Log #11: 2026-04-20 03:06:11
-temp=24.7[C] humi=68.4% volt=3.15V
-Virtual Device Log #12: 2026-04-20 03:06:12
-temp=24.4[C] humi=68.9% volt=3.11V
-  ð
-Virtual Device Log #13: 2026-04-20 03:06:13
-temp=24.0[C] humi=69.3% volt=3.10V
-Virtual Device Log #14: 2026-04-20 03:06:14
-temp=23.5[C] humi=69.6% volt=3.12V
-Virtual Device Log #15: 2026-04-20 03:06:14
-temp=23.0[C] humi=69.9% volt=3.17V
-      
-  
-  
-Virtual Device Log #16: 2026-04-20 03:06:15
-temp=22.4[C] humi=70.0% volt=3.24V
-     ÿJ
-Virtual Device Log #17: 2026-04-20 03:06:16
-temp=21.8[C] humi=70.0% volt=3.32V
-Virtual Device Log #18: 2026-04-20 03:06:17
-temp=21.2[C] humi=69.9% volt=3.40V
-Virtual Device Log #19: 2026-04-20 03:06:17
-temp=20.7[C] humi=69.7% volt=3.46V
-Virtual Device Log #20: 2026-04-20 03:06:18
-temp=20.2[C] humi=69.5% volt=3.49V
-      
-  
-  
-      <+å
-Virtual Device Log #21: 2026-04-20 03:06:19
-temp=19.7[C] humi=69.1% volt=3.50V
-Virtual Device Log #22: 2026-04-20 03:06:20
-temp=19.4[C] humi=68.6% volt=3.47V
-Virtual Device Log #23: 2026-04-20 03:06:21
-temp=19.1[C] humi=68.1% volt=3.42V
-Virtual Device Log #24: 2026-04-20 03:06:21
-temp=19.0[C] humi=67.5% volt=3.34V
-  ð
-Virtual Device Log #25: 2026-04-20 03:06:23
-temp=19.0[C] humi=66.8% volt=3.27V
-      
-  
-  
-Virtual Device Log #26: 2026-04-20 03:06:24
-temp=19.1[C] humi=66.0% volt=3.19V
-Virtual Device Log #27: 2026-04-20 03:06:24
-temp=19.3[C] humi=65.2% volt=3.13V
-Virtual Device Log #28: 2026-04-20 03:06:25
-temp=19.7[C] humi=64.3% volt=3.10V
-      <+å
-Virtual Device Log #29: 2026-04-20 03:06:26
-temp=20.1[C] humi=63.3% volt=3.10V
-Virtual Device Log #30: 2026-04-20 03:06:27
-temp=20.6[C] humi=62.4% volt=3.14V
-      
-  
-  
-Virtual Device Log #31: 2026-04-20 03:06:28
-temp=21.2[C] humi=61.4% volt=3.19V
-Virtual Device Log #32: 2026-04-20 03:06:28
-temp=21.8[C] humi=60.4% volt=3.27V
-     ÿJ
-Virtual Device Log #33: 2026-04-20 03:06:29
-temp=22.3[C] humi=59.4% volt=3.35V
-Virtual Device Log #34: 2026-04-20 03:06:30
-temp=22.9[C] humi=58.4% volt=3.42V
-Virtual Device Log #35: 2026-04-20 03:06:31
-temp=23.5[C] humi=57.4% volt=3.47V
-      
-  
-  
-Virtual Device Log #36: 2026-04-20 03:06:32
-temp=24.0[C] humi=56.5% volt=3.50V
-  ð
-Virtual Device Log #37: 2026-04-20 03:06:33
-temp=24.4[C] humi=55.6% volt=3.49V
-Virtual Device Log #38: 2026-04-20 03:06:34
-temp=24.7[C] humi=54.7% volt=3.46V
-Virtual Device Log #39: 2026-04-20 03:06:35
-temp=24.9[C] humi=53.9% volt=3.40V
-Virtual Device Log #40: 2026-04-20 03:06:36
-temp=25.0[C] humi=53.1% volt=3.32V
-      
-  
-  
-     ÿJ
-Virtual Device Log #41: 2026-04-20 03:06:37
-temp=25.0[C] humi=52.4% volt=3.24V
-Disconnected
-Connected to virtual_device
-Virtual Device Log #1: 2026-04-20 03:06:49
-temp=22.0[C] humi=60.0% volt=3.30V
-Virtual Device Log #2: 2026-04-20 03:06:50
-temp=22.6[C] humi=61.0% volt=3.38V
-Virtual Device Log #3: 2026-04-20 03:06:51
-temp=23.2[C] humi=62.0% volt=3.44V
-Virtual Device Log #4: 2026-04-20 03:06:52
-temp=23.7[C] humi=63.0% volt=3.49V
-      <+å
-Virtual Device Log #5: 2026-04-20 03:06:53
-temp=24.2[C] humi=63.9% volt=3.50V
-      
-  
-  
-Virtual Device Log #6: 2026-04-20 03:06:53
-temp=24.5[C] humi=64.8% volt=3.48V
-Virtual Device Log #7: 2026-04-20 03:06:54
-temp=24.8[C] humi=65.6% volt=3.44V
-Virtual Device Log #8: 2026-04-20 03:06:55
-temp=25.0[C] humi=66.4% volt=3.37V
-     ÿJ
-Virtual Device Log #9: 2026-04-20 03:06:56
-temp=25.0[C] humi=67.2% volt=3.29V
-Virtual Device Log #10: 2026-04-20 03:06:57
-temp=24.9[C] humi=67.8% volt=3.21V
-      
-  
-  
-Virtual Device Log #11: 2026-04-20 03:06:58
-temp=24.7[C] humi=68.4% volt=3.15V
-Virtual Device Log #12: 2026-04-20 03:06:59
-temp=24.4[C] humi=68.9% volt=3.11V
-  ð
-Virtual Device Log #13: 2026-04-20 03:07:00
-temp=24.0[C] humi=69.3% volt=3.10V
-Virtual Device Log #14: 2026-04-20 03:07:01
-temp=23.5[C] humi=69.6% volt=3.12V
-Virtual Device Log #15: 2026-04-20 03:07:02
-temp=23.0[C] humi=69.9% volt=3.17V
-      
-  
-  
-Virtual Device Log #16: 2026-04-20 03:07:03
-temp=22.4[C] humi=70.0% volt=3.24V
-     ÿJ
-Virtual Device Log #17: 2026-04-20 03:07:04
-temp=21.8[C] humi=70.0% volt=3.32V
-Virtual Device Log #18: 2026-04-20 03:07:05
-temp=21.2[C] humi=69.9% volt=3.40V
-Virtual Device Log #19: 2026-04-20 03:07:05
-temp=20.7[C] humi=69.7% volt=3.46V
-Virtual Device Log #20: 2026-04-20 03:07:06
-temp=20.2[C] humi=69.5% volt=3.49V
-      
-  
-  
-      <+å
-Virtual Device Log #21: 2026-04-20 03:07:08
-temp=19.7[C] humi=69.1% volt=3.50V
-Virtual Device Log #22: 2026-04-20 03:07:09
-temp=19.4[C] humi=68.6% volt=3.47V
-Virtual Device Log #23: 2026-04-20 03:07:09
-temp=19.1[C] humi=68.1% volt=3.42V
-Virtual Device Log #24: 2026-04-20 03:07:10
-temp=19.0[C] humi=67.5% volt=3.34V
-  ð
-Virtual Device Log #25: 2026-04-20 03:07:11
-temp=19.0[C] humi=66.8% volt=3.27V
-      
-  
-  
-Virtual Device Log #26: 2026-04-20 03:07:12
-temp=19.1[C] humi=66.0% volt=3.19V
-Virtual Device Log #27: 2026-04-20 03:07:12
-temp=19.3[C] humi=65.2% volt=3.13V
-Virtual Device Log #28: 2026-04-20 03:07:13
-temp=19.7[C] humi=64.3% volt=3.10V
-      <+å
-Virtual Device Log #29: 2026-04-20 03:07:14
-temp=20.1[C] humi=63.3% volt=3.10V
-Virtual Device Log #30: 2026-04-20 03:07:15
-temp=20.6[C] humi=62.4% volt=3.14V
-      
-  
-  
-Virtual Device Log #31: 2026-04-20 03:07:16
-temp=21.2[C] humi=61.4% volt=3.19V
-Virtual Device Log #32: 2026-04-20 03:07:17
-temp=21.8[C] humi=60.4% volt=3.27V
-     ÿJ
-Virtual Device Log #33: 2026-04-20 03:07:18
-temp=22.3[C] humi=59.4% volt=3.35V
-Virtual Device Log #34: 2026-04-20 03:07:19
-temp=22.9[C] humi=58.4% volt=3.42V
-Virtual Device Log #35: 2026-04-20 03:07:19
-temp=23.5[C] humi=57.4% volt=3.47V
-      
-  
-  
-Virtual Device Log #36: 2026-04-20 03:07:20
-temp=24.0[C] humi=56.5% volt=3.50V
-  ð
-Virtual Device Log #37: 2026-04-20 03:07:22
-temp=24.4[C] humi=55.6% volt=3.49V
-Virtual Device Log #38: 2026-04-20 03:07:22
-temp=24.7[C] humi=54.7% volt=3.46V
-Virtual Device Log #39: 2026-04-20 03:07:23
-temp=24.9[C] humi=53.9% volt=3.40V
-Virtual Device Log #40: 2026-04-20 03:07:24
-temp=25.0[C] humi=53.1% volt=3.32V
-      
-  
-  
-     ÿJ
-Virtual Device Log #41: 2026-04-20 03:07:26
-temp=25.0[C] humi=52.4% volt=3.24V
-Virtual Device Log #42: 2026-04-20 03:07:26
-temp=24.8[C] humi=51.8% volt=3.17V
-Virtual Device Log #43: 2026-04-20 03:07:27
-temp=24.6[C] humi=51.3% volt=3.12V
-Virtual Device Log #44: 2026-04-20 03:07:28
-temp=24.2[C] humi=50.8% volt=3.10V
-      <+å
-Virtual Device Log #45: 2026-04-20 03:07:29
-temp=23.8[C] humi=50.5% volt=3.11V
-      
-  
-  
-Virtual Device Log #46: 2026-04-20 03:07:30
-temp=23.2[C] humi=50.2% volt=3.15V
-Virtual Device Log #47: 2026-04-20 03:07:31
-temp=22.7[C] humi=50.1% volt=3.21V
-Virtual Device Log #48: 2026-04-20 03:07:31
-temp=22.1[C] humi=50.0% volt=3.29V
-  ð
-Virtual Device Log #49: 2026-04-20 03:07:33
-temp=21.5[C] humi=50.0% volt=3.37V
-Virtual Device Log #50: 2026-04-20 03:07:33
-temp=20.9[C] humi=50.2% volt=3.44V
-      
-  
-  
-Virtual Device Log #51: 2026-04-20 03:07:34
-temp=20.4[C] humi=50.4% volt=3.48V
-Virtual Device Log #52: 2026-04-20 03:07:35
-temp=19.9[C] humi=50.7% volt=3.50V
-      <+å
-Virtual Device Log #53: 2026-04-20 03:07:36
-temp=19.5[C] humi=51.2% volt=3.49V
-Virtual Device Log #54: 2026-04-20 03:07:37
-temp=19.2[C] humi=51.7% volt=3.44V
-Virtual Device Log #55: 2026-04-20 03:07:38
-temp=19.1[C] humi=52.3% volt=3.38V
-      
-  
-  
-Virtual Device Log #56: 2026-04-20 03:07:39
-temp=19.0[C] humi=52.9% volt=3.30V
-     ÿJ
-Virtual Device Log #57: 2026-04-20 03:07:40
-temp=19.1[C] humi=53.7% volt=3.22V
-Virtual Device Log #58: 2026-04-20 03:07:41
-temp=19.2[C] humi=54.5% volt=3.16V
-Virtual Device Log #59: 2026-04-20 03:07:42
-temp=19.5[C] humi=55.4% volt=3.11V
-Virtual Device Log #60: 2026-04-20 03:07:43
-temp=19.9[C] humi=56.3% volt=3.10V
-      
-  
-  
-  ð
-Virtual Device Log #61: 2026-04-20 03:07:44
-temp=20.4[C] humi=57.2% volt=3.12V
-Virtual Device Log #62: 2026-04-20 03:07:45
-temp=20.9[C] humi=58.2% volt=3.17V
-Virtual Device Log #63: 2026-04-20 03:07:46
-temp=21.5[C] humi=59.2% volt=3.23V
-Virtual Device Log #64: 2026-04-20 03:07:46
-temp=22.1[C] humi=60.2% volt=3.31V
-     ÿJ
-Virtual Device Log #65: 2026-04-20 03:07:47
-temp=22.7[C] humi=61.2% volt=3.39V
-      
-  
-  
-Virtual Device Log #66: 2026-04-20 03:07:49
-temp=23.3[C] humi=62.2% volt=3.45V
-Virtual Device Log #67: 2026-04-20 03:07:49
-temp=23.8[C] humi=63.1% volt=3.49V
-Virtual Device Log #68: 2026-04-20 03:07:50
-temp=24.2[C] humi=64.0% volt=3.50V
-      <+å
-Virtual Device Log #69: 2026-04-20 03:07:51
-temp=24.6[C] humi=64.9% volt=3.48V
-Virtual Device Log #70: 2026-04-20 03:07:52
-temp=24.8[C] humi=65.8% volt=3.42V
-      
-  
-  
-Virtual Device Log #71: 2026-04-20 03:07:53
-temp=25.0[C] humi=66.6% volt=3.35V
-Virtual Device Log #72: 2026-04-20 03:07:54
-temp=25.0[C] humi=67.3% volt=3.27V
-  ð
-Virtual Device Log #73: 2026-04-20 03:07:55
-temp=24.9[C] humi=67.9% volt=3.20V
-Virtual Device Log #74: 2026-04-20 03:07:56
-temp=24.7[C] humi=68.5% volt=3.14V
-Virtual Device Log #75: 2026-04-20 03:07:56
-temp=24.4[C] humi=69.0% volt=3.11V
-      
-  
-  
-Virtual Device Log #76: 2026-04-20 03:07:57
-temp=24.0[C] humi=69.4% volt=3.10V
-      <+å
-Virtual Device Log #77: 2026-04-20 03:07:58
-temp=23.5[C] humi=69.7% volt=3.13V
-Virtual Device Log #78: 2026-04-20 03:07:59
-temp=22.9[C] humi=69.9% volt=3.18V
-Virtual Device Log #79: 2026-04-20 03:08:00
-temp=22.3[C] humi=70.0% volt=3.26V
-Virtual Device Log #80: 2026-04-20 03:08:00
-temp=21.7[C] humi=70.0% volt=3.34V
-      
-  
-  
-     ÿJ
-Virtual Device Log #81: 2026-04-20 03:08:02
-temp=21.1[C] humi=69.9% volt=3.41V
-Virtual Device Log #82: 2026-04-20 03:08:02
-temp=20.6[C] humi=69.7% volt=3.47V
-Virtual Device Log #83: 2026-04-20 03:08:03
-temp=20.1[C] humi=69.4% volt=3.50V
-Virtual Device Log #84: 2026-04-20 03:08:04
-temp=19.7[C] humi=69.0% volt=3.50V
-  ð
-Virtual Device Log #85: 2026-04-20 03:08:05
-temp=19.3[C] humi=68.5% volt=3.46V
-      
-  
-  
-Virtual Device Log #86: 2026-04-20 03:10:19
-temp=19.1[C] humi=68.0% volt=3.41V
-Virtual Device Log #87: 2026-04-20 03:10:20
-temp=19.0[C] humi=67.3% volt=3.33V
-Virtual Device Log #88: 2026-04-20 03:10:21
-temp=19.0[C] humi=66.6% volt=3.25V
-     ÿJ
-Virtual Device Log #89: 2026-04-20 03:10:22
-temp=19.2[C] humi=65.8% volt=3.18V
-Virtual Device Log #90: 2026-04-20 03:10:23
-temp=19.4[C] humi=65.0% volt=3.13V
-      
-  
-  
-Virtual Device Log #91: 2026-04-20 03:10:23
-temp=19.7[C] humi=64.1% volt=3.10V
-Virtual Device Log #92: 2026-04-20 03:10:24
-temp=20.2[C] humi=63.2% volt=3.11V
-      <+å
-Virtual Device Log #93: 2026-04-20 03:10:25
-temp=20.7[C] humi=62.2% volt=3.14V
-Virtual Device Log #94: 2026-04-20 03:10:26
-temp=21.3[C] humi=61.2% volt=3.20V
-Virtual Device Log #95: 2026-04-20 03:10:27
-temp=21.9[C] humi=60.2% volt=3.28V
-      
-  
-  
-Virtual Device Log #96: 2026-04-20 03:10:27
-temp=22.4[C] humi=59.2% volt=3.36V
-  ð
-Virtual Device Log #97: 2026-04-20 03:10:28
-temp=23.0[C] humi=58.3% volt=3.43V
-Virtual Device Log #98: 2026-04-20 03:10:29
-temp=23.6[C] humi=57.3% volt=3.48V
-Virtual Device Log #99: 2026-04-20 03:10:30
-temp=24.0[C] humi=56.3% volt=3.50V
-Virtual Device Log #100: 2026-04-20 03:10:31
-temp=24.4[C] humi=55.4% volt=3.49V
-      
-  
-  
-      <+å
-Virtual Device Log #101: 2026-04-20 03:10:32
-temp=24.7[C] humi=54.6% volt=3.45V
-Virtual Device Log #102: 2026-04-20 03:10:33
-temp=24.9[C] humi=53.7% volt=3.39V
-Virtual Device Log #103: 2026-04-20 03:10:34
-temp=25.0[C] humi=53.0% volt=3.31V
-Virtual Device Log #104: 2026-04-20 03:10:35
-temp=25.0[C] humi=52.3% volt=3.23V
-     ÿJ
-Virtual Device Log #105: 2026-04-20 03:10:35
-temp=24.8[C] humi=51.7% volt=3.16V
-      
-  
-  
-Virtual Device Log #106: 2026-04-20 03:10:36
-temp=24.5[C] humi=51.2% volt=3.12V
-Virtual Device Log #107: 2026-04-20 03:10:37
-temp=24.1[C] humi=50.8% volt=3.10V
-Virtual Device Log #108: 2026-04-20 03:10:38
-temp=23.7[C] humi=50.4% volt=3.11V
-  ð
-Virtual Device Log #109: 2026-04-20 03:10:39
-temp=23.1[C] humi=50.2% volt=3.16V
-Virtual Device Log #110: 2026-04-20 03:10:40
-temp=22.6[C] humi=50.0% volt=3.23V
-      
-  
-  
-Virtual Device Log #111: 2026-04-20 03:10:41
-temp=22.0[C] humi=50.0% volt=3.30V
-Virtual Device Log #112: 2026-04-20 03:10:41
+Connected to virtual_device
+Virtual Device Log #1: 2026-04-20 03:06:02
+temp=22.0[C] humi=60.0% volt=3.30V
+Virtual Device Log #2: 2026-04-20 03:06:03
+temp=22.6[C] humi=61.0% volt=3.38V
+Virtual Device Log #3: 2026-04-20 03:06:04
+temp=23.2[C] humi=62.0% volt=3.44V
+Virtual Device Log #4: 2026-04-20 03:06:04
+temp=23.7[C] humi=63.0% volt=3.49V
+      <+å
+Virtual Device Log #5: 2026-04-20 03:06:05
+temp=24.2[C] humi=63.9% volt=3.50V
+      
+  
+  
+Virtual Device Log #6: 2026-04-20 03:06:07
+temp=24.5[C] humi=64.8% volt=3.48V
+Virtual Device Log #7: 2026-04-20 03:06:07
+temp=24.8[C] humi=65.6% volt=3.44V
+Virtual Device Log #8: 2026-04-20 03:06:08
+temp=25.0[C] humi=66.4% volt=3.37V
+     ÿJ
+Virtual Device Log #9: 2026-04-20 03:06:09
+temp=25.0[C] humi=67.2% volt=3.29V
+Virtual Device Log #10: 2026-04-20 03:06:10
+temp=24.9[C] humi=67.8% volt=3.21V
+      
+  
+  
+Virtual Device Log #11: 2026-04-20 03:06:11
+temp=24.7[C] humi=68.4% volt=3.15V
+Virtual Device Log #12: 2026-04-20 03:06:12
+temp=24.4[C] humi=68.9% volt=3.11V
+  ð
+Virtual Device Log #13: 2026-04-20 03:06:13
+temp=24.0[C] humi=69.3% volt=3.10V
+Virtual Device Log #14: 2026-04-20 03:06:14
+temp=23.5[C] humi=69.6% volt=3.12V
+Virtual Device Log #15: 2026-04-20 03:06:14
+temp=23.0[C] humi=69.9% volt=3.17V
+      
+  
+  
+Virtual Device Log #16: 2026-04-20 03:06:15
+temp=22.4[C] humi=70.0% volt=3.24V
+     ÿJ
+Virtual Device Log #17: 2026-04-20 03:06:16
+temp=21.8[C] humi=70.0% volt=3.32V
+Virtual Device Log #18: 2026-04-20 03:06:17
+temp=21.2[C] humi=69.9% volt=3.40V
+Virtual Device Log #19: 2026-04-20 03:06:17
+temp=20.7[C] humi=69.7% volt=3.46V
+Virtual Device Log #20: 2026-04-20 03:06:18
+temp=20.2[C] humi=69.5% volt=3.49V
+      
+  
+  
+      <+å
+Virtual Device Log #21: 2026-04-20 03:06:19
+temp=19.7[C] humi=69.1% volt=3.50V
+Virtual Device Log #22: 2026-04-20 03:06:20
+temp=19.4[C] humi=68.6% volt=3.47V
+Virtual Device Log #23: 2026-04-20 03:06:21
+temp=19.1[C] humi=68.1% volt=3.42V
+Virtual Device Log #24: 2026-04-20 03:06:21
+temp=19.0[C] humi=67.5% volt=3.34V
+  ð
+Virtual Device Log #25: 2026-04-20 03:06:23
+temp=19.0[C] humi=66.8% volt=3.27V
+      
+  
+  
+Virtual Device Log #26: 2026-04-20 03:06:24
+temp=19.1[C] humi=66.0% volt=3.19V
+Virtual Device Log #27: 2026-04-20 03:06:24
+temp=19.3[C] humi=65.2% volt=3.13V
+Virtual Device Log #28: 2026-04-20 03:06:25
+temp=19.7[C] humi=64.3% volt=3.10V
+      <+å
+Virtual Device Log #29: 2026-04-20 03:06:26
+temp=20.1[C] humi=63.3% volt=3.10V
+Virtual Device Log #30: 2026-04-20 03:06:27
+temp=20.6[C] humi=62.4% volt=3.14V
+      
+  
+  
+Virtual Device Log #31: 2026-04-20 03:06:28
+temp=21.2[C] humi=61.4% volt=3.19V
+Virtual Device Log #32: 2026-04-20 03:06:28
+temp=21.8[C] humi=60.4% volt=3.27V
+     ÿJ
+Virtual Device Log #33: 2026-04-20 03:06:29
+temp=22.3[C] humi=59.4% volt=3.35V
+Virtual Device Log #34: 2026-04-20 03:06:30
+temp=22.9[C] humi=58.4% volt=3.42V
+Virtual Device Log #35: 2026-04-20 03:06:31
+temp=23.5[C] humi=57.4% volt=3.47V
+      
+  
+  
+Virtual Device Log #36: 2026-04-20 03:06:32
+temp=24.0[C] humi=56.5% volt=3.50V
+  ð
+Virtual Device Log #37: 2026-04-20 03:06:33
+temp=24.4[C] humi=55.6% volt=3.49V
+Virtual Device Log #38: 2026-04-20 03:06:34
+temp=24.7[C] humi=54.7% volt=3.46V
+Virtual Device Log #39: 2026-04-20 03:06:35
+temp=24.9[C] humi=53.9% volt=3.40V
+Virtual Device Log #40: 2026-04-20 03:06:36
+temp=25.0[C] humi=53.1% volt=3.32V
+      
+  
+  
+     ÿJ
+Virtual Device Log #41: 2026-04-20 03:06:37
+temp=25.0[C] humi=52.4% volt=3.24V
+Disconnected
+Connected to virtual_device
+Virtual Device Log #1: 2026-04-20 03:06:49
+temp=22.0[C] humi=60.0% volt=3.30V
+Virtual Device Log #2: 2026-04-20 03:06:50
+temp=22.6[C] humi=61.0% volt=3.38V
+Virtual Device Log #3: 2026-04-20 03:06:51
+temp=23.2[C] humi=62.0% volt=3.44V
+Virtual Device Log #4: 2026-04-20 03:06:52
+temp=23.7[C] humi=63.0% volt=3.49V
+      <+å
+Virtual Device Log #5: 2026-04-20 03:06:53
+temp=24.2[C] humi=63.9% volt=3.50V
+      
+  
+  
+Virtual Device Log #6: 2026-04-20 03:06:53
+temp=24.5[C] humi=64.8% volt=3.48V
+Virtual Device Log #7: 2026-04-20 03:06:54
+temp=24.8[C] humi=65.6% volt=3.44V
+Virtual Device Log #8: 2026-04-20 03:06:55
+temp=25.0[C] humi=66.4% volt=3.37V
+     ÿJ
+Virtual Device Log #9: 2026-04-20 03:06:56
+temp=25.0[C] humi=67.2% volt=3.29V
+Virtual Device Log #10: 2026-04-20 03:06:57
+temp=24.9[C] humi=67.8% volt=3.21V
+      
+  
+  
+Virtual Device Log #11: 2026-04-20 03:06:58
+temp=24.7[C] humi=68.4% volt=3.15V
+Virtual Device Log #12: 2026-04-20 03:06:59
+temp=24.4[C] humi=68.9% volt=3.11V
+  ð
+Virtual Device Log #13: 2026-04-20 03:07:00
+temp=24.0[C] humi=69.3% volt=3.10V
+Virtual Device Log #14: 2026-04-20 03:07:01
+temp=23.5[C] humi=69.6% volt=3.12V
+Virtual Device Log #15: 2026-04-20 03:07:02
+temp=23.0[C] humi=69.9% volt=3.17V
+      
+  
+  
+Virtual Device Log #16: 2026-04-20 03:07:03
+temp=22.4[C] humi=70.0% volt=3.24V
+     ÿJ
+Virtual Device Log #17: 2026-04-20 03:07:04
+temp=21.8[C] humi=70.0% volt=3.32V
+Virtual Device Log #18: 2026-04-20 03:07:05
+temp=21.2[C] humi=69.9% volt=3.40V
+Virtual Device Log #19: 2026-04-20 03:07:05
+temp=20.7[C] humi=69.7% volt=3.46V
+Virtual Device Log #20: 2026-04-20 03:07:06
+temp=20.2[C] humi=69.5% volt=3.49V
+      
+  
+  
+      <+å
+Virtual Device Log #21: 2026-04-20 03:07:08
+temp=19.7[C] humi=69.1% volt=3.50V
+Virtual Device Log #22: 2026-04-20 03:07:09
+temp=19.4[C] humi=68.6% volt=3.47V
+Virtual Device Log #23: 2026-04-20 03:07:09
+temp=19.1[C] humi=68.1% volt=3.42V
+Virtual Device Log #24: 2026-04-20 03:07:10
+temp=19.0[C] humi=67.5% volt=3.34V
+  ð
+Virtual Device Log #25: 2026-04-20 03:07:11
+temp=19.0[C] humi=66.8% volt=3.27V
+      
+  
+  
+Virtual Device Log #26: 2026-04-20 03:07:12
+temp=19.1[C] humi=66.0% volt=3.19V
+Virtual Device Log #27: 2026-04-20 03:07:12
+temp=19.3[C] humi=65.2% volt=3.13V
+Virtual Device Log #28: 2026-04-20 03:07:13
+temp=19.7[C] humi=64.3% volt=3.10V
+      <+å
+Virtual Device Log #29: 2026-04-20 03:07:14
+temp=20.1[C] humi=63.3% volt=3.10V
+Virtual Device Log #30: 2026-04-20 03:07:15
+temp=20.6[C] humi=62.4% volt=3.14V
+      
+  
+  
+Virtual Device Log #31: 2026-04-20 03:07:16
+temp=21.2[C] humi=61.4% volt=3.19V
+Virtual Device Log #32: 2026-04-20 03:07:17
+temp=21.8[C] humi=60.4% volt=3.27V
+     ÿJ
+Virtual Device Log #33: 2026-04-20 03:07:18
+temp=22.3[C] humi=59.4% volt=3.35V
+Virtual Device Log #34: 2026-04-20 03:07:19
+temp=22.9[C] humi=58.4% volt=3.42V
+Virtual Device Log #35: 2026-04-20 03:07:19
+temp=23.5[C] humi=57.4% volt=3.47V
+      
+  
+  
+Virtual Device Log #36: 2026-04-20 03:07:20
+temp=24.0[C] humi=56.5% volt=3.50V
+  ð
+Virtual Device Log #37: 2026-04-20 03:07:22
+temp=24.4[C] humi=55.6% volt=3.49V
+Virtual Device Log #38: 2026-04-20 03:07:22
+temp=24.7[C] humi=54.7% volt=3.46V
+Virtual Device Log #39: 2026-04-20 03:07:23
+temp=24.9[C] humi=53.9% volt=3.40V
+Virtual Device Log #40: 2026-04-20 03:07:24
+temp=25.0[C] humi=53.1% volt=3.32V
+      
+  
+  
+     ÿJ
+Virtual Device Log #41: 2026-04-20 03:07:26
+temp=25.0[C] humi=52.4% volt=3.24V
+Virtual Device Log #42: 2026-04-20 03:07:26
+temp=24.8[C] humi=51.8% volt=3.17V
+Virtual Device Log #43: 2026-04-20 03:07:27
+temp=24.6[C] humi=51.3% volt=3.12V
+Virtual Device Log #44: 2026-04-20 03:07:28
+temp=24.2[C] humi=50.8% volt=3.10V
+      <+å
+Virtual Device Log #45: 2026-04-20 03:07:29
+temp=23.8[C] humi=50.5% volt=3.11V
+      
+  
+  
+Virtual Device Log #46: 2026-04-20 03:07:30
+temp=23.2[C] humi=50.2% volt=3.15V
+Virtual Device Log #47: 2026-04-20 03:07:31
+temp=22.7[C] humi=50.1% volt=3.21V
+Virtual Device Log #48: 2026-04-20 03:07:31
+temp=22.1[C] humi=50.0% volt=3.29V
+  ð
+Virtual Device Log #49: 2026-04-20 03:07:33
+temp=21.5[C] humi=50.0% volt=3.37V
+Virtual Device Log #50: 2026-04-20 03:07:33
+temp=20.9[C] humi=50.2% volt=3.44V
+      
+  
+  
+Virtual Device Log #51: 2026-04-20 03:07:34
+temp=20.4[C] humi=50.4% volt=3.48V
+Virtual Device Log #52: 2026-04-20 03:07:35
+temp=19.9[C] humi=50.7% volt=3.50V
+      <+å
+Virtual Device Log #53: 2026-04-20 03:07:36
+temp=19.5[C] humi=51.2% volt=3.49V
+Virtual Device Log #54: 2026-04-20 03:07:37
+temp=19.2[C] humi=51.7% volt=3.44V
+Virtual Device Log #55: 2026-04-20 03:07:38
+temp=19.1[C] humi=52.3% volt=3.38V
+      
+  
+  
+Virtual Device Log #56: 2026-04-20 03:07:39
+temp=19.0[C] humi=52.9% volt=3.30V
+     ÿJ
+Virtual Device Log #57: 2026-04-20 03:07:40
+temp=19.1[C] humi=53.7% volt=3.22V
+Virtual Device Log #58: 2026-04-20 03:07:41
+temp=19.2[C] humi=54.5% volt=3.16V
+Virtual Device Log #59: 2026-04-20 03:07:42
+temp=19.5[C] humi=55.4% volt=3.11V
+Virtual Device Log #60: 2026-04-20 03:07:43
+temp=19.9[C] humi=56.3% volt=3.10V
+      
+  
+  
+  ð
+Virtual Device Log #61: 2026-04-20 03:07:44
+temp=20.4[C] humi=57.2% volt=3.12V
+Virtual Device Log #62: 2026-04-20 03:07:45
+temp=20.9[C] humi=58.2% volt=3.17V
+Virtual Device Log #63: 2026-04-20 03:07:46
+temp=21.5[C] humi=59.2% volt=3.23V
+Virtual Device Log #64: 2026-04-20 03:07:46
+temp=22.1[C] humi=60.2% volt=3.31V
+     ÿJ
+Virtual Device Log #65: 2026-04-20 03:07:47
+temp=22.7[C] humi=61.2% volt=3.39V
+      
+  
+  
+Virtual Device Log #66: 2026-04-20 03:07:49
+temp=23.3[C] humi=62.2% volt=3.45V
+Virtual Device Log #67: 2026-04-20 03:07:49
+temp=23.8[C] humi=63.1% volt=3.49V
+Virtual Device Log #68: 2026-04-20 03:07:50
+temp=24.2[C] humi=64.0% volt=3.50V
+      <+å
+Virtual Device Log #69: 2026-04-20 03:07:51
+temp=24.6[C] humi=64.9% volt=3.48V
+Virtual Device Log #70: 2026-04-20 03:07:52
+temp=24.8[C] humi=65.8% volt=3.42V
+      
+  
+  
+Virtual Device Log #71: 2026-04-20 03:07:53
+temp=25.0[C] humi=66.6% volt=3.35V
+Virtual Device Log #72: 2026-04-20 03:07:54
+temp=25.0[C] humi=67.3% volt=3.27V
+  ð
+Virtual Device Log #73: 2026-04-20 03:07:55
+temp=24.9[C] humi=67.9% volt=3.20V
+Virtual Device Log #74: 2026-04-20 03:07:56
+temp=24.7[C] humi=68.5% volt=3.14V
+Virtual Device Log #75: 2026-04-20 03:07:56
+temp=24.4[C] humi=69.0% volt=3.11V
+      
+  
+  
+Virtual Device Log #76: 2026-04-20 03:07:57
+temp=24.0[C] humi=69.4% volt=3.10V
+      <+å
+Virtual Device Log #77: 2026-04-20 03:07:58
+temp=23.5[C] humi=69.7% volt=3.13V
+Virtual Device Log #78: 2026-04-20 03:07:59
+temp=22.9[C] humi=69.9% volt=3.18V
+Virtual Device Log #79: 2026-04-20 03:08:00
+temp=22.3[C] humi=70.0% volt=3.26V
+Virtual Device Log #80: 2026-04-20 03:08:00
+temp=21.7[C] humi=70.0% volt=3.34V
+      
+  
+  
+     ÿJ
+Virtual Device Log #81: 2026-04-20 03:08:02
+temp=21.1[C] humi=69.9% volt=3.41V
+Virtual Device Log #82: 2026-04-20 03:08:02
+temp=20.6[C] humi=69.7% volt=3.47V
+Virtual Device Log #83: 2026-04-20 03:08:03
+temp=20.1[C] humi=69.4% volt=3.50V
+Virtual Device Log #84: 2026-04-20 03:08:04
+temp=19.7[C] humi=69.0% volt=3.50V
+  ð
+Virtual Device Log #85: 2026-04-20 03:08:05
+temp=19.3[C] humi=68.5% volt=3.46V
+      
+  
+  
+Virtual Device Log #86: 2026-04-20 03:10:19
+temp=19.1[C] humi=68.0% volt=3.41V
+Virtual Device Log #87: 2026-04-20 03:10:20
+temp=19.0[C] humi=67.3% volt=3.33V
+Virtual Device Log #88: 2026-04-20 03:10:21
+temp=19.0[C] humi=66.6% volt=3.25V
+     ÿJ
+Virtual Device Log #89: 2026-04-20 03:10:22
+temp=19.2[C] humi=65.8% volt=3.18V
+Virtual Device Log #90: 2026-04-20 03:10:23
+temp=19.4[C] humi=65.0% volt=3.13V
+      
+  
+  
+Virtual Device Log #91: 2026-04-20 03:10:23
+temp=19.7[C] humi=64.1% volt=3.10V
+Virtual Device Log #92: 2026-04-20 03:10:24
+temp=20.2[C] humi=63.2% volt=3.11V
+      <+å
+Virtual Device Log #93: 2026-04-20 03:10:25
+temp=20.7[C] humi=62.2% volt=3.14V
+Virtual Device Log #94: 2026-04-20 03:10:26
+temp=21.3[C] humi=61.2% volt=3.20V
+Virtual Device Log #95: 2026-04-20 03:10:27
+temp=21.9[C] humi=60.2% volt=3.28V
+      
+  
+  
+Virtual Device Log #96: 2026-04-20 03:10:27
+temp=22.4[C] humi=59.2% volt=3.36V
+  ð
+Virtual Device Log #97: 2026-04-20 03:10:28
+temp=23.0[C] humi=58.3% volt=3.43V
+Virtual Device Log #98: 2026-04-20 03:10:29
+temp=23.6[C] humi=57.3% volt=3.48V
+Virtual Device Log #99: 2026-04-20 03:10:30
+temp=24.0[C] humi=56.3% volt=3.50V
+Virtual Device Log #100: 2026-04-20 03:10:31
+temp=24.4[C] humi=55.4% volt=3.49V
+      
+  
+  
+      <+å
+Virtual Device Log #101: 2026-04-20 03:10:32
+temp=24.7[C] humi=54.6% volt=3.45V
+Virtual Device Log #102: 2026-04-20 03:10:33
+temp=24.9[C] humi=53.7% volt=3.39V
+Virtual Device Log #103: 2026-04-20 03:10:34
+temp=25.0[C] humi=53.0% volt=3.31V
+Virtual Device Log #104: 2026-04-20 03:10:35
+temp=25.0[C] humi=52.3% volt=3.23V
+     ÿJ
+Virtual Device Log #105: 2026-04-20 03:10:35
+temp=24.8[C] humi=51.7% volt=3.16V
+      
+  
+  
+Virtual Device Log #106: 2026-04-20 03:10:36
+temp=24.5[C] humi=51.2% volt=3.12V
+Virtual Device Log #107: 2026-04-20 03:10:37
+temp=24.1[C] humi=50.8% volt=3.10V
+Virtual Device Log #108: 2026-04-20 03:10:38
+temp=23.7[C] humi=50.4% volt=3.11V
+  ð
+Virtual Device Log #109: 2026-04-20 03:10:39
+temp=23.1[C] humi=50.2% volt=3.16V
+Virtual Device Log #110: 2026-04-20 03:10:40
+temp=22.6[C] humi=50.0% volt=3.23V
+      
+  
+  
+Virtual Device Log #111: 2026-04-20 03:10:41
+temp=22.0[C] humi=50.0% volt=3.30V
+Virtual Device Log #112: 2026-04-20 03:10:41
 temp=21.4[C] humi=50.1% volt=3.38V
 
 ## assistant — 2026-04-20 02:12:28

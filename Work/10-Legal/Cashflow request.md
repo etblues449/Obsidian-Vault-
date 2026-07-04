@@ -206,5 +206,5 @@ Anything **L** must be listed in the exception log with: source, expected £, ex
 
 ## Reference
 
-Source PDF for May 2026 baseline: ![[Mine_vs_Amy_May_26.pdf]]
+Source PDF for May 2026 baseline: [Mine_vs_Amy_May_26.pdf](../../attachments/Mine_vs_Amy_May_26.pdf)
 Income workbook path: `C:\Users\ElliotHorton\OneDrive - Select Lifestyles\Income\Income`
