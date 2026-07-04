@@ -1450,93 +1450,93 @@ Open your `configuration.yaml` and show me exactly what your spotcast section lo
 
 ### Human — 2026-05-08T03:04
 
-# Loads default set of integrations. Do not remove.
-default_config:
-
-# Load frontend themes from the themes folder
-frontend:
-  themes: !include_dir_merge_named themes
-  extra_module_url:
-    - /hacsfiles/lovelace-card-mod/card-mod.js?hacstag=1909275244
-
-automation: !include automations.yaml
-script: !include scripts.yaml
-scene: !include scenes.yaml
-
-climate:
-  - platform: ephember
-    username: ehorton@selectlifestyles.co.uk
-    password: Nicholas1
-
-template:
-  - sensor:
-      - name: "Motion Sensor TV Samsung Temperature Corrected"
-        unit_of_measurement: "°C"
-        state: "{{ (states('sensor.motion_sensor_tv_samsung_temperature') | float / 100) | round(1) }}"
-      - name: "Multipurpose Sensor TV Samsung Temperature Corrected"
-        unit_of_measurement: "°C"
-        state: "{{ (states('sensor.multipurpose_sensor_tv_samsung_temperature') | float / 100) | round(1) }}"
-  - binary_sensor:
-      - name: "TV Presence Fixed"
-        state: >
-          {{ is_state('binary_sensor.motion_sensor_tv_samsung_motion', 'on')
-             or is_state('binary_sensor.living_room_occupancy_status', 'on') }}
-
-recorder:
-  purge_keep_days: 7
-  commit_interval: 30
-sensor:
-  - platform: rest
-    name: Lounge Camera Motion
-    resource: http://192.168.0.190:8080/motion.json
-    value_template: "{{ value_json.motion_active }}"
-    scan_interval: 5
-    
-shell_command:
-  query_notebooklm: /config/scripts/ask_notebooklm.sh "What automations run at night?"
-  test_python: which python3 || which python || ls /usr/bin/py*
-  query_notebooklm_dynamic: /bin/bash /config/scripts/ask_notebooklm.sh "{{ states('input_text.notebooklm_question') }}"
-  rebuild_notebook_kb: /bin/bash /config/scripts/rebuild_notebook_kb.sh
-command_line:
-  - sensor:
-      name: "NotebookLM Response"
-      unique_id: notebooklm_response
-      command: "cat /config/.notebooklm/last_response.txt 2>/dev/null || echo 'No response yet'"
-      scan_interval: 10
-      command_timeout: 5
-      value_template: "{{ value[:255] }}"
-    
-intent_script:
-  AskNotebookLM:
-    speech:
-      text: "Asking NotebookLM, give me about 90 seconds..."
-    action:
-      - action: input_text.set_value
-        target:
-          entity_id: input_text.notebooklm_question
-        data:
-          value: "{{ question }}"
-      - action: shell_command.query_notebooklm_dynamic
-      - delay: 00:01:30
-      - action: notify.mobile_app_jelly_bean_s_phone
-        data:
-          title: "🧠 NotebookLM"
-          message: "{{ states('sensor.notebooklm_response') }}"
-      - action: tts.speak
-        target:
-          entity_id: tts.home_assistant_cloud
-        data:
-          media_player_entity_id: media_player.jelly_bean_s_phone
-          message: "{{ states('sensor.notebooklm_response') }}"
-          
-camera:
-  - platform: mjpeg
-    name: CCTV CAM
-    still_image_url: http://192.168.0.234:8081
-    mjpeg_url: http://192.168.0.234:8080
-    
-spotcast:
-  sp_dc: AQD_FM4kqGvO13dKOCpqfl1qU6XU8YdVxTYGa2Pyje_7W6dQ6LfIpsj5WSE_zz7_ifUQbbR187yBiku-xNqGM_w_u1o_7YYPSyz5bulFyJ6V8npN6bqrDYxpsN-pg7k0l2bvnwZpP5ICQjQEQKA770ERtjWrWZyG01ugt5-quyzycpaM4RbaXJ-kDemwLAvCv68G5mTnC4PcKZqKf1RVWwlQ8JwPClJHJ1JmEVkAZxOMW7fXyw775NqP_lWdVqTNzCla2suIHXsyWEk
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+  extra_module_url:
+    - /hacsfiles/lovelace-card-mod/card-mod.js?hacstag=1909275244
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+climate:
+  - platform: ephember
+    username: ehorton@selectlifestyles.co.uk
+    password: Nicholas1
+
+template:
+  - sensor:
+      - name: "Motion Sensor TV Samsung Temperature Corrected"
+        unit_of_measurement: "°C"
+        state: "{{ (states('sensor.motion_sensor_tv_samsung_temperature') | float / 100) | round(1) }}"
+      - name: "Multipurpose Sensor TV Samsung Temperature Corrected"
+        unit_of_measurement: "°C"
+        state: "{{ (states('sensor.multipurpose_sensor_tv_samsung_temperature') | float / 100) | round(1) }}"
+  - binary_sensor:
+      - name: "TV Presence Fixed"
+        state: >
+          {{ is_state('binary_sensor.motion_sensor_tv_samsung_motion', 'on')
+             or is_state('binary_sensor.living_room_occupancy_status', 'on') }}
+
+recorder:
+  purge_keep_days: 7
+  commit_interval: 30
+sensor:
+  - platform: rest
+    name: Lounge Camera Motion
+    resource: http://192.168.0.190:8080/motion.json
+    value_template: "{{ value_json.motion_active }}"
+    scan_interval: 5
+    
+shell_command:
+  query_notebooklm: /config/scripts/ask_notebooklm.sh "What automations run at night?"
+  test_python: which python3 || which python || ls /usr/bin/py*
+  query_notebooklm_dynamic: /bin/bash /config/scripts/ask_notebooklm.sh "{{ states('input_text.notebooklm_question') }}"
+  rebuild_notebook_kb: /bin/bash /config/scripts/rebuild_notebook_kb.sh
+command_line:
+  - sensor:
+      name: "NotebookLM Response"
+      unique_id: notebooklm_response
+      command: "cat /config/.notebooklm/last_response.txt 2>/dev/null || echo 'No response yet'"
+      scan_interval: 10
+      command_timeout: 5
+      value_template: "{{ value[:255] }}"
+    
+intent_script:
+  AskNotebookLM:
+    speech:
+      text: "Asking NotebookLM, give me about 90 seconds..."
+    action:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.notebooklm_question
+        data:
+          value: "{{ question }}"
+      - action: shell_command.query_notebooklm_dynamic
+      - delay: 00:01:30
+      - action: notify.mobile_app_jelly_bean_s_phone
+        data:
+          title: "🧠 NotebookLM"
+          message: "{{ states('sensor.notebooklm_response') }}"
+      - action: tts.speak
+        target:
+          entity_id: tts.home_assistant_cloud
+        data:
+          media_player_entity_id: media_player.jelly_bean_s_phone
+          message: "{{ states('sensor.notebooklm_response') }}"
+          
+camera:
+  - platform: mjpeg
+    name: CCTV CAM
+    still_image_url: http://192.168.0.234:8081
+    mjpeg_url: http://192.168.0.234:8080
+    
+spotcast:
+  sp_dc: AQD_FM4kqGvO13dKOCpqfl1qU6XU8YdVxTYGa2Pyje_7W6dQ6LfIpsj5WSE_zz7_ifUQbbR187yBiku-xNqGM_w_u1o_7YYPSyz5bulFyJ6V8npN6bqrDYxpsN-pg7k0l2bvnwZpP5ICQjQEQKA770ERtjWrWZyG01ugt5-quyzycpaM4RbaXJ-kDemwLAvCv68G5mTnC4PcKZqKf1RVWwlQ8JwPClJHJ1JmEVkAZxOMW7fXyw775NqP_lWdVqTNzCla2suIHXsyWEk
   sp_key: 99a1ac21-6a28-4dab-987b-4151ad97a937
 
 ### Assistant — 2026-05-08T03:04
