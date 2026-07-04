@@ -18,9 +18,6 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  overflow: hidden;
-}
 
 /* Smooth scrolling & transitions */
 * {
