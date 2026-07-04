@@ -1,0 +1,6 @@
+{
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "env": {},
+  "envPrefix": "NEXT_PUBLIC_"
+}
