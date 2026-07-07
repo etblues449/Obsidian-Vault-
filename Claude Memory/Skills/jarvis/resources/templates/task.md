@@ -1,1 +1,0 @@
-- [ ] {{CONTENT}} 📅 {{DUE}} #{{PROJECT}} <!-- captured: {{TIMESTAMP}} -->
