@@ -251,11 +251,16 @@ export default function Vault() {
         if (data.ok && data.reply) {
           const assistantMsg: Message = { role: 'assistant', text: data.reply, ts: Date.now() }
           setMessages((m) => [...m, assistantMsg])
-          // Speak the response
+          // Speak the response (pause listening while speaking to avoid echo)
           if ('speechSynthesis' in window) {
+            if (recRef.current) recRef.current.abort()
+            setListening(false)
             const utterance = new SpeechSynthesisUtterance(data.reply)
             utterance.lang = 'en-GB'
             utterance.rate = 0.95
+            utterance.onend = () => {
+              setTimeout(() => startListening(), 800)
+            }
             window.speechSynthesis.cancel()
             window.speechSynthesis.speak(utterance)
           }
