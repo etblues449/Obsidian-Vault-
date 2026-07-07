@@ -251,6 +251,14 @@ export default function Vault() {
         if (data.ok && data.reply) {
           const assistantMsg: Message = { role: 'assistant', text: data.reply, ts: Date.now() }
           setMessages((m) => [...m, assistantMsg])
+          // Speak the response
+          if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(data.reply)
+            utterance.lang = 'en-GB'
+            utterance.rate = 0.95
+            window.speechSynthesis.cancel()
+            window.speechSynthesis.speak(utterance)
+          }
         } else {
           // Don't fail silently — show why (missing key, API error, empty reply).
           const why = data.error || 'No reply returned.'
