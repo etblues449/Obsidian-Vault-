@@ -251,9 +251,17 @@ export default function Vault() {
         if (data.ok && data.reply) {
           const assistantMsg: Message = { role: 'assistant', text: data.reply, ts: Date.now() }
           setMessages((m) => [...m, assistantMsg])
+        } else {
+          // Don't fail silently — show why (missing key, API error, empty reply).
+          const why = data.error || 'No reply returned.'
+          setMessages((m) => [...m, { role: 'assistant', text: `⚠ ${why}`, ts: Date.now() }])
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Chat error:', error)
+        setMessages((m) => [
+          ...m,
+          { role: 'assistant', text: `⚠ Could not reach JARVIS: ${error?.message || 'network error'}`, ts: Date.now() },
+        ])
       }
 
       setReplying(false)
