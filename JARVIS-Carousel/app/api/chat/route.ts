@@ -23,13 +23,12 @@ export async function POST(request: Request) {
 
     const response = await client.messages.create({
       model: 'claude-opus-4-8',
-      // With extended thinking, max_tokens MUST exceed thinking.budget_tokens
-      // (max_tokens is the cap on thinking + visible output combined). The old
-      // 1024/5000 pairing made every request 400 before any reply came back.
       max_tokens: 4096,
       thinking: {
-        type: 'enabled',
-        budget_tokens: 2048,
+        type: 'adaptive',
+      },
+      output_config: {
+        effort: 'high',
       },
       system: `You are JARVIS, a conversational personal assistant who talks like a friend, not a robot. You engage naturally, ask follow-up questions, offer ideas and thoughts, and do your own research/reasoning to help the user think through things.
 
