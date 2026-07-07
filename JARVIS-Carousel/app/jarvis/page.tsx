@@ -10,7 +10,13 @@ type Message = {
 
 type PhoneAction = {
   label: string
+  // Tasker HTTP Request profile listens on a fixed path per action type
+  // (Tasker 6.6.20 doesn't populate %http_request_body/query/path, so the
+  // path itself is the signal — the body is advisory only).
+  endpoint: 'alarm' | 'timer'
   tasker: { task: string; par1: string; par2: string }
+  // Android intent: scheme URL — the ONLY way to trigger a phone action from
+  // a deployed HTTPS origin (localhost bridge is blocked as mixed content).
   intent: string
 }
 
@@ -27,6 +33,7 @@ function detectAction(text: string): PhoneAction | null {
     const mm = String(M).padStart(2, '0')
     return {
       label: `ALARM ${hh}:${mm}`,
+      endpoint: 'alarm',
       tasker: { task: 'Jarvis Alarm', par1: `${hh}:${mm}`, par2: 'JARVIS' },
       intent: `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${H};i.android.intent.extra.alarm.MINUTES=${M};S.android.intent.extra.alarm.MESSAGE=JARVIS;end`,
     }
@@ -38,6 +45,7 @@ function detectAction(text: string): PhoneAction | null {
     if (!mins || mins > 24 * 60) return null
     return {
       label: `TIMER ${mins} MIN`,
+      endpoint: 'timer',
       tasker: { task: 'Jarvis Timer', par1: String(mins), par2: 'JARVIS' },
       intent: `intent:#Intent;action=android.intent.action.SET_TIMER;i.android.intent.extra.alarm.LENGTH=${mins * 60};S.android.intent.extra.alarm.MESSAGE=JARVIS;end`,
     }
@@ -45,6 +53,11 @@ function detectAction(text: string): PhoneAction | null {
   return null
 }
 
+// On-device Tasker HTTP Request bridge. Only reachable when the app is served
+// from the SAME device that runs Tasker (i.e. the phone opening a local/http
+// origin). From a deployed HTTPS page this is blocked as mixed content and the
+// intent: fallback below takes over. Each action POSTs to a fixed sub-path
+// (/alarm, /timer) that matches a Tasker profile.
 const TASKER_BRIDGE = 'http://localhost:1337/'
 
 export default function Vault() {
@@ -210,7 +223,9 @@ export default function Vault() {
         try {
           const ctl = new AbortController()
           const to = setTimeout(() => ctl.abort(), 2500)
-          await fetch(TASKER_BRIDGE, {
+          // POST to the action's fixed path (/alarm, /timer) so the matching
+          // Tasker profile fires. Works only when reachable on-device.
+          await fetch(TASKER_BRIDGE + action.endpoint, {
             method: 'POST',
             mode: 'no-cors',
             body: JSON.stringify(action.tasker),
@@ -219,6 +234,8 @@ export default function Vault() {
           clearTimeout(to)
           setLastAction({ ...action, outcome: 'tasker' })
         } catch {
+          // Bridge unreachable (deployed HTTPS / not on the phone). Surface the
+          // intent: link so the user can fire the native alarm/timer with a tap.
           setLastAction({ ...action, outcome: 'fallback' })
         }
       }
@@ -234,9 +251,17 @@ export default function Vault() {
         if (data.ok && data.reply) {
           const assistantMsg: Message = { role: 'assistant', text: data.reply, ts: Date.now() }
           setMessages((m) => [...m, assistantMsg])
+        } else {
+          // Don't fail silently — show why (missing key, API error, empty reply).
+          const why = data.error || 'No reply returned.'
+          setMessages((m) => [...m, { role: 'assistant', text: `⚠ ${why}`, ts: Date.now() }])
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Chat error:', error)
+        setMessages((m) => [
+          ...m,
+          { role: 'assistant', text: `⚠ Could not reach JARVIS: ${error?.message || 'network error'}`, ts: Date.now() },
+        ])
       }
 
       setReplying(false)
@@ -269,6 +294,8 @@ export default function Vault() {
         .msg.assistant { align-self: flex-start; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #a7e8c9; }
         .action-banner { font-size: 11px; padding: 8px 10px; border-radius: 3px; background: rgba(16,185,129,0.12);
           border: 1px solid rgba(16,185,129,0.4); color: #6ee7b7; margin: 8px 0; }
+        .action-link { color: #6ee7b7; font-weight: 700; text-decoration: underline; cursor: pointer; }
+        .action-link:active { color: #34d399; }
         .input-area { display: flex; gap: 8px; margin-top: 10px; }
         .btn { border-radius: 4px; font-size: 12px; letter-spacing: 0.18em; padding: 11px;
           text-align: center; border: 1px solid rgba(167,139,250,0.4); color: #d8b4fe; background: transparent;
@@ -303,7 +330,16 @@ export default function Vault() {
       {/* Action confirmation */}
       {lastAction && (
         <div className="action-banner">
-          ⚡ {lastAction.label} {lastAction.outcome === 'tasker' ? '→ SENT' : '(fallback)'}
+          ⚡ {lastAction.label}{' '}
+          {lastAction.outcome === 'tasker' ? (
+            '→ SENT'
+          ) : (
+            // Bridge unreachable — offer the native Android intent as a one-tap
+            // link. This is what makes actions work from the deployed HTTPS URL.
+            <a className="action-link" href={lastAction.intent}>
+              TAP TO SET ON PHONE →
+            </a>
+          )}
         </div>
       )}
 
