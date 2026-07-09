@@ -2244,3 +2244,9 @@ fatal: unable to access 'https://github.com/etblues449/Obsidian-Vault-.git/': Co
 [Thu Jul  9 16:00:05 BST 2026] Pushed to claude/phone-keystore-get.
 [Thu Jul  9 16:00:05 BST 2026] Sync complete.
 [Thu Jul  9 16:15:02 BST 2026] Syncing...
+[Thu Jul  9 16:15:03 BST 2026] Committed.
+[Thu Jul  9 16:15:16 BST 2026] Pushed to claude/phone-keystore-get.
+[Thu Jul  9 16:15:16 BST 2026] Sync complete.
+[Thu Jul  9 16:30:01 BST 2026] Syncing...
+fatal: unable to access 'https://github.com/etblues449/Obsidian-Vault-.git/': Could not resolve host: github.com
+[Thu Jul  9 16:30:07 BST 2026] WARNING: git pull failed (network?). Will retry next sync.
