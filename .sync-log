@@ -2231,3 +2231,8 @@ fatal: unable to access 'https://github.com/etblues449/Obsidian-Vault-.git/': Co
 [Thu Jul  9 15:30:02 BST 2026] Syncing...
 fatal: unable to access 'https://github.com/etblues449/Obsidian-Vault-.git/': Could not resolve host: github.com
 [Thu Jul  9 15:30:14 BST 2026] WARNING: git pull failed (network?). Will retry next sync.
+[Thu Jul  9 15:30:14 BST 2026] Committed.
+fatal: unable to access 'https://github.com/etblues449/Obsidian-Vault-.git/': Could not resolve host: github.com
+[Thu Jul  9 15:30:26 BST 2026] WARNING: git push failed (network?). Will retry next sync.
+[Thu Jul  9 15:30:26 BST 2026] Sync complete.
+[Thu Jul  9 15:45:01 BST 2026] Syncing...
