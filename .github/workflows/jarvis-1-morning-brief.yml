@@ -1,0 +1,23 @@
+# JARVIS Skill 1 — Morning Brief · daily 07:00 Europe/London
+# Cron is UTC and has no DST, so we fire at BOTH 06:00 and 07:00 UTC; the
+# runner's London-time guard lets exactly one of them through (06:00 UTC in
+# BST summer, 07:00 UTC in GMT winter) so it always lands at 07:00 local.
+name: JARVIS 1 · Morning Brief
+
+on:
+  schedule:
+    - cron: '0 6,7 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Run now, ignoring the 07:00 London time guard'
+        type: boolean
+        default: true
+
+jobs:
+  morning-brief:
+    uses: ./.github/workflows/_jarvis-run-skill.yml
+    secrets: inherit
+    with:
+      skill: morning-brief
+      force: ${{ github.event_name == 'workflow_dispatch' && inputs.force }}

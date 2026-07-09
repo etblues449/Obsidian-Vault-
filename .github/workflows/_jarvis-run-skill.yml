@@ -1,0 +1,74 @@
+# Reusable engine for the JARVIS £0 "Active Vault" skills.
+# Called by the four scheduled skill workflows. Runs the shared Node runner
+# (Groq-powered) and commits the output back to master via a single,
+# serialized, rebase-retry write path — honouring the single-writer rule (C3).
+name: JARVIS skill runner (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      skill:
+        description: 'Skill id: morning-brief | connection-finder | weekly-synthesis | pattern-detector'
+        required: true
+        type: string
+      force:
+        description: 'Bypass the London-time guard and run immediately'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    # All four skills share ONE concurrency group so two automated writes can
+    # never hit master simultaneously (the historical cause of corruption).
+    concurrency:
+      group: jarvis-vault-write
+      cancel-in-progress: false
+    steps:
+      - name: Checkout vault (master)
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run skill (${{ inputs.skill }})
+        id: skill
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+        run: |
+          node "Assistant Core/jarvis-skills/runner.mjs" \
+            --skill="${{ inputs.skill }}" ${{ inputs.force && '--force' || '' }}
+
+      - name: Commit & push to master (single write path, rebase-retry)
+        if: steps.skill.outputs.wrote == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "jarvis-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No net change (idempotent re-run) — nothing to commit."
+            exit 0
+          fi
+          git commit -m "${{ steps.skill.outputs.commit_msg }}"
+          for i in 1 2 3 4 5; do
+            if git push origin HEAD:master; then
+              echo "Pushed on attempt $i."
+              exit 0
+            fi
+            echo "Push rejected (another writer won the race); syncing and retrying ($i)…"
+            git pull --rebase --autostash origin master || true
+            sleep $((2 ** i))
+          done
+          echo "::error::push to master failed after 5 attempts"
+          exit 1
