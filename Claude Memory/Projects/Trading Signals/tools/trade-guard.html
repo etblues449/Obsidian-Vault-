@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Trade Guard — Signal Verification Console</title>
+<style>
+  :root {
+    --page: #f7f5ef;
+    --surface: #fcfbf7;
+    --surface-2: #f1eee3;
+    --ink: #171511;
+    --ink-2: #57534a;
+    --ink-3: #8d887b;
+    --hairline: #e5e1d4;
+    --border: rgba(23, 21, 17, 0.10);
+    --accent: #9a6b00;
+    --accent-soft: rgba(154, 107, 0, 0.10);
+    --good: #0ca30c;
+    --good-text: #006300;
+    --warning: #b97e00;
+    --serious: #b35127;
+    --critical: #d03b3b;
+    --critical-text: #b02f2f;
+    --series: #2a78d6;
+    --series-soft: rgba(42, 120, 214, 0.12);
+    --grid: #e1ded1;
+    --shadow: 0 1px 2px rgba(23, 21, 17, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page: #0f0e0c;
+      --surface: #1b1a16;
+      --surface-2: #232219;
+      --ink: #f4f2ea;
+      --ink-2: #b8b4a6;
+      --ink-3: #8d887b;
+      --hairline: #2e2c25;
+      --border: rgba(255, 255, 255, 0.10);
+      --accent: #e3aa3d;
+      --accent-soft: rgba(227, 170, 61, 0.12);
+      --good: #0ca30c;
+      --good-text: #4cc24c;
+      --warning: #fab219;
+      --serious: #ec835a;
+      --critical: #e05252;
+      --critical-text: #e57373;
+      --series: #3987e5;
+      --series-soft: rgba(57, 135, 229, 0.16);
+      --grid: #2c2a22;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="light"] {
+    --page: #f7f5ef; --surface: #fcfbf7; --surface-2: #f1eee3;
+    --ink: #171511; --ink-2: #57534a; --ink-3: #8d887b;
+    --hairline: #e5e1d4; --border: rgba(23,21,17,0.10);
+    --accent: #9a6b00; --accent-soft: rgba(154,107,0,0.10);
+    --good: #0ca30c; --good-text: #006300; --warning: #b97e00;
+    --serious: #b35127; --critical: #d03b3b; --critical-text: #b02f2f;
+    --series: #2a78d6; --series-soft: rgba(42,120,214,0.12);
+    --grid: #e1ded1; --shadow: 0 1px 2px rgba(23,21,17,0.05);
+  }
+  :root[data-theme="dark"] {
+    --page: #0f0e0c; --surface: #1b1a16; --surface-2: #232219;
+    --ink: #f4f2ea; --ink-2: #b8b4a6; --ink-3: #8d887b;
+    --hairline: #2e2c25; --border: rgba(255,255,255,0.10);
+    --accent: #e3aa3d; --accent-soft: rgba(227,170,61,0.12);
+    --good: #0ca30c; --good-text: #4cc24c; --warning: #fab219;
+    --serious: #ec835a; --critical: #e05252; --critical-text: #e57373;
+    --series: #3987e5; --series-soft: rgba(57,135,229,0.16);
+    --grid: #2c2a22; --shadow: none;
+  }
+
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 64px; display: flex; flex-direction: column; gap: 16px; }
+
+  .mono { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace; }
+  .label {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 0.6875rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3);
+  }
+
+  header.masthead { padding: 8px 2px 0; }
+  .masthead .kicker { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .masthead .kicker .rule { flex: 1; height: 1px; background: var(--hairline); }
+  .masthead h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
+  .masthead h1 .au { color: var(--accent); }
+  .masthead p.sub { margin: 6px 0 0; color: var(--ink-2); font-size: 0.9375rem; max-width: 58ch; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--accent-soft); color: var(--accent); font-weight: 600;
+  }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: var(--shadow); padding: 16px;
+  }
+  .card > h2 { font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; margin: 0 0 4px; color: var(--ink); font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .card > p.hint { margin: 0 0 12px; font-size: 0.8125rem; color: var(--ink-2); max-width: 62ch; }
+
+  /* Verdict banner */
+  .verdict { border-radius: 10px; padding: 16px; border: 1px solid var(--border); display: flex; gap: 14px; align-items: flex-start; }
+  .verdict.blocked { background: color-mix(in srgb, var(--critical) 9%, var(--surface)); border-color: color-mix(in srgb, var(--critical) 35%, transparent); }
+  .verdict.pass { background: color-mix(in srgb, var(--good) 9%, var(--surface)); border-color: color-mix(in srgb, var(--good) 35%, transparent); }
+  .verdict .glyph { font-size: 1.375rem; line-height: 1.2; }
+  .verdict h2 { margin: 0; font-size: 1.0625rem; font-weight: 700; letter-spacing: 0.02em; }
+  .verdict.blocked h2 { color: var(--critical-text); }
+  .verdict.pass h2 { color: var(--good-text); }
+  .verdict p { margin: 4px 0 0; font-size: 0.875rem; color: var(--ink-2); max-width: 60ch; }
+
+  /* Forms */
+  .grid { display: grid; gap: 10px; }
+  .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 480px) { .grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field input, .field select, textarea {
+    font: inherit; color: var(--ink); background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.875rem;
+    width: 100%; box-sizing: border-box;
+  }
+  textarea { resize: vertical; min-height: 64px; font-size: 0.8125rem; }
+  .field input:focus-visible, .field select:focus-visible, textarea:focus-visible, button:focus-visible, input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+  button {
+    font: inherit; font-weight: 600; font-size: 0.875rem; cursor: pointer;
+    border-radius: 7px; border: 1px solid var(--border); padding: 8px 14px;
+    background: var(--surface-2); color: var(--ink); transition: background 120ms ease;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] button.primary, :root:not([data-theme="light"]) button.primary { color: var(--page); }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) button.primary { color: #fff; } }
+  button:hover { background: var(--hairline); }
+  button.primary:hover { background: color-mix(in srgb, var(--accent) 85%, var(--ink)); }
+  button.ghost { background: transparent; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  /* Sizer output */
+  .sizer-out { margin-top: 12px; border-top: 1px solid var(--hairline); padding-top: 12px; display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0,1fr)); }
+  @media (max-width: 480px) { .sizer-out { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+  .stat .v { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+  .stat .v.small { font-size: 1rem; }
+  .callout { border-radius: 8px; padding: 10px 12px; font-size: 0.8125rem; margin-top: 12px; display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--border); }
+  .callout.critical { background: color-mix(in srgb, var(--critical) 9%, var(--surface)); color: var(--critical-text); border-color: color-mix(in srgb, var(--critical) 30%, transparent); }
+  .callout.ok { background: color-mix(in srgb, var(--good) 8%, var(--surface)); color: var(--good-text); border-color: color-mix(in srgb, var(--good) 28%, transparent); }
+
+  /* Table */
+  .tablewrap { overflow-x: auto; margin-top: 8px; border: 1px solid var(--hairline); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.8125rem; min-width: 640px; }
+  th { text-align: left; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--hairline); white-space: nowrap; }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--hairline); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td .mini { font-size: 0.75rem; padding: 4px 8px; }
+  td input.close-px { width: 84px; padding: 4px 6px; font-size: 0.75rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; color: var(--ink); font-family: ui-monospace, Menlo, monospace; }
+  .pnl-pos { color: var(--good-text); font-weight: 600; }
+  .pnl-neg { color: var(--critical-text); font-weight: 600; }
+
+  .chip { display: inline-block; font-family: ui-monospace, Menlo, monospace; font-size: 0.65rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); }
+  .chip.open { color: var(--series); background: var(--series-soft); }
+  .chip.win { color: var(--good-text); background: color-mix(in srgb, var(--good) 12%, transparent); }
+  .chip.loss { color: var(--critical-text); background: color-mix(in srgb, var(--critical) 12%, transparent); }
+  .chip.be { color: var(--ink-2); background: var(--surface-2); }
+  .chip.buy { color: var(--good-text); }
+  .chip.sell { color: var(--critical-text); }
+
+  /* Scorecard tiles */
+  .tiles { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+  @media (max-width: 480px) { .tiles { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  .tile { background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 8px; padding: 10px 12px; }
+  .tile .v { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 1.375rem; font-weight: 700; letter-spacing: -0.01em; margin-top: 2px; }
+  .tile .n { font-size: 0.71875rem; color: var(--ink-3); margin-top: 2px; }
+
+  /* Chart */
+  .chartbox { position: relative; margin-top: 8px; }
+  .chartbox svg { display: block; width: 100%; height: auto; }
+  .chartbox .empty { padding: 40px 16px; text-align: center; color: var(--ink-3); font-size: 0.875rem; border: 1px dashed var(--hairline); border-radius: 8px; }
+  .tooltip {
+    position: absolute; pointer-events: none; display: none; z-index: 3;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18); padding: 6px 9px; font-size: 0.75rem;
+    font-family: ui-monospace, Menlo, monospace; white-space: nowrap;
+  }
+  .tooltip .tt-v { font-weight: 700; }
+
+  /* Gate + flags lists */
+  ul.gate, ul.flags { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; }
+  ul.gate li, ul.flags li { display: flex; gap: 10px; align-items: flex-start; padding: 9px 2px; border-bottom: 1px solid var(--hairline); font-size: 0.875rem; }
+  ul.gate li:last-child, ul.flags li:last-child { border-bottom: none; }
+  .gate .mark { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 0.8125rem; min-width: 44px; text-align: center; border-radius: 6px; padding: 1px 0; }
+  .gate .mark.pass { color: var(--good-text); background: color-mix(in srgb, var(--good) 12%, transparent); }
+  .gate .mark.fail { color: var(--critical-text); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+  .gate .why { color: var(--ink-3); font-size: 0.78125rem; display: block; }
+  .flags .sev { font-family: ui-monospace, Menlo, monospace; font-size: 0.625rem; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 700; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--border); min-width: 62px; text-align: center; margin-top: 1px; }
+  .sev.critical { color: var(--critical-text); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+  .sev.serious { color: var(--serious); background: color-mix(in srgb, var(--serious) 10%, transparent); }
+  .sev.warning { color: var(--warning); background: color-mix(in srgb, var(--warning) 12%, transparent); }
+  .flags .why { color: var(--ink-3); font-size: 0.78125rem; display: block; }
+
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .spacer { flex: 1; }
+  .checkline { display: flex; gap: 9px; align-items: flex-start; font-size: 0.875rem; padding: 6px 0; }
+  .checkline input { width: 16px; height: 16px; margin-top: 3px; accent-color: var(--accent); }
+
+  footer.foot { color: var(--ink-3); font-size: 0.75rem; text-align: center; padding-top: 8px; max-width: 60ch; margin: 0 auto; }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="kicker">
+      <span class="badge"><span class="dot"></span>Paper mode — no real orders</span>
+      <span class="rule"></span>
+    </div>
+    <h1>Trade Guard <span class="au">· XAU</span> Signal Verification Console</h1>
+    <p class="sub">Every GOLD&nbsp;VIP signal gets logged and paper-traded here first. The console sizes each trade inside your risk limits, keeps score, and only unlocks the funding gate when the channel has proven itself over a real sample. Until then: not one pound at risk.</p>
+  </header>
+
+  <section class="verdict blocked" id="verdictBanner" aria-live="polite">
+    <div class="glyph" id="verdictGlyph">🛑</div>
+    <div>
+      <h2 id="verdictTitle">DO NOT FUND</h2>
+      <p id="verdictText">0 of 6 funding gates passed. Log the channel's signals as paper trades and let the evidence decide.</p>
+    </div>
+  </section>
+
+  <section class="card" id="paramsCard">
+    <h2>1 · Your risk parameters</h2>
+    <p class="hint">These limits drive everything below. Defaults are the standard retail caps: 1% of the account per trade, 5% max loss per day.</p>
+    <div class="grid cols-3">
+      <div class="field">
+        <span class="label">Account balance $</span>
+        <input type="number" id="pBalance" min="0" step="10" inputmode="decimal">
+      </div>
+      <div class="field">
+        <span class="label">Risk per trade %</span>
+        <input type="number" id="pRisk" min="0.1" max="100" step="0.1" inputmode="decimal">
+      </div>
+      <div class="field">
+        <span class="label">Daily loss cap %</span>
+        <input type="number" id="pDaily" min="0.5" max="100" step="0.5" inputmode="decimal">
+      </div>
+      <div class="field">
+        <span class="label">Max trades / day</span>
+        <input type="number" id="pMaxTrades" min="1" step="1" inputmode="numeric">
+      </div>
+      <div class="field">
+        <span class="label">Min sample (trades)</span>
+        <input type="number" id="pMinSample" min="10" step="5" inputmode="numeric">
+      </div>
+      <div class="field">
+        <span class="label">Min forward test (days)</span>
+        <input type="number" id="pMinDays" min="7" step="7" inputmode="numeric">
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2 · Position sizer — what a signal is allowed to cost you</h2>
+    <p class="hint">Paste a signal straight from Telegram, or type it in. Gold moves $100 per $1 per standard lot, so lots&nbsp;=&nbsp;risk&nbsp;$ ÷ (stop distance&nbsp;× 100).</p>
+    <div class="field">
+      <span class="label">Paste Telegram signal</span>
+      <textarea id="pasteBox" placeholder="e.g.  XAUUSD SELL NOW @ 4334  SL: 4340  TP1: 4330  TP2: 4326" spellcheck="false"></textarea>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="btnParse" class="ghost">Read signal from text</button>
+      <span class="label" id="parseStatus"></span>
+    </div>
+    <div class="grid cols-3" style="margin-top:12px">
+      <div class="field">
+        <span class="label">Side</span>
+        <select id="sSide"><option value="1">Buy</option><option value="-1">Sell</option></select>
+      </div>
+      <div class="field">
+        <span class="label">Entry</span>
+        <input type="number" id="sEntry" step="0.01" inputmode="decimal">
+      </div>
+      <div class="field">
+        <span class="label">Stop loss</span>
+        <input type="number" id="sSL" step="0.01" inputmode="decimal">
+      </div>
+      <div class="field">
+        <span class="label">Take profit</span>
+        <input type="number" id="sTP" step="0.01" inputmode="decimal">
+      </div>
+    </div>
+    <div class="sizer-out">
+      <div class="stat"><span class="label">Your max lots</span><span class="v" id="oLots">—</span></div>
+      <div class="stat"><span class="label">Risk if stopped</span><span class="v small" id="oRisk">—</span></div>
+      <div class="stat"><span class="label">Reward : risk</span><span class="v small" id="oRR">—</span></div>
+    </div>
+    <div class="callout critical" id="channelSizing" hidden>
+      <span aria-hidden="true">⚠</span><span id="channelSizingText"></span>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="primary" id="btnLog">Log as paper trade</button>
+      <span class="label" id="logStatus"></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3 · Paper trade log</h2>
+    <p class="hint">The forward test. Close each trade at the price the market actually gave — TP, SL, or a manual close — and the scorecard updates itself.</p>
+    <div class="tablewrap">
+      <table id="logTable">
+        <thead>
+          <tr><th>#</th><th>Logged</th><th>Side</th><th>Entry</th><th>SL</th><th>TP</th><th>Lots</th><th>Status</th><th>Close</th><th>P&amp;L $</th><th></th></tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="ghost" id="btnExport">Export JSON</button>
+      <button class="ghost" id="btnImport">Import</button>
+      <input type="file" id="fileImport" accept=".json,.jsonl,.txt" hidden>
+      <span class="spacer"></span>
+      <button class="ghost" id="btnClear">Clear log…</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>4 · Scorecard — claimed vs. proven</h2>
+    <p class="hint">The channel claims a 100% win rate. This is what your own log shows, with the honesty bars a marketing post never includes.</p>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section class="card">
+    <h2>5 · Paper equity curve</h2>
+    <p class="hint">Starting from your account balance, applying every closed paper trade at your sizing — the account you would have had.</p>
+    <div class="chartbox" id="chartBox">
+      <div class="empty" id="chartEmpty">No closed trades yet. The curve draws itself as you close paper trades.</div>
+      <div class="tooltip" id="chartTip"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>6 · Funding gate</h2>
+    <p class="hint">Real money is allowed only when every gate is green. The first four compute from your log; the last two you tick only if they are genuinely true.</p>
+    <ul class="gate" id="gateList"></ul>
+    <label class="checkline"><input type="checkbox" id="gLive"><span>Signals arrive <strong>before</strong> the move, with entry, SL and TP — never as after-the-fact screenshots, never edited. <span class="why">Retro-posted or edited "wins" are the oldest trick in the signal business.</span></span></label>
+    <label class="checkline"><input type="checkbox" id="gBroker"><span>The broker I would fund is <strong>FCA-authorised</strong> (FSCS-protected). <span class="why">T4Trade is Seychelles-regulated — a UK client has no FSCS cover and no Financial Ombudsman if withdrawals stall.</span></span></label>
+  </section>
+
+  <section class="card">
+    <h2>7 · Red flags observed on this channel</h2>
+    <p class="hint">Independently of the numbers, these are the patterns documented in regulator warnings about Telegram signal sellers — each one seen on GOLD&nbsp;VIP / THE&nbsp;WAR&nbsp;ZONE.</p>
+    <ul class="flags">
+      <li><span class="sev critical">Critical</span><span>Claims a <strong>“100% WIN RATE”.</strong> <span class="why">No real trader has one. This claim alone is disqualifying — and would be illegal in a regulated firm's marketing.</span></span></li>
+      <li><span class="sev critical">Critical</span><span>“Proof” is forwarded MT4 history screenshots, not a verified track record. <span class="why">Screenshots are trivially faked: demo accounts, cherry-picked legs of hedged positions, editing tools. Verified = live Myfxbook / FX Blue link.</span></span></li>
+      <li><span class="sev critical">Critical</span><span>Companion bot pushes Zoom “account management” calls and $10,000 giveaway streams. <span class="why">The Zoom call is where the pressure to deposit happens; giveaway links are the same funnel's casino arm.</span></span></li>
+      <li><span class="sev critical">Critical</span><span>Steers to an offshore broker with no UK protection. <span class="why">Channels typically earn introducing-broker kickbacks per lot you trade — they get paid whether you win or lose, more if you overtrade.</span></span></li>
+      <li><span class="sev serious">Serious</span><span>Posts fixed 5.00-lot sizes with no reference to account size. <span class="why">5 lots moves $500 per $1 of gold. On a small account that is instant ruin; on any account it ignores risk entirely.</span></span></li>
+      <li><span class="sev warning">Warning</span><span>Urgency and hype language — “NOW”, “exciting week ahead, more to come”. <span class="why">Marketing pressure is a substitute for evidence.</span></span></li>
+    </ul>
+  </section>
+
+  <footer class="foot">Educational paper-trading tool. Nothing here is financial advice, and nothing here places real orders. XAUUSD figures assume a 100&nbsp;oz contract ($100 per $1.00 move per 1.00 lot); check your broker's contract spec.</footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var LS_KEY = 'tradeGuard.v1';
+  var DOLLARS_PER_LOT_PER_DOLLAR = 100; // XAUUSD: 100 oz contract
+
+  var state = {
+    params: { balance: 500, risk: 1, daily: 5, maxTrades: 3, minSample: 30, minDays: 28 },
+    checks: { live: false, broker: false },
+    trades: []
+  };
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        if (s && s.params && Array.isArray(s.trades)) {
+          state.params = Object.assign(state.params, s.params);
+          state.checks = Object.assign(state.checks, s.checks || {});
+          state.trades = s.trades;
+        }
+      }
+    } catch (e) { /* corrupted store — start fresh */ }
+  }
+  function save() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { /* storage full/blocked */ }
+  }
+
+  function $(id) { return document.getElementById(id); }
+  function fmt(n, dp) { return Number(n).toLocaleString('en-GB', { minimumFractionDigits: dp == null ? 2 : dp, maximumFractionDigits: dp == null ? 2 : dp }); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  // ---------- Position sizing ----------
+  function lotsFor(balance, riskPct, entry, sl) {
+    var dist = Math.abs(entry - sl);
+    if (!(dist > 0) || !(balance > 0) || !(riskPct > 0)) return null;
+    var riskUSD = balance * riskPct / 100;
+    var lots = riskUSD / (dist * DOLLARS_PER_LOT_PER_DOLLAR);
+    return Math.floor(lots * 100) / 100; // broker min step 0.01
+  }
+
+  // ---------- Signal parsing ----------
+  function parseSignal(text) {
+    var t = String(text || '');
+    if (!t.trim()) return null;
+    var side = null;
+    var mSide = t.match(/\b(BUY|LONG)\b/i) ? 1 : (t.match(/\b(SELL|SHORT)\b/i) ? -1 : null);
+    side = mSide;
+    function grab(re) { var m = t.match(re); return m ? parseFloat(m[1]) : null; }
+    var sl = grab(/S\.?\s?L\.?\s*[:@=\s]\s*\$?([0-9]{3,5}(?:\.[0-9]+)?)/i);
+    var tpm = t.match(/T\.?\s?P\.?\s?1?\s*[:@=\s]\s*\$?([0-9]{3,5}(?:\.[0-9]+)?)/i);
+    var tp = tpm ? parseFloat(tpm[1]) : null;
+    var entry = grab(/(?:ENTRY|@|NOW\s*@?|PRICE)\s*[:=]?\s*\$?([0-9]{3,5}(?:\.[0-9]+)?)/i);
+    if (entry == null) {
+      var nums = (t.match(/[0-9]{3,5}(?:\.[0-9]+)?/g) || []).map(parseFloat)
+        .filter(function (n) { return n >= 500 && n <= 20000 && n !== sl && n !== tp; });
+      if (nums.length) entry = nums[0];
+    }
+    if (side == null && entry != null && sl != null) side = sl > entry ? -1 : 1;
+    if (entry == null || sl == null || side == null) return null;
+    return { side: side, entry: entry, sl: sl, tp: tp };
+  }
+
+  // ---------- Stats ----------
+  function closedTrades() {
+    return state.trades.filter(function (t) { return t.status !== 'open'; })
+      .sort(function (a, b) { return (a.closedAt || a.ts) - (b.closedAt || b.ts); });
+  }
+  function stats() {
+    var closed = closedTrades();
+    var n = closed.length;
+    var wins = closed.filter(function (t) { return t.pnl > 0; }).length;
+    var grossW = 0, grossL = 0, sum = 0;
+    closed.forEach(function (t) { sum += t.pnl; if (t.pnl > 0) grossW += t.pnl; else grossL += -t.pnl; });
+    var eq = [state.params.balance], peak = state.params.balance, maxDD = 0;
+    closed.forEach(function (t) {
+      var v = eq[eq.length - 1] + t.pnl; eq.push(v);
+      if (v > peak) peak = v;
+      var dd = peak > 0 ? (peak - v) / peak * 100 : 0;
+      if (dd > maxDD) maxDD = dd;
+    });
+    var firstTs = state.trades.length ? Math.min.apply(null, state.trades.map(function (t) { return t.ts; })) : null;
+    var lastTs = closed.length ? Math.max.apply(null, closed.map(function (t) { return t.closedAt || t.ts; })) : null;
+    var days = firstTs && lastTs ? Math.max(0, (lastTs - firstTs) / 864e5) : 0;
+    var p = n ? wins / n : 0;
+    var ci = n ? 1.96 * Math.sqrt(p * (1 - p) / n) * 100 : 0;
+    return {
+      n: n, wins: wins, winRate: n ? p * 100 : null, ci: ci,
+      expectancy: n ? sum / n : null,
+      profitFactor: grossL > 0 ? grossW / grossL : (grossW > 0 ? Infinity : null),
+      maxDD: n ? maxDD : null, netPnl: sum, equity: eq, days: days
+    };
+  }
+
+  // ---------- Rendering ----------
+  function renderParams() {
+    $('pBalance').value = state.params.balance;
+    $('pRisk').value = state.params.risk;
+    $('pDaily').value = state.params.daily;
+    $('pMaxTrades').value = state.params.maxTrades;
+    $('pMinSample').value = state.params.minSample;
+    $('pMinDays').value = state.params.minDays;
+    $('gLive').checked = !!state.checks.live;
+    $('gBroker').checked = !!state.checks.broker;
+  }
+
+  function renderSizer() {
+    var side = parseInt($('sSide').value, 10);
+    var entry = parseFloat($('sEntry').value);
+    var sl = parseFloat($('sSL').value);
+    var tp = parseFloat($('sTP').value);
+    var lots = (isFinite(entry) && isFinite(sl)) ? lotsFor(state.params.balance, state.params.risk, entry, sl) : null;
+    var dist = Math.abs(entry - sl);
+
+    if (lots != null && lots >= 0.01) {
+      $('oLots').textContent = lots.toFixed(2);
+      $('oRisk').textContent = '$' + fmt(lots * dist * DOLLARS_PER_LOT_PER_DOLLAR) + ' (' + fmt(lots * dist * DOLLARS_PER_LOT_PER_DOLLAR / state.params.balance * 100, 1) + '%)';
+    } else if (lots != null) {
+      $('oLots').textContent = '0';
+      $('oRisk').textContent = 'stop too wide for account';
+    } else {
+      $('oLots').textContent = '—';
+      $('oRisk').textContent = '—';
+    }
+    if (isFinite(entry) && isFinite(sl) && isFinite(tp) && dist > 0) {
+      $('oRR').textContent = fmt(Math.abs(tp - entry) / dist, 2) + ' : 1';
+    } else { $('oRR').textContent = '—'; }
+
+    var box = $('channelSizing');
+    if (isFinite(entry) && isFinite(sl) && dist > 0 && state.params.balance > 0) {
+      var chanRisk = 5 * dist * DOLLARS_PER_LOT_PER_DOLLAR;
+      var pct = chanRisk / state.params.balance * 100;
+      box.hidden = false;
+      $('channelSizingText').textContent = 'The channel’s own sizing (5.00 lots) would risk $' + fmt(chanRisk, 0) +
+        ' on this stop — ' + fmt(pct, 0) + '% of your $' + fmt(state.params.balance, 0) +
+        ' account. Your ' + state.params.risk + '% cap allows ' + (lots != null && lots >= 0.01 ? lots.toFixed(2) : '0') + ' lots.';
+    } else { box.hidden = true; }
+  }
+
+  function statusChip(t) {
+    var cls = t.status === 'open' ? 'open' : (t.status === 'be' ? 'be' : (t.pnl > 0 ? 'win' : 'loss'));
+    var lbl = t.status === 'open' ? 'open' : (t.status === 'be' ? 'b/e' : (t.pnl > 0 ? 'win' : 'loss'));
+    return '<span class="chip ' + cls + '">' + lbl + '</span>';
+  }
+
+  function renderLog() {
+    var body = $('logBody');
+    if (!state.trades.length) {
+      body.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--ink-3);padding:18px">Nothing logged yet — paste the next signal above.</td></tr>';
+      return;
+    }
+    var rows = state.trades.slice().sort(function (a, b) { return b.ts - a.ts; }).map(function (t) {
+      var d = new Date(t.ts);
+      var dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      var pnlCell = t.status === 'open' ? '<td>—</td>' :
+        '<td class="' + (t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (t.pnl >= 0 ? '+' : '−') + fmt(Math.abs(t.pnl)) + '</td>';
+      var act;
+      if (t.status === 'open') {
+        act = '<button class="mini" data-act="tp" data-id="' + t.id + '"' + (t.tp == null ? ' disabled' : '') + '>TP hit</button> ' +
+              '<button class="mini" data-act="sl" data-id="' + t.id + '">SL hit</button> ' +
+              '<input class="close-px" data-id="' + t.id + '" type="number" step="0.01" placeholder="close @" inputmode="decimal"> ' +
+              '<button class="mini" data-act="close" data-id="' + t.id + '">Close</button>';
+      } else {
+        act = '<button class="mini" data-act="reopen" data-id="' + t.id + '">Reopen</button>';
+      }
+      act += ' <button class="mini" data-act="del" data-id="' + t.id + '" aria-label="Delete trade">✕</button>';
+      return '<tr>' +
+        '<td>' + t.seq + '</td><td>' + esc(dateStr) + '</td>' +
+        '<td><span class="chip ' + (t.side === 1 ? 'buy' : 'sell') + '">' + (t.side === 1 ? 'buy' : 'sell') + '</span></td>' +
+        '<td>' + fmt(t.entry) + '</td><td>' + fmt(t.sl) + '</td><td>' + (t.tp != null ? fmt(t.tp) : '—') + '</td>' +
+        '<td>' + t.lots.toFixed(2) + '</td>' +
+        '<td>' + statusChip(t) + '</td>' +
+        '<td>' + (t.close != null ? fmt(t.close) : '—') + '</td>' +
+        pnlCell +
+        '<td>' + act + '</td></tr>';
+    });
+    body.innerHTML = rows.join('');
+  }
+
+  function tile(label, value, note) {
+    return '<div class="tile"><span class="label">' + label + '</span><div class="v">' + value + '</div>' + (note ? '<div class="n">' + note + '</div>' : '') + '</div>';
+  }
+
+  function renderTiles(st) {
+    var el = $('tiles');
+    var wr = st.winRate == null ? '—' : fmt(st.winRate, 0) + '%';
+    var wrNote = st.n ? '±' + fmt(st.ci, 0) + ' pts at 95% · claimed: 100%' : 'claimed: 100%';
+    var pf = st.profitFactor == null ? '—' : (st.profitFactor === Infinity ? '∞' : fmt(st.profitFactor, 2));
+    el.innerHTML =
+      tile('Trades closed', st.n + ' / ' + state.params.minSample, st.n < state.params.minSample ? 'below minimum sample' : 'sample reached') +
+      tile('Win rate', wr, wrNote) +
+      tile('Expectancy / trade', st.expectancy == null ? '—' : (st.expectancy >= 0 ? '+$' : '−$') + fmt(Math.abs(st.expectancy)), 'avg P&amp;L per closed trade') +
+      tile('Profit factor', pf, 'gross wins ÷ gross losses · need ≥ 1.3') +
+      tile('Max drawdown', st.maxDD == null ? '—' : fmt(st.maxDD, 1) + '%', 'peak-to-trough · limit 20%') +
+      tile('Paper equity', '$' + fmt(state.params.balance + st.netPnl), (st.netPnl >= 0 ? '+$' : '−$') + fmt(Math.abs(st.netPnl)) + ' vs start');
+  }
+
+  function gateRow(pass, text, why) {
+    return '<li><span class="mark ' + (pass ? 'pass' : 'fail') + '">' + (pass ? 'PASS' : 'FAIL') + '</span><span>' + text + (why ? '<span class="why">' + why + '</span>' : '') + '</span></li>';
+  }
+
+  function renderGates(st) {
+    var g = [];
+    g.push([st.n >= state.params.minSample, 'At least ' + state.params.minSample + ' closed paper trades', st.n + ' logged so far — a hot fortnight can be pure luck; a coin flips 10 heads in a row once in a thousand runs.']);
+    g.push([st.days >= state.params.minDays, 'At least ' + state.params.minDays + ' days of forward testing', fmt(st.days, 0) + ' days so far — one market regime proves nothing about the next.']);
+    g.push([st.profitFactor != null && st.profitFactor >= 1.3 && st.n > 0, 'Profit factor ≥ 1.3 at your sizing', 'currently ' + (st.profitFactor == null ? '—' : (st.profitFactor === Infinity ? '∞' : fmt(st.profitFactor, 2)))]);
+    g.push([st.maxDD != null && st.maxDD <= 20, 'Max drawdown ≤ 20%', 'currently ' + (st.maxDD == null ? '—' : fmt(st.maxDD, 1) + '%')]);
+    var computed = g.map(function (x) { return gateRow(x[0], x[1], x[2]); }).join('');
+    $('gateList').innerHTML = computed;
+
+    var passCount = g.filter(function (x) { return x[0]; }).length + (state.checks.live ? 1 : 0) + (state.checks.broker ? 1 : 0);
+    var all = passCount === 6;
+    var banner = $('verdictBanner');
+    banner.className = 'verdict ' + (all ? 'pass' : 'blocked');
+    $('verdictGlyph').textContent = all ? '✅' : '🛑';
+    $('verdictTitle').textContent = all ? 'GATES PASSED — smallest size only' : 'DO NOT FUND';
+    $('verdictText').textContent = all
+      ? 'All 6 gates are green. If you still proceed, start at 0.01 lots on an FCA-regulated broker and keep every limit above in force.'
+      : passCount + ' of 6 funding gates passed. Keep paper-trading every signal; the evidence decides, not the channel’s marketing.';
+  }
+
+  // ---------- Chart ----------
+  function renderChart(st) {
+    var box = $('chartBox'), tip = $('chartTip'), empty = $('chartEmpty');
+    var old = box.querySelector('svg'); if (old) old.remove();
+    var eq = st.equity;
+    if (!eq || eq.length < 2) { empty.style.display = ''; return; }
+    empty.style.display = 'none';
+
+    var W = 720, H = 240, padL = 54, padR = 16, padT = 14, padB = 26;
+    var iw = W - padL - padR, ih = H - padT - padB;
+    var min = Math.min.apply(null, eq), max = Math.max.apply(null, eq);
+    if (min === max) { min -= 1; max += 1; }
+    var span = max - min; min -= span * 0.08; max += span * 0.08;
+    function X(i) { return padL + i / (eq.length - 1) * iw; }
+    function Y(v) { return padT + (1 - (v - min) / (max - min)) * ih; }
+
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Paper equity curve from $' + fmt(eq[0], 0) + ' to $' + fmt(eq[eq.length - 1], 0) + ' over ' + (eq.length - 1) + ' closed trades');
+
+    var g = '';
+    for (var k = 0; k <= 3; k++) {
+      var gv = min + (max - min) * k / 3, gy = Y(gv);
+      g += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="var(--grid)" stroke-width="1"/>';
+      g += '<text x="' + (padL - 8) + '" y="' + (gy + 3.5) + '" text-anchor="end" font-size="10" fill="var(--ink-3)" style="font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,monospace">$' + fmt(gv, 0) + '</text>';
+    }
+    var by = Y(eq[0]);
+    g += '<line x1="' + padL + '" y1="' + by + '" x2="' + (W - padR) + '" y2="' + by + '" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="3 4" opacity="0.7"/>';
+
+    var line = eq.map(function (v, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); }).join(' ');
+    var area = line + ' L' + X(eq.length - 1).toFixed(1) + ' ' + (padT + ih) + ' L' + padL + ' ' + (padT + ih) + ' Z';
+    g += '<path d="' + area + '" fill="var(--series-soft)"/>';
+    g += '<path d="' + line + '" fill="none" stroke="var(--series)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    var ex = X(eq.length - 1), ey = Y(eq[eq.length - 1]);
+    g += '<circle cx="' + ex + '" cy="' + ey + '" r="3.5" fill="var(--series)" stroke="var(--surface)" stroke-width="2"/>';
+    var lastLabelX = Math.min(ex, W - padR - 4);
+    g += '<text x="' + lastLabelX + '" y="' + (ey - 8) + '" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)" style="font-family:ui-monospace,Menlo,monospace">$' + fmt(eq[eq.length - 1], 0) + '</text>';
+    g += '<text x="' + padL + '" y="' + (H - 8) + '" font-size="10" fill="var(--ink-3)" style="font-family:ui-monospace,Menlo,monospace">start</text>';
+    g += '<text x="' + (W - padR) + '" y="' + (H - 8) + '" text-anchor="end" font-size="10" fill="var(--ink-3)" style="font-family:ui-monospace,Menlo,monospace">trade ' + (eq.length - 1) + '</text>';
+    g += '<line id="xhair" x1="0" y1="' + padT + '" x2="0" y2="' + (padT + ih) + '" stroke="var(--ink-3)" stroke-width="1" opacity="0" pointer-events="none"/>';
+    g += '<circle id="hoverdot" r="4" fill="var(--series)" stroke="var(--surface)" stroke-width="2" opacity="0"/>';
+    g += '<rect x="' + padL + '" y="' + padT + '" width="' + iw + '" height="' + ih + '" fill="transparent"/>';
+    svg.innerHTML = g;
+    box.appendChild(svg);
+
+    var closed = closedTrades();
+    function onMove(evt) {
+      var r = svg.getBoundingClientRect();
+      var px = (evt.clientX - r.left) / r.width * W;
+      var i = Math.round((px - padL) / iw * (eq.length - 1));
+      i = Math.max(0, Math.min(eq.length - 1, i));
+      var cx = X(i), cy = Y(eq[i]);
+      var xh = svg.querySelector('#xhair'), hd = svg.querySelector('#hoverdot');
+      xh.setAttribute('x1', cx); xh.setAttribute('x2', cx); xh.setAttribute('opacity', '0.5');
+      hd.setAttribute('cx', cx); hd.setAttribute('cy', cy); hd.setAttribute('opacity', '1');
+      var t = i > 0 ? closed[i - 1] : null;
+      tip.innerHTML = (i === 0 ? 'Start' : 'After trade ' + i + (t ? ' · ' + new Date(t.closedAt || t.ts).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '')) +
+        '<br><span class="tt-v">$' + fmt(eq[i]) + '</span>' + (t ? ' <span style="color:var(--ink-3)">(' + (t.pnl >= 0 ? '+' : '−') + '$' + fmt(Math.abs(t.pnl)) + ')</span>' : '');
+      tip.style.display = 'block';
+      var bx = box.getBoundingClientRect();
+      var tx = (cx / W) * bx.width + 12;
+      if (tx + tip.offsetWidth > bx.width - 8) tx = tx - tip.offsetWidth - 24;
+      tip.style.left = Math.max(0, tx) + 'px';
+      tip.style.top = ((cy / H) * bx.height - 44) + 'px';
+    }
+    function onLeave() {
+      tip.style.display = 'none';
+      svg.querySelector('#xhair').setAttribute('opacity', '0');
+      svg.querySelector('#hoverdot').setAttribute('opacity', '0');
+    }
+    svg.addEventListener('mousemove', onMove);
+    svg.addEventListener('mouseleave', onLeave);
+    svg.addEventListener('touchstart', function (e) { if (e.touches[0]) onMove(e.touches[0]); }, { passive: true });
+    svg.addEventListener('touchmove', function (e) { if (e.touches[0]) onMove(e.touches[0]); }, { passive: true });
+  }
+
+  function renderAll() {
+    var st = stats();
+    renderLog();
+    renderTiles(st);
+    renderGates(st);
+    renderChart(st);
+    renderSizer();
+    save();
+  }
+
+  // ---------- Events ----------
+  ['pBalance', 'pRisk', 'pDaily', 'pMaxTrades', 'pMinSample', 'pMinDays'].forEach(function (id) {
+    $(id).addEventListener('input', function () {
+      state.params = {
+        balance: parseFloat($('pBalance').value) || 0,
+        risk: parseFloat($('pRisk').value) || 1,
+        daily: parseFloat($('pDaily').value) || 5,
+        maxTrades: parseInt($('pMaxTrades').value, 10) || 3,
+        minSample: parseInt($('pMinSample').value, 10) || 30,
+        minDays: parseInt($('pMinDays').value, 10) || 28
+      };
+      renderAll();
+    });
+  });
+  ['sSide', 'sEntry', 'sSL', 'sTP'].forEach(function (id) { $(id).addEventListener('input', renderSizer); });
+  $('gLive').addEventListener('change', function () { state.checks.live = this.checked; renderAll(); });
+  $('gBroker').addEventListener('change', function () { state.checks.broker = this.checked; renderAll(); });
+
+  $('btnParse').addEventListener('click', function () {
+    var sig = parseSignal($('pasteBox').value);
+    var st = $('parseStatus');
+    if (!sig) { st.textContent = 'could not read a side + entry + SL from that text'; return; }
+    $('sSide').value = String(sig.side);
+    $('sEntry').value = sig.entry;
+    $('sSL').value = sig.sl;
+    $('sTP').value = sig.tp != null ? sig.tp : '';
+    st.textContent = 'parsed ✓';
+    renderSizer();
+  });
+
+  var seqCounter = null;
+  function nextSeq() {
+    if (seqCounter == null) seqCounter = state.trades.reduce(function (m, t) { return Math.max(m, t.seq || 0); }, 0);
+    return ++seqCounter;
+  }
+
+  $('btnLog').addEventListener('click', function () {
+    var side = parseInt($('sSide').value, 10);
+    var entry = parseFloat($('sEntry').value);
+    var sl = parseFloat($('sSL').value);
+    var tp = parseFloat($('sTP').value);
+    var st = $('logStatus');
+    if (!isFinite(entry) || !isFinite(sl) || Math.abs(entry - sl) <= 0) { st.textContent = 'need entry and a stop'; return; }
+    if ((side === 1 && sl >= entry) || (side === -1 && sl <= entry)) { st.textContent = 'stop is on the wrong side of entry'; return; }
+    var lots = lotsFor(state.params.balance, state.params.risk, entry, sl);
+    if (lots == null || lots < 0.01) lots = 0.01; // paper-trade the minimum so the signal is still scored
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var todays = state.trades.filter(function (t) { return t.ts >= today.getTime(); }).length;
+    state.trades.push({
+      id: 't' + Date.now() + Math.floor(Math.random() * 1e4),
+      seq: nextSeq(), ts: Date.now(), side: side, entry: entry, sl: sl,
+      tp: isFinite(tp) ? tp : null, lots: lots, status: 'open', close: null, pnl: 0
+    });
+    st.textContent = todays + 1 > state.params.maxTrades
+      ? 'logged — but this is trade ' + (todays + 1) + ' today, over your cap of ' + state.params.maxTrades
+      : 'logged ✓';
+    $('pasteBox').value = '';
+    renderAll();
+  });
+
+  function closeTrade(t, price) {
+    t.close = price;
+    t.pnl = Math.round((price - t.entry) * t.side * t.lots * DOLLARS_PER_LOT_PER_DOLLAR * 100) / 100;
+    t.status = Math.abs(t.pnl) < 0.005 ? 'be' : 'closed';
+    t.closedAt = Date.now();
+  }
+
+  $('logBody').addEventListener('click', function (e) {
+    var btn = e.target.closest('button'); if (!btn) return;
+    var id = btn.getAttribute('data-id'), act = btn.getAttribute('data-act');
+    var t = state.trades.find(function (x) { return x.id === id; }); if (!t) return;
+    if (act === 'tp' && t.tp != null) closeTrade(t, t.tp);
+    else if (act === 'sl') closeTrade(t, t.sl);
+    else if (act === 'close') {
+      var inp = $('logBody').querySelector('input.close-px[data-id="' + id + '"]');
+      var px = inp ? parseFloat(inp.value) : NaN;
+      if (!isFinite(px)) { if (inp) inp.focus(); return; }
+      closeTrade(t, px);
+    }
+    else if (act === 'reopen') { t.status = 'open'; t.close = null; t.pnl = 0; delete t.closedAt; }
+    else if (act === 'del') {
+      if (!confirm('Delete trade #' + t.seq + '?')) return;
+      state.trades = state.trades.filter(function (x) { return x.id !== id; });
+    }
+    renderAll();
+  });
+
+  $('btnExport').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'trade-guard-log.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  $('btnImport').addEventListener('click', function () { $('fileImport').click(); });
+  $('fileImport').addEventListener('change', function () {
+    var f = this.files[0]; if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var text = String(reader.result || '');
+      try {
+        var obj = JSON.parse(text);
+        if (obj && Array.isArray(obj.trades)) {
+          if (confirm('Replace current log with imported file (' + obj.trades.length + ' trades)?')) {
+            state = { params: Object.assign(state.params, obj.params || {}), checks: Object.assign(state.checks, obj.checks || {}), trades: obj.trades };
+            seqCounter = null; renderParams(); renderAll();
+          }
+          return;
+        }
+      } catch (e) { /* not our JSON — try JSONL from signal_logger.py */ }
+      var added = 0;
+      text.split(/\r?\n/).forEach(function (line) {
+        line = line.trim(); if (!line) return;
+        var rec = null;
+        try { rec = JSON.parse(line); } catch (e2) { return; }
+        var sig = rec && rec.parsed ? rec.parsed : parseSignal(rec && rec.text);
+        if (!sig || sig.entry == null || sig.sl == null) return;
+        var ts = rec.ts ? Date.parse(rec.ts) || Date.now() : Date.now();
+        if (state.trades.some(function (t) { return t.srcTs === ts; })) return;
+        var lots = lotsFor(state.params.balance, state.params.risk, sig.entry, sig.sl);
+        if (lots == null || lots < 0.01) lots = 0.01;
+        state.trades.push({
+          id: 't' + ts + Math.floor(Math.random() * 1e4), srcTs: ts, seq: nextSeq(),
+          ts: ts, side: sig.side, entry: sig.entry, sl: sig.sl, tp: sig.tp != null ? sig.tp : null,
+          lots: lots, status: 'open', close: null, pnl: 0
+        });
+        added++;
+      });
+      alert(added + ' signal(s) imported from the logger file.');
+      renderAll();
+    };
+    reader.readAsText(f);
+    this.value = '';
+  });
+
+  $('btnClear').addEventListener('click', function () {
+    if (confirm('Clear the whole paper-trade log? Export first if you want to keep it.')) {
+      state.trades = []; seqCounter = 0; renderAll();
+    }
+  });
+
+  load();
+  renderParams();
+  renderAll();
+})();
+</script>
+
+</body>
+</html>
