@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json.schemastore.org/claude-commands.json",
+  "name": "ultraplan-command-framework",
+  "version": "1.0.0",
+  "description": "Portable Claude Code slash-command framework: plan, execute, delegate, and review with sub-agents.",
+  "commandsDir": ".claude/commands",
+  "commands": [
+    {
+      "name": "ultraplan",
+      "file": "ultraplan.md",
+      "summary": "Deploy parallel sub-agents to research and produce a rigorous step-by-step ultra plan.",
+      "argumentHint": "<goal or task to plan>"
+    },
+    {
+      "name": "goal",
+      "file": "goal.md",
+      "summary": "Execute an ultra plan in a verify-gated loop until the success criteria are met.",
+      "argumentHint": "[plan slug | goal]"
+    },
+    {
+      "name": "agents",
+      "file": "agents.md",
+      "summary": "Dispatch the current task to background sub-agents and hand control back (zoom out).",
+      "argumentHint": "[task to run in background]"
+    },
+    {
+      "name": "ultrareview",
+      "file": "ultrareview.md",
+      "summary": "Deploy parallel sub-agents to review produced code (correctness, security, tests, style).",
+      "argumentHint": "[diff range or PR description]"
+    }
+  ]
+}
