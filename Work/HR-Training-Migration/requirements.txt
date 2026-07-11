@@ -1,0 +1,11 @@
+# Core pipeline (extract / normalise / expiry / master sheet)
+pandas>=2.0
+openpyxl>=3.1
+PyYAML>=6.0
+python-dateutil>=2.8
+
+# Optional: better fuzzy course matching (pipeline falls back to stdlib difflib)
+rapidfuzz>=3.0
+
+# Browser-entry step (src/enter_records.py). Also run: playwright install chromium
+playwright>=1.40

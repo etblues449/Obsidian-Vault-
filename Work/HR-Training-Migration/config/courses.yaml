@@ -1,0 +1,92 @@
+# Course catalogue + refresher intervals (CQC-aligned)
+# ----------------------------------------------------
+# Edit this file to match YOUR mandatory training matrix. Each course has:
+#   canonical        - the clean name written to the master sheet
+#   interval_months  - how long a completion stays valid (refresher frequency)
+#   aliases          - the messy spellings/abbreviations seen on paper/spreadsheets
+#
+# Intervals below are common UK adult-social-care defaults. CONFIRM against your
+# own policy / CQC requirements before relying on them — providers vary, and
+# some commission annual refreshers for courses others run every 3 years.
+
+settings:
+  # A record is "Expiring Soon" when expiry is within this many days of `today`.
+  expiring_soon_days: 60
+  # Used when a course is matched but has no interval, or an unknown course is kept.
+  default_interval_months: 12
+  # Fuzzy course-match confidence (0-100). Below this we DON'T auto-assign a
+  # canonical course; the row is routed to the Review sheet instead.
+  fuzzy_threshold: 84
+
+courses:
+  - canonical: "Safeguarding Adults"
+    interval_months: 12
+    aliases: ["safeguarding", "safeguarding adults", "adult safeguarding", "sova", "safeguarding adults level 2", "safeguarding lvl 2"]
+
+  - canonical: "Safeguarding Children"
+    interval_months: 12
+    aliases: ["safeguarding children", "child safeguarding", "socc"]
+
+  - canonical: "Moving and Handling"
+    interval_months: 12
+    aliases: ["moving & handling", "moving and handling", "manual handling", "m&h", "people moving and handling", "moving handling people"]
+
+  - canonical: "Basic Life Support"
+    interval_months: 12
+    aliases: ["bls", "basic life support", "cpr", "resuscitation", "life support"]
+
+  - canonical: "Fire Safety"
+    interval_months: 12
+    aliases: ["fire", "fire safety", "fire awareness", "fire marshal", "fire warden"]
+
+  - canonical: "Medication Administration"
+    interval_months: 12
+    aliases: ["medication", "meds", "administration of medication", "safe handling of medicines", "mar", "medication management"]
+
+  - canonical: "Infection Prevention and Control"
+    interval_months: 12
+    aliases: ["ipc", "infection control", "infection prevention", "infection prevention and control"]
+
+  - canonical: "Data Protection (GDPR)"
+    interval_months: 12
+    aliases: ["gdpr", "data protection", "information governance", "ig", "data security"]
+
+  - canonical: "Positive Behaviour Support"
+    interval_months: 12
+    aliases: ["pbs", "positive behaviour support", "positive behavior support", "challenging behaviour", "managing challenging behaviour"]
+
+  - canonical: "Epilepsy and Buccal Midazolam"
+    interval_months: 12
+    aliases: ["epilepsy", "buccal", "buccal midazolam", "epilepsy awareness", "epilepsy & buccal"]
+
+  - canonical: "First Aid at Work"
+    interval_months: 36
+    aliases: ["first aid", "faw", "first aid at work", "emergency first aid", "efaw"]
+
+  - canonical: "Food Hygiene"
+    interval_months: 36
+    aliases: ["food hygiene", "food safety", "level 2 food hygiene", "food handling"]
+
+  - canonical: "Mental Capacity Act and DoLS"
+    interval_months: 36
+    aliases: ["mca", "mental capacity act", "dols", "mca & dols", "mca dols", "deprivation of liberty"]
+
+  - canonical: "Equality, Diversity and Inclusion"
+    interval_months: 36
+    aliases: ["equality", "equality and diversity", "edi", "diversity", "equality diversity inclusion"]
+
+  - canonical: "Health and Safety"
+    interval_months: 36
+    aliases: ["health and safety", "h&s", "health & safety", "general health and safety"]
+
+  - canonical: "Autism Awareness"
+    interval_months: 36
+    aliases: ["autism", "autism awareness", "understanding autism"]
+
+  - canonical: "Learning Disability Awareness"
+    interval_months: 36
+    aliases: ["learning disability", "ld awareness", "learning disabilities", "understanding learning disability"]
+
+  - canonical: "Oliver McGowan Mandatory Training"
+    interval_months: 36
+    aliases: ["oliver mcgowan", "omt", "oliver mcgowan training", "ld and autism"]
