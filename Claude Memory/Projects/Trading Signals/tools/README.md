@@ -11,13 +11,17 @@ is exposed.
 |---|---|
 | `trade-guard.html` | The console. Open it in any browser (works offline). Also published as a Claude artifact. |
 | `signal_logger.py` | Read-only Telethon listener for Termux. Appends every channel message to `signals.jsonl`, parsing XAUUSD signals where it can. |
-| `signals.jsonl` | Created by the logger. Import it into the console with the **Import** button. Git-ignored by default is fine — it's regenerable. |
+| `resolve_trades.py` | Auto-adjudicator (stdlib only). Fetches real gold bars (Yahoo 15-minute first, Stooq daily fallback — no API keys) and walks them forward from each signal: TP-first = win, SL-first = loss, one bar spanning both = ambiguous (left for a manual call). Writes `signals.resolved.jsonl`. Adjudication logic unit-tested 8/8. |
+| `signals.jsonl` | Created by the logger. Run `resolve_trades.py`, then import `signals.resolved.jsonl` into the console — matching trades close themselves at the adjudicated price. Git-ignored by default is fine — it's regenerable. |
 
 ## The loop
 
 1. **Capture** — run `signal_logger.py` in Termux (or just paste signals into
    the console by hand; the paste box parses `SELL @ 4334 SL 4340 TP 4326`
    style text directly).
+1b. **Resolve** — `python resolve_trades.py` turns `signals.jsonl` into
+   `signals.resolved.jsonl` using real price history, so no one (including
+   you) gets to decide after the fact whether a trade "would have" won.
 2. **Size** — the console computes the lots *your* risk parameters allow
    (default 1% per trade), and shows what the channel's 5.00-lot sizing would
    have done to your account.

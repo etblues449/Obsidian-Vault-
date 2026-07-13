@@ -316,7 +316,7 @@
 
   <section class="card">
     <h2>3 · Paper trade log</h2>
-    <p class="hint">The forward test. Close each trade at the price the market actually gave — TP, SL, or a manual close — and the scorecard updates itself.</p>
+    <p class="hint">The forward test. Close each trade at the price the market actually gave — tap TP/SL, enter a manual close, or run <span class="mono">resolve_trades.py</span> and Import: trades then close themselves at the price real gold bars actually hit.</p>
     <div class="tablewrap">
       <table id="logTable">
         <thead>
@@ -795,7 +795,16 @@
           return;
         }
       } catch (e) { /* not our JSON — try JSONL from signal_logger.py */ }
-      var added = 0;
+      var added = 0, resolved = 0, ambiguous = 0;
+      function applyResolution(trade, res) {
+        if (!res) return;
+        if (res.status === 'ambiguous') { ambiguous++; return; }
+        if (res.close == null || trade.status !== 'open') return;
+        closeTrade(trade, res.close);
+        var at = res.closedAt ? Date.parse(res.closedAt) : NaN;
+        if (isFinite(at)) trade.closedAt = at;
+        resolved++;
+      }
       text.split(/\r?\n/).forEach(function (line) {
         line = line.trim(); if (!line) return;
         var rec = null;
@@ -803,17 +812,22 @@
         var sig = rec && rec.parsed ? rec.parsed : parseSignal(rec && rec.text);
         if (!sig || sig.entry == null || sig.sl == null) return;
         var ts = rec.ts ? Date.parse(rec.ts) || Date.now() : Date.now();
-        if (state.trades.some(function (t) { return t.srcTs === ts; })) return;
+        var existing = state.trades.find(function (t) { return t.srcTs === ts; });
+        if (existing) { applyResolution(existing, rec.resolution); return; }
         var lots = lotsFor(state.params.balance, state.params.risk, sig.entry, sig.sl);
         if (lots == null || lots < 0.01) lots = 0.01;
-        state.trades.push({
+        var trade = {
           id: 't' + ts + Math.floor(Math.random() * 1e4), srcTs: ts, seq: nextSeq(),
           ts: ts, side: sig.side, entry: sig.entry, sl: sig.sl, tp: sig.tp != null ? sig.tp : null,
           lots: lots, status: 'open', close: null, pnl: 0
-        });
+        };
+        state.trades.push(trade);
         added++;
+        applyResolution(trade, rec.resolution);
       });
-      alert(added + ' signal(s) imported from the logger file.');
+      alert(added + ' signal(s) imported' +
+        (resolved ? ', ' + resolved + ' auto-closed at the adjudicated price' : '') +
+        (ambiguous ? ', ' + ambiguous + ' ambiguous (bar spans TP and SL) left open for a manual call' : '') + '.');
       renderAll();
     };
     reader.readAsText(f);
