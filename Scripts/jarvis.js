@@ -46,10 +46,14 @@ const CONFIG = {
   // natural language ("turn on the lounge lights") to one of these exactly.
   // Add yours here — anything not listed is treated as a note, never guessed.
   haEntities: [
-  "light.living_room_light",
-  "light.left_smart_bulb",
-  "light.right_smart_bulb",
-  "light.stairs_smart_bulb",
+    "light.right_smart_bulb",
+    "light.left_smart_bulb",
+    "light.living_room_light",
+    "light.rgbic_tv_backlight",
+    "light.stairs_smart_bulb",
+    "switch.rgbic_tv_backlight_dreamview",
+    "climate.living_room",
+    "media_player.tv_jelly_beans_tv_2",
   ],
 };
 
@@ -58,8 +62,10 @@ const CONFIG = {
 // ============================================================================
 module.exports = async (params) => {
   const { app, quickAddApi } = params;
+  // QuickAdd hands us the obsidian module on params (works on mobile AND
+  // desktop). Never use require("obsidian") — there is no require on mobile.
   const { requestUrl, Notice } = params.obsidian;
-  
+
   const apiKey = window.localStorage.getItem("jarvis-anthropic-key");
   if (!apiKey) {
     new Notice("JARVIS: no API key. Run the JARVIS Setup command first.", 8000);

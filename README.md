@@ -1,371 +1,211 @@
-# Global Repository Environment
+# JARVIS Full Automatic Assistant
 
-Centralized workspace for managing multiple projects and frameworks with unified environment configuration, symlinks, and quick-access aliases.
+**Status:** ✅ **COMPLETE & READY TO TEST**  
+**Version:** 1.0 (Full System)  
+**Built:** 2026-06-25
 
-## Overview
-
-This `/opt/repos/` directory serves as the global home for all development projects. It includes:
-
-- **Three main repositories** - Obsidian Vault, Fincast Suite, ECC Framework
-- **Environment configuration** - `.env.repos` with variables and aliases
-- **Repository metadata** - `repos-manifest.json` documenting all repos
-- **Automated setup** - `setup-repos.sh` for easy initialization
-
-## Directory Structure
-
-```
-/opt/repos/
-├── obsidian-vault-/              # Knowledge vault with projects & context
-├── fincast-suite/                # Unified fincast application monorepo
-├── ecc/                          # AI agent framework reference (250+ skills)
-├── .env.repos                    # Environment variables & shell aliases
-├── repos-manifest.json           # Repository metadata & descriptions
-├── setup-repos.sh                # Automated setup & cloning script
-└── README.md                     # This file
-```
-
-## Quick Start
-
-### Automated Setup (First Time)
-
-```bash
-# Clone/setup all repositories
-bash /opt/repos/setup-repos.sh
-
-# Reload your shell
-source ~/.bashrc    # or ~/.zshrc
-```
-
-### Manual Setup
-
-If you prefer step-by-step:
-
-```bash
-# Clone repositories
-git clone https://github.com/etblues449/Obsidian-Vault- /opt/repos/obsidian-vault-
-git clone https://github.com/etblues449/fincast-suite /opt/repos/fincast-suite
-git clone https://github.com/affaan-m/ECC /opt/repos/ecc
-
-# Create symlinks
-mkdir -p ~/dev-global
-ln -s /opt/repos/obsidian-vault- ~/dev-global/vault
-ln -s /opt/repos/fincast-suite ~/dev-global/fincast
-ln -s /opt/repos/ecc ~/dev-global/ecc
-
-# Load environment
-echo 'source /opt/repos/.env.repos' >> ~/.bashrc
-source ~/.bashrc
-```
-
-## Navigation & Access
-
-### Using Aliases
-
-```bash
-# Quick navigation
-vault                  # Jump to Obsidian Vault
-fincast                # Jump to Fincast Suite
-ecc                    # Jump to ECC Framework
-dev-global             # Jump to ~/dev-global symlink directory
-```
-
-### Using Environment Variables
-
-```bash
-# In shell scripts or code
-cd $OBSIDIAN_VAULT
-cd $FINCAST_SUITE
-cd $ECC_FRAMEWORK
-
-# Or query from scripts
-echo "My vault is at: $OBSIDIAN_VAULT"
-find $FINCAST_SUITE -name "*.py"
-```
-
-### Direct Paths
-
-```bash
-cd /opt/repos/obsidian-vault-
-cd /opt/repos/fincast-suite
-cd /opt/repos/ecc
-```
-
-## Repository Descriptions
-
-### Obsidian Vault (`obsidian-vault-`)
-
-**Purpose:** Personal knowledge management and project context  
-**Usage:** Reference, context, documentation  
-**Key Features:**
-- SessionStart hook for auto-loading Claude context
-- Cross-device sync via Obsidian Sync
-- Organized notes and project management
-- Claude Memory with project-specific context
-
-**Navigate:** `vault` or `$OBSIDIAN_VAULT`
-
-**Example:**
-```bash
-vault
-cd "Claude Memory/Projects/Smart Home"
-cat _index.md
-```
-
-### Fincast Suite (`fincast-suite`)
-
-**Purpose:** Unified financial forecasting application  
-**Usage:** Active development, reference, dependency integration  
-**Structure:**
-- `dashboard/` - Financial analytics UI
-- `backend/` - Worker services and APIs (pending merge)
-- `frontend/` - Web application interface (pending merge)
-- `web-version/` - Alternative web implementation (pending merge)
-
-**Navigate:** `fincast` or `$FINCAST_SUITE`
-
-**Example:**
-```bash
-fincast
-cd dashboard
-npm install
-npm start
-```
-
-### ECC Framework (`ecc`)
-
-**Purpose:** Comprehensive AI agent framework and skill library  
-**Usage:** Reference, learning, pattern extraction  
-**Key Features:**
-- 250+ reusable skills for AI-assisted development
-- Multiple AI IDE integrations (Claude, Cursor, Codex, etc.)
-- Agent framework and protocol definitions
-- MCP server configurations
-- Security and testing best practices
-
-**Navigate:** `ecc` or `$ECC_FRAMEWORK`
-
-**Example:**
-```bash
-ecc
-ls skills/ | head -20
-cat skills/*/SKILL.md | grep "# " | head -10
-```
-
-## Usage Patterns
-
-### Pattern 1: Reference & Learning
-
-Quickly access repo documentation:
-
-```bash
-# Read repository info
-vault && cat README.md
-fincast && cat README.md
-ecc && cat README.md
-
-# Search for patterns
-grep -r "pattern_name" $FINCAST_SUITE/
-find $ECC_FRAMEWORK/skills -name "*specific-skill*"
-```
-
-### Pattern 2: Active Development
-
-Work directly in a repo:
-
-```bash
-fincast
-cd backend/
-git checkout -b feature/new-endpoint
-# ... make changes ...
-git add .
-git commit -m "feat: add new endpoint"
-git push origin feature/new-endpoint
-```
-
-### Pattern 3: Dependency Integration
-
-Reference repos from scripts or other projects:
-
-```bash
-#!/bin/bash
-# Script using environment variables
-VAULT_PROJECT="$OBSIDIAN_VAULT/Work/MyProject"
-FINCAST_CONFIG="$FINCAST_SUITE/config"
-
-cp "$FINCAST_CONFIG/default.json" "/tmp/config.json"
-```
-
-## Adding New Repositories
-
-To add another repository to this environment:
-
-1. Clone it to `/opt/repos/`:
-   ```bash
-   git clone <url> /opt/repos/<name>
-   ```
-
-2. Update `repos-manifest.json` with its metadata
-
-3. Create a symlink if desired:
-   ```bash
-   ln -s /opt/repos/<name> ~/dev-global/<shortname>
-   ```
-
-4. Add environment variable to `.env.repos`:
-   ```bash
-   export MY_REPO="${REPOS_ROOT}/<name>"
-   ```
-
-5. Add alias to `.env.repos` (optional):
-   ```bash
-   alias myrepo='cd "${MY_REPO}" && pwd'
-   ```
-
-6. Reload: `source ~/.bashrc`
-
-## Utilities
-
-### Repo Info
-
-Display current repository configuration:
-
-```bash
-repos-info
-```
-
-Output:
-```
-=== Repository Environment ===
-REPOS_ROOT: /opt/repos
-
-Repositories:
-  OBSIDIAN_VAULT: /opt/repos/obsidian-vault-
-  FINCAST_SUITE: /opt/repos/fincast-suite
-  ECC_FRAMEWORK: /opt/repos/ecc
-
-Quick access: vault, fincast, ecc, dev-global
-```
-
-### List Repos
-
-```bash
-repos-list
-```
-
-### Manifest Query
-
-View repository metadata:
-
-```bash
-python3 -m json.tool /opt/repos/repos-manifest.json
-```
-
-## Troubleshooting
-
-### Aliases not working
-
-Make sure `.env.repos` is sourced:
-
-```bash
-source /opt/repos/.env.repos
-alias | grep vault
-```
-
-### Symlinks broken
-
-Verify symlink targets:
-
-```bash
-ls -la ~/dev-global/
-readlink ~/dev-global/vault
-```
-
-### Repository not found
-
-Check that clone succeeded:
-
-```bash
-ls -la /opt/repos/
-```
-
-If a repo is missing, clone it:
-
-```bash
-git clone <url> /opt/repos/<name>
-```
-
-## Shell Configuration
-
-### For Bash
-
-Add to `~/.bashrc`:
-
-```bash
-[ -f /opt/repos/.env.repos ] && source /opt/repos/.env.repos
-```
-
-### For Zsh
-
-Add to `~/.zshrc`:
-
-```bash
-[ -f /opt/repos/.env.repos ] && source /opt/repos/.env.repos
-```
-
-### For Fish
-
-Create `~/.config/fish/conf.d/repos.fish`:
-
-```fish
-test -f /opt/repos/.env.repos; and source /opt/repos/.env.repos
-```
-
-## Backup & Restore
-
-The setup script creates backups of your shell configurations:
-
-```bash
-ls -la ~/.repo-setup-backups/
-```
-
-To restore a backup:
-
-```bash
-cp ~/.repo-setup-backups/.bashrc.backup ~/.bashrc
-```
-
-## FAQ
-
-**Q: Can I work directly in these repos?**  
-A: Yes! The fincast-suite and obsidian-vault are meant for active development. Just use normal git workflow.
-
-**Q: How do I update all repos at once?**  
-A: Create a simple script:
-```bash
-for repo in $REPOS_ROOT/*/; do
-  (cd "$repo" && git pull origin main)
-done
-```
-
-**Q: Can I use these repos on multiple machines?**  
-A: Yes. Run `setup-repos.sh` on each machine to get the same environment.
-
-**Q: What if I delete a repo by mistake?**  
-A: Just re-clone it:
-```bash
-git clone <url> /opt/repos/<name>
-```
-
-## Support
-
-For issues with specific repositories, see their individual README files:
-
-- **Obsidian Vault:** `/opt/repos/obsidian-vault-/README.md`
-- **Fincast Suite:** `/opt/repos/fincast-suite/README.md`
-- **ECC Framework:** `/opt/repos/ecc/README.md`
+Your vault is your brain. You talk to JARVIS in natural language. It understands your intent, executes phone actions (alarms, SMS, reminders, calendar, timers, apps), and logs everything back to your vault.
 
 ---
 
-**Last Updated:** 2026-06-10  
-**Setup Method:** Automated with `setup-repos.sh`  
-**Configuration:** `.env.repos`, `repos-manifest.json`
+## Quick Start (15 minutes)
+
+**→ [QUICK START.md](QUICK START.md)** — Read this first
+
+Then:
+1. Create 7 Tasker tasks (see [TASKER SETUP.md](TASKER SETUP.md))
+2. Test one action: Alt+A → "Set alarm for 8am" → verify it works
+3. Done. JARVIS is live.
+
+---
+
+## What JARVIS Can Do
+
+| Action | Command | Status |
+|--------|---------|--------|
+| **Alarms** | "Set alarm for 8am tomorrow" | ✅ Ready |
+| **SMS** | "Send message to John: Hi" | ✅ Ready |
+| **Reminders** | "Remind me at 2pm tomorrow" | ✅ Ready |
+| **Calendar** | "Schedule meeting next Monday 10am" | ✅ Ready |
+| **Timers** | "Set 5 minute timer" | ✅ Ready |
+| **Apps** | "Open Chrome" | ✅ Ready |
+| **Notifications** | "Send notification: Hey!" | ✅ Ready |
+| **Auto-Logging** | Everything logged to vault | ✅ Ready |
+
+**Coming:** Daily briefing, smart reminders, weekly reviews, project integration, habit tracking.
+
+---
+
+## The System (How It Works)
+
+```
+You → Obsidian (Alt+A) → Claude AI → Tasker → Phone Action
+  ↓                          ↓
+Input prompt         Understands intent,
+                     picks right tool,
+                     extracts parameters
+                                ↓
+                        (creates alarm/SMS/etc)
+                                ↓
+                            Vault logs entry
+```
+
+**Full details:** [SYSTEM ARCHITECTURE.md](SYSTEM ARCHITECTURE.md)
+
+---
+
+## Files You Have
+
+```
+JARVIS/
+├── README.md                            ← You are here
+├── QUICK START.md                       ← START HERE
+├── SYSTEM ARCHITECTURE.md               ← How it all works
+├── TASKER SETUP.md                      ← Create executor tasks
+├── PRODUCTION CHECKLIST.md              ← Pre-launch tests
+├── Automation Workflows.md              ← Future automations
+├── Actions Dashboard.md                 ← Analytics dashboards
+├── scripts/
+│   ├── jarvis_ask.js                    ← Main script (enhanced)
+│   ├── jarvis.js                        ← Original capture system
+│   ├── jarvis_digest.js                 ← Daily briefing
+│   └── jarvis_setup.js                  ← API key setup
+└── [Auto-created on use]
+    ├── Chat.md                          ← Conversation log
+    └── Actions/
+        └── 2026-06-25.md                ← Daily action log
+```
+
+---
+
+## Next Steps
+
+### This Week
+1. **Read** [QUICK START.md](QUICK START.md)
+2. **Create** 7 Tasker tasks ([TASKER SETUP.md](TASKER SETUP.md))
+3. **Test** each action (alarm, SMS, reminder, calendar, timer, app, notify)
+4. **Verify** all tests pass ([PRODUCTION CHECKLIST.md](PRODUCTION CHECKLIST.md))
+
+### Next Week
+- Enable daily briefing automation
+- Set up project integration
+- Configure habit tracking
+
+### Later
+- Voice input integration
+- Pattern learning and smart suggestions
+- Financial tracking integration
+
+---
+
+## How to Use (Daily)
+
+**On your phone:**
+1. Press **Alt+A** → "Ask JARVIS..." prompt appears
+2. Type your request: `"Set alarm for 8am to pick up Shae"`
+3. Press **Enter** → JARVIS processes it
+4. See result in notification + vault log
+
+**Examples:**
+```
+"Set alarm for 7am every weekday"
+"Send SMS to John: Running late"
+"Remind me to call mum tomorrow 2pm"
+"Schedule team meeting Tuesday 10am-11am at office"
+"Set 5 minute timer for cooking"
+"Open Gmail"
+"Send high priority notification"
+```
+
+---
+
+## Key Files & Roles
+
+| File | Purpose |
+|------|---------|
+| `jarvis_ask.js` | **Main entry point** — handles all requests via Alt+A |
+| `jarvis.js` | Original capture system (still works) |
+| `jarvis_setup.js` | One-time setup to store API key securely |
+| `jarvis_digest.js` | Daily briefing (morning routine automation) |
+| Dashboard files | Analytics and action tracking |
+
+---
+
+## System Requirements
+
+✅ Obsidian with QuickAdd plugin  
+✅ Tasker (with HTTP server enabled)  
+✅ Fold 7 (or any Android phone)  
+✅ Anthropic API key (free from [claude.ai/code](https://claude.ai/code))  
+✅ Internet (for Claude API calls only)
+
+---
+
+## Security & Privacy
+
+- ✅ Your vault stays on your phone (local only)
+- ✅ Phone actions stay on your phone (no cloud)
+- ✅ API key stored device-local, never synced
+- ✅ Only API requests to Claude leave your phone (encrypted)
+- ✅ Full audit trail of everything in vault
+
+---
+
+## Architecture
+
+Three simple parts working together:
+
+1. **Obsidian** — Your interface and vault (brain)
+2. **Claude API** — Understanding your intent (intelligence)
+3. **Tasker** — Executing phone actions (hands)
+
+All three talk via simple HTTP requests. Loose coupling means you can upgrade any piece independently.
+
+**Full technical details:** [SYSTEM ARCHITECTURE.md](SYSTEM ARCHITECTURE.md)
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| "JARVIS: no API key" | Run JARVIS Setup macro, paste your API key |
+| Alarm shows 00:00 | Pull latest from git, restart Obsidian |
+| HTTP requests timeout | Enable "Allow external access" in Tasker |
+| SMS not sending | Grant SMS + CONTACTS permissions in Android |
+| Can't find contact | Use phone number instead of name |
+
+**More help:** [QUICK START.md](QUICK START.md) Troubleshooting section
+
+---
+
+## Version History
+
+- **v1.0** (2026-06-25) — Full Automatic Assistant complete
+  - All 8 phone actions implemented
+  - Complete Tasker integration
+  - Vault auto-logging
+  - Ready for production testing
+
+- **v0.9** (2026-06-24) — Parameter passing fixed
+  - Tasker alarm/SMS handlers working
+  - URL encoding corrected
+
+- **v0.5** (2026-06-19) — JARVIS v3 launched
+  - Original Obsidian-native capture system
+  - Home Assistant integration
+
+---
+
+## Let's Get Started
+
+**→ Go read [QUICK START.md](QUICK START.md) right now.**
+
+Then create Tasker tasks, test end-to-end, and start using JARVIS in your daily routine.
+
+**JARVIS is ready. Let's make it happen.**
+
+---
+
+*Built by Claude for Elliot Horton*  
+*JARVIS Unlimited — Your personal assistant, on your phone, in your vault*
