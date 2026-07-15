@@ -1,0 +1,70 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Card from '../components/Card.astro';
+---
+
+<Layout title="Captures">
+  <div class="space-y-8">
+    <div>
+      <h2 class="text-3xl font-bold text-slate-100">Recent Captures</h2>
+      <p class="mt-2 text-slate-400">Voice captures and notes from JARVIS</p>
+    </div>
+
+    <div class="flex gap-4 mb-6">
+      <input type="search" placeholder="Search captures..." class="flex-1 rounded-lg bg-slate-800 border border-slate-700 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none" />
+      <select class="rounded-lg bg-slate-800 border border-slate-700 px-4 py-2 text-slate-100 focus:border-purple-500 focus:outline-none">
+        <option>All</option>
+        <option>Today</option>
+        <option>This Week</option>
+        <option>This Month</option>
+      </select>
+    </div>
+
+    <div class="space-y-4">
+      <Card title="Set bedroom temperature to 22 degrees">
+        <div class="mt-4 space-y-2 text-sm text-slate-300">
+          <p><span class="font-semibold">Type:</span> Voice Command</p>
+          <p><span class="font-semibold">Time:</span> Today at 2:45 PM</p>
+          <p><span class="font-semibold">Status:</span> <span class="text-green-400">✓ Executed</span></p>
+          <p class="text-xs text-slate-400 mt-3">Bedroom thermostat set to 22°C</p>
+        </div>
+      </Card>
+
+      <Card title="What's on my calendar tomorrow?">
+        <div class="mt-4 space-y-2 text-sm text-slate-300">
+          <p><span class="font-semibold">Type:</span> Question</p>
+          <p><span class="font-semibold">Time:</span> Today at 1:15 PM</p>
+          <p><span class="font-semibold">Status:</span> <span class="text-green-400">✓ Answered</span></p>
+          <p class="text-xs text-slate-400 mt-3">Meeting at 10am, Lunch with Sarah at 12:30pm</p>
+        </div>
+      </Card>
+
+      <Card title="Remind me to call mum at 6pm">
+        <div class="mt-4 space-y-2 text-sm text-slate-300">
+          <p><span class="font-semibold">Type:</span> Reminder</p>
+          <p><span class="font-semibold">Time:</span> Today at 11:20 AM</p>
+          <p><span class="font-semibold">Status:</span> <span class="text-blue-400">⏱️ Scheduled</span></p>
+          <p class="text-xs text-slate-400 mt-3">Reminder set for 6:00 PM today</p>
+        </div>
+      </Card>
+
+      <Card title="Turn off all lights in 10 minutes">
+        <div class="mt-4 space-y-2 text-sm text-slate-300">
+          <p><span class="font-semibold">Type:</span> Timer</p>
+          <p><span class="font-semibold">Time:</span> Yesterday at 10:30 PM</p>
+          <p><span class="font-semibold">Status:</span> <span class="text-green-400">✓ Completed</span></p>
+          <p class="text-xs text-slate-400 mt-3">All lights turned off at 10:40 PM</p>
+        </div>
+      </Card>
+
+      <Card title="Add milk to shopping list">
+        <div class="mt-4 space-y-2 text-sm text-slate-300">
+          <p><span class="font-semibold">Type:</span> Note</p>
+          <p><span class="font-semibold">Time:</span> Yesterday at 3:50 PM</p>
+          <p><span class="font-semibold">Status:</span> <span class="text-green-400">✓ Saved</span></p>
+          <p class="text-xs text-slate-400 mt-3">Added to shopping list</p>
+        </div>
+      </Card>
+    </div>
+  </div>
+</Layout>

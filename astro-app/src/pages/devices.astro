@@ -1,0 +1,125 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Card from '../components/Card.astro';
+---
+
+<Layout title="Devices">
+  <div class="space-y-8">
+    <div>
+      <h2 class="text-3xl font-bold text-slate-100">Devices</h2>
+      <p class="mt-2 text-slate-400">Smart home devices and status</p>
+    </div>
+
+    <!-- Lights -->
+    <div>
+      <h3 class="text-xl font-semibold mb-4 text-slate-100">💡 Lights</h3>
+      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <Card title="Lounge Main Light" status="online">
+          <div class="mt-4 space-y-3 text-sm text-slate-300">
+            <div class="flex justify-between">
+              <span>Brightness:</span>
+              <span class="text-slate-100">80%</span>
+            </div>
+            <div class="w-full bg-slate-700 rounded-full h-2">
+              <div class="bg-yellow-400 h-2 rounded-full" style="width: 80%"></div>
+            </div>
+            <div class="flex justify-between pt-2">
+              <button class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded transition">Turn Off</button>
+              <button class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded transition">Adjust</button>
+            </div>
+          </div>
+        </Card>
+
+        <Card title="Bedroom Light" status="online">
+          <div class="mt-4 space-y-3 text-sm text-slate-300">
+            <div class="flex justify-between">
+              <span>Status:</span>
+              <span class="text-red-400">Off</span>
+            </div>
+            <button class="w-full mt-2 bg-purple-600 hover:bg-purple-700 px-3 py-2 rounded transition text-sm font-semibold">Turn On</button>
+          </div>
+        </Card>
+
+        <Card title="Upstairs Light" status="online">
+          <div class="mt-4 space-y-3 text-sm text-slate-300">
+            <div class="flex justify-between">
+              <span>Brightness:</span>
+              <span class="text-slate-100">45%</span>
+            </div>
+            <div class="w-full bg-slate-700 rounded-full h-2">
+              <div class="bg-yellow-400 h-2 rounded-full" style="width: 45%"></div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+
+    <!-- Sensors -->
+    <div>
+      <h3 class="text-xl font-semibold mb-4 text-slate-100">📡 Sensors</h3>
+      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <Card title="Temperature Sensor - Lounge" status="online">
+          <div class="mt-4 text-sm text-slate-300">
+            <p class="text-2xl font-bold text-slate-100">21.5°C</p>
+            <p class="text-xs text-slate-400 mt-2">Last update: 30s ago</p>
+          </div>
+        </Card>
+
+        <Card title="Motion Sensor - Entrance" status="online">
+          <div class="mt-4 text-sm text-slate-300">
+            <p class="text-lg font-semibold">Motion: <span class="text-green-400">Detected</span></p>
+            <p class="text-xs text-slate-400 mt-2">Last: 2 min ago</p>
+          </div>
+        </Card>
+
+        <Card title="Door Sensor - Front" status="online">
+          <div class="mt-4 text-sm text-slate-300">
+            <p class="text-lg font-semibold">Status: <span class="text-green-400">Closed</span></p>
+            <p class="text-xs text-slate-400 mt-2">Last change: 1 hour ago</p>
+          </div>
+        </Card>
+      </div>
+    </div>
+
+    <!-- Switches -->
+    <div>
+      <h3 class="text-xl font-semibold mb-4 text-slate-100">🔌 Switches</h3>
+      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <Card title="Lounge TV Plug" status="online">
+          <div class="mt-4 space-y-3 text-sm text-slate-300">
+            <div class="flex justify-between">
+              <span>Status:</span>
+              <span class="text-blue-400">On</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Power:</span>
+              <span>45W</span>
+            </div>
+            <button class="w-full mt-2 bg-red-600 hover:bg-red-700 px-3 py-2 rounded transition text-sm font-semibold">Turn Off</button>
+          </div>
+        </Card>
+
+        <Card title="Kitchen Outlet" status="online">
+          <div class="mt-4 space-y-3 text-sm text-slate-300">
+            <div class="flex justify-between">
+              <span>Status:</span>
+              <span class="text-red-400">Off</span>
+            </div>
+            <button class="w-full mt-2 bg-purple-600 hover:bg-purple-700 px-3 py-2 rounded transition text-sm font-semibold">Turn On</button>
+          </div>
+        </Card>
+      </div>
+    </div>
+
+    <!-- Offline Devices -->
+    <div>
+      <h3 class="text-xl font-semibold mb-4 text-slate-100">⚠️ Offline Devices</h3>
+      <Card title="Upstairs Node (Expected)" status="offline">
+        <div class="mt-4 text-sm text-slate-300">
+          <p>This device is offline as expected due to firmware update.</p>
+          <button class="mt-4 text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded transition">More Info</button>
+        </div>
+      </Card>
+    </div>
+  </div>
+</Layout>
