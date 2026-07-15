@@ -1,0 +1,24 @@
+---
+interface Props {
+  label: string;
+  value: string | number;
+  unit?: string;
+  trend?: 'up' | 'down' | 'neutral';
+}
+
+const { label, value, unit, trend } = Astro.props;
+
+const trendIcons = {
+  up: '📈',
+  down: '📉',
+  neutral: '→',
+};
+---
+
+<div class="rounded-lg bg-slate-700/50 p-4 text-center">
+  <p class="text-sm text-slate-400">{label}</p>
+  <p class="mt-2 text-2xl font-bold text-slate-100">
+    {value}{unit && <span class="text-lg text-slate-400 ml-1">{unit}</span>}
+  </p>
+  {trend && <p class="mt-1 text-sm">{trendIcons[trend]}</p>}
+</div>
