@@ -47,5 +47,7 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - [ ] **Build Phase-2 capture router** (skills 2/5/7 as a GitHub `on: push` router → removes the paid n8n webhook; also fixes the empty-Tasker-capture bug via a junk filter)
 
 ## Reference
+- **ESP32-S3-AUDIO-Board far-field voice** (research + build guide + ready-to-flash ESPHome config) — [[hardware/ESP32-S3-AUDIO-Board — Far-Field Voice Guide]] · [[hardware/ESP32-S3-AUDIO-Board.esphome.yaml]]. Key finding: board = Waveshare ESP32-S3-AUDIO-Board (ES8311 + ES7210 4-ch, dual mic). AEC cancels the board's *own* audio (great barge-in) but **cannot** cancel an *external TV* (no reference signal) — so whole-room-over-TV needs placement + BSS direction + 2-3 satellites, and ultimately a 4-mic XMOS array for the loud-lounge primary. Road A = ESPHome + Assist (AEC+BSS+NS+AGC + microWakeWord "Hey Jarvis"). (2026-07-15)
+
 Full detail: [[smart_home]]
 Sessions: [[sessions/2026-06-19]] — JARVIS v3 Obsidian-native complete & production-ready · [[sessions/2026-06-16]] — JARVIS phone-native v1 complete + merged · [[sessions/2026-06-13]] — on-device JARVIS stand-up · [[sessions/2026-06-08]] — RuView CSI node fixed + WiFi sensing live
