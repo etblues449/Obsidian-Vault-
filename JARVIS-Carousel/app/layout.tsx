@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'JARVIS — Personal AI Assistant',
-  description: 'Voice-first AI assistant built with Claude, runs 100% locally',
+  title: 'J.A.R.V.I.S — V.A.U.L.T.',
+  description: 'Voice-first AI assistant vault capture terminal, runs 100% locally',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
