@@ -4,12 +4,26 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'JARVIS — Personal AI Assistant',
   description: 'Voice-first AI assistant built with Claude, runs 100% locally',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'JARVIS',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: '/icon-192.png',
+    apple: '/icon-192.png',
+  },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -20,8 +34,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="theme-color" content="#e07856" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body>
         {children}
