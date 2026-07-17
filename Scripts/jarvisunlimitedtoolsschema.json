@@ -1,0 +1,232 @@
+{
+  "tools": [
+    {
+      "name": "set_alarm",
+      "description": "Set an alarm on the phone for a specific time with optional label/reason",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "string",
+            "description": "Time in HH:MM format (24-hour). Example: '08:00', '14:30'"
+          },
+          "date": {
+            "type": "string",
+            "description": "Date in YYYY-MM-DD format or relative ('today', 'tomorrow', '+1day'). Example: '2026-06-21' or 'tomorrow'"
+          },
+          "label": {
+            "type": "string",
+            "description": "Alarm label/reason. Example: 'Grandad picking up Shae', 'Meeting with team'"
+          },
+          "vibrate": {
+            "type": "boolean",
+            "description": "Should alarm vibrate? Default true"
+          }
+        },
+        "required": ["time", "date"]
+      }
+    },
+    {
+      "name": "create_calendar_event",
+      "description": "Create a calendar event with date, time, title, and optional description",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Event title. Example: 'Lunch with Sarah', 'Project deadline'"
+          },
+          "date": {
+            "type": "string",
+            "description": "Event date in YYYY-MM-DD or relative format. Example: '2026-06-21' or 'tomorrow'"
+          },
+          "start_time": {
+            "type": "string",
+            "description": "Start time in HH:MM format. Example: '12:00'"
+          },
+          "end_time": {
+            "type": "string",
+            "description": "End time in HH:MM format. Example: '13:00'"
+          },
+          "description": {
+            "type": "string",
+            "description": "Event description/notes"
+          },
+          "location": {
+            "type": "string",
+            "description": "Event location"
+          }
+        },
+        "required": ["title", "date", "start_time"]
+      }
+    },
+    {
+      "name": "send_sms",
+      "description": "Send an SMS text message to a contact or phone number",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "contact": {
+            "type": "string",
+            "description": "Contact name from phone or phone number. Example: 'Dad', '+1234567890'"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message text to send. Keep under 160 characters for single SMS"
+          },
+          "confirm": {
+            "type": "boolean",
+            "description": "Request confirmation before sending? Default true for safety"
+          }
+        },
+        "required": ["contact", "message"]
+      }
+    },
+    {
+      "name": "create_reminder",
+      "description": "Create a time-based reminder for a specific time/date",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Reminder text. Example: 'Buy milk', 'Call Grandad'"
+          },
+          "date": {
+            "type": "string",
+            "description": "Date in YYYY-MM-DD or relative format"
+          },
+          "time": {
+            "type": "string",
+            "description": "Time in HH:MM format when reminder should trigger"
+          }
+        },
+        "required": ["title", "date", "time"]
+      }
+    },
+    {
+      "name": "open_app",
+      "description": "Open an app on the phone by name",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "app_name": {
+            "type": "string",
+            "description": "Name of app to open. Example: 'Chrome', 'Gmail', 'Obsidian', 'Settings', 'Camera'"
+          }
+        },
+        "required": ["app_name"]
+      }
+    },
+    {
+      "name": "send_notification",
+      "description": "Send a system notification to the phone with title and message",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Notification title"
+          },
+          "message": {
+            "type": "string",
+            "description": "Notification body text"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["low", "normal", "high"],
+            "description": "Priority level. Default 'normal'"
+          }
+        },
+        "required": ["title", "message"]
+      }
+    },
+    {
+      "name": "get_contacts",
+      "description": "Query phone contacts by name or get full contact list",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Contact name to search for. If empty, returns all contacts"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Max contacts to return. Default 10"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "set_timer",
+      "description": "Set a timer for a specified duration",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "duration_minutes": {
+            "type": "number",
+            "description": "Timer duration in minutes. Example: 5, 30, 60"
+          },
+          "label": {
+            "type": "string",
+            "description": "Timer label/reason. Example: 'Cooking pasta', 'Break time'"
+          }
+        },
+        "required": ["duration_minutes"]
+      }
+    },
+    {
+      "name": "read_file",
+      "description": "Read a file from phone storage",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Full file path. Example: '/storage/emulated/0/Documents/notes.txt'"
+          }
+        },
+        "required": ["file_path"]
+      }
+    },
+    {
+      "name": "write_file",
+      "description": "Write or append content to a file",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Full file path where to write"
+          },
+          "content": {
+            "type": "string",
+            "description": "Content to write"
+          },
+          "append": {
+            "type": "boolean",
+            "description": "Append to file (true) or overwrite (false)? Default false"
+          }
+        },
+        "required": ["file_path", "content"]
+      }
+    },
+    {
+      "name": "get_time_and_date",
+      "description": "Get current time and date in various formats",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": ["iso", "readable", "timestamp"],
+            "description": "Format for return. Default 'readable'"
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}

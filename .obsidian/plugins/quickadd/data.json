@@ -1,0 +1,356 @@
+{
+  "choices": [
+    {
+      "id": "f63005f5-93bc-447d-864f-9a593abddb77",
+      "name": "Jarvis Setup",
+      "type": "Macro",
+      "command": true,
+      "runOnStartup": false,
+      "macro": {
+        "name": "Jarvis Setup",
+        "id": "391f80a5-3bc3-4128-b938-02b443d3c0cf",
+        "commands": [
+          {
+            "name": "jarvis_setup",
+            "type": "UserScript",
+            "id": "e11c3072-162e-4e36-a608-d23d32e2d9bc",
+            "path": "JARVIS/Scripts/jarvis_setup.js",
+            "settings": {}
+          },
+          {
+            "name": "Jarvis Setup",
+            "type": "Choice",
+            "id": "16921f9f-b098-4367-9646-65a117490d36",
+            "choiceId": "f63005f5-93bc-447d-864f-9a593abddb77"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ffd3139a-2b9d-46d4-b8ff-2ebcbc13226f",
+      "name": "Jarvis Ask",
+      "type": "Macro",
+      "command": true,
+      "runOnStartup": false,
+      "macro": {
+        "name": "Jarvis Ask",
+        "id": "3f579f9a-1c59-44ab-98e5-5fdb28501466",
+        "commands": [
+          {
+            "name": "jarvis_ask",
+            "type": "UserScript",
+            "id": "0bf5bb5a-b2ba-46e1-b262-8b9542fe027a",
+            "path": "JARVIS/Scripts/jarvis_ask.js",
+            "settings": {}
+          },
+          {
+            "name": "Jarvis Ask",
+            "type": "Choice",
+            "id": "6e328ea2-a7d2-4ef0-bf11-5eb957db71ee",
+            "choiceId": "ffd3139a-2b9d-46d4-b8ff-2ebcbc13226f"
+          }
+        ]
+      }
+    },
+    {
+      "id": "14f9b3fe-7a2d-4711-a3f8-e2b21bdf50ef",
+      "name": "Jarvis Capture ",
+      "type": "Macro",
+      "command": true,
+      "runOnStartup": false,
+      "macro": {
+        "name": "Jarvis Capture ",
+        "id": "4c6be9a8-a05d-4ca8-9fd8-b229d532bc59",
+        "commands": [
+          {
+            "name": "jarvis",
+            "type": "UserScript",
+            "id": "538a3f75-ad45-4c9b-9f7e-53b76a3ca394",
+            "path": "JARVIS/Scripts/jarvis.js",
+            "settings": {}
+          },
+          {
+            "name": "Jarvis Capture ",
+            "type": "Choice",
+            "id": "6644813a-f58e-4e99-b945-0c5eaaeb3b74",
+            "choiceId": "14f9b3fe-7a2d-4711-a3f8-e2b21bdf50ef"
+          },
+          {
+            "name": "Jarvis Capture ",
+            "type": "Choice",
+            "id": "aec652f4-75dd-4ed5-a397-feb8bc252021",
+            "choiceId": "14f9b3fe-7a2d-4711-a3f8-e2b21bdf50ef"
+          },
+          {
+            "name": "AI Assistant",
+            "type": "AIAssistant",
+            "id": "967526c1-f334-4341-a264-4a7646a38bca",
+            "model": "claude-haiku-4-5",
+            "systemPrompt": "As an AI assistant within Obsidian, your primary goal is to help users manage their ideas and knowledge more effectively. Format your responses using Markdown syntax. Please use the [[Obsidian]] link format. You can write aliases for the links by writing [[Obsidian|the alias after the pipe symbol]]. To use mathematical notation, use LaTeX syntax. LaTeX syntax for larger equations should be on separate lines, surrounded with double dollar signs ($$). You can also inline math expressions by wrapping it in $ symbols. For example, use $$w_{ij}^{\\text{new}}:=w_{ij}^{\\text{current}}+\\eta\\cdot\\delta_j\\cdot x_{ij}$$ on a separate line, but you can write \"($\\eta$ = learning rate, $\\delta_j$ = error term, $x_{ij}$ = input)\" inline.",
+            "outputVariableName": "output",
+            "promptTemplate": {
+              "enable": true,
+              "name": "CLAUDE.md"
+            },
+            "modelParameters": {
+              "temperature": 1,
+              "top_p": 1,
+              "frequency_penalty": 0,
+              "presence_penalty": 0.5
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "59747c81-3bc5-47de-905b-1cdc696a0568",
+      "name": "Jarvis Digest ",
+      "type": "Macro",
+      "command": true,
+      "runOnStartup": false,
+      "macro": {
+        "name": "Jarvis Digest ",
+        "id": "d9a44372-2e5f-459c-8e76-4bb0802aa2bf",
+        "commands": [
+          {
+            "name": "Jarvis Digest ",
+            "type": "Choice",
+            "id": "4d10850d-ec31-4827-a31c-09c480c905ba",
+            "choiceId": "59747c81-3bc5-47de-905b-1cdc696a0568"
+          },
+          {
+            "name": "jarvis_digest_WRAPPED",
+            "type": "UserScript",
+            "id": "523685a4-9f7f-4bb7-93bc-72d22c1f7bf4",
+            "path": "JARVIS/Scripts/jarvis_digest_WRAPPED.js",
+            "settings": {}
+          }
+        ]
+      }
+    }
+  ],
+  "inputPrompt": "single-line",
+  "persistInputPromptDrafts": true,
+  "useSelectionAsCaptureValue": true,
+  "devMode": false,
+  "templateFolderPath": "JARVIS",
+  "announceUpdates": "major",
+  "version": "2.12.3",
+  "globalVariables": {},
+  "onePageInputEnabled": false,
+  "disableOnlineFeatures": false,
+  "enableRibbonIcon": true,
+  "showCaptureNotification": true,
+  "showInputCancellationNotification": false,
+  "enableTemplatePropertyTypes": false,
+  "dateAliases": {
+    "t": "today",
+    "tm": "tomorrow",
+    "yd": "yesterday",
+    "nw": "next week",
+    "nm": "next month",
+    "ny": "next year",
+    "lw": "last week",
+    "lm": "last month",
+    "ly": "last year"
+  },
+  "ai": {
+    "defaultModel": "Ask me",
+    "defaultSystemPrompt": "As an AI assistant within Obsidian, your primary goal is to help users manage their ideas and knowledge more effectively. Format your responses using Markdown syntax. Please use the [[Obsidian]] link format. You can write aliases for the links by writing [[Obsidian|the alias after the pipe symbol]]. To use mathematical notation, use LaTeX syntax. LaTeX syntax for larger equations should be on separate lines, surrounded with double dollar signs ($$). You can also inline math expressions by wrapping it in $ symbols. For example, use $$w_{ij}^{\\text{new}}:=w_{ij}^{\\text{current}}+\\eta\\cdot\\delta_j\\cdot x_{ij}$$ on a separate line, but you can write \"($\\eta$ = learning rate, $\\delta_j$ = error term, $x_{ij}$ = input)\" inline.",
+    "promptTemplatesFolderPath": "",
+    "showAssistant": true,
+    "providers": [
+      {
+        "name": "OpenAI",
+        "endpoint": "https://api.openai.com/v1",
+        "apiKey": "",
+        "models": [
+          {
+            "name": "gpt-3.5-turbo",
+            "maxTokens": 4096
+          },
+          {
+            "name": "gpt-3.5-turbo-16k",
+            "maxTokens": 16384
+          },
+          {
+            "name": "gpt-3.5-turbo-1106",
+            "maxTokens": 16385
+          },
+          {
+            "name": "gpt-4",
+            "maxTokens": 8192
+          },
+          {
+            "name": "gpt-4-32k",
+            "maxTokens": 32768
+          },
+          {
+            "name": "gpt-4-1106-preview",
+            "maxTokens": 128000
+          },
+          {
+            "name": "gpt-4-turbo",
+            "maxTokens": 128000
+          },
+          {
+            "name": "gpt-4o",
+            "maxTokens": 128000
+          },
+          {
+            "name": "gpt-4o-mini",
+            "maxTokens": 128000
+          }
+        ],
+        "autoSyncModels": false,
+        "modelSource": "modelsDev"
+      },
+      {
+        "name": "Gemini",
+        "endpoint": "https://generativelanguage.googleapis.com",
+        "apiKey": "",
+        "models": [
+          {
+            "name": "gemini-1.5-pro",
+            "maxTokens": 1000000
+          },
+          {
+            "name": "gemini-1.5-flash",
+            "maxTokens": 1000000
+          },
+          {
+            "name": "gemini-1.5-flash-8b",
+            "maxTokens": 1000000
+          }
+        ],
+        "autoSyncModels": false,
+        "modelSource": "modelsDev"
+      },
+      {
+        "name": "Anthropic",
+        "endpoint": "https://api.anthropic.com",
+        "apiKey": "",
+        "apiKeyRef": "obs-ai-claude-june26",
+        "models": [
+          {
+            "name": "claude-opus-4-5",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-haiku-4-5-20251001",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-3-5-haiku-20241022",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-opus-4-0",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-3-opus-20240229",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-opus-4-1-20250805",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-sonnet-4-5",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-opus-4-7",
+            "maxTokens": 1000000
+          },
+          {
+            "name": "claude-opus-4-5-20251101",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-3-5-sonnet-20241022",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-opus-4-8",
+            "maxTokens": 1000000
+          },
+          {
+            "name": "claude-opus-4-20250514",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-3-5-sonnet-20240620",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-sonnet-4-20250514",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-opus-4-1",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-3-haiku-20240307",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-fable-5",
+            "maxTokens": 1000000
+          },
+          {
+            "name": "claude-sonnet-4-0",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-3-7-sonnet-20250219",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-haiku-4-5",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-opus-4-6",
+            "maxTokens": 1000000
+          },
+          {
+            "name": "claude-sonnet-4-5-20250929",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-3-sonnet-20240229",
+            "maxTokens": 200000
+          },
+          {
+            "name": "claude-sonnet-4-6",
+            "maxTokens": 1000000
+          },
+          {
+            "name": "claude-3-5-haiku-latest",
+            "maxTokens": 200000
+          }
+        ],
+        "modelSource": "auto",
+        "autoSyncModels": true
+      }
+    ]
+  },
+  "migrations": {
+    "migrateToMacroIDFromEmbeddedMacro": true,
+    "useQuickAddTemplateFolder": true,
+    "incrementFileNameSettingMoveToDefaultBehavior": true,
+    "consolidateFileExistsBehavior": true,
+    "repairTemplateFileExistsBehavior": true,
+    "mutualExclusionInsertAfterAndWriteToBottomOfFile": true,
+    "setVersionAfterUpdateModalRelease": true,
+    "addDefaultAIProviders": true,
+    "removeMacroIndirection": true,
+    "migrateFileOpeningSettings": true,
+    "backfillFileOpeningDefaults": true,
+    "setProviderModelDiscoveryMode": true,
+    "migrateProviderApiKeysToSecretStorage": true
+  }
+}

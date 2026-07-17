@@ -1,5 +1,251 @@
-/* 
+/*
 Shell Path Copy Plugin Styles
-This file is intentionally left empty as the plugin uses Obsidian's default styles.
-If custom styles are needed in the future, they can be added here.
 */
+
+.shell-path-copy-footer {
+	text-align: center;
+	opacity: 0.8;
+}
+
+/* Custom formats settings section */
+
+.shell-path-copy-format-list {
+	margin: var(--size-4-2) 0;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	overflow: hidden;
+}
+
+.shell-path-copy-format-row {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	padding: var(--size-2-3) var(--size-4-2);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.shell-path-copy-format-row:last-child {
+	border-bottom: none;
+}
+
+.shell-path-copy-format-row.is-dragging {
+	opacity: 0.5;
+}
+
+.shell-path-copy-format-row.is-dragover {
+	border-top: 2px solid var(--interactive-accent);
+}
+
+.shell-path-copy-drag-handle {
+	cursor: grab;
+	color: var(--text-faint);
+	display: flex;
+	align-items: center;
+}
+
+.shell-path-copy-move-button {
+	display: flex;
+	align-items: center;
+	padding: var(--size-2-1);
+}
+
+.shell-path-copy-format-icon {
+	display: flex;
+	align-items: center;
+	color: var(--text-muted);
+}
+
+.shell-path-copy-format-name {
+	flex-grow: 1;
+}
+
+.shell-path-copy-state-button {
+	min-width: 3.5em;
+}
+
+.shell-path-copy-state-button.is-off {
+	color: var(--text-muted);
+}
+
+.shell-path-copy-format-editor {
+	padding: var(--size-2-2) var(--size-4-3) var(--size-4-2);
+	border-bottom: 1px solid var(--background-modifier-border);
+	background-color: var(--background-secondary);
+}
+
+.shell-path-copy-format-editor:last-child {
+	border-bottom: none;
+}
+
+.shell-path-copy-template-input {
+	width: 100%;
+	min-height: 9em;
+	font-family: var(--font-monospace);
+	resize: vertical;
+}
+
+.shell-path-copy-token-palette {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-2-2);
+	padding: var(--size-2-2) 0;
+}
+
+.shell-path-copy-token-button {
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+	padding: var(--size-2-1) var(--size-2-2);
+	cursor: pointer;
+}
+
+.shell-path-copy-template-preview {
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	white-space: pre-wrap;
+	word-break: break-all;
+	padding: var(--size-2-1) 0;
+}
+
+.shell-path-copy-format-info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-2-1);
+	padding-bottom: var(--size-2-2);
+}
+
+.shell-path-copy-compat {
+	display: flex;
+	gap: var(--size-4-3);
+	padding: var(--size-2-1) 0;
+}
+
+.shell-path-copy-compat-item {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-1);
+}
+
+.shell-path-copy-compat-ok {
+	display: flex;
+	color: var(--text-success);
+}
+
+.shell-path-copy-compat-bad {
+	display: flex;
+	color: var(--text-error);
+}
+
+.shell-path-copy-info-note {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+.shell-path-copy-badge-warn {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-on-accent);
+	background-color: var(--text-warning);
+	border-radius: var(--radius-s);
+	padding: var(--size-2-1) var(--size-2-2);
+	align-self: flex-start;
+}
+
+/* Icon picker modal (Browse all icons). A wider dialog so long icon ids do not
+   wrap, a search field, and a virtualized grid of every registered icon. */
+.shell-path-copy-icon-dialog {
+	width: min(900px, 92vw);
+	max-width: min(900px, 92vw);
+}
+
+.shell-path-copy-icon-search {
+	width: 100%;
+	margin-bottom: 8px;
+}
+
+.shell-path-copy-icon-count {
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	margin-bottom: 8px;
+}
+
+.shell-path-copy-icon-grid {
+	max-height: 50vh;
+	overflow-y: auto;
+}
+
+.shell-path-copy-icon-row {
+	display: flex;
+	gap: 4px;
+}
+
+/* Fills the trailing slots of a partial last row so real cells keep their width. */
+.shell-path-copy-icon-cell-spacer {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.shell-path-copy-icon-cell {
+	display: flex;
+	flex: 1 1 0;
+	min-width: 0;
+	height: 100%;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 8px 6px;
+	border-radius: 6px;
+	cursor: pointer;
+	overflow: hidden;
+}
+
+.shell-path-copy-icon-cell:hover {
+	background: var(--background-modifier-hover);
+}
+
+.shell-path-copy-icon-cell.is-selected {
+	background: var(--background-modifier-active-hover);
+	box-shadow: inset 0 0 0 2px var(--interactive-accent);
+}
+
+.shell-path-copy-icon-preview {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-normal);
+}
+
+.shell-path-copy-icon-preview svg {
+	width: 24px;
+	height: 24px;
+}
+
+.shell-path-copy-icon-label {
+	font-size: var(--font-ui-smaller);
+	font-family: var(--font-monospace);
+	color: var(--text-muted);
+	text-align: center;
+	line-height: 1.2;
+	word-break: break-all;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+.shell-path-copy-vlist-sizer {
+	position: relative;
+	width: 100%;
+}
+
+.shell-path-copy-vlist-rows {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+}
+
+.shell-path-copy-vlist-row {
+	box-sizing: border-box;
+	width: 100%;
+}

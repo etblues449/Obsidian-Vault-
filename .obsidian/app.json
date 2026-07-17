@@ -1,1 +1,10 @@
-{}
+{
+  "alwaysUpdateLinks": true,
+  "showUnsupportedFiles": true,
+  "newFileLocation": "folder",
+  "attachmentFolderPath": "_attachments",
+  "uriCallbacks": true,
+  "showLineNumber": true,
+  "newFileFolderPath": "JARVIS/Inbox/quick-notes.md",
+  "openBehavior": "daily"
+}

@@ -1,0 +1,320 @@
+{
+  "name": "JARVIS - Morning Brief",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * *"
+            }
+          ]
+        }
+      },
+      "id": "mb1",
+      "name": "Every Day 7am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "list",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "etblues449"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Obsidian-Vault-"
+        },
+        "filePath": "JARVIS/Inbox"
+      },
+      "id": "mb2",
+      "name": "List Inbox",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const N = 12;\nconst files = $input.all().map(i => i.json)\n  .filter(f => f.type === 'file' && String(f.name).endsWith('.md'))\n  .sort((a, b) => String(b.name).localeCompare(String(a.name)))\n  .slice(0, N);\nif (files.length === 0) {\n  return [{ json: { path: 'Claude Memory/capture_queue.md', name: 'capture_queue.md' } }];\n}\nreturn files.map(f => ({ json: { path: f.path, name: f.name } }));"
+      },
+      "id": "mb3",
+      "name": "Pick Recent Captures",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "etblues449"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Obsidian-Vault-"
+        },
+        "filePath": "={{ $json.path }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "id": "mb4",
+      "name": "Get Capture File",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const parts = [];\nfor (const item of $input.all()) {\n  const j = item.json;\n  const name = j.name || j.path || 'file';\n  let text = '';\n  if (j.content) text = Buffer.from(j.content, 'base64').toString('utf8');\n  parts.push('## ' + name + '\\n' + text.slice(0, 4000));\n}\nreturn [{ json: { corpus: parts.join('\\n\\n---\\n\\n').slice(0, 45000) } }];"
+      },
+      "id": "mb5",
+      "name": "Aggregate Captures",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "etblues449"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Obsidian-Vault-"
+        },
+        "filePath": "Claude Memory/MEMORY.md",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "id": "mb6",
+      "name": "Get MEMORY",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1000,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const memory = Buffer.from($input.first().json.content, 'base64').toString('utf8').slice(0, 6000);\nconst captures = $('Aggregate Captures').first().json.corpus;\nconst today = $now.setZone('Europe/London').toFormat('cccc d LLLL yyyy');\nconst body = {\n  model: 'claude-opus-4-8',\n  max_tokens: 1500,\n  system: \"You are JARVIS, Elliot's morning briefing assistant. Write a concise 2-3 minute morning brief in markdown. Sections: ## Today at a Glance, ## Recent Highlights, ## Patterns, ## Today's Focus (top 3, numbered). Be specific and pull only from the provided vault context - no invented events, no filler. Do not write a top-level # title - start directly with the first ## section. Focus on captures from the last 48 hours; ignore older ones (filenames contain dates).\",\n  messages: [{ role: 'user', content: 'Today is ' + today + '.\\n\\n=== MEMORY.md ===\\n' + memory + '\\n\\n=== RECENT CAPTURES ===\\n' + captures + '\\n\\nGenerate the morning brief.' }]\n};\nreturn [{ json: { body } }];"
+      },
+      "id": "mb7",
+      "name": "Compose Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "mb8",
+      "name": "Claude - Generate Brief",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.content[0].text;\nconst date = $now.setZone('Europe/London').toFormat('yyyy-MM-dd');\nconst markdown = '# Morning Brief — ' + date + '\\n\\n' + text + '\\n\\n---\\n*Generated automatically by n8n (JARVIS Skill 1: Morning Brief).*\\n';\nreturn [{ json: { path: 'Claude Memory/briefings/' + date + '.md', markdown: markdown, commit: 'Morning brief ' + date + ' (automated)' } }];"
+      },
+      "id": "mb9",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "create",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "etblues449"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Obsidian-Vault-"
+        },
+        "filePath": "={{ $json.path }}",
+        "fileContent": "={{ $json.markdown }}",
+        "commitMessage": "={{ $json.commit }}"
+      },
+      "id": "mb10",
+      "name": "Write Briefing",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1800,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Every Day 7am": {
+      "main": [
+        [
+          {
+            "node": "List Inbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Inbox": {
+      "main": [
+        [
+          {
+            "node": "Pick Recent Captures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Recent Captures": {
+      "main": [
+        [
+          {
+            "node": "Get Capture File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Capture File": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Captures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Captures": {
+      "main": [
+        [
+          {
+            "node": "Get MEMORY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get MEMORY": {
+      "main": [
+        [
+          {
+            "node": "Compose Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose Request": {
+      "main": [
+        [
+          {
+            "node": "Claude - Generate Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude - Generate Brief": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output": {
+      "main": [
+        [
+          {
+            "node": "Write Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/London"
+  },
+  "pinData": {}
+}

@@ -1,0 +1,246 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Drops empty / placeholder captures so they never reach the vault.\nconst t = String($json.noteText || '').trim().toLowerCase();\nconst junk = ['', 'your note here', 'test', 'testing'];\nif (junk.includes(t)) return [];\nreturn $input.all();"
+      },
+      "id": "ad1",
+      "name": "Junk Filter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Only continues when the capture is tagged #belief\nconst t = String($('Normalize Note').first().json.noteText || '');\nif (!/#belief\\b/i.test(t)) return [];\nreturn $input.all();"
+      },
+      "id": "ad2",
+      "name": "Belief Gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "etblues449"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Obsidian-Vault-"
+        },
+        "filePath": "Claude Memory/beliefs.md",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "id": "ad3",
+      "name": "Get Beliefs File",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = Buffer.from($input.first().json.content, 'base64').toString('utf8');\nconst note = $('Normalize Note').first().json;\nconst ts = $now.setZone('Europe/London').toFormat('yyyy-MM-dd HH:mm');\nconst text = String(note.noteText || '').replace(/#belief\\b/ig, '').trim();\nconst entry = '\\n---\\n\\n## Belief — ' + ts + '\\n**Source:** ' + (note.source || 'capture') + ' (auto-routed by Note Router)\\n**Status:** NEW (unconfirmed)\\n\\n' + text + '\\n';\nreturn [{ json: { markdown: prev + entry, commit: 'Belief capture ' + ts + ' (automated)' } }];"
+      },
+      "id": "ad4",
+      "name": "Append Belief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "etblues449"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Obsidian-Vault-"
+        },
+        "filePath": "Claude Memory/beliefs.md",
+        "fileContent": "={{ $json.markdown }}",
+        "commitMessage": "={{ $json.commit }}"
+      },
+      "id": "ad5",
+      "name": "Update Beliefs File",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Only continues when the capture is tagged #decision\nconst t = String($('Normalize Note').first().json.noteText || '');\nif (!/#decision\\b/i.test(t)) return [];\nreturn $input.all();"
+      },
+      "id": "ad6",
+      "name": "Decision Gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "etblues449"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Obsidian-Vault-"
+        },
+        "filePath": "Claude Memory/decisions.md",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "id": "ad7",
+      "name": "Get Decisions File",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = Buffer.from($input.first().json.content, 'base64').toString('utf8');\nconst note = $('Normalize Note').first().json;\nconst ts = $now.setZone('Europe/London').toFormat('yyyy-MM-dd HH:mm');\nconst text = String(note.noteText || '').replace(/#decision\\b/ig, '').trim();\nconst entry = '\\n---\\n\\n## Decision — ' + ts + '\\n**Source:** ' + (note.source || 'capture') + ' (auto-routed by Note Router)\\n**Outcome:** 🔄 PENDING\\n\\n' + text + '\\n';\nreturn [{ json: { markdown: prev + entry, commit: 'Decision capture ' + ts + ' (automated)' } }];"
+      },
+      "id": "ad8",
+      "name": "Append Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "etblues449"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Obsidian-Vault-"
+        },
+        "filePath": "Claude Memory/decisions.md",
+        "fileContent": "={{ $json.markdown }}",
+        "commitMessage": "={{ $json.commit }}"
+      },
+      "id": "ad9",
+      "name": "Update Decisions File",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        700
+      ]
+    }
+  ],
+  "connections": {
+    "Belief Gate": {
+      "main": [
+        [
+          {
+            "node": "Get Beliefs File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Beliefs File": {
+      "main": [
+        [
+          {
+            "node": "Append Belief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Belief": {
+      "main": [
+        [
+          {
+            "node": "Update Beliefs File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decision Gate": {
+      "main": [
+        [
+          {
+            "node": "Get Decisions File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Decisions File": {
+      "main": [
+        [
+          {
+            "node": "Append Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Decision": {
+      "main": [
+        [
+          {
+            "node": "Update Decisions File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

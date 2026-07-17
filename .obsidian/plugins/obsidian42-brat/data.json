@@ -5,7 +5,7 @@
   "pluginSubListFrozenVersion": [
     {
       "repo": "YishenTu/claudian",
-      "version": "latest"
+      "version": ""
     }
   ],
   "themesList": [],
@@ -17,8 +17,8 @@
   "loggingVerboseEnabled": false,
   "debuggingMode": false,
   "notificationsEnabled": true,
-  "globalTokenName": "",
+  "globalTokenName": "obsidiangit",
   "personalAccessToken": "",
-  "selectLatestPluginVersionByDefault": false,
+  "selectLatestPluginVersionByDefault": true,
   "allowIncompatiblePlugins": false
 }
