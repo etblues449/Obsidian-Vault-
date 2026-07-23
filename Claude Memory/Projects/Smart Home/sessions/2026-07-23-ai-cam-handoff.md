@@ -436,3 +436,65 @@ The BSP is what their own firmware ships against.
 flashing; result not yet confirmed in this session. If sound works, mark the speaker
 DONE and proceed to ES7210 mics on DIN **GPIO13** (I²C 0x40).
 
+
+---
+
+# ✅ RESOLVED (2026-07-23) — SPEAKER WORKING
+
+TTS confirmed audible through the onboard speaker after flashing the corrected pins
+and role from the vendor BSP. **Camera + speaker now both fully working on one board.**
+
+**The fix that did it:**
+- BCLK GPIO13 → **GPIO11**
+- LRCK GPIO14 → **GPIO12**
+- DOUT GPIO12 → **GPIO14**
+- removed `force_master: true` (ES8311 is SLAVE; ESP32 masters the clocks)
+
+Everything else (48000 Hz, mono, 16-bit, mixer + dual resamplers, EXIO3 LOW for camera
+power, EXIO4 HIGH for amp) was already correct and unchanged.
+
+**Root cause of the whole session's static-then-silence:** the audio pin map was taken
+from the Amazon product "Interface Definition" image instead of Waveshare's BSP. Three
+of four I²S pins were permuted, so speaker data was being driven onto the word-select
+line. The camera pins in that image were correct, which is what made it look reliable.
+Every subsequent theory (master mode, 16k vs 48k, FLAC vs MP3, APLL) was built on that
+broken foundation and was a dead end.
+
+**Time cost:** ~4 hours. **Time to settle it once the vendor repo was cloned:** ~2 min.
+
+## Confirmed-good audio block (as flashed, working)
+```yaml
+i2s_audio:
+  - id: i2s_out
+    i2s_mclk_pin: GPIO10
+    i2s_bclk_pin: GPIO11
+    i2s_lrclk_pin: GPIO12
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: bus_a
+    address: 0x18
+    sample_rate: 48000
+    bits_per_sample: 16bit
+    use_mclk: true
+
+speaker:
+  - platform: i2s_audio
+    id: spk
+    dac_type: external
+    audio_dac: es8311_dac
+    i2s_audio_id: i2s_out
+    i2s_dout_pin: GPIO14
+    sample_rate: 48000
+    bits_per_sample: 16bit
+    channel: mono
+    timeout: never
+```
+
+## Next on this board
+- **ES7210 dual mics** — DIN = **GPIO13**, I²C **0x40**. Reference: `02_esp_sr` example in
+  the vendor repo. Once mics land, this board becomes a full Assist satellite
+  (camera + speaker + mics) with microWakeWord.
+- Optional: Music Assistant target now that the media_player is real.
+
