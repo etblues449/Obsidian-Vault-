@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "notebooklm": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "notebooklm-py[mcp]",
+        "notebooklm-mcp"
+      ]
+    }
+  }
+}
