@@ -2,7 +2,10 @@
 # Install via: uv pip install -r requirements.txt
 
 # Core dependencies
-notebooklm-py[browser]>=0.1.0
+notebooklm-py[browser,mcp]>=0.1.0
+
+# MCP Bridge dependencies
+mcp>=0.1.0
 
 # Optional: for enhanced functionality
 requests>=2.31.0

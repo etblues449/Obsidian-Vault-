@@ -193,6 +193,79 @@ Manages authentication and credentials.
   - `expires_at`: Token expiry timestamp
   - `last_checked`: Last status check time
 
+## MCP Bridge - Bidirectional Integration
+
+The MCP (Model Context Protocol) bridge enables **bidirectional** integration between Claude, Obsidian Vault, and NotebookLM.
+
+### Setup
+
+```bash
+cd "Assistant Core/notebooklm"
+bash setup-mcp.sh
+```
+
+This will:
+1. Install the MCP package
+2. Configure .mcp.json for Claude Code
+3. Test the bridge connection
+
+### How It Works
+
+**Direction 1: Vault → NotebookLM**
+- Claude reads Obsidian Vault notes tagged with `#notebook`
+- Creates NotebookLM notebooks automatically
+- Generates podcast summaries
+
+**Direction 2: NotebookLM → Vault**
+- Claude adds insights from notebooks back to vault notes
+- Appends to "NotebookLM Insights" section
+- Includes timestamps for each annotation
+
+### MCP Tools Available to Claude
+
+Once configured, Claude has access to these MCP tools:
+
+**`vault_search_by_tag`**
+- Search for notes with a specific tag
+- Returns matching notes with paths and content
+- Example: Find all `#notebook` tagged notes
+
+**`notebooklm_create`**
+- Create a notebook from vault content
+- Supports text content or URLs
+- Returns notebook ID and metadata
+
+**`notebooklm_list`**
+- List all notebooks
+- Shows IDs, titles, creation dates
+- Returns full notebook metadata
+
+**`notebooklm_podcast`**
+- Generate podcast summary for a notebook
+- Returns audio URL, transcript, key points
+- Includes speaker information
+
+**`vault_annotate`**
+- Add insights back to vault notes
+- Automatically timestamps entries
+- Appends to specified section
+
+### Configuration
+
+Edit `.notebooklmrc` to customize defaults:
+
+```ini
+# Vault settings
+vault_root=/path/to/vault
+
+# Auto-sync settings
+auto_tag=true
+tags=research,notebook
+
+# Output format
+output_format=json
+```
+
 ## Usage in JARVIS
 
 ### Integration with Obsidian Macros

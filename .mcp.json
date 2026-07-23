@@ -1,12 +1,12 @@
 {
   "mcpServers": {
-    "notebooklm": {
-      "command": "uvx",
+    "notebooklm-bridge": {
+      "command": "python3",
       "args": [
-        "--from",
-        "notebooklm-py[mcp]",
-        "notebooklm-mcp"
-      ]
+        "Assistant Core/notebooklm/mcp_bridge.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
     }
   }
 }
