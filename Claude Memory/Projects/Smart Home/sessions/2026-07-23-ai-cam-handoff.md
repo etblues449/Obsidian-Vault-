@@ -309,3 +309,36 @@ text_sensor:
 ---
 
 *Camera: done. Speaker: one MP3 flash from done. Pick up at "NEXT SESSION" above.*
+
+
+---
+
+## ⚠️ Trap: generic ESP32-CAM audio advice (logged 2026-07-23 02:00)
+
+Advice circulating online (and from some AI answers) tells you to set up audio on
+"ESP32-S3-CAM" using **Arduino + `ESP32-audioI2S`** with:
+
+```
+audio.setPinout(47, 46, 45); // BCLK, LRC, DOUT
+```
+
+**DO NOT FOLLOW THIS ON THIS BOARD.** It is wrong on four counts:
+
+1. **GPIO45/46/47 are CAMERA DATA PINS** on this board (D0:45, D1:47, D2:48, D3:46 —
+   see boot log). Using them for I²S conflicts with the OV3660 and kills the stream.
+   Real audio pins: **MCLK 10, BCLK 13, LRCK 14, DOUT 12** (already in the config).
+2. **This board HAS an external DAC** — ES8311 at I²C 0x18. Claims that the "integrated
+   audio module" avoids external-DAC complexity are backwards for SKU 33700.
+3. **`ESP32-audioI2S` does not initialise the ES8311** over I²C — no codec setup means
+   no sound regardless of pins, and no useful diagnostics.
+4. **It's Arduino framework.** This node runs ESPHome/ESP-IDF with working camera,
+   Frigate, HA entities and OTA. Switching frameworks discards all of that.
+
+The ESPHome config in this document is correct. The only open item is the
+media_player pipeline codec format (see NEXT SESSION above).
+
+## Note: intermittent 0x3C absence in I²C scan
+On some boots the scan lists only 0x18, 0x24, 0x40 — camera sensor 0x3C missing —
+yet the camera streams normally. This is scan timing racing the EXIO3 power-up,
+not a fault. Ignore it.
+
