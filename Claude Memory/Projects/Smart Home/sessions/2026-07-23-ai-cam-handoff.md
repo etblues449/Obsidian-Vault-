@@ -342,3 +342,97 @@ On some boots the scan lists only 0x18, 0x24, 0x40 — camera sensor 0x3C missin
 yet the camera streams normally. This is scan timing racing the EXIO3 power-up,
 not a fault. Ignore it.
 
+
+---
+
+# ⛔ CORRECTION (2026-07-23, later session) — AUDIO PIN MAP ABOVE IS WRONG
+
+The audio pin map earlier in this document (MCLK 10 / BCLK 13 / LRCK 14 / DOUT 12 /
+DIN 11) was **derived from the Amazon Interface Definition image and is incorrect**.
+It is the reason the speaker produced static and then silence all session. The camera
+pins in that table are correct and unaffected.
+
+## Authoritative source
+Waveshare's own repo + BSP component (not the product image):
+
+```
+git clone https://github.com/waveshareteam/ESP32-S3-CAM-OVxxxx.git
+```
+- Audio example: `examples/ESP-IDF-v5.5.1/03_audio_play`
+- BSP (managed component, from ESP Component Registry):
+  `waveshare/esp32_s3_cam_ovxxxx` v2.0.1 → `include/bsp/esp32_s3_cam_ovxxxx.h`
+
+## CORRECT audio pins (from BSP header, verified against its i2s_std_gpio_config_t)
+```c
+#define BSP_I2S_MCLK   (GPIO_NUM_10)   // .mclk
+#define BSP_I2S_SCLK   (GPIO_NUM_11)   // .bclk
+#define BSP_I2S_LCLK   (GPIO_NUM_12)   // .ws   (LRCK)
+#define BSP_I2S_DOUT   (GPIO_NUM_14)   // .dout (ESP -> ES8311 DAC / speaker)
+#define BSP_I2S_DSIN   (GPIO_NUM_13)   // .din  (ES7210 mics -> ESP)
+```
+
+| Signal | WRONG (was flashed) | CORRECT |
+|---|---|---|
+| MCLK | GPIO10 | GPIO10 (only one that was right) |
+| BCLK | GPIO13 | **GPIO11** |
+| LRCK | GPIO14 | **GPIO12** |
+| DOUT (speaker) | GPIO12 | **GPIO14** |
+| DIN (mics, for ES7210 later) | GPIO11 | **GPIO13** |
+
+## CORRECT I²S role — `force_master: true` was ALSO wrong
+BSP source `esp32_s3_cam_ovxxxx.c`:
+```c
+line 226: I2S_CHANNEL_DEFAULT_CONFIG(CONFIG_BSP_I2S_NUM, I2S_ROLE_MASTER);  // ESP32 = MASTER
+line 305: .master_mode = false,                                            // ES8311 = SLAVE
+```
+→ **Remove `force_master`** from the `audio_dac:` block. ES8311 must be SLAVE; the
+ESP32 drives BCLK/LRCK. A log line reading `I2S Role: SLAVE` is CORRECT, not a fault.
+
+Other BSP details: slot format is `I2S_STD_PHILIP_SLOT_DEFAULT_CONFIG`, 16-bit
+(= ESPHome's default `std` comm format, so nothing to set). `BSP_POWER_AMP_IO` is
+`GPIO_NUM_NC` — confirms no direct amp GPIO; amp is via the CH32V003 expander.
+EXIO4 HIGH = amp on is empirically confirmed (static was audible with it ON) — keep
+`ALWAYS_ON`. EXIO3 LOW for camera power is confirmed working — keep `ALWAYS_OFF`.
+
+Waveshare's `03_audio_play` opens the codec at 24000 Hz / 2ch; 48000 mono works fine
+through the ESPHome resamplers, so sample rate was never the fault.
+
+## Corrected audio blocks
+```yaml
+i2s_audio:
+  - id: i2s_out
+    i2s_mclk_pin: GPIO10
+    i2s_bclk_pin: GPIO11
+    i2s_lrclk_pin: GPIO12
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: bus_a
+    address: 0x18
+    sample_rate: 48000
+    bits_per_sample: 16bit
+    use_mclk: true          # NOTE: no force_master — ES8311 is SLAVE
+
+speaker:
+  - platform: i2s_audio
+    id: spk
+    dac_type: external
+    audio_dac: es8311_dac
+    i2s_audio_id: i2s_out
+    i2s_dout_pin: GPIO14
+    sample_rate: 48000
+    bits_per_sample: 16bit
+    channel: mono
+    timeout: never
+```
+
+## Lesson
+For Waveshare boards, **clone the vendor repo and read the BSP header** before trusting
+a product-page interface image, a datasheet diagram, or any generic ESP32-CAM guide.
+The BSP is what their own firmware ships against.
+
+**Status at time of this correction:** corrected pins + slave role handed over for
+flashing; result not yet confirmed in this session. If sound works, mark the speaker
+DONE and proceed to ES7210 mics on DIN **GPIO13** (I²C 0x40).
+
