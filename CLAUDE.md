@@ -35,3 +35,78 @@ This vault holds Elliot's legal and financial records (credit-card statements, s
 
 ## Device Sync
 Reliable remote is the GitHub repo via the Obsidian Git plugin (`https://github.com/etblues449/Obsidian-Vault-.git`). Note: `remotely-save` has been failing — prefer Obsidian Git.
+
+## Research Workflow (Claude Code + NotebookLM + Obsidian)
+
+A self-improving research pipeline turning Claude Code into a research assistant.
+
+### The Pipeline
+
+```
+Research Query (e.g., "Claude Code MCP servers")
+    ↓
+YouTube Search Skill (find relevant videos)
+    ↓
+NotebookLM Skill (ingest sources + analyze)
+    ↓
+Generate Deliverables (podcast, infographic, study guide)
+    ↓
+Save to Vault (Research/<date>_<query>.md with backlinks)
+    ↓
+Claude learns patterns → Improves CLAUDE.md → Better next iteration
+```
+
+### Quick Start
+
+```
+/youtube-pipeline "Claude Code MCP servers" --analysis gaps --deliverable infographic
+```
+
+### Analysis Types
+- `gaps` - What's missing from current content? (find content opportunities)
+- `trends` - What patterns are emerging?
+- `competitive` - Competitive landscape analysis
+- `content-performance` - What drives views/engagement?
+- `opportunities` - Actionable next steps
+- `comprehensive` - All analyses combined
+
+### Deliverable Types
+- `podcast` - Audio summary with transcript
+- `infographic` - Visual breakdown
+- `mindmap` - Concept relationship map
+- `flashcards` - Key points for learning
+- `studyguide` - Comprehensive study guide
+
+### What Gets Saved
+
+Each research run creates a markdown file in `Research/YouTube/`:
+- Full analysis and key findings
+- All videos analyzed with links
+- Podcast transcript (if generated)
+- Opportunity list and gaps
+- Metadata: date, query, video count, analysis type
+- Backlinks to related research
+
+Example: `Research/YouTube/2024-07-23_Claude-Code-MCP-servers.md`
+
+### Self-Improvement Loop
+
+The vault stores your research patterns:
+1. **Topics** - What you research
+2. **Style** - How you like analysis presented
+3. **Preferences** - Which deliverables matter most
+
+**Update CLAUDE.md with learned patterns:**
+```
+Can you update CLAUDE.md based on my latest research?
+Focus on: analysis preferences, deliverable formats, research style.
+```
+
+This teaches Claude your research patterns for better future iterations.
+
+### Key Principle
+
+This workflow creates a **feedback loop**:
+- More research → More vault data → Better CLAUDE.md → Better next analysis
+- Over weeks/months, Claude learns exactly how you think about research
+- The system improves itself through repeated use

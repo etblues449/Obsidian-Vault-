@@ -1,0 +1,35 @@
+# NotebookLM Configuration
+# This file stores default settings for the NotebookLM integration
+#
+# Format: KEY=VALUE (one per line)
+# Comments start with #
+
+# Authentication
+# auth_method=oauth  # oauth (default) or service_account
+# timeout=300        # seconds for auth flow
+
+# API Defaults
+# default_title_prefix=JARVIS
+# auto_tag=true
+# tags=research,jarvis,automated
+
+# Audio Generation
+# audio_language=en
+# audio_voice=default
+# audio_speed=1.0
+
+# Storage
+# cache_notebooks=true
+# cache_ttl=3600  # seconds
+
+# Output
+# output_format=json  # json, yaml, or text
+# verbose=false
+
+# Logging
+# log_level=INFO  # DEBUG, INFO, WARNING, ERROR
+# log_file=~/.notebooklm/app.log
+
+# Device/Environment
+# device_name=fold7
+# sync_enabled=false
