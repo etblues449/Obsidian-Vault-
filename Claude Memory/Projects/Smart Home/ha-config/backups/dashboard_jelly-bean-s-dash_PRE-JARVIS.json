@@ -1,0 +1,755 @@
+{
+  "button_card_templates": {
+    "jb_room": {
+      "show_name": true,
+      "show_state": false,
+      "show_icon": true,
+      "styles": {
+        "card": [
+          {
+            "border-radius": "16px"
+          },
+          {
+            "padding": "12px"
+          },
+          {
+            "background-color": "var(--jb-surface)"
+          },
+          {
+            "box-shadow": "none"
+          }
+        ],
+        "grid": [
+          {
+            "grid-template-areas": "\"i n\" \"i s\""
+          },
+          {
+            "grid-template-columns": "min-content 1fr"
+          }
+        ],
+        "name": [
+          {
+            "justify-self": "start"
+          },
+          {
+            "font-weight": 600
+          },
+          {
+            "color": "var(--jb-text)"
+          }
+        ],
+        "icon": [
+          {
+            "width": "32px"
+          },
+          {
+            "color": "[[[ return states[entity.entity_id].state === 'on'\n    ? 'var(--jb-on)' : 'var(--jb-off)'; ]]]\n"
+          }
+        ]
+      },
+      "custom_fields": {
+        "s": "[[[\n  var p = variables.presence ? states[variables.presence].state : null;\n  if (p === 'on') return '<span style=\"color:var(--jb-present)\">Occupied</span>';\n  if (p === 'off') return '<span style=\"color:var(--jb-clear)\">Clear</span>';\n  return '<span style=\"color:var(--jb-text-muted)\">\u2014</span>';\n]]]\n"
+      }
+    }
+  },
+  "decluttering_templates": {
+    "jb_presence_row": {
+      "card": {
+        "type": "custom:mushroom-template-card",
+        "primary": "[[name]]",
+        "secondary": "{{ 'Occupied' if is_state('[[presence]]','on') else 'Clear' }}",
+        "icon": "{{ 'mdi:motion-sensor' if is_state('[[presence]]','on') else 'mdi:motion-sensor-off' }}",
+        "icon_color": "{{ 'var(--jb-present)' if is_state('[[presence]]','on') else 'var(--jb-clear)' }}",
+        "tap_action": {
+          "action": "more-info"
+        }
+      }
+    },
+    "jb_node_card": {
+      "card": {
+        "type": "custom:mushroom-template-card",
+        "primary": "[[name]]",
+        "secondary": "{{ states(\"[[wifi]]\") }} dBm",
+        "icon": "mdi:wifi",
+        "icon_color": "{% set r = states(\"[[wifi]]\")|int(0) %} {{ 'var(--jb-present)' if r > -60 else 'var(--jb-on)' if r > -75 else 'var(--jb-warning)' }}",
+        "tap_action": {
+          "action": "more-info"
+        }
+      }
+    },
+    "jb_light_card": {
+      "card": {
+        "type": "custom:mushroom-light-card",
+        "entity": "[[entity]]",
+        "name": "[[name]]",
+        "show_brightness_control": true,
+        "use_light_color": true,
+        "show_color_temp_control": false
+      }
+    }
+  },
+  "title": "Jelly Bean's House",
+  "views": [
+    {
+      "title": "Home",
+      "path": "home",
+      "type": "sections",
+      "max_columns": 4,
+      "theme": "Jelly Bean Light",
+      "badges": [],
+      "sections": [
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Jelly Bean's House",
+              "heading_style": "title"
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "column_span": 2,
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Rooms"
+            },
+            {
+              "type": "custom:bubble-card",
+              "card_type": "button",
+              "button_type": "name",
+              "name": "Kitchen",
+              "icon": "mdi:sofa",
+              "entity": "light.lounge_lights",
+              "show_state": true,
+              "sub_button": [
+                {
+                  "entity": "binary_sensor.lounge_presence",
+                  "icon": "mdi:motion-sensor",
+                  "show_name": false,
+                  "show_background": false
+                }
+              ],
+              "button_action": {
+                "tap_action": {
+                  "action": "navigate",
+                  "navigation_path": "#lounge"
+                }
+              }
+            },
+            {
+              "type": "custom:bubble-card",
+              "card_type": "button",
+              "button_type": "name",
+              "name": "Bedroom",
+              "icon": "mdi:bed",
+              "entity": "light.bedroom_light",
+              "show_state": true,
+              "sub_button": [
+                {
+                  "entity": "binary_sensor.bedroom_presence",
+                  "icon": "mdi:motion-sensor",
+                  "show_name": false,
+                  "show_background": false
+                }
+              ],
+              "button_action": {
+                "tap_action": {
+                  "action": "navigate",
+                  "navigation_path": "#bedroom"
+                }
+              }
+            },
+            {
+              "type": "custom:bubble-card",
+              "card_type": "button",
+              "button_type": "name",
+              "name": "Landing",
+              "icon": "mdi:stairs",
+              "entity": "light.stairs_smart_bulb",
+              "show_state": true,
+              "sub_button": [
+                {
+                  "entity": "binary_sensor.landing_presence",
+                  "icon": "mdi:motion-sensor",
+                  "show_name": false,
+                  "show_background": false
+                }
+              ],
+              "button_action": {
+                "tap_action": {
+                  "action": "navigate",
+                  "navigation_path": "#landing"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "column_span": 2,
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "All Lights"
+            },
+            {
+              "type": "custom:auto-entities",
+              "card": {
+                "type": "entities",
+                "state_color": true
+              },
+              "filter": {
+                "include": [
+                  {
+                    "domain": "light"
+                  }
+                ]
+              },
+              "sort": {
+                "method": "friendly_name"
+              },
+              "show_empty": false
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "column_span": 2,
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Scenes"
+            },
+            {
+              "type": "custom:mushroom-template-card",
+              "primary": "Evening",
+              "icon": "mdi:weather-sunset",
+              "icon_color": "amber",
+              "tap_action": {
+                "action": "call-service",
+                "service": "scene.turn_on",
+                "data": {
+                  "entity_id": "scene.evening"
+                }
+              }
+            },
+            {
+              "type": "custom:mushroom-template-card",
+              "primary": "Night",
+              "icon": "mdi:weather-night",
+              "icon_color": "indigo",
+              "tap_action": {
+                "action": "call-service",
+                "service": "scene.turn_on",
+                "data": {
+                  "entity_id": "scene.night"
+                }
+              }
+            },
+            {
+              "type": "custom:mushroom-template-card",
+              "primary": "Movie",
+              "icon": "mdi:movie-open",
+              "icon_color": "deep-purple",
+              "tap_action": {
+                "action": "call-service",
+                "service": "scene.turn_on",
+                "data": {
+                  "entity_id": "scene.movie"
+                }
+              }
+            },
+            {
+              "type": "custom:mushroom-template-card",
+              "primary": "All Off",
+              "icon": "mdi:power",
+              "icon_color": "red",
+              "tap_action": {
+                "action": "call-service",
+                "service": "scene.turn_on",
+                "data": {
+                  "entity_id": "scene.all_off"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "column_span": 2,
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Media"
+            },
+            {
+              "type": "custom:mushroom-media-player-card",
+              "entity": "media_player.jelly_beans_tv",
+              "show_volume_level": true
+            },
+            {
+              "type": "custom:mushroom-media-player-card",
+              "entity": "media_player.sambed",
+              "show_volume_level": true
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "custom:bubble-card",
+              "card_type": "pop-up",
+              "hash": "#lounge",
+              "name": "Kitchen",
+              "icon": "mdi:sofa",
+              "cards": [
+                {
+                  "type": "custom:decluttering-card",
+                  "template": "jb_presence_row",
+                  "variables": [
+                    {
+                      "name": "Presence"
+                    },
+                    {
+                      "presence": "binary_sensor.lounge_presence"
+                    }
+                  ]
+                },
+                {
+                  "type": "custom:decluttering-card",
+                  "template": "jb_light_card",
+                  "variables": [
+                    {
+                      "entity": "light.lounge_lights"
+                    },
+                    {
+                      "name": "Main Lights"
+                    }
+                  ]
+                },
+                {
+                  "type": "custom:decluttering-card",
+                  "template": "jb_light_card",
+                  "variables": [
+                    {
+                      "entity": "light.living_room_light"
+                    },
+                    {
+                      "name": "Side Lights"
+                    }
+                  ]
+                },
+                {
+                  "type": "custom:decluttering-card",
+                  "template": "jb_light_card",
+                  "variables": [
+                    {
+                      "entity": "light.rgbic_tv_backlight"
+                    },
+                    {
+                      "name": "TV Backlight"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "custom:bubble-card",
+              "card_type": "pop-up",
+              "hash": "#bedroom",
+              "name": "Bedroom",
+              "icon": "mdi:bed",
+              "cards": [
+                {
+                  "type": "custom:decluttering-card",
+                  "template": "jb_presence_row",
+                  "variables": [
+                    {
+                      "name": "Presence"
+                    },
+                    {
+                      "presence": "binary_sensor.bedroom_presence"
+                    }
+                  ]
+                },
+                {
+                  "type": "custom:decluttering-card",
+                  "template": "jb_light_card",
+                  "variables": [
+                    {
+                      "entity": "light.bedroom_light"
+                    },
+                    {
+                      "name": "Bedroom Light"
+                    }
+                  ]
+                },
+                {
+                  "type": "custom:mushroom-media-player-card",
+                  "entity": "media_player.sambed",
+                  "use_media_info": true,
+                  "show_volume_level": true
+                }
+              ]
+            },
+            {
+              "type": "custom:bubble-card",
+              "card_type": "pop-up",
+              "hash": "#landing",
+              "name": "Landing",
+              "icon": "mdi:stairs",
+              "cards": [
+                {
+                  "type": "custom:decluttering-card",
+                  "template": "jb_presence_row",
+                  "variables": [
+                    {
+                      "name": "Presence"
+                    },
+                    {
+                      "presence": "binary_sensor.landing_presence"
+                    }
+                  ]
+                },
+                {
+                  "type": "custom:decluttering-card",
+                  "template": "jb_light_card",
+                  "variables": [
+                    {
+                      "entity": "light.stairs_smart_bulb"
+                    },
+                    {
+                      "name": "Stairs"
+                    }
+                  ]
+                },
+                {
+                  "type": "custom:decluttering-card",
+                  "template": "jb_light_card",
+                  "variables": [
+                    {
+                      "entity": "light.upstairs_led_bulb"
+                    },
+                    {
+                      "name": "Upstairs"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Lounge",
+      "path": "lounge",
+      "type": "sections",
+      "max_columns": 4,
+      "theme": "Jelly Bean Light",
+      "sections": [
+        {
+          "type": "grid",
+          "column_span": 2,
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Kitchen Lights"
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_light_card",
+              "variables": [
+                {
+                  "entity": "light.lounge_lights"
+                },
+                {
+                  "name": "Main"
+                }
+              ]
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_light_card",
+              "variables": [
+                {
+                  "entity": "light.living_room_light"
+                },
+                {
+                  "name": "Side"
+                }
+              ]
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_light_card",
+              "variables": [
+                {
+                  "entity": "light.left_smart_bulb"
+                },
+                {
+                  "name": "Left"
+                }
+              ]
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_light_card",
+              "variables": [
+                {
+                  "entity": "light.right_smart_bulb"
+                },
+                {
+                  "name": "Right"
+                }
+              ]
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_light_card",
+              "variables": [
+                {
+                  "entity": "light.rgbic_tv_backlight"
+                },
+                {
+                  "name": "TV Backlight"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Presence & Climate"
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_presence_row",
+              "variables": [
+                {
+                  "name": "Kitchen"
+                },
+                {
+                  "presence": "binary_sensor.lounge_presence"
+                }
+              ]
+            },
+            {
+              "type": "thermostat",
+              "entity": "climate.ember"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Bedroom",
+      "path": "bedroom",
+      "type": "sections",
+      "max_columns": 4,
+      "theme": "Jelly Bean Light",
+      "sections": [
+        {
+          "type": "grid",
+          "column_span": 2,
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Bedroom"
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_light_card",
+              "variables": [
+                {
+                  "entity": "light.bedroom_light"
+                },
+                {
+                  "name": "Light"
+                }
+              ]
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_presence_row",
+              "variables": [
+                {
+                  "name": "Presence"
+                },
+                {
+                  "presence": "binary_sensor.bedroom_presence"
+                }
+              ]
+            },
+            {
+              "type": "custom:mushroom-media-player-card",
+              "entity": "media_player.sambed",
+              "use_media_info": true,
+              "show_volume_level": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Landing",
+      "path": "landing",
+      "type": "sections",
+      "max_columns": 4,
+      "theme": "Jelly Bean Light",
+      "sections": [
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Landing"
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_light_card",
+              "variables": [
+                {
+                  "entity": "light.stairs_smart_bulb"
+                },
+                {
+                  "name": "Stairs"
+                }
+              ]
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_light_card",
+              "variables": [
+                {
+                  "entity": "light.upstairs_led_bulb"
+                },
+                {
+                  "name": "Upstairs"
+                }
+              ]
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_presence_row",
+              "variables": [
+                {
+                  "name": "Presence"
+                },
+                {
+                  "presence": "binary_sensor.landing_presence"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "System",
+      "path": "system",
+      "type": "sections",
+      "max_columns": 4,
+      "theme": "Jelly Bean Light",
+      "sections": [
+        {
+          "type": "grid",
+          "column_span": 2,
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "ESPHome Nodes"
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_node_card",
+              "variables": [
+                {
+                  "name": "Kitchen"
+                },
+                {
+                  "wifi": "sensor.lounge_wifi_signal"
+                }
+              ]
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_node_card",
+              "variables": [
+                {
+                  "name": "Landing"
+                },
+                {
+                  "wifi": "sensor.landing_wifi_signal"
+                }
+              ]
+            },
+            {
+              "type": "custom:decluttering-card",
+              "template": "jb_node_card",
+              "variables": [
+                {
+                  "name": "RuView CSI"
+                },
+                {
+                  "wifi": "sensor.ruview_csi_node_3_wifi_signal"
+                }
+              ]
+            },
+            {
+              "type": "custom:advanced-camera-card",
+              "cameras": [
+                {
+                  "camera_entity": "camera.ai_cam",
+                  "live_provider": "auto",
+                  "id": "Ai Cam",
+                  "triggers": {
+                    "occupancy": true,
+                    "motion": true
+                  },
+                  "cast": {
+                    "method": "dashboard"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "column_span": 2,
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Cameras"
+            },
+            {
+              "type": "custom:auto-entities",
+              "card": {
+                "type": "entities"
+              },
+              "filter": {
+                "include": [
+                  {
+                    "domain": "camera"
+                  }
+                ]
+              },
+              "sort": {
+                "method": "friendly_name"
+              },
+              "show_empty": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

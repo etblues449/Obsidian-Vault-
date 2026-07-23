@@ -1,0 +1,23 @@
+{
+  "id": "landing_enter",
+  "alias": "Landing - Enter",
+  "triggers": [
+    {
+      "trigger": "state",
+      "entity_id": "binary_sensor.landing_landing_presence",
+      "to": "on"
+    }
+  ],
+  "actions": [
+    {
+      "action": "light.turn_on",
+      "target": {
+        "entity_id": "light.upstairs_led_bulb"
+      },
+      "data": {
+        "brightness_pct": 100
+      }
+    }
+  ],
+  "mode": "single"
+}

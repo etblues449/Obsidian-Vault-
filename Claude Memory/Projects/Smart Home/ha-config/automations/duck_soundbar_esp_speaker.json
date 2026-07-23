@@ -1,0 +1,80 @@
+{
+  "id": "duck_soundbar_esp_speaker",
+  "alias": "Duck soundbar when voice active",
+  "description": "Save volume and duck on wake, restore exact volume on idle",
+  "triggers": [
+    {
+      "trigger": "state",
+      "entity_id": "assist_satellite.home_assistant_voice",
+      "from": "idle",
+      "id": "wake"
+    },
+    {
+      "trigger": "state",
+      "entity_id": "assist_satellite.home_assistant_voice",
+      "to": "idle",
+      "id": "done"
+    }
+  ],
+  "conditions": [],
+  "actions": [
+    {
+      "choose": [
+        {
+          "conditions": [
+            {
+              "condition": "trigger",
+              "id": "wake"
+            }
+          ],
+          "sequence": [
+            {
+              "action": "input_number.set_value",
+              "target": {
+                "entity_id": "input_number.soundbar_saved_volume"
+              },
+              "data": {
+                "value": "{{ state_attr('media_player.jelly_bean_s_soundbar_media_player', 'volume_level') }}"
+              }
+            },
+            {
+              "action": "media_player.volume_set",
+              "target": {
+                "entity_id": "media_player.jelly_bean_s_soundbar_media_player"
+              },
+              "data": {
+                "volume_level": 0.08
+              }
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "condition": "trigger",
+              "id": "done"
+            }
+          ],
+          "sequence": [
+            {
+              "delay": {
+                "milliseconds": 600
+              }
+            },
+            {
+              "action": "media_player.volume_set",
+              "target": {
+                "entity_id": "media_player.jelly_bean_s_soundbar_media_player"
+              },
+              "data": {
+                "volume_level": "{{ states('input_number.soundbar_saved_volume') | float }}"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "mode": "restart",
+  "max_exceeded": "silent"
+}

@@ -1,0 +1,84 @@
+# JARVIS — dark theme for Home Assistant
+# Palette mirrors the JARVIS / V.A.U.L.T. app: deep purple-black bg,
+# violet primary, mint-green presence accents, lavender text.
+# Drop-in replacement for "Jelly Bean Light" — keeps the same jb-* / mush-*
+# token names your dashboard cards use, so nothing else needs changing.
+JARVIS:
+  # ---- Brand accents ----
+  primary-color: "#7c3aed"            # violet
+  accent-color: "#6ee7b7"             # mint
+  light-primary-color: "#d8b4fe"
+  dark-primary-color: "#5b21b6"
+
+  # ---- Backgrounds ----
+  primary-background-color: "#0a0612"
+  secondary-background-color: "#0f0a1e"
+  lovelace-background: "radial-gradient(ellipse 80% 55% at 50% 18%, rgba(88,28,135,0.28), transparent 70%), #0a0612"
+  card-background-color: "rgba(30,18,60,0.55)"
+
+  # ---- Text ----
+  primary-text-color: "#e9e4f5"
+  secondary-text-color: "#a99cc9"
+  text-primary-color: "#e9e4f5"
+  disabled-text-color: "#6b5f88"
+  divider-color: "rgba(167,139,250,0.14)"
+
+  # ---- Cards ----
+  ha-card-background: "rgba(30,18,60,0.55)"
+  ha-card-border-radius: "16px"
+  ha-card-border-width: "1px"
+  ha-card-border-color: "rgba(167,139,250,0.22)"
+  ha-card-box-shadow: "0 2px 14px rgba(0,0,0,0.45)"
+
+  # ---- App header / sidebar ----
+  app-header-background-color: "#0a0612"
+  app-header-text-color: "#e9e4f5"
+  sidebar-background-color: "#0f0a1e"
+  sidebar-text-color: "#e9e4f5"
+  sidebar-icon-color: "#8b7fb0"
+  sidebar-selected-icon-color: "#a78bfa"
+  sidebar-selected-text-color: "#d8b4fe"
+
+  # ---- Icons / states ----
+  state-icon-color: "#8b7fb0"
+  state-icon-active-color: "#a78bfa"
+  paper-item-icon-color: "#8b7fb0"
+  paper-item-icon-active-color: "#a78bfa"
+  state-light-on-color: "#d8b4fe"
+
+  # ---- Toggles / switches ----
+  switch-checked-color: "#7c3aed"
+  switch-checked-button-color: "#d8b4fe"
+  paper-toggle-button-checked-button-color: "#7c3aed"
+
+  # ---- Sliders ----
+  slider-color: "#7c3aed"
+  slider-secondary-color: "rgba(124,58,237,0.35)"
+  slider-track-color: "rgba(167,139,250,0.15)"
+
+  # ---- RGB helpers (some cards read these) ----
+  rgb-primary-color: "124,58,237"
+  rgb-accent-color: "110,231,183"
+  rgb-primary-text-color: "233,228,245"
+
+  # ---- Custom jb-* tokens (used directly by your dashboard cards) ----
+  jb-surface: "rgba(30,18,60,0.55)"
+  jb-text: "#e9e4f5"
+  jb-text-muted: "#a99cc9"
+  jb-on: "#d8b4fe"          # a light/switch that is ON  -> lavender glow
+  jb-off: "#4a4066"         # OFF -> muted violet-grey
+  jb-present: "#6ee7b7"     # presence/motion detected   -> mint
+  jb-clear: "#4a4066"       # no presence                -> muted
+  jb-warning: "#f87171"     # alerts
+
+  # ---- Mushroom tokens (unchanged sizing, kept for parity) ----
+  mush-spacing: "12px"
+  mush-card-primary-font-size: "14px"
+  mush-card-secondary-font-size: "12px"
+  mush-icon-size: "36px"
+  mush-control-border-radius: "14px"
+  mush-chip-border-radius: "18px"
+  mush-rgb-purple: "124,58,237"
+
+  # ---- card-mod ----
+  card-mod-theme: JARVIS

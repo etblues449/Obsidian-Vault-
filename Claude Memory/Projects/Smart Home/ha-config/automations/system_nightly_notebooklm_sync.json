@@ -1,0 +1,16 @@
+{
+  "id": "system_nightly_notebooklm_sync",
+  "alias": "System - Nightly NotebookLM Sync",
+  "triggers": [
+    {
+      "trigger": "time",
+      "at": "03:00:00"
+    }
+  ],
+  "actions": [
+    {
+      "action": "shell_command.rebuild_notebook_kb"
+    }
+  ],
+  "mode": "single"
+}

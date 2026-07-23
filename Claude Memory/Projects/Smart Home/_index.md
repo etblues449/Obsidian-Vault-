@@ -18,6 +18,8 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - **Voice agent (Layer B interface): LIVE & £0** — `jarvis-voice-lovat.vercel.app` (Vercel Hobby, free) using Groq `llama-3.1-8b-instant` + Browser Web Speech API (STT/TTS), reads the vault via GitHub API (octokit). Deployed from Termux. Complementary to the Obsidian-native brain (Layer A), not competing. *(Recorded here 2026-07-08 per handoff §12.7 reconciliation.)*
 - **JARVIS Carousel: deployed on Vercel** — 7-slide Next.js presentation (JARVIS-Carousel/ in vault, monorepo root dir on Vercel project `jarvis-carousel`). Production branch = master.
 
+- **Automations minimised + JARVIS-themed dashboard (2026-07-23)** — hub had 36 automation entities but only **8 real** ones; the other **28 were ghosts** (deleted-config registry leftovers, state `unavailable`). Purged all 28 via the entity registry; renamed the two kitchen automations (dropped a misleading `(Daytime)` that had no condition). Dashboard `jelly-bean-s-dash` is fully `jb-*`-token-driven with no hardcoded colours, so created `ha-config/themes/jarvis.yaml` (dark drop-in for "Jelly Bean Light": bg `#0a0612`, violet `#7c3aed`, mint `#6ee7b7`, lavender text) and switched all 5 views to it via API. **User action: install `jarvis.yaml` in the hub themes folder + Reload Themes** to go live. Full record + revert steps: `ha-config/README.md`. LLAT used was revoked after.
+
 ## Key Decisions
 - bedroom-2.yaml canonical (bedroom.yaml broken)
 - media_player.tv_jelly_beans_tv_2 canonical TV entity

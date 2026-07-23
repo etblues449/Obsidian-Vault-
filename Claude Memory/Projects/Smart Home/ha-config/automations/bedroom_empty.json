@@ -1,0 +1,23 @@
+{
+  "id": "bedroom_empty",
+  "alias": "Bedroom - Empty",
+  "triggers": [
+    {
+      "trigger": "state",
+      "entity_id": "binary_sensor.bedroom_bedroom_presence",
+      "to": "off",
+      "for": {
+        "minutes": 2
+      }
+    }
+  ],
+  "actions": [
+    {
+      "action": "light.turn_off",
+      "target": {
+        "entity_id": "light.bedroom_light"
+      }
+    }
+  ],
+  "mode": "single"
+}

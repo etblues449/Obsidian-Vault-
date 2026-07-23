@@ -1,0 +1,34 @@
+{
+  "id": "kitchen_empty",
+  "alias": "Kitchen - Empty",
+  "triggers": [
+    {
+      "entity_id": [
+        "binary_sensor.living_room_kitchen_presence_kitchen_presence"
+      ],
+      "to": [
+        "off"
+      ],
+      "for": {
+        "hours": 0,
+        "minutes": 10,
+        "seconds": 0
+      },
+      "trigger": "state"
+    }
+  ],
+  "actions": [
+    {
+      "action": "light.turn_off",
+      "target": {
+        "entity_id": [
+          "light.kitchen_light",
+          "light.kitchen_2",
+          "light.kitchen_3"
+        ]
+      },
+      "data": {}
+    }
+  ],
+  "mode": "single"
+}
