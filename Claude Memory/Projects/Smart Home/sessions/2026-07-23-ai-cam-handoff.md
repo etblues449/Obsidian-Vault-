@@ -498,3 +498,51 @@ speaker:
   (camera + speaker + mics) with microWakeWord.
 - Optional: Music Assistant target now that the media_player is real.
 
+
+---
+
+# Battery / portable operation (researched 2026-07-23)
+
+**The board is battery-capable by design** — confirmed from `Schematic/ESP32-S3-CAM-XXXX-schematic.pdf`
+and the BSP, not from marketing copy.
+
+Onboard hardware:
+- **ETA6098** switching Li-ion charger (up to 2.5A capable; actual current set by a resistor on the
+  ISET pin — Waveshare's value not verified)
+- **J4** battery connector, **VBAT** net
+- **CHG_STAT** charge-status line
+- **PWR_KEY** power button; **VBUS/VSYS** power-path switching (runs while charging)
+- Battery voltage sensing via CH32V003 ADC — BSP exposes `bsp_get_io_expander_adc()` and a
+  `g09_battery` group (`BSP_BATTERY_VOLTAGE` = GPIO_NUM_NC, "Connected via IO expander ADC")
+
+**Battery type:** single-cell 3.7V Li-ion / LiPo (4.2V float), protected pack, JST to J4.
+
+## Runtime estimate — continuous MJPEG streaming
+Workload: 800x600 @5fps + WiFi `power_save_mode: none` + camera + octal PSRAM @80MHz.
+Estimated ~250–350 mA average from the cell.
+
+| Cell | Est. continuous streaming |
+|---|---|
+| 2000 mAh LiPo | ~6–8 h |
+| 3000 mAh | ~9–12 h |
+| 18650 (3400 mAh) | ~10–14 h |
+
+**Portable = a shift, not a season.** Fine for temporary placement / events / cable-free jobs.
+Not viable as a permanent battery camera: 24/7 Frigate streaming is a mains workload, because
+deep sleep (the only big power lever) is incompatible with a continuous stream.
+
+For long life you'd change the *duty cycle*, not the battery: deep sleep + wake on motion
+(PIR or an LD2410), snapshot-and-push rather than stream. Days-to-weeks life, but it leaves
+Frigate's continuous pipeline.
+
+## Cautions before connecting a cell
+1. **Verify J4 polarity with a meter** against the schematic first — Waveshare JST polarity is not
+   consistent across their boards; reversed will kill the board.
+2. **Battery % in HA is not free.** Voltage is behind the CH32V003 ADC. The `waveshare_io_ch32v003`
+   ESPHome external component in use here exposes GPIO but no ADC read — surfacing a battery sensor
+   would need the component extending (see `bsp_get_io_expander_adc()` in the BSP for the register
+   interface). Don't assume a percentage appears automatically.
+
+Ties into existing next action "Order: 18650 cells" — note an 18650 needs a holder + JST pigtail;
+a LiPo pouch pack with a JST already fitted is the lower-friction option.
+
