@@ -7,6 +7,7 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - Lounge: complete (~19 automations)
 - Bedroom: operational (bedroom-2.yaml)
 - Upstairs: BLE/radar contention unresolved
+- **AI Cam (Waveshare ESP32-S3-CAM-OV3660, node `ai_cam` @ 192.168.0.199): camera DONE, speaker 95%** — OV3660 streaming 800x600 MJPEG (`:8080`) + snapshot (`:8081`), live in Frigate with recording + person detection. Camera power gated by CH32V003 expander EXIO3 (drive LOW); amp on EXIO4. ES8311 speaker: full software chain works (media_player reaches Playing, DAC master/unmuted/full-vol), but silent — root cause identified as **media_player pipeline defaulting to FLAC while HA Cloud TTS sends MP3**. Fix = add `format: MP3` to both pipelines (one flash, high confidence). Full handoff + known-good YAML: [[sessions/2026-07-23-ai-cam-handoff]]. (2026-07-23)
 - **On-device JARVIS terminal (Fold 7): operational** — Claude Code pinned to v2.1.112 in Termux, auto mode, filesystem MCP scoped to `~/jarvis`, vault cloned on-device, Termux:API hardware tools live (battery + notification verified). See [[sessions/2026-06-13]].
 - **JARVIS Phone-Native v1: complete & deployed** — Capture (text→Inbox), HA control (REST wrapper), git sync (branch-aware), daily digest (cron), one-tap Termux:Widget. Fully tested on Fold 7 (install.sh runs clean, capture + HA control working, cron scheduled). PR #52 merged to master 2026-06-16. See [[sessions/2026-06-16]] + QUICK_START.md.
 - **JARVIS v3: Obsidian-native (DEPLOYED & LIVE)** — Obsidian-native brain replacing Termux. The vault IS the system: Capture (Alt+J) → Claude classifies → routes to folder; Ask (Alt+A) → Q&A grounded in last 20 captures; Digest (Alt+D) → daily 24h summary to Journal/. All run *inside Obsidian* via QuickAdd scripts calling Claude API (`claude-opus-4-8`) via `requestUrl`. Dashboards (Master Dashboard, Finance Tracker, Projects Dashboard) auto-update via Dataview. Obsidian Sync + Git backup. Secrets device-local (localStorage), never synced. **Complete 2026-06-20**: 14 docs + 6 scripts + home-screen shortcuts; all 3 core macros tested & working on Fold 7; digest running daily; Ask returning grounded answers. See [[sessions/2026-06-19]].
@@ -20,13 +21,17 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 ## Key Decisions
 - bedroom-2.yaml canonical (bedroom.yaml broken)
 - media_player.tv_jelly_beans_tv_2 canonical TV entity
-- Frigate ruled out (too heavy for HA Green)
+- **Frigate: RE-ADOPTED (2026-07-23)** — previously ruled out as too heavy, but now running on HA Green with 3 cameras (ai_cam + cctv_cam .234 + porch .240), CPU detector, MQTT to .200. Config `/config/frigate.yaml`. ai_cam tile confirmed live. Runs fine at 800x600/5fps per camera. Supersedes the earlier "Frigate ruled out" decision.
+- **Waveshare ESP32-S3-CAM: camera power is expander-gated** — the OV3660 will not init (`ESP_ERR_NOT_SUPPORTED`, garbage PID) until CH32V003 EXIO3 (PWDN net) is driven LOW. Amp is on EXIO4 (drive HIGH). Interface Definition image from the Amazon listing is the authoritative pinout — sibling ESP32-S3 cam boards do NOT match.
+- **ES8311 must be I²S master on shared-bus boards** — `force_master: true`; as slave it clocks nothing out → silence.
 - BLE + mmWave on same ESP32 = contention; split nodes
 - **Claude Code on Termux: pin to v2.1.112, disable auto-updater** — every release from v2.1.113 onward pulls a 233 MB glibc native binary that Android kills mid-download. Disable via `DISABLE_AUTOUPDATER=1` in `~/.bashrc` **and** `autoUpdates: false` in `~/.claude/settings.json`, or it silently re-breaks itself.
 - **git MCP: use `uvx mcp-server-git`, not npx** — the npm version won't connect. Falling back to the `git` CLI is fine.
 - Interactive `read -s` token paste fails on mobile; let `git` prompt for credentials.
 
 ## Next Actions
+- [ ] **AI Cam speaker — finish (one flash):** add `format: MP3` to both media_player pipelines, remove the stray `i2s_use_apll` line from the speaker block, Install/OTA, test `tts.speak`. Fallbacks (in order): `i2s_use_apll: true` on the `i2s_audio:` block → drop to 16000 Hz. Then add ES7210 dual mics. Full detail + YAML: [[sessions/2026-07-23-ai-cam-handoff]]
+- [ ] **AI Cam — verify cctv_cam (.234) + porch (.240)** are powered; may be hardware-down not config
 - [x] **GitHub PAT rotated** (2026-06-15) — old exposed token revoked, new fine-grained token in Windows Credential Manager
 - [x] **JARVIS v3 Obsidian-native: complete** (2026-06-19) — all docs, scripts, config + phone setup ready
 - [ ] **User: Run INSTALLATION CHECKLIST.md on Fold 7** — steps 1-9, ~15 min total
@@ -47,7 +52,8 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - [ ] **Build Phase-2 capture router** (skills 2/5/7 as a GitHub `on: push` router → removes the paid n8n webhook; also fixes the empty-Tasker-capture bug via a junk filter)
 
 ## Reference
+- **AI Cam (Waveshare ESP32-S3-CAM-OV3660) full handoff** — pin map, I²C scan, discoveries, audio debug log, known-good YAML, next steps: [[sessions/2026-07-23-ai-cam-handoff]] (2026-07-23)
 - **ESP32-S3-AUDIO-Board far-field voice** (research + build guide + ready-to-flash ESPHome config) — [[hardware/ESP32-S3-AUDIO-Board — Far-Field Voice Guide]] · [[hardware/ESP32-S3-AUDIO-Board.esphome.yaml]]. Key finding: board = Waveshare ESP32-S3-AUDIO-Board (ES8311 + ES7210 4-ch, dual mic). AEC cancels the board's *own* audio (great barge-in) but **cannot** cancel an *external TV* (no reference signal) — so whole-room-over-TV needs placement + BSS direction + 2-3 satellites, and ultimately a 4-mic XMOS array for the loud-lounge primary. Road A = ESPHome + Assist (AEC+BSS+NS+AGC + microWakeWord "Hey Jarvis"). (2026-07-15)
 
 Full detail: [[smart_home]]
-Sessions: [[sessions/2026-06-19]] — JARVIS v3 Obsidian-native complete & production-ready · [[sessions/2026-06-16]] — JARVIS phone-native v1 complete + merged · [[sessions/2026-06-13]] — on-device JARVIS stand-up · [[sessions/2026-06-08]] — RuView CSI node fixed + WiFi sensing live
+Sessions: [[sessions/2026-07-23-ai-cam-handoff]] — AI Cam camera done, speaker pending MP3 fix · [[sessions/2026-06-19]] — JARVIS v3 Obsidian-native complete & production-ready · [[sessions/2026-06-16]] — JARVIS phone-native v1 complete + merged · [[sessions/2026-06-13]] — on-device JARVIS stand-up · [[sessions/2026-06-08]] — RuView CSI node fixed + WiFi sensing live
