@@ -546,3 +546,87 @@ Frigate's continuous pipeline.
 Ties into existing next action "Order: 18650 cells" — note an 18650 needs a holder + JST pigtail;
 a LiPo pouch pack with a JST already fitted is the lower-friction option.
 
+
+---
+
+# ✅ ES7210 MICROPHONES WORKING (2026-07-27)
+
+**Wrote a custom ESPHome external component for the ES7210 — it did not exist before this.**
+Confirmed initialising on hardware.
+
+Boot log evidence:
+```
+[C][es7210:191]: ES7210 Audio ADC:
+[C][es7210:192]:   Address: 0x40
+[C][es7210:197]:   Mode: SLAVE (ESP32 drives BCLK/LRCK)
+[C][es7210:198]:   Bits per sample: 16
+[C][es7210:199]:   Mic gain: 30.0 dB (reg 0x0A)
+[C][es7210:201]:   Channels: MIC1=YES MIC2=YES MIC3=NO MIC4=NO
+[C][i2s_audio.microphone:053]: Microphone:
+[C][i2s_audio.microphone:053]:   Pin: 13
+```
+No `Setup FAILED` = every I2C write in the init sequence was ACKed.
+
+## Component location
+Committed to this vault: **`esphome/components/es7210/`**
+- `__init__.py` — namespace + class declaration
+- `audio_adc.py` — the `audio_adc` platform (schema, codegen)
+- `es7210.h` — register map + class
+- `es7210.cpp` — implementation
+
+Referenced from ESPHome via git:
+```yaml
+external_components:
+  - source:
+      type: git
+      url: https://github.com/etblues449/Obsidian-Vault-
+      ref: master
+      path: esphome/components
+    components: [es7210]
+```
+(A local copy under `/config/esphome/components/es7210/` with `type: local` works too.)
+
+## Source of truth for the port
+Espressif **`esp_codec_dev` v1.6.2**, `device/es7210/es7210.c` + `es7210_reg.h`
+(downloaded from components.espressif.com). The Waveshare BSP just calls
+`es7210_codec_new()` — nothing board-specific except the I2C address 0x40.
+
+Init sequence ported verbatim from `es7210_open()`:
+reset 0x00=0xFF then 0x41 → clock-off 0x01=0x3F → time control 0x09/0x0A=0x30 →
+HPF 0x23=0x2A, 0x22=0x0A, 0x20=0x0A, 0x21=0x2A → slave mode (0x08 bit0=0) →
+analog 0x40=0x43 → mic bias 0x41/0x42=0x70 → OSR 0x07=0x20 → mainclk 0x02=0xC1 →
+word length 0x11 (16-bit = 0x60) → mic channel enable + gain → power-up 0x06=0x00 →
+clock gate release 0x01=0x14.
+
+Gain mapping mirrors `get_db()`: 3 dB steps to 33 dB, then discrete codes
+0x0B=30, 0x0C=34.5, 0x0D=36, 0x0E=37.5 dB. 30 dB → reg 0x0A (confirmed in log).
+
+**Slave mode is correct** — `es7210_config_sample()` returns immediately when
+`master_mode == false`, so no LRCK/coeff table config is needed. The ESP32 drives
+the clocks (matches `I2S_ROLE_MASTER` in the BSP).
+
+## Two blockers that had to be solved
+1. **ONE i2s_audio bus, not two.** Declaring `i2s_out` and `i2s_in` with the same
+   MCLK/BCLK/LRCK pins triggers "Pin 10/11/12 is used in multiple places" — a hard
+   error. Correct pattern: a single bus, with speaker and microphone both as children
+   referencing the same `i2s_audio_id`. Both attach via `register_i2s_audio_component`
+   → `cg.register_parented()`; nothing forbids two children on one bus.
+2. **No ES7210 driver existed in ESPHome.** The sw3Dan external component ships
+   `es8311` only. Hence this port.
+
+## Sample rate constraint
+Speaker and mic share one I2S port → shared BCLK/LRCK → **they must use the same
+sample rate**. Dropped the whole chain to **16000 Hz** (was 48000). Resamplers handle
+TTS arriving at other rates. MCLK correctly recalculated to 4.096 MHz (16000 × 256).
+
+`use_microphone: true` on the **es8311** block is NOT needed and should be removed —
+the mics are on the ES7210, not the ES8311.
+
+## Still to verify
+- Audio actually reaching HA (add `voice_assistant:` and check STT returns text)
+- Whether the shared I2S port supports true simultaneous record+play (full duplex)
+  or serialises via the bus lock — matters for barge-in
+- microWakeWord "Hey Jarvis" on-device
+
+## Board status: camera ✅ · speaker ✅ · mics ✅ (initialised)
+
