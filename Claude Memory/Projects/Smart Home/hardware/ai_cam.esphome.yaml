@@ -1,0 +1,181 @@
+# Waveshare ESP32-S3-CAM-OV3660 (node ai_cam, 192.168.0.199) — camera + speaker.
+# Confirmed-working config. Key hard-won facts (see 2026-07-23-ai-cam-handoff):
+#   - Camera PWDN is CH32V003 EXIO3, active-high -> ALWAYS_OFF (drives LOW) or camera 0x106s.
+#   - Amp enable is CH32V003 EXIO4 -> ALWAYS_ON (HIGH).
+#   - Audio pins from vendor BSP: MCLK 10 / BCLK 11 / LRCK 12 / DOUT 14 / (mic DIN 13).
+#   - ES8311 is I2S SLAVE: use_mclk true, NO force_master. Log "I2S Role: SLAVE" is correct.
+#   - XCLK 20MHz + 800x600 @ 5fps is the clean, stable camera profile on this board.
+
+esphome:
+  name: ai_cam
+  friendly_name: AI Cam
+  min_version: 2026.4.0
+  name_add_mac_suffix: false
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/sw3Dan/waveshare-s2-audio_esphome_voice
+      ref: main
+    components: [es8311]
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  level: DEBUG
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  power_save_mode: none
+  reboot_timeout: 120s
+  manual_ip:
+    static_ip: 192.168.0.199
+    gateway: 192.168.0.1
+    subnet: 255.255.255.0
+    dns1: 192.168.0.1
+  use_address: 192.168.0.199
+  ap:
+    ssid: "AI-Cam-Fallback"
+    password: "fallback123"
+
+captive_portal:
+
+web_server:
+  port: 80
+
+i2c:
+  - id: bus_a
+    sda: GPIO8
+    scl: GPIO7
+    scan: true
+
+waveshare_io_ch32v003:
+  - id: io_expander
+    address: 0x24
+    i2c_id: bus_a
+
+switch:
+  - platform: gpio
+    name: "Camera Power Down"
+    id: camera_pwdn
+    restore_mode: ALWAYS_OFF   # EXIO3 LOW = camera powered ON (else 0x106)
+    pin:
+      waveshare_io_ch32v003: io_expander
+      number: 3
+      mode:
+        output: true
+  - platform: gpio
+    name: "Amp Enable"
+    id: amp_enable
+    restore_mode: ALWAYS_ON    # EXIO4 HIGH = audio amp enabled
+    pin:
+      waveshare_io_ch32v003: io_expander
+      number: 4
+      mode:
+        output: true
+
+esp32_camera:
+  name: "AI Cam"
+  external_clock:
+    pin: GPIO38
+    frequency: 20MHz
+  i2c_id: bus_a
+  data_pins: [GPIO45, GPIO47, GPIO48, GPIO46, GPIO42, GPIO40, GPIO39, GPIO21]
+  vsync_pin: GPIO17
+  href_pin: GPIO18
+  pixel_clock_pin: GPIO41
+  resolution: 800x600
+  jpeg_quality: 12
+  max_framerate: 5 fps
+  frame_buffer_count: 2
+
+esp32_camera_web_server:
+  - port: 8080
+    mode: stream
+  - port: 8081
+    mode: snapshot
+
+i2s_audio:
+  - id: i2s_out
+    i2s_mclk_pin: GPIO10
+    i2s_bclk_pin: GPIO11
+    i2s_lrclk_pin: GPIO12
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: bus_a
+    address: 0x18
+    sample_rate: 48000
+    bits_per_sample: 16bit
+    use_mclk: true          # ES8311 is SLAVE — do NOT add force_master
+
+speaker:
+  - platform: i2s_audio
+    id: spk
+    dac_type: external
+    audio_dac: es8311_dac
+    i2s_audio_id: i2s_out
+    i2s_dout_pin: GPIO14
+    sample_rate: 48000
+    bits_per_sample: 16bit
+    channel: mono
+    timeout: never
+  - platform: mixer
+    id: spk_mixer
+    output_speaker: spk
+    source_speakers:
+      - id: mixer_announcement
+      - id: mixer_media
+  - platform: resampler
+    id: resample_media
+    output_speaker: mixer_media
+  - platform: resampler
+    id: resample_announcement
+    output_speaker: mixer_announcement
+
+media_player:
+  - platform: speaker
+    name: "AI Cam Speaker"
+    id: cam_media
+    media_pipeline:
+      speaker: resample_media
+    announcement_pipeline:
+      speaker: resample_announcement
+
+sensor:
+  - platform: wifi_signal
+    name: "AI Cam WiFi Signal"
+    update_interval: 60s
+    entity_category: diagnostic
+  - platform: uptime
+    name: "AI Cam Uptime"
+    update_interval: 60s
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "AI Cam IP Address"
+      entity_category: diagnostic
+  - platform: version
+    name: "AI Cam ESPHome Version"
+    entity_category: diagnostic
