@@ -630,3 +630,86 @@ the mics are on the ES7210, not the ES8311.
 
 ## Board status: camera ✅ · speaker ✅ · mics ✅ (initialised)
 
+
+---
+
+# 🏁 COMPLETE (2026-07-28) — CAMERA + SPEAKER + MICROPHONES ALL WORKING
+
+End-to-end voice loop confirmed on hardware. Spoke a command, HA replied through the
+onboard speaker with *"Sorry, I am not aware of any light called ..."* — which is an
+**intent-matching** miss, not an audio failure. It proves the full chain ran:
+
+```
+voice → ES7210 (0x40) → I2S DIN GPIO13 → ESPHome mic → HA Cloud STT
+      → transcript → intent parser → TTS → ES8311 → NS4150B → speaker
+```
+
+STT cannot return a light name unless it received real audio. **The ES7210 is capturing.**
+
+## The final blocker: `timeout: never` on the speaker
+
+`[E][i2s_audio.microphone:400]` = *"Driver failed to start; retrying in 1 second"*.
+Traced to ESPHome source:
+
+```cpp
+// i2s_audio/microphone/i2s_audio_microphone.cpp
+bool I2SAudioMicrophone::start_driver_() {
+  if (!this->parent_->try_lock()) {
+    return false;  // Waiting for another i2s to return lock
+  }
+```
+
+The speaker holds the I2S bus lock and only calls `parent_->unlock()` when it stops.
+With `timeout: never` it never stops, so it held the bus from boot forever and the mic
+could never acquire it.
+
+**Fix — one line in the `speaker:` block:**
+```yaml
+    timeout: 500ms      # was: never
+```
+Confirmed in boot log: `[C][i2s_audio.speaker:049]: Timeout: 500 ms`, and the
+`[E][i2s_audio.microphone:400]` error disappeared.
+
+`timeout: never` had been in the config since the first speaker build. Harmless while
+nothing else wanted the bus; a deadlock the moment a microphone was added.
+
+## ANSWERED: no true full duplex
+ESPHome's shared I2S port is a **mutex, one direction at a time** — not simultaneous
+record+play. Sequential listen-then-speak works. **Barge-in will NOT work** (the speaker
+holds the bus while playing). Important constraint for any future wake-word design.
+
+## Intermittent camera init failure (open, low priority)
+One boot showed:
+```
+[E][esp32_camera:143]: Setup Failed: ESP_ERR_NOT_SUPPORTED
+```
+with I2C scan listing 0x18, 0x24, 0x30, 0x40 but **no 0x3C** — the OV3660 hadn't powered
+up via EXIO3 before the camera component probed. Race condition on the expander
+power-gate. Intermittent; clears on reboot. Proper fix would force a delay between
+EXIO3 going low and camera probe. Not yet implemented.
+
+(Also note 0x30 now appears on the bus intermittently — unidentified, appears harmless.)
+
+## Final working configuration — key values
+| Setting | Value | Why |
+|---|---|---|
+| I2S buses | **ONE** (`i2s_bus`) | two buses on the same clock pins = "Pin used in multiple places" |
+| MCLK / BCLK / LRCK | GPIO10 / 11 / 12 | vendor BSP |
+| Speaker DOUT | GPIO14 | vendor BSP |
+| Mic DIN | GPIO13 | vendor BSP |
+| Sample rate | **16000 Hz** everywhere | shared port ⇒ speaker and mic must match |
+| Speaker `timeout` | **500ms** | must release the bus lock for the mic |
+| ES8311 | slave, `use_mclk: true`, no `force_master` | ESP32 is I2S master |
+| ES7210 | slave, 0x40, 30 dB, MIC1+MIC2 | custom component (this vault) |
+| Camera PWDN | EXIO3 `ALWAYS_OFF` | drive LOW to wake OV3660 |
+| Amp enable | EXIO4 `ALWAYS_ON` | NS4150B |
+
+## Remaining / next
+- [ ] Light **entity naming** — "not aware of any light called X". Use real entity names
+      (`light.living_room_light`, `light.right_smart_bulb`, `light.left_smart_bulb`) or add
+      aliases via Settings → Voice assistants → Expose
+- [ ] microWakeWord "Hey Jarvis" on-device (wake_word entity currently `unavailable`)
+- [ ] Camera EXIO3 power-up race — add settle delay before camera probe
+- [ ] Port the same config to the 2nd CAM-OV3660 board (new IP, new API key)
+- [ ] Optional: Music Assistant target
+
