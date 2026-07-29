@@ -7,7 +7,8 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - Lounge: complete (~19 automations)
 - Bedroom: operational (bedroom-2.yaml)
 - Upstairs: BLE/radar contention unresolved
-- **AI Cam (Waveshare ESP32-S3-CAM-OV3660, node `ai_cam` @ 192.168.0.199): CAMERA + SPEAKER BOTH WORKING ✅ (2026-07-23)** — OV3660 streaming 800x600 MJPEG (`:8080`) + snapshot (`:8081`), live in Frigate with recording + person detection; ES8311 speaker confirmed audible via `tts.speak` to `media_player.ai_cam_speaker`. Camera power gated by CH32V003 EXIO3 (LOW); amp on EXIO4 (HIGH). Audio pins **MCLK 10 / BCLK 11 / LRCK 12 / DOUT 14**, ES8311 = **SLAVE** (no `force_master`) — taken from the vendor BSP after the product-image pinout proved wrong and cost ~4h of static/silence. Remaining: ES7210 mics (DIN GPIO13, I²C 0x40) → full Assist satellite. Full detail: [[sessions/2026-07-23-ai-cam-handoff]].
+- **AI Cam (Waveshare ESP32-S3-CAM-OV3660, node `ai_cam` @ 192.168.0.199): COMPLETE ✅ — camera + speaker + microphones + wake word (2026-07-29)** — OV3660 streaming 800x600 MJPEG (`:8080`) + snapshot (`:8081`), live in Frigate with recording + person detection. ES8311 speaker doing TTS. **ES7210 dual mics working via a custom ESPHome component written from scratch** (`esphome/components/es7210/` in this vault) — STT confirmed transcribing verbatim in 0.04s. Plus microWakeWord "Hey Jarvis", both hardware buttons, and status LED. Full build log, register sequences and all three blockers: [[sessions/2026-07-23-ai-cam-handoff]] · session summary: [[sessions/2026-07-29]].
+- **ES7210 ESPHome component: WRITTEN & WORKING** — did not exist in ESPHome before 2026-07-27. Ported from Espressif `esp_codec_dev` v1.6.2. Lives at `esphome/components/es7210/` in this vault, consumed over git. **Reusable on any ES7210 board** — including the ESP32-S3-AUDIO-Board at .216.
 - **On-device JARVIS terminal (Fold 7): operational** — Claude Code pinned to v2.1.112 in Termux, auto mode, filesystem MCP scoped to `~/jarvis`, vault cloned on-device, Termux:API hardware tools live (battery + notification verified). See [[sessions/2026-06-13]].
 - **JARVIS Phone-Native v1: complete & deployed** — Capture (text→Inbox), HA control (REST wrapper), git sync (branch-aware), daily digest (cron), one-tap Termux:Widget. Fully tested on Fold 7 (install.sh runs clean, capture + HA control working, cron scheduled). PR #52 merged to master 2026-06-16. See [[sessions/2026-06-16]] + QUICK_START.md.
 - **JARVIS v3: Obsidian-native (DEPLOYED & LIVE)** — Obsidian-native brain replacing Termux. The vault IS the system: Capture (Alt+J) → Claude classifies → routes to folder; Ask (Alt+A) → Q&A grounded in last 20 captures; Digest (Alt+D) → daily 24h summary to Journal/. All run *inside Obsidian* via QuickAdd scripts calling Claude API (`claude-opus-4-8`) via `requestUrl`. Dashboards (Master Dashboard, Finance Tracker, Projects Dashboard) auto-update via Dataview. Obsidian Sync + Git backup. Secrets device-local (localStorage), never synced. **Complete 2026-06-20**: 14 docs + 6 scripts + home-screen shortcuts; all 3 core macros tested & working on Fold 7; digest running daily; Ask returning grounded answers. See [[sessions/2026-06-19]].
@@ -24,7 +25,9 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - **Frigate: RE-ADOPTED (2026-07-23)** — previously ruled out as too heavy, but now running on HA Green with 3 cameras (ai_cam + cctv_cam .234 + porch .240), CPU detector, MQTT to .200. Config `/config/frigate.yaml`. ai_cam tile confirmed live. Runs fine at 800x600/5fps per camera. Supersedes the earlier "Frigate ruled out" decision.
 - **For Waveshare boards: clone the vendor repo, don't trust the product image (2026-07-23)** — `git clone https://github.com/waveshareteam/ESP32-S3-CAM-OVxxxx.git` + the BSP managed component `waveshare/esp32_s3_cam_ovxxxx` (ESP Component Registry) are the authoritative pinout. The Amazon "Interface Definition" image gave a **wrong audio pin map** that cost ~4h chasing static/silence; the vendor BSP settled it in 2 minutes. Camera pins from the image happened to be right; audio pins were not. **Supersedes the earlier claim that the Interface Definition image is authoritative.**
 - **Waveshare ESP32-S3-CAM: camera power is expander-gated** — the OV3660 will not init (`ESP_ERR_NOT_SUPPORTED`, garbage PID) until CH32V003 EXIO3 (PWDN net) is driven LOW. Amp enable is EXIO4 driven HIGH (empirically confirmed). Sibling ESP32-S3 cam boards do NOT match this board.
-- **AI Cam audio: ESP32 is I²S master, ES8311 is SLAVE** — per BSP (`I2S_ROLE_MASTER` on the channel, `.master_mode = false` on the codec). **Do NOT set `force_master: true`** on this board — that was a wrong turn taken from generic ES8311 advice. A log line reading `I2S Role: SLAVE` is correct here.
+- **AI Cam audio: ESP32 is I²S master, ES8311 is SLAVE** — per BSP (`I2S_ROLE_MASTER` on the channel, `.master_mode = false` on the codec). **Do NOT set `force_master: true`** on this board. A log line reading `I2S Role: SLAVE` is correct here.
+- **ESPHome I²S: ONE bus, multiple children (2026-07-27)** — declaring two `i2s_audio` buses on the same MCLK/BCLK/LRCK pins is a hard error ("Pin N is used in multiple places"). Correct pattern is a single bus with speaker and microphone both referencing the same `i2s_audio_id`.
+- **ESPHome I²S is a mutex, not full duplex (2026-07-28)** — `I2SAudioMicrophone::start_driver_()` opens with `if (!this->parent_->try_lock()) return false;`. Only one direction can hold the bus. **`timeout: never` on a speaker holds the bus forever and permanently blocks the microphone** — must be a real value (500ms). Consequence: **no barge-in**, and continuous wake-word listening blocks non-conversational TTS.
 - BLE + mmWave on same ESP32 = contention; split nodes
 - **Claude Code on Termux: pin to v2.1.112, disable auto-updater** — every release from v2.1.113 onward pulls a 233 MB glibc native binary that Android kills mid-download. Disable via `DISABLE_AUTOUPDATER=1` in `~/.bashrc` **and** `autoUpdates: false` in `~/.claude/settings.json`, or it silently re-breaks itself.
 - **git MCP: use `uvx mcp-server-git`, not npx** — the npm version won't connect. Falling back to the `git` CLI is fine.
@@ -33,8 +36,14 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 ## Next Actions
 - [x] **AI Cam camera** — streaming, Frigate, recording, person detection (2026-07-23)
 - [x] **AI Cam speaker** — corrected pins from vendor BSP; TTS confirmed audible (2026-07-23)
-- [ ] **AI Cam — add ES7210 dual mics**: DIN = **GPIO13**, I²C 0x40. Reference `02_esp_sr` in the vendor repo. Unlocks full Assist satellite (camera + speaker + mics + microWakeWord)
+- [x] **AI Cam ES7210 mics** — custom ESPHome component written, STT verified (2026-07-27/28)
+- [x] **AI Cam microWakeWord + buttons + LED** (2026-07-29)
+- [ ] **AI Cam — light entity naming**: Assist returns `no_valid_targets` for unmapped rooms (e.g. "dining room"). Fix by creating the Area and assigning lights, or by adding aliases in Settings → Voice assistants → Expose. Best: assign lights to the **Living Room** area (where ai_cam lives) so "turn on the lights" resolves with no name at all.
+- [ ] **AI Cam — unused hardware**: microSD (CLK 16 / CMD 43 / D0 44, needs `sd_mmc_card` external component) · LCD 320x240 QSPI (DATA0 1, PCLK 5, DC 3, CS 6; RST EXIO2, backlight EXIO1 PWM — **panel controller not yet identified**) · touch (RST EXIO0, INT GPIO9) · battery ADC via CH32V003 (needs component extension)
+- [ ] **AI Cam — camera EXIO3 power-up race**: intermittent `ESP_ERR_NOT_SUPPORTED` at boot when the OV3660 (0x3C) hasn't woken before the camera probes. Clears on reboot. Proper fix = settle delay between EXIO3 low and camera init.
+- [ ] **Port config to 2nd CAM-OV3660 board** — new IP + new API key, otherwise identical
 - [ ] **AI Cam — verify cctv_cam (.234) + porch (.240)** are powered; may be hardware-down not config
+- [ ] **AI Cam porch deployment** — power-bank swap model + IP67 enclosure + bracket (~£80–110). Board is battery-capable (ETA6098 charger, J4 GH1.25). **Check J4 polarity with a meter first — no reverse protection.** ~9–12h streaming on 3000mAh.
 - [ ] Optional: expose AI Cam speaker as a Music Assistant target
 - [x] **GitHub PAT rotated** (2026-06-15) — old exposed token revoked, new fine-grained token in Windows Credential Manager
 - [x] **JARVIS v3 Obsidian-native: complete** (2026-06-19) — all docs, scripts, config + phone setup ready
@@ -44,8 +53,8 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - [ ] **Apply .171 IP collision fix** — upstairs → .207 via ESPHome OTA. Full plan: [[fixes/2026-06-14-ip-collision-fix]]
 - [ ] DHCP reservation: RuView node MAC e0:72:a1:e7:03:60 → .227
 - [ ] Delete ghost "Upstairs" (.207) config in ESPHome Builder (board now runs CSI firmware)
-- [ ] Order: 18650 cells, ESP32-S3-CAM, 5V servo rail
-- [x] **Install Termux:Widget + JARVIS buttons** (2026-06-16) — jarvis, sync, digest shortcuts created; widget installed on home screen. Shortcut may need Termux:Widget rebuild if pointing to Obsidian instead of Termux.
+- [ ] Order: 18650 cells, 5V servo rail
+- [x] **Install Termux:Widget + JARVIS buttons** (2026-06-16) — jarvis, sync, digest shortcuts created; widget installed on home screen.
 - [ ] Copy `JARVIS-CHEATSHEET.md` into `~/jarvis`
 - [ ] Optional later: upgrade Claude Code to native binary via the ferrum patcher, on wifi + wakelock
 - [x] **Seven-skill n8n automation: imported, tested, published** (2026-07-04)
@@ -56,10 +65,20 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - [ ] **Build Phase-2 capture router** (skills 2/5/7 as a GitHub `on: push` router → removes the paid n8n webhook; also fixes the empty-Tasker-capture bug via a junk filter)
 
 ## Reference
-- **AI Cam (Waveshare ESP32-S3-CAM-OV3660) full handoff** — pin map (see CORRECTION + RESOLVED sections for the authoritative audio pins and the working config), I²C scan, discoveries, full audio debug log, next steps: [[sessions/2026-07-23-ai-cam-handoff]] (2026-07-23)
-- **Waveshare ESP32-S3-CAM-OV3660 setup guide (corrected)** — full IDE + pinout + the CH32V003 EXIO3 power-gating fix that clears `0x106`; proven ESPHome config + an Arduino path. Corrects the circular Google-AI-Mode setup steps. [[hardware/Waveshare ESP32-S3-CAM-OV3660 — Arduino IDE Setup (CORRECTED)]]
+- **AI Cam (Waveshare ESP32-S3-CAM-OV3660) full handoff** — pin map (see CORRECTION + RESOLVED sections for the authoritative audio pins and working config), I²C scan, discoveries, full audio debug log, ES7210 component port, battery research: [[sessions/2026-07-23-ai-cam-handoff]]
+- **ES7210 ESPHome component** — `esphome/components/es7210/` in this vault. Ported from Espressif `esp_codec_dev` v1.6.2 (`device/es7210/es7210.c` + `es7210_reg.h`). Consume via:
+  ```yaml
+  external_components:
+    - source:
+        type: git
+        url: https://github.com/etblues449/Obsidian-Vault-
+        ref: master
+        path: esphome/components
+      components: [es7210]
+  ```
+- **Waveshare ESP32-S3-CAM-OV3660 setup guide (corrected)** — full IDE + pinout + the CH32V003 EXIO3 power-gating fix that clears `0x106`; proven ESPHome config + an Arduino path. [[hardware/Waveshare ESP32-S3-CAM-OV3660 — Arduino IDE Setup (CORRECTED)]]
 - **Waveshare vendor sources for this board** — repo `github.com/waveshareteam/ESP32-S3-CAM-OVxxxx` (examples `01_simple_video_server`, `02_esp_sr`, `03_audio_play`, `04_dvp_camera_display`, `05_lvgl_brookesia`, `06_usb_host_uvc`; plus `Schematic/ESP32-S3-CAM-XXXX-schematic.pdf`) and BSP component `waveshare/esp32_s3_cam_ovxxxx` on components.espressif.com. Read the BSP header for any pin question on this board.
-- **ESP32-S3-AUDIO-Board far-field voice** (research + build guide + ready-to-flash ESPHome config) — [[hardware/ESP32-S3-AUDIO-Board — Far-Field Voice Guide]] · [[hardware/ESP32-S3-AUDIO-Board.esphome.yaml]]. Key finding: board = Waveshare ESP32-S3-AUDIO-Board (ES8311 + ES7210 4-ch, dual mic). AEC cancels the board's *own* audio (great barge-in) but **cannot** cancel an *external TV* (no reference signal) — so whole-room-over-TV needs placement + BSS direction + 2-3 satellites, and ultimately a 4-mic XMOS array for the loud-lounge primary. Road A = ESPHome + Assist (AEC+BSS+NS+AGC + microWakeWord "Hey Jarvis"). (2026-07-15)
+- **ESP32-S3-AUDIO-Board far-field voice** — [[hardware/ESP32-S3-AUDIO-Board — Far-Field Voice Guide]] · [[hardware/ESP32-S3-AUDIO-Board.esphome.yaml]]. Board = ES8311 + ES7210 4-ch, dual mic. **The new ES7210 component above applies to this board too.** AEC cancels the board's *own* audio but **cannot** cancel an *external TV* (no reference signal). (2026-07-15)
 
 Full detail: [[smart_home]]
-Sessions: [[sessions/2026-07-23-ai-cam-handoff]] — AI Cam camera + speaker both working; vendor-BSP pinout correction · [[sessions/2026-06-19]] — JARVIS v3 Obsidian-native complete & production-ready · [[sessions/2026-06-16]] — JARVIS phone-native v1 complete + merged · [[sessions/2026-06-13]] — on-device JARVIS stand-up · [[sessions/2026-06-08]] — RuView CSI node fixed + WiFi sensing live
+Sessions: [[sessions/2026-07-29]] — AI Cam complete: mics, wake word, ES7210 component · [[sessions/2026-07-23-ai-cam-handoff]] — full AI Cam build log · [[sessions/2026-06-19]] — JARVIS v3 Obsidian-native complete · [[sessions/2026-06-16]] — JARVIS phone-native v1 merged · [[sessions/2026-06-13]] — on-device JARVIS stand-up · [[sessions/2026-06-08]] — RuView CSI node fixed
