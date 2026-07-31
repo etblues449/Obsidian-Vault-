@@ -1,0 +1,105 @@
+# Reusable engine for all four scheduled JARVIS skills.
+#
+# concurrency uses ONE group shared by every caller (jarvis-vault-write) with
+# cancel-in-progress: false. This is the single-write-path rule enforced in CI —
+# four skills can never push to master concurrently. Cancelling would be wrong:
+# a cancelled skill silently produces no briefing.
+name: _jarvis-run-skill
+
+on:
+  workflow_call:
+    inputs:
+      skill:
+        description: 'morning-brief | connection-finder | weekly-synthesis | pattern-detector'
+        required: true
+        type: string
+      force:
+        description: 'Ignore the London time guard (manual runs only)'
+        required: false
+        default: false
+        type: boolean
+      dry_run:
+        description: 'No Groq call — stub text. Proves plumbing without spending quota.'
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      GROQ_API_KEY:
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jarvis-vault-write
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout master (full history — the push step rebases)
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Set up Node 20 (full-ICU Intl for the London DST guard)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Sanity — Intl has real timezone data
+        run: |
+          node -e "
+            const s = new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',hour:'2-digit'}).format(new Date());
+            if (!/^[0-9]{2}\$/.test(s)) { console.error('Intl/ICU unusable — DST guard would be wrong'); process.exit(1); }
+            console.log('[jarvis] Intl OK, London hour =', s);
+          "
+
+      - name: Run skill
+        id: skill
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          cd "Assistant Core/jarvis-skills"
+          ARGS="--skill=${{ inputs.skill }}"
+          if [ "${{ inputs.force }}" = "true" ];   then ARGS="$ARGS --force";   fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          echo "[jarvis] node runner.mjs $ARGS"
+          node runner.mjs $ARGS
+
+      - name: Commit and push (rebase-retry, never force)
+        if: steps.skill.outputs.wrote == 'true'
+        run: |
+          git config user.name  "jarvis-skills[bot]"
+          git config user.email "jarvis-skills@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "[jarvis] runner reported a write but the tree is clean — nothing to commit."
+            exit 0
+          fi
+          git commit -m "${{ steps.skill.outputs.commit_msg }}"
+          for i in 1 2 3 4 5; do
+            if git push origin HEAD:master; then
+              echo "[jarvis] pushed on attempt $i"
+              exit 0
+            fi
+            echo "[jarvis] push rejected, rebasing (attempt $i)"
+            git pull --rebase origin master || {
+              echo "[jarvis] rebase conflict — stopping without pushing."
+              git rebase --abort || true
+              exit 1
+            }
+            sleep $((i * 3))
+          done
+          echo "[jarvis] could not push after 5 attempts"
+          exit 1
+
+      - name: Report skip reason
+        if: steps.skill.outputs.wrote != 'true'
+        run: |
+          echo "[jarvis] no write. reason=${{ steps.skill.outputs.reason }}"
+          echo "A time-guard skip is expected: each skill fires two crons (BST + GMT)"
+          echo "and exactly one passes the London-hour guard."

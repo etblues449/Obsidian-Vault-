@@ -1,0 +1,37 @@
+# JARVIS Skill — Connection Finder
+# Scheduled: Sunday 14:00  (Europe/London)
+#
+# GitHub cron is UTC and has no timezone. Two crons fire year-round:
+#   BST (late Mar – late Oct, London = UTC+1) -> 0 13 * * 0
+#   GMT (late Oct – late Mar, London = UTC+0) -> 0 14 * * 0
+# The in-runner guard (guardPasses in runner.mjs) requires an EXACT London-hour
+# match, so precisely one of the two passes and the other exits 0 as a skip.
+# Do not "clean this up" to a single cron — that breaks half the year.
+name: JARVIS Connection Finder
+
+on:
+  schedule:
+    - cron: '0 13 * * 0'
+    - cron: '0 14 * * 0'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Ignore the London time guard'
+        required: false
+        default: true
+        type: boolean
+      dry_run:
+        description: 'No Groq call (plumbing test only)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  connection-finder:
+    uses: ./.github/workflows/_jarvis-run-skill.yml
+    with:
+      skill: connection-finder
+      force: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+      dry_run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+    secrets:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
