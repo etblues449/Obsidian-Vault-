@@ -7,10 +7,10 @@
 
 ## From the 2026-07-27 harness audit
 
-- [ ] **S1 — Confirm `GROQ_API_KEY` repo secret is set.** Without it every scheduled skill fails.
-- [ ] **S1 — Merge `.github/workflows/` to `master`.** Five files, documented in `jarvis-skills/README.md`, previously absent from `master` — so nothing was scheduled.
-- [ ] **S1 — Run each of the 4 skills once via workflow_dispatch** to verify green.
-- [ ] **S1 — Reconcile the project set.** `runner.mjs` reads 5 project indexes including `Work Financial Forecasting`; CLAUDE.md's session-start list names 4 and omits it.
+- [x] **S1 — Confirm `GROQ_API_KEY` repo secret is set.** *(2026-08-01: evidenced — all 4 scheduled skills produced automated commits on master today; they cannot run without the key.)*
+- [x] **S1 — Merge `.github/workflows/` to `master`.** *(2026-08-01: all 5 files present on master; drift-check green.)*
+- [x] **S1 — Run each of the 4 skills once** to verify green. *(2026-08-01: better — scheduled runs for skills 1/3/4/6 all committed to master today: `e43e6f6`, `8a89e92`, `e22ea99`, `1c18bc1`.)*
+- [x] **S1 — Reconcile the project set.** *(Done 2026-07-27 per CLAUDE.md "Reconciled" note — 8 mandatory files, `Account/` canonical.)*
 - [ ] **S2 — Decide `webapp-reviewer` model.** Uses `model: sonnet`; harness standard is `opus`.
 - [ ] **S3 — Resolve dangling wikilink** `[[sessions/2026-07-29]]` — referenced twice in the Smart Home index (upstream `6313897`); a reconstruction stub is included, replace it with the real session content.
 - [ ] **S3 — Resolve 6 dangling wikilinks** in `Projects/Smart Home/_index.md`: `sessions/2026-06-08`, `2026-06-13`, `2026-06-16`, `2026-07-04`, `fixes/2026-06-14-ip-collision-fix`, `smart_home`.
@@ -31,6 +31,17 @@
 - [ ] Apply `.171` IP collision fix — upstairs to `.207` via ESPHome OTA.
 - [ ] DHCP reservation: RuView node MAC `e0:72:a1:e7:03:60` to `.227`.
 - [ ] Delete ghost "Upstairs" (.207) config in ESPHome Builder.
+
+## New — from the 2026-08-01 expansion session (PR #71)
+
+- [ ] **Merge PR #71** — master plan + ha-doctor + dashboard S1 fix; also unbreaks ES7210 `ref: master` (component commits verified branch-only).
+- [ ] **Run ha-doctor on the LAN** (ADMIN token) → commit report to `Smart Home/diagnostics/`.
+- [ ] **S1 — Inbox drift:** root `Inbox/` holds 5 captures (to 2026-07-09) invisible to the engine, which reads `JARVIS/Inbox/` only. Fix inside the Phase-2 capture router.
+- [ ] Back up hub-side config (automations, bedroom-2.yaml, frigate.yaml, scenes/scripts) into the vault — currently exists only on the hub.
+- [ ] Flash + verify the EXIO3 boot-race fix on ai_cam (proposed, NOT yet flashed).
+- [ ] Decide: delete stale `Claude Memory 1/` duplicate (byte-identical subset; referenced nowhere).
+- [ ] Reconcile espspeaker yaml (`timeout: never`, `force_master: true`) with the I²S-mutex law — retest on hardware.
+- [ ] Resolve `living_room_ai_cam_*` vs `ai_cam_*` naming once ha-doctor reports which is live; update the losing side.
 
 ## Carried forward — capture
 

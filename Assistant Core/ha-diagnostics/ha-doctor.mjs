@@ -70,9 +70,10 @@ async function api(path, opts = {}, timeoutMs = 15000) {
 }
 
 // Render a Jinja template on the hub. Templates below emit JSON by construction.
+// NOTE: /api/template is @require_admin in HA core — a non-admin token gets 401.
 async function template(tpl) {
   const r = await api('/api/template', { method: 'POST', body: JSON.stringify({ template: tpl }) });
-  if (!r.ok) return { ok: false, error: `${r.status}: ${r.text.slice(0, 200)}` };
+  if (!r.ok) return { ok: false, admin: r.status === 401 || r.status === 403, error: `${r.status}: ${r.text.slice(0, 200)}` };
   try { return { ok: true, data: JSON.parse(r.text) }; }
   catch { return { ok: true, data: r.text }; }
 }
@@ -210,31 +211,41 @@ async function main() {
 
   // ── 8. Companion app (mobile_app) ──────────────────────────────────────────
   const mob = await template(`{{ integration_entities('mobile_app') | list | to_json }}`);
-  const mobEntities = (mob.ok && Array.isArray(mob.data)) ? mob.data : [];
-  const mobStates = states.filter(s => mobEntities.includes(s.entity_id));
-  const batteries = mobStates.filter(s => /battery_level$/.test(s.entity_id));
-  report.sections.companion = {
-    entities: mobEntities.length,
-    batteries: batteries.map(b => ({ id: b.entity_id, level: b.state })),
-    unavailable: mobStates.filter(s => s.state === 'unavailable').map(s => s.entity_id),
-  };
-  summary.push([mobEntities.length ? B.ok : B.warn, `Companion app: ${mobEntities.length} entities · ${batteries.length} battery sensors`]);
-  if (!mobEntities.length) actions.push('No mobile_app entities — the Companion app is not connected (or its integration entry is dead). Reinstall/re-login on the Fold 7.');
+  if (!mob.ok && mob.admin) {
+    report.sections.companion = { error: 'template API requires an admin token' };
+    summary.push([B.warn, 'Companion app check skipped — /api/template needs an ADMIN long-lived token']);
+  } else {
+    const mobEntities = (mob.ok && Array.isArray(mob.data)) ? mob.data : [];
+    const mobStates = states.filter(s => mobEntities.includes(s.entity_id));
+    const batteries = mobStates.filter(s => /battery_level$/.test(s.entity_id));
+    report.sections.companion = {
+      entities: mobEntities.length,
+      batteries: batteries.map(b => ({ id: b.entity_id, level: b.state })),
+      unavailable: mobStates.filter(s => s.state === 'unavailable').map(s => s.entity_id),
+    };
+    summary.push([mobEntities.length ? B.ok : B.warn, `Companion app: ${mobEntities.length} entities · ${batteries.length} battery sensors`]);
+    if (!mobEntities.length) actions.push('No mobile_app entities — the Companion app is not connected (or its integration entry is dead). Reinstall/re-login on the Fold 7.');
+  }
 
   // ── 9. Areas & registry coverage (Assist depends on this) ──────────────────
   const areasT = await template(
     `[{% for a in areas() %}{"id": {{ a | to_json }}, "name": {{ area_name(a) | to_json }}, "entities": {{ area_entities(a) | list | to_json }}, "devices": {{ area_devices(a) | list | count }}}{{ "," if not loop.last }}{% endfor %}]`);
-  const areas = (areasT.ok && Array.isArray(areasT.data)) ? areasT.data : [];
-  const inArea = new Set(areas.flatMap(a => a.entities));
-  const actionable = states.filter(s => ['light', 'switch', 'media_player', 'cover', 'climate', 'fan', 'camera', 'lock'].includes(s.entity_id.split('.')[0]));
-  const noArea = actionable.filter(s => !inArea.has(s.entity_id));
-  report.sections.areas = {
-    areas: areas.map(a => ({ name: a.name, entities: a.entities.length, devices: a.devices })),
-    actionable_without_area: noArea.map(s => s.entity_id),
-  };
-  summary.push([noArea.length ? B.warn : B.ok, `${areas.length} areas · ${noArea.length} actionable entities with NO area`]);
-  if (noArea.length)
-    actions.push(`${noArea.length} lights/switches/players/cameras have no Area. Voice ("turn on the lights") resolves by area — this is the \`no_valid_targets\` bug from the AI Cam session. Assign areas: ${noArea.slice(0, 10).map(s => s.entity_id).join(', ')}${noArea.length > 10 ? ' …' : ''}`);
+  if (!areasT.ok && areasT.admin) {
+    report.sections.areas = { error: 'template API requires an admin token' };
+    summary.push([B.warn, 'Area-coverage check skipped — /api/template needs an ADMIN long-lived token']);
+  } else {
+    const areas = (areasT.ok && Array.isArray(areasT.data)) ? areasT.data : [];
+    const inArea = new Set(areas.flatMap(a => a.entities));
+    const actionable = states.filter(s => ['light', 'switch', 'media_player', 'cover', 'climate', 'fan', 'camera', 'lock'].includes(s.entity_id.split('.')[0]));
+    const noArea = actionable.filter(s => !inArea.has(s.entity_id));
+    report.sections.areas = {
+      areas: areas.map(a => ({ name: a.name, entities: a.entities.length, devices: a.devices })),
+      actionable_without_area: noArea.map(s => s.entity_id),
+    };
+    summary.push([noArea.length ? B.warn : B.ok, `${areas.length} areas · ${noArea.length} actionable entities with NO area`]);
+    if (noArea.length)
+      actions.push(`${noArea.length} lights/switches/players/cameras have no Area. Voice ("turn on the lights") resolves by area — this is the \`no_valid_targets\` bug from the AI Cam session. Assign areas: ${noArea.slice(0, 10).map(s => s.entity_id).join(', ')}${noArea.length > 10 ? ' …' : ''}`);
+  }
 
   // ── 10. Pending updates ────────────────────────────────────────────────────
   const updates = (byDomain.update || []).filter(u => u.state === 'on');
@@ -252,18 +263,31 @@ async function main() {
   for (const d of downNodes) actions.push(`Node DOWN: ${d.name} (${d.url}) — check power first (cctv .234 / porch .240 are suspected hardware-down, not config).`);
 
   // ── 12. JARVIS canonical-entity checks ─────────────────────────────────────
+  // The index documents short ai_cam_* IDs; the dashboard YAMLs use
+  // living_room_ai_cam_* (HA device-name prefixing). This check answers which
+  // naming is live so the vault docs and dashboard can be reconciled.
   const canon = [];
   const get = (id) => states.find(s => s.entity_id === id);
+  const getEither = (short, prefixed) => {
+    const s = get(short); if (s) return { st: s, form: 'short' };
+    const p = get(prefixed); if (p) return { st: p, form: 'prefixed' };
+    return { st: null, form: 'missing' };
+  };
   const tv = get(CANONICAL.tv);
   canon.push({ check: `${CANONICAL.tv} exists`, ok: !!tv, detail: tv ? tv.state : 'MISSING — canonical TV entity' });
-  const cam = get(CANONICAL.aiCamCamera);
-  canon.push({ check: `${CANONICAL.aiCamCamera} available`, ok: cam && cam.state !== 'unavailable', detail: cam?.state ?? 'MISSING' });
-  const spk = get(CANONICAL.aiCamSpeaker);
-  canon.push({ check: `${CANONICAL.aiCamSpeaker} available`, ok: spk && spk.state !== 'unavailable', detail: spk?.state ?? 'MISSING' });
-  const pwdn = get(CANONICAL.aiCamPwdn);
-  canon.push({ check: `${CANONICAL.aiCamPwdn} is OFF (EXIO3 LOW = camera powered)`, ok: pwdn?.state === 'off', detail: pwdn?.state ?? 'MISSING' });
-  const amp = get(CANONICAL.aiCamAmp);
-  canon.push({ check: `${CANONICAL.aiCamAmp} is ON (NS4150B amp)`, ok: amp?.state === 'on', detail: amp?.state ?? 'MISSING' });
+  const staleTv = get('media_player.jelly_beans_tv');
+  if (staleTv) canon.push({ check: 'stale media_player.jelly_beans_tv absent', ok: false, detail: `exists (${staleTv.state}) — dashboard v2-corrected referenced it; canonical is ${CANONICAL.tv}` });
+  const cam = getEither(CANONICAL.aiCamCamera, 'camera.living_room_ai_cam');
+  canon.push({ check: 'AI Cam camera entity available', ok: cam.st && cam.st.state !== 'unavailable', detail: cam.st ? `${cam.st.entity_id} (${cam.form} form): ${cam.st.state}` : 'MISSING in both forms' });
+  const spk = getEither(CANONICAL.aiCamSpeaker, 'media_player.living_room_ai_cam_ai_cam_speaker');
+  canon.push({ check: 'AI Cam speaker entity available', ok: spk.st && spk.st.state !== 'unavailable', detail: spk.st ? `${spk.st.entity_id} (${spk.form} form): ${spk.st.state}` : 'MISSING in both forms' });
+  const pwdn = getEither(CANONICAL.aiCamPwdn, 'switch.living_room_ai_cam_camera_power_down');
+  canon.push({ check: 'AI Cam "Camera Power Down" switch is OFF (EXIO3 LOW = camera powered)', ok: pwdn.st?.state === 'off', detail: pwdn.st ? `${pwdn.st.entity_id}: ${pwdn.st.state}` : 'MISSING in both forms' });
+  const amp = getEither(CANONICAL.aiCamAmp, 'switch.living_room_ai_cam_amp_enable');
+  canon.push({ check: 'AI Cam "Amp Enable" switch is ON (NS4150B)', ok: amp.st?.state === 'on', detail: amp.st ? `${amp.st.entity_id}: ${amp.st.state}` : 'MISSING in both forms' });
+  const naming = [cam, spk, pwdn, amp].map(x => x.form).filter(f => f !== 'missing');
+  if (naming.length)
+    canon.push({ check: 'AI Cam entity naming (index says short, dashboard says living_room_ prefixed)', ok: true, detail: `live registry uses the ${naming[0].toUpperCase()} form — update ${naming[0] === 'short' ? 'the dashboard YAMLs' : "the Smart Home index's entity reference"} to match` });
   const ruview = states.filter(s => RUVIEW_KINDS.some(k => s.entity_id.includes(k)) && s.entity_id.match(/^(binary_)?sensor\./));
   canon.push({ check: 'RuView CSI entities present & fresh', ok: ruview.length >= 3 && ruview.some(r => r.state !== 'unavailable'), detail: `${ruview.length} matched` });
   report.sections.canonical = canon;
@@ -271,13 +295,18 @@ async function main() {
   summary.push([canonBad.length ? B.bad : B.ok, `Canonical checks: ${canon.length - canonBad.length}/${canon.length} pass`]);
   for (const c of canonBad) actions.push(`Canonical check FAILED: ${c.check} → ${c.detail}`);
 
-  // ── 13. Error log tail ─────────────────────────────────────────────────────
+  // ── 13. Error log tail (admin-only endpoint) ───────────────────────────────
   const elog = await api('/api/error_log');
-  const lines = (elog.ok ? elog.text : '').trim().split('\n');
-  const errs = lines.filter(l => / ERROR /.test(l));
-  const warns = lines.filter(l => / WARNING /.test(l));
-  report.sections.error_log = { errors: errs.length, warnings: warns.length, last_errors: errs.slice(-10) };
-  summary.push([errs.length > 20 ? B.warn : B.info, `Error log: ${errs.length} errors · ${warns.length} warnings`]);
+  if (!elog.ok) {
+    report.sections.error_log = { error: `unavailable (${elog.status}) — /api/error_log needs an ADMIN token` };
+    summary.push([B.warn, 'Error log skipped — needs an ADMIN long-lived token']);
+  } else {
+    const lines = elog.text.trim().split('\n');
+    const errs = lines.filter(l => / ERROR /.test(l));
+    const warns = lines.filter(l => / WARNING /.test(l));
+    report.sections.error_log = { errors: errs.length, warnings: warns.length, last_errors: errs.slice(-10) };
+    summary.push([errs.length > 20 ? B.warn : B.info, `Error log: ${errs.length} errors · ${warns.length} warnings`]);
+  }
 
   // ── Render ─────────────────────────────────────────────────────────────────
   if (AS_JSON) { console.log(JSON.stringify(report, null, 2)); return; }
