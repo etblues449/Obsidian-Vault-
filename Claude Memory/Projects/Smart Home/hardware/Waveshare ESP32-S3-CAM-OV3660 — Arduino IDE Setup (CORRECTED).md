@@ -265,6 +265,30 @@ Then call `powerOnCamera();` as the **first thing** in `setup()`, before `Serial
 
 ---
 
+## Addendum (2026-08-01) — proposed fix for the intermittent EXIO3 power-up race
+
+**Status: PROPOSED, NOT YET FLASHED.** The open next-action "camera EXIO3 power-up race"
+(intermittent `0x106` at boot when the OV3660 hasn't woken before the camera probes;
+clears on reboot) can be closed with a boot-sequence settle delay — no component changes:
+
+```yaml
+esphome:
+  # ... existing name/friendly_name/etc ...
+  on_boot:
+    # Runs after the GPIO switch setup (~priority 800) has already driven EXIO3 LOW,
+    # and before esp32_camera sets up (~priority 600). The blocking delay stalls the
+    # remaining setup so the OV3660 rail settles before the camera probes SCCB.
+    - priority: 700
+      then:
+        - switch.turn_off: camera_pwdn   # idempotent re-assert: EXIO3 LOW = camera powered
+        - lambda: 'delay(150);'          # BLOCKING on purpose — do not use an async delay here
+```
+
+Verification after flashing: reboot ~10 times; `[E][esp32_camera:143]: Setup Failed:
+ESP_ERR_NOT_SUPPORTED` must not appear. If it still does, the camera set up before the
+delay — lower the trigger to `priority: 620` and repeat. An async `delay:` action would
+NOT work here (setup continues while it waits); the blocking lambda is the point.
+
 ## References
 - Working handoff for this exact board (camera + speaker): [[../sessions/2026-07-23-ai-cam-handoff]]
 - Vendor repo (ground truth): `github.com/waveshareteam/ESP32-S3-CAM-OVxxxx` — examples `01_simple_video_server`, `03_audio_play`; `Schematic/ESP32-S3-CAM-XXXX-schematic.pdf`
