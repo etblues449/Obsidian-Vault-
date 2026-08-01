@@ -25,6 +25,9 @@ const HA_TOKEN = process.env.HA_TOKEN;
 const args = process.argv.slice(2);
 const OUT = args.includes('--out') ? args[args.indexOf('--out') + 1] : null;
 const AS_JSON = args.includes('--json');
+// Remote run (e.g. via the Nabu Casa URL): the hub API works but the 192.168.0.x
+// node probes are unreachable — skip them instead of falsely reporting "down".
+const REMOTE = args.includes('--remote') || /nabu\.casa/i.test(HA_URL);
 const STALE_AUTOMATION_DAYS = 30;
 const STALE_TRACKER_HOURS = 48;
 
@@ -256,11 +259,19 @@ async function main() {
 
   // ── 11. JARVIS node reachability ───────────────────────────────────────────
   const probes = [];
-  for (const n of NODES) probes.push({ name: n.name, url: n.probe, ...(await probe(n.probe)) });
+  for (const n of NODES) {
+    const isLan = /192\.168\./.test(n.probe);
+    if (REMOTE && isLan) { probes.push({ name: n.name, url: n.probe, skipped: true }); continue; }
+    probes.push({ name: n.name, url: n.probe, ...(await probe(n.probe)) });
+  }
   report.sections.nodes = probes;
-  const downNodes = probes.filter(p => !p.up);
-  summary.push([downNodes.length ? B.bad : B.ok, `Nodes: ${probes.length - downNodes.length}/${probes.length} reachable`]);
+  const probed = probes.filter(p => !p.skipped);
+  const downNodes = probed.filter(p => !p.up);
+  const skippedN = probes.length - probed.length;
+  summary.push([downNodes.length ? B.bad : B.ok,
+    `Nodes: ${probed.length - downNodes.length}/${probed.length} reachable${skippedN ? ` · ${skippedN} LAN probes skipped (remote run — re-run on the LAN for node reachability)` : ''}`]);
   for (const d of downNodes) actions.push(`Node DOWN: ${d.name} (${d.url}) — check power first (cctv .234 / porch .240 are suspected hardware-down, not config).`);
+  if (skippedN) actions.push('Re-run ha-doctor from the LAN once for the direct node probes (.199/.216/.227/.234/.240) — entity availability above covers them only indirectly.');
 
   // ── 12. JARVIS canonical-entity checks ─────────────────────────────────────
   // The index documents short ai_cam_* IDs; the dashboard YAMLs use
