@@ -43,7 +43,9 @@ const NODES = [
   { name: 'porch', probe: 'http://192.168.0.240/' },
 ];
 const CANONICAL = {
-  tv: 'media_player.tv_jelly_beans_tv_2',
+  // Decided 2026-08-02 from live evidence: device_class tv, full source_list, SmartThings-class
+  // features. media_player.jelly_beans_tv_tv_jelly_beans_tv is the DLNA shell — not canonical.
+  tv: 'media_player.jelly_beans_tv_3',
   aiCamCamera: 'camera.ai_cam',
   aiCamSpeaker: 'media_player.ai_cam_speaker',
   aiCamPwdn: 'switch.ai_cam_camera_power_down', // must be OFF: EXIO3 LOW = camera powered
