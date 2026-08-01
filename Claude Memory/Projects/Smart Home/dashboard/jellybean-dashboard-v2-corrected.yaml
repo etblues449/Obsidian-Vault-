@@ -413,7 +413,7 @@ views:
             tap_action:
               action: more-info
           - type: custom:mushroom-media-player-card
-            entity: media_player.jelly_beans_tv
+            entity: media_player.tv_jelly_beans_tv_2
             name: Lounge TV
             use_media_info: true
             show_volume_level: true
@@ -426,10 +426,10 @@ views:
               - next
             visibility:
               - condition: state
-                entity: media_player.jelly_beans_tv
+                entity: media_player.tv_jelly_beans_tv_2
                 state_not: "off"
               - condition: state
-                entity: media_player.jelly_beans_tv
+                entity: media_player.tv_jelly_beans_tv_2
                 state_not: unavailable
           - type: custom:mushroom-media-player-card
             entity: media_player.jelly_bean_s_soundbar_media_player
@@ -533,7 +533,7 @@ views:
             name: DreamView Sync
             icon: mdi:television-play
           - type: custom:mushroom-media-player-card
-            entity: media_player.jelly_beans_tv
+            entity: media_player.tv_jelly_beans_tv_2
             name: TV
             use_media_info: true
             show_volume_level: true

@@ -265,6 +265,54 @@ Then call `powerOnCamera();` as the **first thing** in `setup()`, before `Serial
 
 ---
 
+## Addendum (2026-08-01) — proposed fix for the intermittent EXIO3 power-up race
+
+**Status: PROPOSED, NOT YET FLASHED.** The open next-action "camera EXIO3 power-up race"
+(intermittent `0x106` at boot when the OV3660 hasn't woken before the camera probes;
+clears on reboot) can be closed with a boot-sequence settle delay — no component changes:
+
+```yaml
+esphome:
+  # ... existing name/friendly_name/etc ...
+  on_boot:
+    # Runs after the GPIO switch setup (~priority 800) has already driven EXIO3 LOW,
+    # and before esp32_camera sets up (~priority 600). The blocking delay stalls the
+    # remaining setup so the OV3660 rail settles before the camera probes SCCB.
+    - priority: 700
+      then:
+        - switch.turn_off: camera_pwdn   # idempotent re-assert: EXIO3 LOW = camera powered
+        - lambda: 'delay(150);'          # BLOCKING on purpose — do not use an async delay here
+```
+
+Verification after flashing: reboot ~10 times; `[E][esp32_camera:143]: Setup Failed:
+ESP_ERR_NOT_SUPPORTED` must not appear. If it still does, the camera set up before the
+delay — lower the trigger to `priority: 620` and repeat. An async `delay:` action would
+NOT work here (setup continues while it waits); the blocking lambda is the point.
+
+## Verification (2026-08-01) — every pin CONFIRMED against the vendor BSP + schematic
+
+Independent web audit of BSP v2.0.1 (`waveshareteam/Waveshare-ESP32-components` →
+`bsp/esp32_s3_cam_ovxxxx`) and `Schematic/ESP32-S3-CAM-XXXX-schematic.pdf`:
+**all 22 claims in this document verified CONFIRMED, zero mismatches** — camera pins,
+I²S pins (MCLK 10 / BCLK 11 / LRCK 12 / DOUT 14 / DIN 13), ESP32-as-I²S-master,
+shared I²C bus 8/7, and all four device addresses (0x24 / 0x18 / 0x40 / 0x3C).
+
+Two useful nuances the schematic adds:
+
+1. **CAM_PWDN has a 10K pull-down (R8) to GND** — the camera is powered when the line
+   is low *or floating*. The vendor BSP never drives EXIO3 at all (leaves it as input,
+   relying on R8); ESPHome's `ALWAYS_OFF` output drive is equivalent and safe. Anything
+   that latches EXIO3 HIGH powers the sensor down — consistent with the `0x106` failures.
+2. **Full CH32V003 expander map** (from the vendor driver `custom_io_expander_ch32v003`
+   v2.0.0): registers `0x02` direction · `0x03` output · `0x04` input · `0x05` PWM ·
+   `0x06` ADC · `0x07` RTC; reset defaults DIR=0xFF (all input), OUT=0x00; I²C 400kHz.
+   EXIO functions: **0**=TP_RST · **1**=LCD_RST (backlight = EXIO_PWM1) · **2**=SD_CS ·
+   **3**=CAM_PWDN · **4**=PA_CTRL (NS4150B, HIGH=on, 10K pull-down → amp off by
+   default) · **5**=BAT_EN · **6**=PWR_LED · **7**=CHG_DET · **ADC**=BAT_ADC.
+   → The **battery-voltage backlog item** needs a read of expander register `0x06`
+   (ADC), and the **LCD backlight** is PWM register `0x05` — both are small extensions
+   to the `waveshare_io_ch32v003` ESPHome component.
+
 ## References
 - Working handoff for this exact board (camera + speaker): [[../sessions/2026-07-23-ai-cam-handoff]]
 - Vendor repo (ground truth): `github.com/waveshareteam/ESP32-S3-CAM-OVxxxx` — examples `01_simple_video_server`, `03_audio_play`; `Schematic/ESP32-S3-CAM-XXXX-schematic.pdf`

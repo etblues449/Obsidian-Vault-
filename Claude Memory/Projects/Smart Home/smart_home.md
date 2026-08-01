@@ -25,6 +25,12 @@
 - Frigate config: `/config/frigate.yaml` on HA Green — 3 cameras, CPU detector,
   MQTT to `.200`, 800x600 @ 5fps per camera.
 
+## Plan & diagnostics
+
+- [[MASTER_PLAN]] — the whole-home roadmap (2026-08-01)
+- [[diagnostics/2026-08-01-dashboard-audit]] — all 5 dashboard files audited; canonical = `dashboard/jellybean-dashboard-v2-corrected.yaml` (see `dashboard/README.md`)
+- `Assistant Core/ha-diagnostics/ha-doctor.mjs` — run on the LAN, report lands in `diagnostics/`
+
 ## Hardware notes
 
 - [[hardware/Waveshare ESP32-S3-CAM-OV3660 — Arduino IDE Setup (CORRECTED)]]
