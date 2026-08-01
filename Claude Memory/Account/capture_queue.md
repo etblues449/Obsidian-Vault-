@@ -32,6 +32,18 @@
 - [ ] DHCP reservation: RuView node MAC `e0:72:a1:e7:03:60` to `.227`.
 - [ ] Delete ghost "Upstairs" (.207) config in ESPHome Builder.
 
+## New — from the 2026-08-02 full HA diagnosis (report: `Smart Home/diagnostics/2026-08-02-ha-doctor.md`)
+
+- [ ] **Decide the canonical TV entity** — `tv_jelly_beans_tv_2` no longer exists. Live candidates: `media_player.jelly_beans_tv_tv_jelly_beans_tv` vs `media_player.jelly_beans_tv_3`. Then fix dashboards + index.
+- [ ] **ai_cam wake word — Option B**: compile `hardware/ai_cam.yaml` off-box on the PC (needs the vault `esphome/components/es7210/` → merge PR #71 first), factory-flash via web.esphome.io. N100 (~£140) is the structural fix.
+- [ ] **Revive the 3 offline voice satellites**: espspeaker (Living Room), Voice PE (`home_assistant_voice_09eabd`), `landing_ai_cam_2` (the 2nd CAM board — already provisioned!).
+- [ ] **Fix area typo "Dinning Room" → "Dining Room"** (likely cause of the dining-room `no_valid_targets` voice miss) and assign the 10 area-less actionables (haribo_room light/switch, soundbar_2, jessa_voice_assistant, home_group, 5× eshare dupes — the eshare dupes may just need deleting).
+- [ ] **Registry cleanup**: 156 unavailable entities — delete dead duplicates (soundbar_2, jelly_bean_s_tv, bedroom_sambed, eshare×5) after the node revivals.
+- [ ] **Commit `/home/claude/ui-lovelace-minimal.yaml` (new 3-view dashboard) from the HA box into the vault**, then deploy per the handoff.
+- [ ] Reflash offline nodes: bedroom presence .171 · porch servo .206 · cctv XIAO .234 (inspect first).
+- [ ] 4 pending updates (core b2→b3, OS 18.2.rc1→18.2, browser_mod, mushroom) — batch after satellites are back.
+- [ ] Re-run ha-doctor from the LAN once (direct node probes + error_log, which Nabu Casa denied).
+
 ## New — from the 2026-08-01 expansion session (PR #71)
 
 - [ ] **Merge PR #71** — master plan + ha-doctor + dashboard S1 fix; also unbreaks ES7210 `ref: master` (component commits verified branch-only).

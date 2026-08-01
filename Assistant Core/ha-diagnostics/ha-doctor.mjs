@@ -279,16 +279,16 @@ async function main() {
   // naming is live so the vault docs and dashboard can be reconciled.
   const canon = [];
   const get = (id) => states.find(s => s.entity_id === id);
-  const getEither = (short, prefixed) => {
+  const getEither = (short, ...prefixed) => {
     const s = get(short); if (s) return { st: s, form: 'short' };
-    const p = get(prefixed); if (p) return { st: p, form: 'prefixed' };
+    for (const id of prefixed) { const p = get(id); if (p) return { st: p, form: 'prefixed' }; }
     return { st: null, form: 'missing' };
   };
   const tv = get(CANONICAL.tv);
   canon.push({ check: `${CANONICAL.tv} exists`, ok: !!tv, detail: tv ? tv.state : 'MISSING — canonical TV entity' });
   const staleTv = get('media_player.jelly_beans_tv');
   if (staleTv) canon.push({ check: 'stale media_player.jelly_beans_tv absent', ok: false, detail: `exists (${staleTv.state}) — dashboard v2-corrected referenced it; canonical is ${CANONICAL.tv}` });
-  const cam = getEither(CANONICAL.aiCamCamera, 'camera.living_room_ai_cam');
+  const cam = getEither(CANONICAL.aiCamCamera, 'camera.living_room_ai_cam', 'camera.living_room_ai_cam_ai_cam');
   canon.push({ check: 'AI Cam camera entity available', ok: cam.st && cam.st.state !== 'unavailable', detail: cam.st ? `${cam.st.entity_id} (${cam.form} form): ${cam.st.state}` : 'MISSING in both forms' });
   const spk = getEither(CANONICAL.aiCamSpeaker, 'media_player.living_room_ai_cam_ai_cam_speaker');
   canon.push({ check: 'AI Cam speaker entity available', ok: spk.st && spk.st.state !== 'unavailable', detail: spk.st ? `${spk.st.entity_id} (${spk.form} form): ${spk.st.state}` : 'MISSING in both forms' });

@@ -1,0 +1,541 @@
+# ai_cam.yaml — FULL target config (micro_wake_word + SD card), provided by Elliot 2026-08-02.
+# STATUS: validated clean in Device Builder; COMPILE BLOCKED on HA Green (OOM during
+# TFLite micro_wake_word build — see sessions/2026-08-01-hagreen-handoff). The firmware
+# currently FLASHED on the board (built 2026-07-30 00:29, hash 0x8b9a6799) is this config
+# MINUS micro_wake_word/SD — hence wake-word selects show unavailable.
+# NOTE: audio_adc es7210 resolves from the local /config/esphome/components/ copy on the
+# Green (the vault git source needs PR #71 merged before ref:master works).
+# Compile off-box (Option B): bring esphome/components/es7210/ from this vault along.
+
+substitutions:
+  wake_word_model: hey_jarvis   # okay_nabu | hey_jarvis | hey_mycroft | alexa
+
+esphome:
+  name: ai_cam
+  friendly_name: AI Cam
+  min_version: 2026.4.0
+  name_add_mac_suffix: false
+  compile_process_limit: 1
+  on_boot:
+    - priority: 700
+      then:
+        - lambda: 'delay(300);'
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/sw3Dan/waveshare-s2-audio_esphome_voice
+      ref: main
+    components: [es8311]
+  - source: github://mnark/esphome-components
+    components: [sdmmc]
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+# baud_rate 0 is REQUIRED — GPIO43/44 are shared with SD_CMD / SD_D0.
+# Logs still stream over the API to the ESPHome dashboard.
+logger:
+  level: DEBUG
+  baud_rate: 0
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+  on_client_connected:
+    - if:
+        condition:
+          and:
+            - switch.is_on: wake_word_enabled
+            - not:
+                voice_assistant.is_running:
+        then:
+          - micro_wake_word.start:
+  on_client_disconnected:
+    - voice_assistant.stop:
+    - micro_wake_word.stop:
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  power_save_mode: none
+  reboot_timeout: 120s
+  manual_ip:
+    static_ip: 192.168.0.199
+    gateway: 192.168.0.1
+    subnet: 255.255.255.0
+    dns1: 192.168.0.1
+  use_address: 192.168.0.199
+  ap:
+    ssid: "AI-Cam-Fallback"
+    password: "fallback123"
+
+captive_portal:
+
+web_server:
+  port: 80
+
+i2c:
+  - id: bus_a
+    sda: GPIO8
+    scl: GPIO7
+    scan: true
+
+waveshare_io_ch32v003:
+  - id: io_expander
+    address: 0x24
+    i2c_id: bus_a
+
+# ─── SD CARD ────────────────────────────────────────────────────────────────
+# TF-07F socket, 1-bit SDMMC mode.
+# SD_CLK = GPIO16, SD_CMD = GPIO43 (U0TXD), SD_D0 = GPIO44 (U0RXD)
+# SD_CS / D3 sits on expander EXIO2 and is held high by R32 — do not drive it.
+sdmmc:
+  id: sdcard
+  name: "SD Card"
+  clock_pin: GPIO16
+  command_pin: GPIO43
+  data_pin: GPIO44
+
+globals:
+  - id: save_to_disk
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: snapshot_name
+    type: std::string
+    restore_value: no
+    initial_value: '"img.jpg"'
+  - id: snapshot_count
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+esp32_camera:
+  name: "AI Cam"
+  id: ai_camera
+  external_clock:
+    pin: GPIO38
+    frequency: 10MHz
+  i2c_id: bus_a
+  data_pins: [GPIO45, GPIO47, GPIO48, GPIO46, GPIO42, GPIO40, GPIO39, GPIO21]
+  vsync_pin: GPIO17
+  href_pin: GPIO18
+  pixel_clock_pin: GPIO41
+  resolution: 800x600
+  jpeg_quality: 12
+  max_framerate: 5 fps
+  frame_buffer_count: 2
+  on_image:
+    then:
+      - lambda: |-
+          if (id(save_to_disk)) {
+            id(sdcard).write_file(id(snapshot_name).c_str(), image.length, image.data);
+            id(save_to_disk) = false;
+            ESP_LOGI("sd", "Wrote %s (%d bytes)", id(snapshot_name).c_str(), image.length);
+          }
+
+esp32_camera_web_server:
+  - port: 8080
+    mode: stream
+  - port: 8081
+    mode: snapshot
+
+i2s_audio:
+  - id: i2s_bus
+    i2s_mclk_pin: GPIO10
+    i2s_bclk_pin: GPIO11
+    i2s_lrclk_pin: GPIO12
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: bus_a
+    address: 0x18
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    use_mclk: true
+
+audio_adc:
+  - platform: es7210
+    id: es7210_adc
+    i2c_id: bus_a
+    address: 0x40
+    mic_gain: 30db
+
+speaker:
+  - platform: i2s_audio
+    id: spk
+    dac_type: external
+    audio_dac: es8311_dac
+    i2s_audio_id: i2s_bus
+    i2s_dout_pin: GPIO14
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    channel: mono
+    timeout: 500ms
+
+  - platform: mixer
+    id: spk_mixer
+    output_speaker: spk
+    source_speakers:
+      - id: mixer_announcement
+      - id: mixer_media
+
+  - platform: resampler
+    id: resample_media
+    output_speaker: mixer_media
+
+  - platform: resampler
+    id: resample_announcement
+    output_speaker: mixer_announcement
+
+microphone:
+  - platform: i2s_audio
+    id: mic
+    i2s_audio_id: i2s_bus
+    i2s_din_pin: GPIO13
+    adc_type: external
+    pdm: false
+    channel: stereo
+    sample_rate: 16000
+    bits_per_sample: 16bit
+
+micro_wake_word:
+  id: mww
+  microphone:
+    microphone: mic
+    channels: 0
+    gain_factor: 4
+  vad:
+  models:
+    - model: ${wake_word_model}
+  on_wake_word_detected:
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
+
+voice_assistant:
+  id: va
+  microphone:
+    microphone: mic
+    channels: 0
+    gain_factor: 4
+  media_player: cam_media
+  noise_suppression_level: 2
+  auto_gain: 31dBFS
+  volume_multiplier: 2.0
+  on_end:
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - if:
+        condition:
+          switch.is_on: wake_word_enabled
+        then:
+          - micro_wake_word.start:
+  on_error:
+    - if:
+        condition:
+          and:
+            - lambda: return code != "duplicate_wake_up_detected";
+            - lambda: return code != "stt-no-text-recognized";
+        then:
+          - logger.log:
+              format: "Voice assistant error: %s"
+              args: ['code.c_str()']
+    - if:
+        condition:
+          switch.is_on: wake_word_enabled
+        then:
+          - micro_wake_word.start:
+
+media_player:
+  - platform: speaker
+    name: "AI Cam Speaker"
+    id: cam_media
+    media_pipeline:
+      speaker: resample_media
+    announcement_pipeline:
+      speaker: resample_announcement
+
+binary_sensor:
+  - platform: gpio
+    name: "Boot Button"
+    id: btn_boot
+    pin:
+      number: GPIO0
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    on_press:
+      - micro_wake_word.stop:
+      - voice_assistant.start:
+
+  - platform: gpio
+    name: "User Button"
+    id: btn_user
+    pin:
+      number: GPIO15
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+
+output:
+  - platform: gpio
+    id: led_out
+    pin:
+      waveshare_io_ch32v003: io_expander
+      number: 6
+      mode:
+        output: true
+
+light:
+  - platform: binary
+    name: "Status LED"
+    id: status_led
+    output: led_out
+
+switch:
+  - platform: template
+    name: "Wake Word Enabled"
+    id: wake_word_enabled
+    icon: "mdi:microphone-message"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - if:
+          condition:
+            not:
+              voice_assistant.is_running:
+          then:
+            - micro_wake_word.start:
+    on_turn_off:
+      - micro_wake_word.stop:
+
+  - platform: gpio
+    name: "Camera Power Down"
+    id: camera_pwdn
+    restore_mode: ALWAYS_OFF
+    pin:
+      waveshare_io_ch32v003: io_expander
+      number: 3
+      mode:
+        output: true
+
+  - platform: gpio
+    name: "Amp Enable"
+    id: amp_enable
+    restore_mode: ALWAYS_ON
+    pin:
+      waveshare_io_ch32v003: io_expander
+      number: 4
+      mode:
+        output: true
+
+  - platform: template
+    name: "Camera Rotate 180"
+    id: cam_rotate
+    icon: "mdi:rotate-3d-variant"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_state:
+      - lambda: |-
+          id(ai_camera).set_horizontal_mirror(x);
+          id(ai_camera).set_vertical_flip(x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
+
+  - platform: template
+    name: "Camera Auto Exposure"
+    id: cam_aec
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    disabled_by_default: true
+    on_state:
+      - lambda: |-
+          id(ai_camera).set_aec_mode(x ? esp32_camera::ESP32_GC_MODE_AUTO : esp32_camera::ESP32_GC_MODE_MANU);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
+
+  - platform: template
+    name: "Camera Auto Gain"
+    id: cam_agc
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    disabled_by_default: true
+    on_state:
+      - lambda: |-
+          id(ai_camera).set_agc_mode(x ? esp32_camera::ESP32_GC_MODE_AUTO : esp32_camera::ESP32_GC_MODE_MANU);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
+
+select:
+  - platform: template
+    name: "Camera Quality"
+    id: cam_quality
+    icon: "mdi:image-size-select-large"
+    optimistic: true
+    restore_value: true
+    options: ["Best (10)", "Good (15)", "Medium (25)", "Low (40)", "Fastest (63)"]
+    initial_option: "Good (15)"
+    on_value:
+      - lambda: |-
+          int qa[] = { 10, 15, 25, 40, 63 };
+          id(ai_camera).set_jpeg_quality(qa[i]);
+          sensor_t *s = esp_camera_sensor_get();
+          if (s != nullptr) s->set_quality(s, qa[i]);
+
+  - platform: template
+    name: "Camera AGC Ceiling"
+    id: cam_agc_ceiling
+    icon: "mdi:image-filter-center-focus"
+    optimistic: true
+    restore_value: true
+    disabled_by_default: true
+    options: ["2x", "4x", "8x", "16x", "32x", "64x", "128x"]
+    initial_option: "2x"
+    on_value:
+      - lambda: |-
+          esp32_camera::ESP32AgcGainCeiling agc[] = {
+            esp32_camera::ESP32_GAINCEILING_2X,
+            esp32_camera::ESP32_GAINCEILING_4X,
+            esp32_camera::ESP32_GAINCEILING_8X,
+            esp32_camera::ESP32_GAINCEILING_16X,
+            esp32_camera::ESP32_GAINCEILING_32X,
+            esp32_camera::ESP32_GAINCEILING_64X,
+            esp32_camera::ESP32_GAINCEILING_128X,
+          };
+          id(ai_camera).set_agc_gain_ceiling(agc[i]);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
+
+number:
+  - platform: template
+    name: "Camera Brightness"
+    id: cam_brightness
+    icon: "mdi:brightness-6"
+    optimistic: true
+    restore_value: true
+    initial_value: 0
+    min_value: -2
+    max_value: 2
+    step: 1
+    mode: slider
+    set_action:
+      - lambda: |-
+          id(ai_camera).set_brightness((int)x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
+
+  - platform: template
+    name: "Camera Contrast"
+    id: cam_contrast
+    icon: "mdi:contrast-box"
+    optimistic: true
+    restore_value: true
+    initial_value: 0
+    min_value: -2
+    max_value: 2
+    step: 1
+    mode: slider
+    set_action:
+      - lambda: |-
+          id(ai_camera).set_contrast((int)x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
+
+  - platform: template
+    name: "Camera Saturation"
+    id: cam_saturation
+    icon: "mdi:palette"
+    optimistic: true
+    restore_value: true
+    initial_value: 0
+    min_value: -2
+    max_value: 2
+    step: 1
+    mode: slider
+    set_action:
+      - lambda: |-
+          id(ai_camera).set_saturation((int)x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
+
+  - platform: template
+    name: "Camera Exposure Level"
+    id: cam_ae_level
+    icon: "mdi:brightness-7"
+    optimistic: true
+    restore_value: true
+    initial_value: 0
+    min_value: -2
+    max_value: 2
+    step: 1
+    mode: slider
+    set_action:
+      - lambda: |-
+          id(ai_camera).set_ae_level((int)x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
+
+  - platform: template
+    name: "Camera ISO"
+    id: cam_iso
+    icon: "mdi:camera-iris"
+    optimistic: true
+    restore_value: true
+    disabled_by_default: true
+    initial_value: 300
+    min_value: 0
+    max_value: 1200
+    step: 10
+    mode: slider
+    set_action:
+      - lambda: |-
+          id(ai_camera).set_aec_value((int)x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
+
+button:
+  - platform: template
+    name: "Start Voice Assistant"
+    on_press:
+      - micro_wake_word.stop:
+      - voice_assistant.start:
+
+  - platform: template
+    name: "Save Snapshot to SD"
+    icon: "mdi:content-save"
+    on_press:
+      - lambda: |-
+          id(snapshot_count)++;
+          id(snapshot_name) = "snap" + std::to_string(id(snapshot_count)) + ".jpg";
+          id(save_to_disk) = true;
+      - component.update: ai_camera
+
+  - platform: restart
+    name: "Restart"
+
+sensor:
+  - platform: wifi_signal
+    name: "AI Cam WiFi Signal"
+    update_interval: 60s
+    entity_category: diagnostic
+  - platform: uptime
+    name: "AI Cam Uptime"
+    update_interval: 60s
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "AI Cam IP Address"
+      entity_category: diagnostic
+  - platform: version
+    name: "AI Cam ESPHome Version"
+    entity_category: diagnostic

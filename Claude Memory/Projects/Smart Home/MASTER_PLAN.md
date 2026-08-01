@@ -173,6 +173,7 @@ Each phase is shippable on its own; order chosen so truth precedes construction.
 
 | Item | For | Status |
 |---|---|---|
+| **N100 mini PC (~£140)** | HA host upgrade — the Green is **margin-zero**: wake-word (TFLite) compiles OOM its compiler; N100 also carries Frigate + future nodes | budgeted per 2026-08-01 handoff; the structural fix behind the mWW regression |
 | 18650 cells (+holder/JST pigtail — or LiPo pouch w/ JST, lower friction) | porch battery | on the order list since index |
 | 5V servo rail | (purpose not recorded in vault) | on the order list |
 | IP67 enclosure + bracket (~£80–110 all-in) | porch cam | planned |

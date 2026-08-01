@@ -296,10 +296,13 @@ text_sensor:
 - `cctv_cam` (.234) and `porch` (.240) may be hardware-down, not config — verify power next time
 
 ## Entity reference
-- Camera: `camera.ai_cam` / stream `:8080` / snapshot `:8081`
-- Speaker: `media_player.ai_cam_speaker` (label "Speaker" under AI Cam · Living Room · ESPHome)
-- Switches: `switch.ai_cam_amp_enable`, `switch.ai_cam_camera_power_down`
-- Diagnostics: WiFi signal, uptime, IP, ESPHome version
+> **CORRECTED 2026-08-02 against the live registry (ha-doctor):** HA device-name prefixing
+> applies — the short forms below no longer exist.
+- Camera: `camera.living_room_ai_cam_ai_cam` / stream `:8080` / snapshot `:8081`
+- Speaker: `media_player.living_room_ai_cam_ai_cam_speaker`
+- Switches: `switch.living_room_ai_cam_amp_enable`, `switch.living_room_ai_cam_camera_power_down`
+- Assist: `assist_satellite.living_room_ai_cam_assist_satellite`
+- Diagnostics: WiFi signal, uptime, IP, ESPHome version (same prefix pattern)
 
 ## Verification URLs
 - Stream: http://192.168.0.199:8080
