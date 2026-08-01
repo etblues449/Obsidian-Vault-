@@ -28,7 +28,8 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 
 ## Key Decisions
 - bedroom-2.yaml canonical (bedroom.yaml broken)
-- media_player.tv_jelly_beans_tv_2 canonical TV entity
+- **Canonical TV entity: `media_player.jelly_beans_tv_3` (2026-08-02)** — decided from live registry evidence: device_class `tv`, full source_list (Bose Soundbar/Fire Stick/PS5/apps), features 221117. `media_player.jelly_beans_tv_tv_jelly_beans_tv` is the DLNA shell (dlna_dmr, no sources) — do not use. **Supersedes** `tv_jelly_beans_tv_2`, which no longer exists in the registry. Dashboard + ha-doctor updated.
+- **Area "Dinning Room" renamed to "Dining Room" (2026-08-02)** — typo fixed live via the registry API; was the likely cause of the dining-room `no_valid_targets` voice miss.
 - **Frigate: RE-ADOPTED (2026-07-23)** — previously ruled out as too heavy, but now running on HA Green with 3 cameras (ai_cam + cctv_cam .234 + porch .240), CPU detector, MQTT to .200. Config `/config/frigate.yaml`. ai_cam tile confirmed live. Runs fine at 800x600/5fps per camera. Supersedes the earlier "Frigate ruled out" decision.
 - **For Waveshare boards: clone the vendor repo, don't trust the product image (2026-07-23)** — `git clone https://github.com/waveshareteam/ESP32-S3-CAM-OVxxxx.git` + the BSP managed component `waveshare/esp32_s3_cam_ovxxxx` (ESP Component Registry) are the authoritative pinout. The Amazon "Interface Definition" image gave a **wrong audio pin map** that cost ~4h chasing static/silence; the vendor BSP settled it in 2 minutes. Camera pins from the image happened to be right; audio pins were not. **Supersedes the earlier claim that the Interface Definition image is authoritative.**
 - **Waveshare ESP32-S3-CAM: camera power is expander-gated** — the OV3660 will not init (`ESP_ERR_NOT_SUPPORTED`, garbage PID) until CH32V003 EXIO3 (PWDN net) is driven LOW. Amp enable is EXIO4 driven HIGH (empirically confirmed). Sibling ESP32-S3 cam boards do NOT match this board.
@@ -41,8 +42,9 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 - Interactive `read -s` token paste fails on mobile; let `git` prompt for credentials.
 
 ## Next Actions
-- [ ] **Merge PR #71** (master plan + ha-doctor + dashboard fix) — also unbreaks ES7210 `ref: master`
-- [ ] **Run ha-doctor on the LAN** (Fold 7 or PC, ADMIN token) → commit report to `diagnostics/` — settles entity naming, areas, automations health, RuView dashboard claim, cctv/porch reachability (Phase 0 of [[MASTER_PLAN]])
+- [x] **Merge PR #71** — MERGED 2026-08-02 (`bd91acb`)
+- [x] **Run ha-doctor** — first full run 2026-08-02 via Nabu Casa: [[diagnostics/2026-08-02-ha-doctor]] (naming settled, TV decided, areas mapped). Remaining: one LAN run for direct node probes + error_log
+- [ ] **Get "Hey Jarvis" back — run the Option B compile**: [[hardware/ai_cam-compile-runbook]] on the PC (~15 min, OTA, no USB)
 - [ ] **Back up hub-side config into the vault** (`automations.yaml`, `bedroom-2.yaml`, `frigate.yaml`, scenes/scripts → `ha-config/`) — the ~19 lounge automations exist nowhere but the hub. **Include the CURRENT `ai_cam.yaml` from ESPHome Builder** — the flashed config (tuning entities, XCLK 10 MHz, quality 10) was never captured
 - [ ] **Re-enable microWakeWord on ai_cam** — wake-word selects unavailable on the current build (see [[sessions/2026-08-02]]). Order matters: pull the live `ai_cam.yaml` into the vault FIRST, then re-add `micro_wake_word` and flash — don't reconstruct from memory
 - [x] **AI Cam camera** — streaming, Frigate, recording, person detection (2026-07-23)

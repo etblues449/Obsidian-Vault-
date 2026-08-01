@@ -34,8 +34,10 @@
 
 ## New — from the 2026-08-02 full HA diagnosis (report: `Smart Home/diagnostics/2026-08-02-ha-doctor.md`)
 
-- [ ] **Decide the canonical TV entity** — `tv_jelly_beans_tv_2` no longer exists. Live candidates: `media_player.jelly_beans_tv_tv_jelly_beans_tv` vs `media_player.jelly_beans_tv_3`. Then fix dashboards + index.
-- [ ] **ai_cam wake word — Option B**: compile `hardware/ai_cam.yaml` off-box on the PC (needs the vault `esphome/components/es7210/` → merge PR #71 first), factory-flash via web.esphome.io. N100 (~£140) is the structural fix.
+- [x] **Canonical TV entity: DECIDED 2026-08-02** — `media_player.jelly_beans_tv_3` (evidence: device_class tv, full source_list, features 221117; other candidate is the DLNA shell). Dashboard + ha-doctor + index updated.
+- [ ] **ai_cam wake word — Option B**: follow [[../Projects/Smart Home/hardware/ai_cam-compile-runbook]] on the PC (~15 min, OTA, no USB; native es7210, no special deps). N100 (~£140) remains the structural fix.
+- [x] **Area typo "Dinning Room" → "Dining Room": FIXED LIVE 2026-08-02** via the registry API. (The 10 area-less actionables still need Elliot's placement knowledge — mostly dead eshare dupes + haribo_room.)
+- [x] **Merge PR #71**: MERGED 2026-08-02 (`bd91acb`).
 - [ ] **Revive the 3 offline voice satellites**: espspeaker (Living Room), Voice PE (`home_assistant_voice_09eabd`), `landing_ai_cam_2` (the 2nd CAM board — already provisioned!).
 - [ ] **Fix area typo "Dinning Room" → "Dining Room"** (likely cause of the dining-room `no_valid_targets` voice miss) and assign the 10 area-less actionables (haribo_room light/switch, soundbar_2, jessa_voice_assistant, home_group, 5× eshare dupes — the eshare dupes may just need deleting).
 - [ ] **Registry cleanup**: 156 unavailable entities — delete dead duplicates (soundbar_2, jelly_bean_s_tv, bedroom_sambed, eshare×5) after the node revivals.
@@ -46,8 +48,8 @@
 
 ## New — from the 2026-08-01 expansion session (PR #71)
 
-- [ ] **Merge PR #71** — master plan + ha-doctor + dashboard S1 fix; also unbreaks ES7210 `ref: master` (component commits verified branch-only).
-- [ ] **Run ha-doctor on the LAN** (ADMIN token) → commit report to `Smart Home/diagnostics/`.
+- [x] **Merge PR #71** — MERGED 2026-08-02 (`bd91acb`); ES7210 `ref: master` unbroken.
+- [x] **Run ha-doctor** — first full run done 2026-08-02 via Nabu Casa (report committed). Still pending: one LAN run for direct node probes + error_log.
 - [ ] **S1 — Inbox drift:** root `Inbox/` holds 5 captures (to 2026-07-09) invisible to the engine, which reads `JARVIS/Inbox/` only. Fix inside the Phase-2 capture router.
 - [ ] Back up hub-side config (automations, bedroom-2.yaml, frigate.yaml, scenes/scripts) into the vault — currently exists only on the hub.
 - [ ] Flash + verify the EXIO3 boot-race fix on ai_cam (proposed, NOT yet flashed).
