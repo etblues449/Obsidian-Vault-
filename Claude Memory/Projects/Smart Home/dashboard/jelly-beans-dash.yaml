@@ -209,28 +209,6 @@ views:
                   action: toggle
       - type: grid
         column_span: 3
-        visibility:
-          - condition: and
-            conditions:
-              - condition: state
-                entity: input_boolean.away_mode
-                state: 'on'
-              - condition: state
-                entity: binary_sensor.ai_cam_person_occupancy
-                state: 'on'
-        cards:
-          - type: custom:mushroom-template-card
-            primary: Person detected while away
-            secondary: AI Cam has seen someone
-            icon: mdi:alert-decagram
-            icon_color: red
-            layout: horizontal
-            multiline_secondary: true
-            tap_action:
-              action: more-info
-              entity: camera.living_room_ai_cam_ai_cam
-      - type: grid
-        column_span: 3
         cards:
           - type: grid
             columns: 4
@@ -439,39 +417,35 @@ views:
             type: picture-entity
             entity: camera.ai_cam_2_ai_cam_outside
             name: AI Cam — Outside
-          - type: custom:mushroom-chips-card
-            alignment: start
-            visibility:
-              - condition: state
-                entity: binary_sensor.ai_cam_person_occupancy
-                state_not: unavailable
-            chips:
-              - type: entity
-                entity: binary_sensor.ai_cam_person_occupancy
-                icon: mdi:account
-                icon_color: red
-              - type: entity
-                entity: binary_sensor.ai_cam_motion
-                icon: mdi:motion-sensor
-                icon_color: amber
-              - type: entity
-                entity: sensor.ai_cam_person_count
-                icon: mdi:account-multiple
-          - type: entities
-            show_header_toggle: false
-            visibility:
-              - condition: state
-                entity: switch.ai_cam_detect
-                state_not: unavailable
-            entities:
-              - entity: switch.ai_cam_detect
-                name: Detection
-              - entity: switch.ai_cam_motion
-                name: Motion
-              - entity: switch.ai_cam_recordings
-                name: Recordings
-              - entity: switch.ai_cam_snapshots
-                name: Snapshots
+
+# ─── STASHED: Frigate cards (2026-08-02) ─────────────────────────────────────
+# The Frigate ADD-ON is not running (cannot_connect on ccab4aaf-frigate-fa-beta,
+# ccab4aaf-frigate and 192.168.0.200:5000; no config entry exists). Once the
+# add-on is started and the integration added (camera name ai_cam), restore
+# these blocks:
+#
+# 1. Away-alert section (goes back after the greeting section on Home):
+#      - type: grid
+#        column_span: 3
+#        visibility:
+#          - condition: and
+#            conditions:
+#              - {condition: state, entity: input_boolean.away_mode, state: 'on'}
+#              - {condition: state, entity: binary_sensor.ai_cam_person_occupancy, state: 'on'}
+#        cards:
+#          - type: custom:mushroom-template-card
+#            primary: Person detected while away
+#            secondary: AI Cam has seen someone
+#            icon: mdi:alert-decagram
+#            icon_color: red
+#            layout: horizontal
+#            tap_action: {action: more-info, entity: camera.living_room_ai_cam_ai_cam}
+#
+# 2. Cameras section extras (go back under the two picture-entity cards):
+#      - mushroom-chips: binary_sensor.ai_cam_person_occupancy /
+#        binary_sensor.ai_cam_motion / sensor.ai_cam_person_count
+#      - entities card: switch.ai_cam_detect / _motion / _recordings / _snapshots
+# ─────────────────────────────────────────────────────────────────────────────
   # ───────────────────────────── ROOMS ─────────────────────────────
   - title: Rooms
     path: rooms
