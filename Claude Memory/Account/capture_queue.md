@@ -9,12 +9,26 @@
 
 - [x] **S1 — Confirm `GROQ_API_KEY` repo secret is set.** *(2026-08-01: evidenced — all 4 scheduled skills produced automated commits on master today; they cannot run without the key.)*
 - [x] **S1 — Merge `.github/workflows/` to `master`.** *(2026-08-01: all 5 files present on master; drift-check green.)*
-- [x] **S1 — Run each of the 4 skills once** to verify green. *(2026-08-01: better — scheduled runs for skills 1/3/4/6 all committed to master today: `e43e6f6`, `8a89e92`, `e22ea99`, `1c18bc1`.)*
+- [x] **S1 — Run each of the 4 skills once** to verify green. *(2026-08-01: skills 1/3/4/6 all committed to master: `e43e6f6`, `8a89e92`, `e22ea99`, `1c18bc1`.)* **⚠️ Evidence corrected 2026-08-02:** those four commits came from manual `workflow_dispatch` runs at 01:09–01:33, **not** scheduled runs. The skills work; the *schedule* was never proven by this. See the new S1 below.
 - [x] **S1 — Reconcile the project set.** *(Done 2026-07-27 per CLAUDE.md "Reconciled" note — 8 mandatory files, `Account/` canonical.)*
 - [ ] **S2 — Decide `webapp-reviewer` model.** Uses `model: sonnet`; harness standard is `opus`.
 - [ ] **S3 — Resolve dangling wikilink** `[[sessions/2026-07-29]]` — referenced twice in the Smart Home index (upstream `6313897`); a reconstruction stub is included, replace it with the real session content.
 - [ ] **S3 — Resolve 6 dangling wikilinks** in `Projects/Smart Home/_index.md`: `sessions/2026-06-08`, `2026-06-13`, `2026-06-16`, `2026-07-04`, `fixes/2026-06-14-ip-collision-fix`, `smart_home`.
 - [ ] **Deactivate the 4 n8n.cloud workflows** once GitHub Actions is verified green.
+
+## New — from the 2026-08-02 system understanding (`Claude Memory/2026-08-02-jarvis-state-of-the-system.md`)
+
+- [ ] **S1 — The scheduled skill engine has NEVER written output.** All 11 scheduled runs started late enough that `guardPasses` (exact London-hour match, `runner.mjs:340`) failed → exit 0 → run green, `Commit and push` skipped, nothing written. Proven by job log `30693257169` ("London now: … 10:11", "want hour=7"). Every existing briefing/connection/synthesis/pattern file came from n8n (07-07, 07-08) or a manual `workflow_dispatch`. **Decision needed:** output-idempotency check (recommended — DST-safe *and* delay-safe, self-heals a missed day) vs a tolerance window vs staying manual.
+- [ ] **S1 — The "skip is expected" log line masks the failure.** It cannot distinguish the intended BST/GMT skip from a delay-induced skip, so every broken run reads as normal. Must change with the guard.
+- [ ] **S1 — Capture idle 24 days** (newest capture 2026-07-09; newest the engine can see 2026-07-07). **Fix capture BEFORE the schedule** — a working schedule over a 4-week-stale corpus manufactures confident, wrong briefings.
+- [ ] **`AGENT.md` understates `jarvis-core` by four tiers.** Tiers 3–6 all have shipped code (`ears/deepgram/elevenlabs`, `memory`, `heartbeat`, `rails` + 23 green tier-6 tests) plus a web app and Supabase tool that appear nowhere in it — yet it is the file every fresh session reads first. Reconcile with `JARVIS/HANDOFF.md`, or demote it.
+- [ ] **`jarvis-core` ships a red test on `main`** — `tier1-test.mjs` 6/7. The 401 mock (`test/tier1-test.mjs:172`) omits `headers`, which `lib/brain.mjs:226` reads unconditionally. Production unaffected (real `fetch` always sets it); one-line fixture fix.
+- [ ] **Merge PR #73** (open, draft, `mergeable_state: clean`) — until it lands, `master` and every session-start read are a day behind the real house.
+- [ ] **Triage 3 stale open PRs** — #70 (canonical `ai_cam.esphome.yaml`), #68 (minimise HA automations), #67 (NotebookLM client).
+- [ ] **Confirm the n8n.cloud account state and formally retire it** (C1). Verified only that no n8n-format commit exists after 2026-07-08 — not the account itself.
+- [ ] **Answer the open device question:** the Termux checks from the last session — pad or Fold 7? `ro.build.characteristics=device` only rules out a TV build. All Termux battery/wakelock notes in this vault are Fold-7 specific.
+- [x] **Fix the 4-way session-start list drift** — `.claude/skills/vault-conventions/SKILL.md` still carried the superseded 7-file list (missing Work Financial Forecasting) and is preloaded into every agent. *(Fixed 2026-08-02.)*
+- [ ] **S3 — Dangling wikilink `[[hardware/ai_cam]]`** in the Smart Home index; the file on disk is `hardware/ai_cam.yaml`. (The other 6 dangling links listed above are already resolved — that section is stale in your favour.)
 
 ## New — AI Cam unused hardware (from upstream 6313897)
 

@@ -71,8 +71,16 @@ Assistant Core/jarvis-skills/          the £0 skill engine
 3. `Claude Memory/Projects/Smart Home/_index.md`
 4. `Claude Memory/Projects/Faceless Finance/_index.md`
 5. `Claude Memory/Projects/Doc to Learning/_index.md`
-6. `Claude Memory/Projects/Other Workspaces/_index.md`
-7. `Claude Memory/Account/capture_queue.md`
+6. `Claude Memory/Projects/Work Financial Forecasting/_index.md`
+7. `Claude Memory/Projects/Other Workspaces/_index.md`
+8. `Claude Memory/Account/capture_queue.md`
+
+> This list is authoritative only insofar as it matches `Assistant Core/jarvis-skills/runner.mjs`
+> and `test/local-test.mjs`. It disagreed with them until 2026-08-02 by omitting **Work
+> Financial Forecasting** — the 2026-07-27 reconciliation fixed `CLAUDE.md` and
+> `.claude/hooks/session-start.sh` but missed this file, so every agent preloading these
+> conventions got the superseded 7-file list. If the runner's project list changes, change
+> all four together.
 
 Report any that are missing **as missing**. Do not synthesise plausible contents to fill
 a gap — an invented memory file is indistinguishable from a real one on the next read,
