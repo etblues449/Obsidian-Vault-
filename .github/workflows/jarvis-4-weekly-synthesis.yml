@@ -4,9 +4,14 @@
 # GitHub cron is UTC and has no timezone. Two crons fire year-round:
 #   BST (late Mar – late Oct, London = UTC+1) -> 0 17 * * 5
 #   GMT (late Oct – late Mar, London = UTC+0) -> 0 18 * * 5
-# The in-runner guard (guardPasses in runner.mjs) requires an EXACT London-hour
-# match, so precisely one of the two passes and the other exits 0 as a skip.
-# Do not "clean this up" to a single cron — that breaks half the year.
+# Both are simply two ATTEMPTS at the same period. The runner no longer checks
+# the clock at all: it asks whether this period's output already exists, and
+# writes it if not. Whichever cron GitHub actually gets to first does the work;
+# the other no-ops with reason=already-done.
+#
+# Do not "clean this up" to a single cron — that breaks half the year, and do not
+# reintroduce an exact-hour guard: GitHub starts these jobs 30min-3h late, which
+# silently disabled the whole engine until 2026-08-02. See runner.mjs `shouldRun`.
 name: JARVIS Weekly Synthesis
 
 on:
@@ -16,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       force:
-        description: 'Ignore the London time guard'
+        description: 'Regenerate even if this period output already exists'
         required: false
         default: true
         type: boolean

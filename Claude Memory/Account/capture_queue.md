@@ -18,9 +18,12 @@
 
 ## New — from the 2026-08-02 system understanding (`Claude Memory/2026-08-02-jarvis-state-of-the-system.md`)
 
-- [ ] **S1 — The scheduled skill engine has NEVER written output.** All 11 scheduled runs started late enough that `guardPasses` (exact London-hour match, `runner.mjs:340`) failed → exit 0 → run green, `Commit and push` skipped, nothing written. Proven by job log `30693257169` ("London now: … 10:11", "want hour=7"). Every existing briefing/connection/synthesis/pattern file came from n8n (07-07, 07-08) or a manual `workflow_dispatch`. **Decision needed:** output-idempotency check (recommended — DST-safe *and* delay-safe, self-heals a missed day) vs a tolerance window vs staying manual.
-- [ ] **S1 — The "skip is expected" log line masks the failure.** It cannot distinguish the intended BST/GMT skip from a delay-induced skip, so every broken run reads as normal. Must change with the guard.
-- [ ] **S1 — Capture idle 24 days** (newest capture 2026-07-09; newest the engine can see 2026-07-07). **Fix capture BEFORE the schedule** — a working schedule over a 4-week-stale corpus manufactures confident, wrong briefings.
+- [x] **S1 — The scheduled skill engine has NEVER written output.** All 11 scheduled runs started late enough that `guardPasses` (exact London-hour match) failed → exit 0 → run green, `Commit and push` skipped, nothing written. Proven by job log `30693257169`. *(FIXED 2026-08-02: the exact-hour guard is replaced by per-skill period idempotency — `shouldRun`/`done(ctx)` in `runner.mjs`. DST-safe, delay-safe, self-healing. Regression test proven to fail on the old guard and pass on the new.)*
+- [x] **S1 — The "skip is expected" log line masks the failure.** *(FIXED 2026-08-02: `_jarvis-run-skill.yml` now branches on the reason — `already-done` and `no-new-captures` are explained as expected, `error` emits `::error::`, anything unrecognised emits `::warning::` telling the reader to treat it as a silent failure. Plus a job summary on every run.)*
+- [x] **S1 — Capture split: 4 captures were invisible to the engine.** *(FIXED 2026-08-02: swept into `JARVIS/Inbox/`; the router now sweeps legacy root `Inbox/` forward on every run, copy-if-missing. Source fixed too — `Scripts/jarvis.js` + `JARVIS/scripts/jarvis.js` fell back to root `"Inbox"` for any unknown capture kind, which is what created the split.)*
+- [ ] **Capture is still idle** — newest capture is 2026-07-09, ~24 days ago. The router is built and the vault side is fixed, but nothing has *arrived* since. Check the phone leg before trusting any briefing generated from this corpus.
+- [ ] **⚠️ Fix the Tasker variable at source (still open).** The router's junk filter quarantines `your note here` / empty captures to `JARVIS/Inbox/_rejected/` and reports them loudly — but **that is a second line of defence, not the fix**. Diagnose leg 1: log the Tasker variable to a Flash immediately before the HTTP Request action; variable scope at that moment is the usual cause, not the network.
+- [ ] **Finish Phase 2 — retarget the phone at GitHub.** Tasker still posts to the paid n8n webhook. Point it at the GitHub Contents API (`MIGRATION.md` → Phase 2, step 1) and the paid dependency is gone (C1).
 - [ ] **`AGENT.md` understates `jarvis-core` by four tiers.** Tiers 3–6 all have shipped code (`ears/deepgram/elevenlabs`, `memory`, `heartbeat`, `rails` + 23 green tier-6 tests) plus a web app and Supabase tool that appear nowhere in it — yet it is the file every fresh session reads first. Reconcile with `JARVIS/HANDOFF.md`, or demote it.
 - [ ] **`jarvis-core` ships a red test on `main`** — `tier1-test.mjs` 6/7. The 401 mock (`test/tier1-test.mjs:172`) omits `headers`, which `lib/brain.mjs:226` reads unconditionally. Production unaffected (real `fetch` always sets it); one-line fixture fix.
 - [ ] **Merge PR #73** (open, draft, `mergeable_state: clean`) — until it lands, `master` and every session-start read are a day behind the real house.
@@ -64,7 +67,7 @@
 
 - [x] **Merge PR #71** — MERGED 2026-08-02 (`bd91acb`); ES7210 `ref: master` unbroken.
 - [x] **Run ha-doctor** — first full run done 2026-08-02 via Nabu Casa (report committed). Still pending: one LAN run for direct node probes + error_log.
-- [ ] **S1 — Inbox drift:** root `Inbox/` holds 5 captures (to 2026-07-09) invisible to the engine, which reads `JARVIS/Inbox/` only. Fix inside the Phase-2 capture router.
+- [x] **S1 — Inbox drift:** root `Inbox/` held 4 captures invisible to the engine. *(FIXED 2026-08-02 — swept into `JARVIS/Inbox/`; the router keeps sweeping legacy arrivals forward, and the `|| "Inbox"` fallback that caused it is fixed in both copies of `jarvis.js`.)*
 - [ ] Back up hub-side config (automations, bedroom-2.yaml, frigate.yaml, scenes/scripts) into the vault — currently exists only on the hub.
 - [ ] Flash + verify the EXIO3 boot-race fix on ai_cam (proposed, NOT yet flashed).
 - [ ] Decide: delete stale `Claude Memory 1/` duplicate (byte-identical subset; referenced nowhere).
@@ -73,8 +76,8 @@
 
 ## Carried forward — capture
 
-- [ ] **Fix empty Tasker captures** — "Ask JARVIS" has fired 3x with placeholder `"your note here"`. Needs BOTH the Tasker variable fix AND a server-side junk filter.
-- [ ] **Build Phase-2 capture router** (GitHub `on: push`) to retire the paid n8n webhook — satisfies C1.
+- [~] **Fix empty Tasker captures** — needs BOTH the Tasker variable fix AND a server-side junk filter. *(2026-08-02: junk filter SHIPPED — quarantines to `JARVIS/Inbox/_rejected/`, reported loudly. The Tasker variable fix is STILL OPEN; see the item near the top.)*
+- [~] **Build Phase-2 capture router** (GitHub `on: push`) to retire the paid n8n webhook. *(2026-08-02: router + workflow SHIPPED and tested. Remaining: retarget Tasker from the n8n webhook to the GitHub Contents API — until that lands the paid dependency is still live.)*
 
 ## Completed
 

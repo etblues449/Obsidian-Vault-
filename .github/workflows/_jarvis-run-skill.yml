@@ -10,11 +10,11 @@ on:
   workflow_call:
     inputs:
       skill:
-        description: 'morning-brief | connection-finder | weekly-synthesis | pattern-detector'
+        description: 'morning-brief | connection-finder | weekly-synthesis | pattern-detector | capture-router'
         required: true
         type: string
       force:
-        description: 'Ignore the London time guard (manual runs only)'
+        description: 'Regenerate even if this period output already exists (manual runs only)'
         required: false
         default: false
         type: boolean
@@ -97,9 +97,41 @@ jobs:
           echo "[jarvis] could not push after 5 attempts"
           exit 1
 
+      - name: Summarise the run
+        if: always()
+        run: |
+          {
+            echo "### JARVIS · ${{ inputs.skill }}"
+            echo ""
+            if [ "${{ steps.skill.outputs.wrote }}" = "true" ]; then
+              echo "**Wrote:** \`${{ steps.skill.outputs.path }}\`"
+              echo ""
+              echo "${{ steps.skill.outputs.summary }}"
+            else
+              echo "**No write** — reason: \`${{ steps.skill.outputs.reason }}\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Report skip reason
         if: steps.skill.outputs.wrote != 'true'
         run: |
-          echo "[jarvis] no write. reason=${{ steps.skill.outputs.reason }}"
-          echo "A time-guard skip is expected: each skill fires two crons (BST + GMT)"
-          echo "and exactly one passes the London-hour guard."
+          REASON="${{ steps.skill.outputs.reason }}"
+          echo "[jarvis] no write. reason=$REASON"
+          case "$REASON" in
+            already-done)
+              echo "Expected: this period's output already exists. Each skill fires two"
+              echo "crons (BST + GMT) as two ATTEMPTS at the same period — whichever runs"
+              echo "first does the work and the other no-ops. Nothing is wrong."
+              ;;
+            no-new-captures)
+              echo "Expected: the capture router found nothing new to route."
+              ;;
+            error)
+              echo "::error::The skill failed. This is NOT a normal skip — read the log above."
+              ;;
+            *)
+              echo "::warning::Unrecognised skip reason '$REASON'. If output is missing when"
+              echo "it should exist, treat this as a silent failure and investigate — a green"
+              echo "run that writes nothing is the failure mode this engine was built to avoid."
+              ;;
+          esac
