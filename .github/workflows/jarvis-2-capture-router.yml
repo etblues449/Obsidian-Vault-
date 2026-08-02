@@ -1,0 +1,41 @@
+# JARVIS Skill 2 — Capture Router
+# Event-driven: fires on a capture landing in the vault, not on a clock.
+#
+# This is the Phase-2 £0 replacement for the paid n8n "Note Router" webhook
+# (see `Assistant Core/jarvis-skills/MIGRATION.md` → Phase 2, Option A).
+#
+# NO LOOP: this workflow's own commit is made with the Actions GITHUB_TOKEN, and
+# GitHub deliberately does not re-trigger workflows on pushes made with that
+# token. A capture pushed from the phone (obsidian-git / a PAT) DOES trigger it.
+# Do not swap the commit step to a PAT without re-checking that.
+#
+# Both inbox paths are watched on purpose. `JARVIS/Inbox/` is canonical and is
+# what the skill engine reads; root `Inbox/` is a legacy destination that some
+# capture paths still write to. The router sweeps the legacy one forward rather
+# than requiring every writer to be corrected simultaneously on a device that
+# cannot be reached from CI.
+name: JARVIS Capture Router
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'JARVIS/Inbox/**'
+      - 'Inbox/**'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'No writes beyond the log (plumbing test only)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  capture-router:
+    uses: ./.github/workflows/_jarvis-run-skill.yml
+    with:
+      skill: capture-router
+      force: true          # event-driven — there is no time guard to bypass
+      dry_run: ${{ inputs.dry_run == true }}
+    secrets:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}   # unused: the router is deterministic

@@ -129,10 +129,48 @@ Add an `/api/capture` route to the already-deployed `jarvis-voice-lovat` app
 (Vercel Hobby, free) that does the same classify-and-commit via octokit, and
 point Tasker at it. Keeps a webhook shape but on free hosting.
 
-Option A is fewer moving parts and has no always-on surface at all. Building the
-`capture-router` skill is a natural next session — the engine and schema are
-already in place; it's one more entry in the `SKILLS` map plus one `on: push`
-workflow. Say the word and it gets built and tested the same way.
+### ✅ BUILT 2026-08-02 — Option A shipped
+
+The `capture-router` skill and `.github/workflows/jarvis-2-capture-router.yml`
+are merged and tested (13 offline tests in `test/local-test.mjs`). What shipped
+differs from the design above in three deliberate ways:
+
+1. **No Groq call at all.** The design said "Groq classify". The routing rules
+   turned out to be fully deterministic (tag match + emptiness), so the router
+   is a written rule table in `runner.mjs`, not a prompt. That is cheaper, has
+   no quota, no nondeterminism, and satisfies the pipeline rule that a routing
+   rule you cannot state is unmaintainable.
+2. **Junk captures are quarantined, not dropped.** They move to
+   `JARVIS/Inbox/_rejected/` and are reported loudly in the job summary. The
+   filter is a second line of defence — **the Tasker variable bug is still open
+   and still needs fixing at source.**
+3. **The router also sweeps legacy root `Inbox/`.** Some capture paths still
+   write there and cannot be corrected from CI. The sweep is copy-if-missing —
+   never deletes, never overwrites — so the split is self-healing rather than
+   requiring every writer to be fixed simultaneously.
+
+Idempotence is keyed on a SHA-1 prefix of the capture content, recorded in
+`Claude Memory/Account/capture-router-log.md`, and belief/decision entries carry
+a `<!-- capture:<id> -->` marker so a duplicate cannot be appended even if the
+log is lost. `on: push` fires on every commit, so this matters.
+
+**Still on n8n / still to do:** the phone leg. Tasker still posts to the paid
+n8n webhook. Retarget it at the GitHub Contents API (step 1 above) to finish
+Phase 2 and satisfy C1.
+
+#### Verify it on the Fold 7 (one line)
+
+```bash
+cd ~/jarvis/vault && printf -- '---\ntype: note\n---\n\n# Router check\n\n#belief Capture routing works end to end.\n' > "JARVIS/Inbox/$(date +%Y%m%d-%H%M%S)-router-check.md" && node "Assistant Core/jarvis-skills/runner.mjs" --skill=capture-router && tail -6 "Claude Memory/beliefs.md"
+```
+
+Expect `beliefs 1` in the summary line and your sentence at the bottom of
+`beliefs.md`. Run it a second time — it must print `nothing new to route` and
+`beliefs.md` must not grow. That second run is the important half: `on: push`
+fires on every commit, so a non-idempotent router would duplicate every entry.
+
+To prove the junk filter instead, write `your note here` as the body: the file
+moves to `JARVIS/Inbox/_rejected/` and the run prints a `⚠ REJECTED` line.
 
 ---
 

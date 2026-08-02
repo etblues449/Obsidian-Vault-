@@ -20,3 +20,11 @@
 ## Beliefs
 
 <!-- Entries land here from #belief captures. Empty by design. -->
+
+---
+
+## Belief — 2026-08-02 <!-- capture:c1a8d0db -->
+**Source:** 2026-07-04-1927-belief-tagged-captures-now-file-themselves-the-vau.md (auto-routed by Capture Router)
+**Status:** NEW (unconfirmed)
+
+>  Tagged captures now file themselves — the vault routes beliefs and decisions automatically, verified end-to-end today

@@ -34,6 +34,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 // ---------- paths ----------
@@ -192,11 +193,210 @@ async function groqChat({ system, user, maxTokens }) {
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// ---------- capture router (Skill 2) ----------
+// Event-driven, NOT scheduled — fires on push to the inbox. Deterministic: the
+// routing rules are a written table below, never a prompt, so this skill makes
+// no Groq call at all (£0, no quota, no nondeterminism).
+//
+// THE RULE TABLE — if you cannot state the rule that routed a note, the rule is
+// unmaintainable. Rules are applied top-down, first match wins:
+//
+//   1. body is empty / whitespace-only ....... REJECT -> JARVIS/Inbox/_rejected/
+//   2. body is a known placeholder ........... REJECT -> JARVIS/Inbox/_rejected/
+//   3. body matches /#belief\b/i ............. APPEND -> Claude Memory/beliefs.md
+//   4. body matches /#decision\b/i ........... APPEND -> Claude Memory/decisions.md
+//   5. anything else ......................... KEEP   -> stays in JARVIS/Inbox/
+//
+// Rule 5 is load-bearing: an unclassifiable capture is NEVER dropped. Losing a
+// capture is the one unrecoverable outcome in this pipeline.
+//
+// The junk filter (rules 1-2) is a SECOND LINE OF DEFENCE, not the fix for the
+// empty-Tasker-capture bug. Rejected captures are MOVED, never deleted, and are
+// reported loudly in the workflow job summary — a silent drop would be worse
+// than the bug it hides.
+
+const CAPTURE_DIR = path.join('JARVIS', 'Inbox');
+const LEGACY_CAPTURE_DIR = 'Inbox'; // pre-2026-06-19 destination; still written by some paths
+const REJECT_DIR = path.join('JARVIS', 'Inbox', '_rejected');
+const ROUTER_LOG = path.join('Claude Memory', 'Account', 'capture-router-log.md');
+
+// Files that live in an inbox but are NOT captures (templates, landing pages).
+const NOT_A_CAPTURE = new Set(['quick-capture.md', 'quick-notes.md', 'readme.md']);
+
+// Known placeholder bodies. `your note here` is the live Tasker bug.
+const JUNK_BODIES = new Set(['', 'your note here', 'test', 'testing', 'test capture', 'n/a', '-']);
+
+const captureId = (text) =>
+  crypto.createHash('sha1').update(text, 'utf8').digest('hex').slice(0, 8);
+
+function splitFrontMatter(raw) {
+  const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  return m ? { fm: m[1], body: m[2] } : { fm: '', body: raw };
+}
+
+// The meaningful text of a capture: front-matter and the "# Title" line removed.
+// The title is derived from the body by the capture scripts, so counting it
+// would make an empty capture look non-empty.
+function captureBody(raw) {
+  return splitFrontMatter(raw).body.replace(/^\s*#[^\n]*\r?\n/, '').trim();
+}
+
+function classifyCapture(raw) {
+  const body = captureBody(raw);
+  const norm = body.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (JUNK_BODIES.has(norm)) return { rule: norm === '' ? 1 : 2, action: 'reject', body };
+  if (/#belief\b/i.test(body)) return { rule: 3, action: 'belief', body };
+  if (/#decision\b/i.test(body)) return { rule: 4, action: 'decision', body };
+  return { rule: 5, action: 'keep', body };
+}
+
+function listCaptures(relDir) {
+  const dir = path.join(VAULT_ROOT, relDir);
+  try {
+    return fs.readdirSync(dir, { withFileTypes: true })
+      .filter((e) => e.isFile() && e.name.toLowerCase().endsWith('.md'))
+      .map((e) => e.name)
+      .filter((n) => !NOT_A_CAPTURE.has(n.toLowerCase()))
+      .sort();
+  } catch { return []; }
+}
+
+// Sweep the legacy root Inbox/ into JARVIS/Inbox/ so the engine can see captures
+// regardless of which writer produced them. COPY-IF-MISSING ONLY — this never
+// deletes and never overwrites, so it is safely idempotent and cannot lose a
+// capture if the two copies ever diverge.
+function sweepLegacyInbox() {
+  const swept = [];
+  for (const name of listCaptures(LEGACY_CAPTURE_DIR)) {
+    const from = path.join(VAULT_ROOT, LEGACY_CAPTURE_DIR, name);
+    const to = path.join(VAULT_ROOT, CAPTURE_DIR, name);
+    if (fs.existsSync(to)) continue; // already visible to the engine — leave both alone
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.copyFileSync(from, to);
+    swept.push(name);
+  }
+  return swept;
+}
+
+// Append an entry to beliefs.md / decisions.md, keyed by capture id so a repeat
+// run can never duplicate it even if the router log is lost.
+function appendKeyed(relPath, id, entry) {
+  const full = path.join(VAULT_ROOT, relPath);
+  const prev = readFileSafe(relPath) ?? '';
+  if (prev.includes(`<!-- capture:${id} -->`)) return false; // already routed
+  fs.mkdirSync(path.dirname(full), { recursive: true });
+  fs.writeFileSync(full, `${prev.replace(/\s*$/, '')}\n${entry}`, 'utf8');
+  return true;
+}
+
+function routedEntry(kind, id, note, london) {
+  const text = note.body.replace(new RegExp(`#${kind}\\b`, 'ig'), '').trim();
+  const label = kind === 'belief' ? 'Belief' : 'Decision';
+  return (
+    `\n---\n\n## ${label} — ${london.date} <!-- capture:${id} -->\n` +
+    `**Source:** ${note.name} (auto-routed by Capture Router)\n` +
+    `**Status:** NEW (unconfirmed)\n\n${text}\n`
+  );
+}
+
+function readRouterLog() {
+  const raw = readFileSafe(ROUTER_LOG) ?? '';
+  const seen = new Set();
+  for (const m of raw.matchAll(/`([0-9a-f]{8})`/g)) seen.add(m[1]);
+  return { raw, seen };
+}
+
+async function runCaptureRouter(ctx) {
+  const swept = sweepLegacyInbox();
+  if (swept.length) console.log(`[jarvis] swept ${swept.length} capture(s) from ${LEGACY_CAPTURE_DIR}/ -> ${CAPTURE_DIR}/`);
+
+  const { raw: logRaw, seen } = readRouterLog();
+  const names = listCaptures(CAPTURE_DIR);
+
+  const done = { rejected: [], belief: [], decision: [], kept: [] };
+  const logLines = [];
+
+  for (const name of names) {
+    const rel = path.join(CAPTURE_DIR, name);
+    const text = readFileSafe(rel);
+    if (text == null) continue;
+    const id = captureId(text);
+    if (seen.has(id)) continue; // idempotent: already routed
+    seen.add(id);
+
+    const c = classifyCapture(text);
+    const note = { name, body: c.body };
+
+    if (c.action === 'reject') {
+      const to = path.join(VAULT_ROOT, REJECT_DIR, name);
+      fs.mkdirSync(path.dirname(to), { recursive: true });
+      fs.renameSync(path.join(VAULT_ROOT, rel), to);
+      done.rejected.push(name);
+      logLines.push(`| \`${id}\` | ${ctx.london.date} | ${name} | ${c.rule} | REJECTED → \`_rejected/\` |`);
+    } else if (c.action === 'belief' || c.action === 'decision') {
+      const target = c.action === 'belief'
+        ? path.join('Claude Memory', 'beliefs.md')
+        : path.join('Claude Memory', 'decisions.md');
+      appendKeyed(target, id, routedEntry(c.action, id, note, ctx.london));
+      done[c.action].push(name);
+      logLines.push(`| \`${id}\` | ${ctx.london.date} | ${name} | ${c.rule} | → \`${target}\` |`);
+    } else {
+      done.kept.push(name);
+      logLines.push(`| \`${id}\` | ${ctx.london.date} | ${name} | ${c.rule} | kept in inbox |`);
+    }
+  }
+
+  const touched = done.rejected.length + done.belief.length + done.decision.length;
+  if (!logLines.length && !swept.length) {
+    console.log('[jarvis] capture router: nothing new to route.');
+    return { wrote: false, reason: 'no-new-captures' };
+  }
+
+  // Write the audit log — append-only, newest block at the bottom.
+  const header =
+    '# Capture Router — processing log\n\n' +
+    '> Append-only audit trail written by JARVIS Skill 2 (Capture Router).\n' +
+    '> Each capture is keyed by a SHA-1 prefix of its content; a capture whose id\n' +
+    "> already appears here is never re-routed. Don't hand-edit the ids.\n\n" +
+    '| id | date | capture | rule | outcome |\n|---|---|---|---|---|\n';
+  const body = logRaw.includes('| id | date |')
+    ? logRaw.replace(/\s*$/, '') + '\n' + logLines.join('\n') + '\n'
+    : header + logLines.join('\n') + '\n';
+  const logFull = path.join(VAULT_ROOT, ROUTER_LOG);
+  fs.mkdirSync(path.dirname(logFull), { recursive: true });
+  fs.writeFileSync(logFull, body, 'utf8');
+
+  const summary =
+    `swept ${swept.length} · rejected ${done.rejected.length} · ` +
+    `beliefs ${done.belief.length} · decisions ${done.decision.length} · kept ${done.kept.length}`;
+  console.log(`[jarvis] capture router: ${summary}`);
+  if (done.rejected.length) {
+    // Loud on purpose: a rejected capture means the SOURCE is still broken.
+    console.log(`[jarvis] ⚠ REJECTED ${done.rejected.length} placeholder/empty capture(s): ${done.rejected.join(', ')}`);
+    console.log('[jarvis] ⚠ The junk filter is a second line of defence — fix the Tasker variable at source.');
+  }
+
+  return {
+    wrote: true,
+    commit: `JARVIS Skill 2: capture router — ${summary} (automated)`,
+    summary,
+    rejected: done.rejected,
+  };
+}
+
 // ---------- skill definitions (faithful ports) ----------
 const SKILLS = {
+  'capture-router': {
+    label: 'Capture Router', num: 2,
+    guard: {},        // event-driven: no time guard, ever
+    kind: 'router',
+    run: runCaptureRouter,
+  },
   'morning-brief': {
     label: 'Morning Brief', num: 1,
-    guard: { hour: 7 }, // daily 07:00 London
+    // Scheduled daily ~07:00 London (two crons: 06:00 + 07:00 UTC). Runs when
+    // today's brief does not exist yet, whenever GitHub actually gets to it.
+    done: (ctx) => outputExists(`Claude Memory/briefings/${ctx.london.date}.md`),
     build(ctx) {
       const memory = readFileSafe('Claude Memory/MEMORY.md', MEMORY_CAP) || '';
       const captures = corpusFrom(recentCaptures(12));
@@ -223,7 +423,9 @@ const SKILLS = {
 
   'connection-finder': {
     label: 'Connection Finder', num: 3,
-    guard: { hour: 14, dow: 0 }, // Sunday 14:00 London
+    // Scheduled Sunday ~14:00 London. The cron only fires on Sunday, so the day
+    // is enforced by the schedule; this only stops a second run the same day.
+    done: (ctx) => outputExists(`Claude Memory/connections/${ctx.london.date}.md`),
     build(ctx) {
       const corpus = filesCorpus([
         'Claude Memory/MEMORY.md',
@@ -253,7 +455,13 @@ const SKILLS = {
 
   'weekly-synthesis': {
     label: 'Weekly Synthesis', num: 4,
-    guard: { hour: 18, dow: 5 }, // Friday 18:00 London
+    // Scheduled Friday ~18:00 London. Keyed on the ISO WEEK, not the date — so a
+    // run that slips past midnight into Saturday still fills the same week's
+    // slot instead of losing the week entirely.
+    done: (ctx) => {
+      const { week, weekYear } = isoWeek(ctx.london.year, ctx.london.month, ctx.london.day);
+      return outputExists(`Claude Memory/synthesis/${weekYear}-W${String(week).padStart(2, '0')}.md`);
+    },
     build(ctx) {
       const captures = corpusFrom(recentCaptures(30));
       const context = filesCorpus([
@@ -293,7 +501,14 @@ const SKILLS = {
 
   'pattern-detector': {
     label: 'Pattern Detector', num: 6,
-    guard: { hour: 8, dow: 1 }, // Monday 08:00 London
+    // Scheduled Monday ~08:00 London. patterns.md is a rolling prepend file, so
+    // there is no per-period path to test — the rendered section carries an
+    // explicit `<!-- week:YYYY-Www -->` marker and we look for that instead.
+    done: (ctx) => {
+      const { week, weekYear } = isoWeek(ctx.london.year, ctx.london.month, ctx.london.day);
+      const raw = readFileSafe('Claude Memory/patterns.md') ?? '';
+      return raw.includes(`<!-- week:${weekYear}-W${String(week).padStart(2, '0')} -->`);
+    },
     build(ctx) {
       const captures = corpusFrom(recentCaptures(30));
       const previousRaw = readFileSafe('Claude Memory/patterns.md') || '';
@@ -320,7 +535,10 @@ const SKILLS = {
         render: (text) =>
           `# Patterns Detected\n\n` +
           `*Last updated: ${ctx.london.date} (automated · JARVIS Skill 6: Pattern Detector · GitHub Actions + Groq)*\n\n` +
-          `## Week ending ${ctx.london.date}\n\n${text}\n\n---\n${historyTail}`,
+          `## Week ending ${ctx.london.date} <!-- week:${(() => {
+            const { week, weekYear } = isoWeek(ctx.london.year, ctx.london.month, ctx.london.day);
+            return `${weekYear}-W${String(week).padStart(2, '0')}`;
+          })()} -->\n\n${text}\n\n---\n${historyTail}`,
         commit: `JARVIS Skill 6: pattern report ${ctx.london.date} (automated · GitHub Actions + Groq)`,
       };
     },
@@ -335,12 +553,40 @@ function setOutputs(obj) {
   fs.appendFileSync(gh, lines.join('\n') + '\n');
 }
 
-function guardPasses(guard, london) {
-  if (FORCE) return true;
-  if (guard.hour != null && london.hour !== guard.hour) return false;
-  if (guard.dow != null && london.dow !== guard.dow) return false;
-  return true;
+// ---------- the run guard ----------
+//
+// HISTORY — read before changing this.
+//
+// Until 2026-08-02 this was an EXACT London-hour equality check:
+//     if (guard.hour != null && london.hour !== guard.hour) return false;
+// It silently broke the entire engine. GitHub Actions cron is best-effort and on
+// free runners routinely starts jobs 30 minutes to 3 hours late. `londonNow()`
+// reads the wall clock AT EXECUTION, so a delayed run saw the wrong hour, failed
+// the guard, and exited 0 — the workflow reported SUCCESS and wrote nothing.
+// Every one of the 11 scheduled runs in the repo's history failed this way; every
+// briefing that exists was produced by n8n or a manual `workflow_dispatch`.
+// Evidence: job 30693257169 ("London now: ... 10:11", "want hour=7").
+//
+// The replacement asks the only question that actually matters:
+//
+//     "Has this skill's output for the current period already been written?"
+//
+// That is DST-safe (no hour arithmetic at all), delay-safe (a brief written at
+// 10:00 is still today's brief), and self-healing (a missed period is picked up
+// by the next attempt). The paired BST/GMT crons are now simply two attempts at
+// the same period — whichever runs first does the work, the other no-ops.
+//
+// `done(ctx)` is per-skill and MUST be keyed on the same period as the skill's
+// output path, or the skill will either duplicate or never run.
+function shouldRun(skill, ctx) {
+  if (FORCE) return { run: true };
+  if (typeof skill.done === 'function' && skill.done(ctx)) {
+    return { run: false, reason: 'already-done' };
+  }
+  return { run: true };
 }
+
+const outputExists = (rel) => fs.existsSync(path.join(VAULT_ROOT, rel));
 
 // ---------- main ----------
 async function main() {
@@ -356,11 +602,23 @@ async function main() {
   console.log(`[jarvis] London now: ${london.long} ${String(london.hour).padStart(2, '0')}:${String(london.minute).padStart(2, '0')} (dow=${london.dow})`);
   console.log(`[jarvis] model=${GROQ_MODEL}  dry-run=${DRY_RUN}  force=${FORCE}`);
 
-  if (!guardPasses(skill.guard, london)) {
-    console.log(`[jarvis] Not the scheduled London time for ${skill.label} — nothing to do. ` +
-      `(want hour=${skill.guard.hour}${skill.guard.dow != null ? `, dow=${skill.guard.dow}` : ''})`);
-    setOutputs({ wrote: 'false', reason: 'time-guard' });
+  const gate = shouldRun(skill, ctx);
+  if (!gate.run) {
+    console.log(`[jarvis] ${skill.label}: this period's output already exists — nothing to do.`);
+    setOutputs({ wrote: 'false', reason: gate.reason });
     process.exit(0);
+  }
+
+  // Event-driven skills (the capture router) do their own multi-file writes and
+  // never call Groq — they return the commit message directly.
+  if (skill.kind === 'router') {
+    const res = await skill.run(ctx);
+    if (!res.wrote) {
+      setOutputs({ wrote: 'false', reason: res.reason || 'nothing-to-do' });
+      process.exit(0);
+    }
+    setOutputs({ wrote: 'true', path: '(multiple)', commit_msg: res.commit, summary: res.summary });
+    return;
   }
 
   const spec = skill.build(ctx);
