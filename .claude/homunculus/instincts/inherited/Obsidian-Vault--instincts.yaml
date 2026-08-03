@@ -1,0 +1,604 @@
+# Instincts generated from https://github.com/etblues449/Obsidian-Vault-
+# Generated: 2026-08-03T00:01:21.493Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: Obsidian-Vault--commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Commit Length
+
+## Action
+
+Write moderate-length commit messages (~57 characters)
+
+## Evidence
+
+- Average commit message length: 57 chars
+- Based on 293 commits
+
+---
+id: Obsidian-Vault--naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: Obsidian-Vault--import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: Obsidian-Vault--export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Export Style
+
+## Action
+
+Prefer mixed exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: mixed
+
+---
+id: Obsidian-Vault--workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.7
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~4x per month
+- Files: **/*.test.*, **/api/**
+
+---
+id: Obsidian-Vault--workflow-add-or-update-jarvis-skill-or-skill-engine
+trigger: "when doing add or update jarvis skill or skill engine"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow Add Or Update Jarvis Skill Or Skill Engine
+
+## Action
+
+Follow the add-or-update-jarvis-skill-or-skill-engine workflow:
+1. Edit or add .github/workflows/jarvis-*-*.yml (one per skill or engine)
+2. Edit or add Assistant Core/jarvis-skills/runner.mjs
+3. Update Assistant Core/jarvis-skills/README.md and/or MIGRATION.md
+4. Edit or add Assistant Core/jarvis-skills/test/local-test.mjs
+5. Update or create skill documentation in .claude/skills/*/SKILL.md
+6. Update memory/log files (e.g., Claude Memory/Account/capture-router-log.md, beliefs.md, capture_queue.md)
+7. Test: run engine tests, verify drift-check/verify-refs
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: .github/workflows/jarvis-1-morning-brief.yml, .github/workflows/jarvis-2-capture-router.yml, .github/workflows/jarvis-3-connection-finder.yml
+
+---
+id: Obsidian-Vault--workflow-smart-home-project-diagnostics-and-dashboard-update
+trigger: "when doing smart home project diagnostics and dashboard update"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow Smart Home Project Diagnostics And Dashboard Update
+
+## Action
+
+Follow the smart-home-project-diagnostics-and-dashboard-update workflow:
+1. Run or update diagnostic scripts (Assistant Core/ha-diagnostics/ha-doctor.mjs)
+2. Update or create diagnostic output files (Claude Memory/Projects/Smart Home/diagnostics/*.md)
+3. Edit or update dashboard YAMLs (jellybean-dashboard*.yaml, theme.yaml)
+4. Update master plan and index (_index.md, MASTER_PLAN.md)
+5. Update or add hardware guides (hardware/*.md, hardware/*.yaml)
+6. Reconcile findings in capture_queue.md and session notes
+7. Propagate canonical device/entity decisions across relevant files
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: Assistant Core/ha-diagnostics/ha-doctor.mjs, Assistant Core/ha-diagnostics/README.md, Claude Memory/Projects/Smart Home/diagnostics/*.md
+
+---
+id: Obsidian-Vault--workflow-merge-pull-request-smart-home-or-skill
+trigger: "when doing merge pull request smart home or skill"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow Merge Pull Request Smart Home Or Skill
+
+## Action
+
+Follow the merge-pull-request-smart-home-or-skill workflow:
+1. Merge PR (affecting Smart Home or skill engine files)
+2. Immediately follow up with a commit updating index, dashboard, or capture_queue.md to reflect canonical decisions or correct minor issues
+3. Update session notes and runbooks as needed
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: Claude Memory/Projects/Smart Home/_index.md, Claude Memory/Projects/Smart Home/dashboard/*.yaml, Claude Memory/Projects/Smart Home/hardware/*.md
+
+---
+id: Obsidian-Vault--workflow-android-client-or-skill-framework-integration
+trigger: "when doing android client or skill framework integration"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow Android Client Or Skill Framework Integration
+
+## Action
+
+Follow the android-client-or-skill-framework-integration workflow:
+1. Add or update .claude/skills/android-development
+2. Scaffold or update jarvis-android/* project structure (app, core/*, feature/*, gradle configs)
+3. Add or update Gradle files (build.gradle.kts, settings.gradle.kts, libs.versions.toml)
+4. Add sample implementation files (e.g., CaptureUiState, CaptureNavigation)
+5. Update or create jarvis-android/README.md
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: .claude/skills/android-development, jarvis-android/README.md, jarvis-android/app/build.gradle.kts
+
+---
+id: Obsidian-Vault--workflow-recover-deleted-files-after-obsidian-git-sync
+trigger: "when doing recover deleted files after obsidian git sync"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow Recover Deleted Files After Obsidian Git Sync
+
+## Action
+
+Follow the recover-deleted-files-after-obsidian-git-sync workflow:
+1. Detect file deletions in a 'Sync from Obsidian' commit (notably .github/workflows/*.yml, manifest, setup scripts, .gitignore)
+2. Restore deleted files from a good branch or backup
+3. Reconcile any conflicts (keep modifications, discard deletions)
+4. Document the recurrence and update CLAUDE.md or change history
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: .github/workflows/_jarvis-run-skill.yml, .github/workflows/jarvis-1-morning-brief.yml, .github/workflows/jarvis-3-connection-finder.yml
+
+---
+id: Obsidian-Vault--workflow-state-of-system-or-audit-note-update
+trigger: "when doing state of system or audit note update"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow State Of System Or Audit Note Update
+
+## Action
+
+Follow the state-of-system-or-audit-note-update workflow:
+1. Create or update Claude Memory/202*-*-*-jarvis-state-of-the-system.md or similar audit notes
+2. Update capture_queue.md and beliefs.md with findings
+3. Edit or update CLAUDE.md with change history and reconciled rules
+4. Update Smart Home/_index.md or related project indices
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: Claude Memory/2026-08-02-jarvis-state-of-the-system.md, Claude Memory/Account/capture_queue.md, Claude Memory/beliefs.md
+
+---
+id: obsidian-vault--naming-convention-files
+trigger: "When creating or renaming a file in the codebase"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Naming Convention Files
+
+## Action
+
+Use camelCase for file names
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.files
+- Consistent naming in JARVIS-Carousel/next.config.js
+
+---
+id: obsidian-vault--naming-convention-functions
+trigger: "When defining a function"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Naming Convention Functions
+
+## Action
+
+Use camelCase for function names
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.functions
+- Seen in Assistant Core/jarvis-skills/runner.mjs
+
+---
+id: obsidian-vault--naming-convention-classes
+trigger: "When defining a class"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Naming Convention Classes
+
+## Action
+
+Use PascalCase for class names
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.classes
+
+---
+id: obsidian-vault--naming-convention-constants
+trigger: "When defining a constant"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Naming Convention Constants
+
+## Action
+
+Use SCREAMING_SNAKE_CASE for constant names
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.constants
+
+---
+id: obsidian-vault--import-style
+trigger: "When importing modules in JavaScript"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Import Style
+
+## Action
+
+Use relative import paths
+
+## Evidence
+
+- Pattern in codeStyle.importStyle
+- Seen in Assistant Core/jarvis-skills/runner.mjs
+
+---
+id: obsidian-vault--export-style
+trigger: "When exporting modules or functions"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Export Style
+
+## Action
+
+Use mixed export style (default and named exports as appropriate)
+
+## Evidence
+
+- Pattern in codeStyle.exportStyle
+
+---
+id: obsidian-vault--error-handling-try-catch
+trigger: "When handling errors in JavaScript code"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Error Handling Try Catch
+
+## Action
+
+Use try-catch blocks for error handling
+
+## Evidence
+
+- Pattern in errorHandling.style
+- Seen in Assistant Core/jarvis-skills/runner.mjs
+
+---
+id: obsidian-vault--testing-patterns-location
+trigger: "When adding or updating tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Testing Patterns Location
+
+## Action
+
+Place test files alongside implementation files (mixed test location)
+
+## Evidence
+
+- Pattern in architecture.folderStructure.testLocation
+- Files like Assistant Core/jarvis-skills/test/local-test.mjs
+
+---
+id: obsidian-vault--testing-patterns-feature
+trigger: "When implementing a new feature"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Testing Patterns Feature
+
+## Action
+
+Add corresponding tests for the feature before or after implementation
+
+## Evidence
+
+- Workflows.feature-development.commitSequence includes 'Add tests for feature'
+- Seen in commits for phone-UI-control research note
+
+---
+id: obsidian-vault--git-commit-prefixes
+trigger: "When writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Git Commit Prefixes
+
+## Action
+
+Start the commit message with a prefix such as 'jarvis', 'fix', 'feat', or 'Setup'
+
+## Evidence
+
+- Pattern in commits.prefixes
+- Examples: 'jarvis-core pushed...', 'Fix: Pause listening...'
+
+---
+id: obsidian-vault--git-commit-format-length
+trigger: "When writing a commit message"
+confidence: 0.8
+domain: git
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Git Commit Format Length
+
+## Action
+
+Keep commit messages concise (average ~57 characters), but descriptive
+
+## Evidence
+
+- Pattern in commits.averageLength
+- Examples in commits.examples
+
+---
+id: obsidian-vault--workflow-add-or-update-jarvis-skill
+trigger: "When adding a new skill, fixing the skill engine, or updating scheduled skill workflows"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow Add Or Update Jarvis Skill
+
+## Action
+
+Edit or add relevant workflow YAMLs, update runner scripts, docs, tests, and memory/log files; run engine tests and verify drift-check/refs
+
+## Evidence
+
+- Workflow: add-or-update-jarvis-skill-or-skill-engine
+- Commit sequences and files in workflow definition
+
+---
+id: obsidian-vault--workflow-smart-home-diagnostics
+trigger: "When new devices are added, diagnostics are run, or dashboards/hardware configs need correction"
+confidence: 0.92
+domain: workflow
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow Smart Home Diagnostics
+
+## Action
+
+Run/update diagnostic scripts, update diagnostic outputs, dashboards, master plan, hardware guides, and reconcile findings in logs and session notes
+
+## Evidence
+
+- Workflow: smart-home-project-diagnostics-and-dashboard-update
+- Commit sequences and files in workflow definition
+
+---
+id: obsidian-vault--workflow-merge-pr-smart-home-or-skill
+trigger: "When merging a feature/fix PR for Smart Home or JARVIS skills"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow Merge Pr Smart Home Or Skill
+
+## Action
+
+Merge PR, immediately follow up with a commit updating index/dashboard/capture_queue.md, and update session notes/runbooks as needed
+
+## Evidence
+
+- Workflow: merge-pull-request-smart-home-or-skill
+- Commit sequences and files in workflow definition
+
+---
+id: obsidian-vault--workflow-android-client-integration
+trigger: "When starting or integrating a new Android client or skill framework"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow Android Client Integration
+
+## Action
+
+Scaffold/update android project structure, Gradle configs, add sample implementations, and update documentation
+
+## Evidence
+
+- Workflow: android-client-or-skill-framework-integration
+- Commit sequences and files in workflow definition
+
+---
+id: obsidian-vault--workflow-recover-deleted-files-after-sync
+trigger: "When a sync from Obsidian (Jarvis) deletes files due to a stale working copy"
+confidence: 0.88
+domain: workflow
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow Recover Deleted Files After Sync
+
+## Action
+
+Detect deletions, restore files from backup/branch, reconcile conflicts, and document the incident
+
+## Evidence
+
+- Workflow: recover-deleted-files-after-obsidian-git-sync
+- Commit sequences and files in workflow definition
+- Seen in commit 'recover the deleted files, reconcile the docs'
+
+---
+id: obsidian-vault--workflow-state-of-system-audit-note
+trigger: "When verifying system health, reconciling documentation with reality, or after a major incident"
+confidence: 0.87
+domain: workflow
+source: repo-analysis
+source_repo: etblues449/Obsidian-Vault-
+---
+
+# Obsidian Vault  Workflow State Of System Audit Note
+
+## Action
+
+Create/update state-of-system or audit notes, update logs/beliefs, edit CLAUDE.md and project indices
+
+## Evidence
+
+- Workflow: state-of-system-or-audit-note-update
+- Commit sequences and files in workflow definition
+
