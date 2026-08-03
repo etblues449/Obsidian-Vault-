@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "generatedBy": "ecc-tools",
+  "profile": "research",
+  "sharedSkills": [
+    ".claude/skills/Obsidian-Vault-/SKILL.md",
+    ".agents/skills/Obsidian-Vault-/SKILL.md"
+  ],
+  "commandFiles": [
+    ".claude/commands/feature-development.md",
+    ".claude/commands/add-or-update-jarvis-skill-or-skill-engine.md",
+    ".claude/commands/smart-home-project-diagnostics-and-dashboard-update.md"
+  ],
+  "updatedAt": "2026-08-03T00:00:48.485Z"
+}
