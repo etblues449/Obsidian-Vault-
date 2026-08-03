@@ -163,6 +163,9 @@ esp32_camera_web_server:
   - port: 8081
     mode: snapshot
 
+rtmp_server:
+  port: 1935
+
 i2s_audio:
   - id: i2s_bus
     i2s_mclk_pin: GPIO10
