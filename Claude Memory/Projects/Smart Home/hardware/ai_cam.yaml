@@ -157,14 +157,13 @@ esp32_camera:
             ESP_LOGI("sd", "Wrote %s (%d bytes)", id(snapshot_name).c_str(), image.length);
           }
 
+# MJPEG over HTTP is the ONLY video transport this board offers — ESPHome has no
+# rtmp_server / rtsp_server component. go2rtc ingests :8080 and transcodes to h264.
 esp32_camera_web_server:
   - port: 8080
     mode: stream
   - port: 8081
     mode: snapshot
-
-rtmp_server:
-  port: 1935
 
 i2s_audio:
   - id: i2s_bus
