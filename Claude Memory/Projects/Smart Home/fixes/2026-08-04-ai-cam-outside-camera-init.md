@@ -73,33 +73,78 @@ genuine OV3660 hardware failing under ESPHome 2026.x and working under Arduino.
 
 ---
 
-## What the registry actually shows about this board
+## ⛔ RETRACTED — the registry inference was wrong
 
-From `diagnostics/2026-08-02-ha-doctor.md`, the entities `landing_ai_cam_2` has ever
-registered are:
+An earlier version of this note claimed the `landing_ai_cam_2` device had never
+registered a camera entity or a `camera_power_down` switch, and concluded that nothing
+had ever driven EXIO3 on this board.
 
-```
-update.landing_ai_cam_2_firmware
-select.landing_ai_cam_2_assistant            select.landing_ai_cam_2_assistant_2
-select.landing_ai_cam_2_wake_word            select.landing_ai_cam_2_wake_word_2
-select.landing_ai_cam_2_finished_speaking_detection
-assist_satellite.landing_ai_cam_2_assist_satellite
-```
+**That was an overread.** The list it drew on
+(`diagnostics/2026-08-02-ha-doctor.md`) is the *unknown-state* entity dump, not a full
+device inventory — and Elliot's own registry check on 2026-08-04 shows
+`camera.ai_cam_2_ai_cam_outside`, `sensor.landing_ai_cam_2_ai_cam_outside_wifi_signal`
+and `..._ip_address`, none of which appear in that dump. So the dump cannot be read as
+"these are the only entities this device has".
 
-**No camera entity, and — decisively — no `switch.…_camera_power_down` and no
-`switch.…_amp_enable`.** The working board has `switch.living_room_ai_cam_camera_power_down`
-(ha-doctor checks it explicitly). So the config flashed on `.201` has never declared the
-CH32V003 expander at all, and nothing has ever driven EXIO3 on this board.
+**Nothing is known either way about whether the 2026-08-02 firmware drove EXIO3.** Do not
+carry the retracted claim forward.
 
-*Caveat, stated honestly:* that snapshot is 2026-08-02 and the device was offline, so it
-reflects the last build that connected, not necessarily the current one. It is strong
-evidence, not proof.
+What *is* known: the working file as of 2026-08-04 does drive it — expander declared,
+`camera_pwdn` on EXIO3 `restore_mode: ALWAYS_OFF`, priority-700 blocking settle delay —
+and **that file has never been flashed, because the build does not complete.** The
+hypothesis is untested, not disproved.
 
 **The other difference the handoff surfaced but didn't weigh:** `ai_cam` (working) was
 compiled **2026-07-30**; `ai_cam_outside` (failing) was compiled **2026-08-02 on
 2026.7.3**. Both are 2026.x, so "all of 2026.x is broken" is already falsified by
 `ai_cam` itself — but a version bump on the Green between those two dates fits #16926
 exactly, and is the single largest uncontrolled difference between the two boards.
+
+---
+
+---
+
+## ⚠️ THE CURRENT BLOCKER IS THE BUILD, NOT THE CAMERA (2026-08-04)
+
+Device Builder 1.7.0 / ESPHome 2026.7.3. Log kept at
+`hardware/ai_cam_outside-install-2026-08-04.log`. It ends:
+
+```
+-- Building ESP-IDF components for target esp32s3
+-- ESP-TEE is currently supported only on the esp32c6;esp32h2;esp32c5 SoCs
+-- Project sdkconfig file /data/build/ai_cam_outside/sdkconfig.ai_cam_outside
+```
+
+then the UI shows **"WebSocket connection closed"** at **16m 58s**, with **2 active jobs**
+on the build server.
+
+**Read that carefully — the compile had not started.** Those are the last lines of the
+*cmake configure* stage. Sixteen minutes to reach the end of configure is the Green under
+memory pressure, not a YAML fault. Nothing in the config failed; `esphome` validated it
+and generated C++ cleanly (the only messages are the expected strapping-pin warnings on
+GPIO45/46/0 — those are camera data pins D0/D3 on this board — and the
+`Charger Connected: falling back to polling mode` note for the expander pin).
+
+Order of response:
+
+1. **"WebSocket connection closed" is the browser losing the log stream.** It is not
+   proof the build died — Device Builder keeps going server-side. Check Build server →
+   jobs before concluding anything.
+2. **Do NOT click "cleaning the build files for this device."** The dialog offers it and
+   it is the wrong move here: it throws away the `sdkconfig` and ccache that the 16
+   minutes just produced, so the next attempt pays the cost again. ESP-IDF 5.5.5 was
+   being installed and cached for the first time for this device — that one-off is most
+   of the 16 minutes, and a plain **Retry** skips it.
+3. **Build one device at a time.** Two concurrent ESP-IDF builds is what puts a 4 GB
+   Green into swap. `compile_process_limit: 1` caps parallelism *within* a build, not
+   across builds.
+4. **If it keeps dying, compile off-box on the PC.** [[../hardware/ai_cam-compile-runbook]]
+   exists for exactly this failure mode (it was written when the Green OOM-killed the
+   mWW build) and OTA reaches `.201` with no USB cable. Substitute `ai_cam_outside.yaml`
+   for `ai_cam.yaml` and `192.168.0.201` for `.199`; the `secrets.yaml` step is
+   unchanged, and this config needs no external components at all.
+
+Until a build lands on the board, **every camera hypothesis below is untested**.
 
 ---
 
@@ -155,6 +200,10 @@ JPEG engine → module replacement. Note that `esp32_camera_web_server` cannot s
 RGB565, so this is a diagnostic only: no `:8080`, no go2rtc, no Frigate.
 
 ### Test 3 — the version test (leading candidate if PID reads 0x3660)
+
+> **`min_version: 2026.4.0` was in the working file and has been removed.** It silently
+> blocks this entire test — a downgrade fails validation instead of building. Do not add
+> it back until the camera is confirmed working.
 
 Read the known-good version off the working board first — **do not guess it**:
 
