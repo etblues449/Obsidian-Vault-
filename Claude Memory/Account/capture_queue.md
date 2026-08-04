@@ -125,3 +125,14 @@ Runbook: [[../Projects/Smart Home/automations/2026-08-04-assist-person-automatio
 - [x] 2026-07-27 — JARVIS harness built: 5 agents, 7 skills, orchestrator, 2 bundled checkers
 - [x] 2026-07-29 — **AI Cam COMPLETE** — ES7210 mics + microWakeWord + buttons + LED; custom ESPHome ES7210 component written from scratch and verified (STT verbatim in 0.04s)
 - [x] 2026-07-23 — AI Cam camera + speaker working (vendor-BSP pinout correction)
+
+
+## New — from the 2026-08-04 session (camera transcript closed; estate expanded)
+
+- [x] **AI-Mode camera transcript root-caused & closed** — `0x106` = CH32V003 EXIO3 power gating, never pins; corrected sketch (vendor-example base) **compile-verified** on esp32 core 3.3.11 and delivered as `WS_S3_CAM_OV3660_WebServer.zip`. Full analysis: `Smart Home/diagnostics/2026-08-04-full-home-diagnosis.md` Part 1.
+- [x] **MASTER_PLAN v2 + full-home diagnosis committed** (2026-08-04) — estate re-baselined, room-by-room end state, ranked P0–P3 repair queue.
+- [x] **Option B runbook gap fixed** — PyPI ESPHome (≤2026.6.5) lacks `waveshare_io_ch32v003`; pin it from the esphome repo @ tag 2026.7.1 (addendum in the runbook; already included in landing yaml).
+- [ ] **Flash board #2 with `hardware/landing_ai_cam_2.yaml`** (validated exit 0) — add `landing_api_encryption_key` + `landing_ota_password` secrets; **first flash USB/web.esphome.io** (board likely carries the Arduino-experiment firmware — no ESPHome OTA); confirm 192.168.0.198 is free.
+- [ ] **Confirm board identity by MAC** — `28:84:85:49:83:C8` = live ai_cam; check whether `…:86:70` answers as the Arduino-flashed board.
+- [ ] **P0 unchanged and still open: back up hub-side config into `ha-config/`** — automations, bedroom-2, frigate, scenes/scripts, the FLASHED ai_cam.yaml, `ui-lovelace-minimal.yaml`. One SD failure erases the lot.
+

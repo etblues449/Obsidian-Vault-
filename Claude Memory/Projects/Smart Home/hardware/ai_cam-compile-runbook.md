@@ -67,3 +67,28 @@ factory bin via https://web.esphome.io).
 This exact flow revives `landing_ai_cam_2` (2nd CAM board — new IP + its own API key in a
 copied config) and any future node the Green can't compile. Structural fix stays the
 **N100** on the [[../MASTER_PLAN]] buy list.
+
+
+## ⚠️ Addendum (2026-08-04) — REQUIRED patch for the PC compile: the PyPI channel gap
+
+Verified today on a clean install: **`pip install esphome` gives you at most 2026.6.5 —
+PyPI trails the HA add-on channel, and 2026.6.5 does NOT ship `waveshare_io_ch32v003`**
+(the Green's 2026.7.1 add-on does). Step 4 (`esphome run ai_cam.yaml`) therefore fails
+off-box with `Unable to import component waveshare_io_ch32v003` unless you add this to
+`ai_cam.yaml`'s `external_components:` before compiling:
+
+```yaml
+  - source:
+      type: git
+      url: https://github.com/esphome/esphome
+      ref: 2026.7.1
+      path: esphome/components
+    components: [waveshare_io_ch32v003]
+```
+
+This pins the official component at the hub's exact release. Remove it once your PC
+ESPHome ships the component natively. `hardware/landing_ai_cam_2.yaml` already includes
+it. (Everything else in this runbook stands: es7210 is native, hey_jarvis/vad models
+download automatically on a normal network — a 403 on those in a restricted environment
+is the proxy, not the config.)
+
