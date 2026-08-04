@@ -1,0 +1,389 @@
+# ai_cam_outside.yaml — Waveshare ESP32-S3-CAM-OVxxxx, node 2
+# Board: ai_cam_outside @ 192.168.0.201 · HA device "AI CAM 2" · area Landing
+#
+# STATUS 2026-08-04: camera init fails with ESP_ERR_NOT_SUPPORTED on ESPHome 2026.7.3.
+# This file is the corrected config. It does NOT by itself prove the camera will work —
+# see fixes/2026-08-04-ai-cam-outside-camera-init.md for the ordered diagnosis. Flash
+# this, then read the boot log for the `camera` tag PID line; that line, not this file,
+# is what settles the cause.
+#
+# WHAT CHANGED vs the Downloads copy, and why (each item is sourced):
+#   1. ADDED waveshare_io_ch32v003 + `camera_pwdn` (EXIO3) + `amp_enable` (EXIO4).
+#      The HA registry snapshot of 2026-08-02 shows this board registered NO camera and
+#      NO switch entities at all — so nothing has ever driven EXIO3 on it. On this board
+#      camera PWDN is CH32V003 EXIO3, not a GPIO.
+#      Source: hardware/Waveshare ESP32-S3-CAM-OV3660 — Arduino IDE Setup (CORRECTED).md
+#   2. ADDED the priority-700 blocking on_boot settle delay. This is the fix that was
+#      PROPOSED 2026-08-01 and never flashed. THIS IS ITS FIRST FLASH — verify with the
+#      10-reboot protocol in the fixes note before believing it.
+#   3. REMOVED the `ap:` block and `captive_portal:`. This clears the compile blocker
+#      without adding `ap_fallback_password` to secrets.yaml, and is the correct call for
+#      an outdoor board: an open or weakly-keyed fallback AP next to `web_server: 80` is
+#      a way in. Nothing is lost — `reboot_timeout` + OTA recover the node.
+#   4. es8311/es7210 use the CORE components. Do NOT copy ai_cam's `external_components`
+#      block for them: `audio_dac/es8311` and `audio_adc/es7210` (the latter since
+#      2025.2.0) are in ESPHome core now.
+#   5. NO `min_version:`. Deliberate — a pin here would block the ESPHome-downgrade test
+#      (Test 3), which is currently the leading fix. Do not add one back.
+#   6. Speaker `timeout: 500ms`. NEVER `timeout: never` on this board: the I2S bus is a
+#      mutex and `never` permanently blocks the microphone with no error.
+#   7. UART logging left ON (no `baud_rate: 0`). ai_cam sets 0 only because its SD card
+#      uses GPIO43/44. There is no SD block here, so the pins are free — and you need
+#      serial to read the camera PID line if the API drops.
+#
+# Pin map source: Waveshare BSP `waveshare/esp32_s3_cam_ovxxxx` v2.0.1 +
+# Schematic/ESP32-S3-CAM-XXXX-schematic.pdf. All 22 pin claims independently
+# re-verified 2026-08-01. Do not substitute the Amazon "Interface Definition" image —
+# its audio pins are wrong and cost ~4h once already.
+
+substitutions:
+  node_name: ai_cam_outside
+  # friendly_name drives the HA device name, which drives EVERY entity ID for this
+  # board (area prefix + device prefix + slug). It is currently "AI CAM 2" in area
+  # Landing, giving `landing_ai_cam_2_*`. CHANGING THIS RENAMES EVERY ENTITY and breaks
+  # any automation referencing them. Leave it alone.
+  friendly_name: AI CAM 2
+
+esphome:
+  name: ${node_name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: false
+  # Keep the HA Green's compiler from being OOM-killed (it has been, on this board family).
+  compile_process_limit: 1
+  on_boot:
+    # Runs AFTER the gpio switch platform has set up (~priority 800) and driven EXIO3
+    # LOW, and BEFORE esp32_camera sets up (~priority 600). The blocking delay stalls the
+    # rest of setup so the OV3660 rail settles before the camera probes SCCB.
+    # The lambda delay is BLOCKING on purpose — an async `delay:` action would NOT work
+    # here, because setup continues while it waits. That is the entire point.
+    - priority: 700
+      then:
+        - switch.turn_off: camera_pwdn   # idempotent re-assert: EXIO3 LOW = camera powered
+        - lambda: 'delay(150);'
+    # If the camera still fails, the camera set up before this ran. Lower to 620 and retry.
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    # ── TEST 3 (ESPHome/esp-idf downgrade, see the fixes note) ──────────────────
+    # esphome/esphome#16926 is OPEN and explicitly names OV3660 as affected, blaming
+    # "the updated esp-idf framework" in 2026.x. To pin the framework rather than
+    # downgrading all of ESPHome, uncomment and set to the version the WORKING ai_cam
+    # firmware was built against:
+    #   version: recommended
+    #   platform_version: 51.03.07
+    # Read the known-good version off the working board first — do not guess it.
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  level: DEBUG
+  # DEBUG is required: the decisive esp32-camera lines ("Detected camera at address=…",
+  # "Camera PID=0x…", "Detected camera not supported." / "JPEG format is not supported
+  # on this sensor") come from the ESP-IDF `camera` tag, not from ESPHome's own
+  # esp32_camera tag. The [C][esp32_camera:143] line you already have is dump_config
+  # output — it reports the errno but never the reason.
+
+api:
+  # If AI CAM 2 was adopted in HA under its own key, put THAT secret's name here.
+  # Changing an adopted device's encryption key makes HA drop the device until the new
+  # key is entered by hand.
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  power_save_mode: none
+  reboot_timeout: 120s
+  manual_ip:
+    static_ip: 192.168.0.201
+    gateway: 192.168.0.1
+    subnet: 255.255.255.0
+    dns1: 192.168.0.1
+  use_address: 192.168.0.201
+  # NO `ap:` block and NO `captive_portal:` — see header note 3. If you ever add the
+  # fallback AP back, it MUST have a real password in secrets.yaml. An open AP on a
+  # board also running `web_server: 80` is an unauthenticated route onto the LAN.
+
+web_server:
+  port: 80
+
+i2c:
+  - id: bus_a
+    sda: GPIO8
+    scl: GPIO7
+    scan: true
+    # SCCB (camera control) shares this bus. Expected scan: 0x18 ES8311 · 0x24 CH32V003
+    # · 0x3C camera · 0x40 ES7210. An occasional boot missing 0x3C is scan timing racing
+    # the EXIO3 power-up, not a fault — the settle delay above is what fixes it.
+
+waveshare_io_ch32v003:
+  - id: io_expander
+    address: 0x24
+    i2c_id: bus_a
+    # If this fails to resolve on your ESPHome version, add:
+    #   external_components:
+    #     - source: github://fuzzybear62/esphome-waveshare_io_ch32v003
+    #       components: [waveshare_io_ch32v003]
+
+# ─── CAMERA ─────────────────────────────────────────────────────────────────────
+# Pins per vendor BSP. XCLK held at 10 MHz to match the KNOWN-GOOD ai_cam board —
+# changing it is Test 4, and only after the PID line has been read.
+esp32_camera:
+  name: "AI Cam Outside"
+  id: outside_camera
+  external_clock:
+    pin: GPIO38
+    frequency: 10MHz
+  i2c_id: bus_a
+  data_pins: [GPIO45, GPIO47, GPIO48, GPIO46, GPIO42, GPIO40, GPIO39, GPIO21]
+  vsync_pin: GPIO17
+  href_pin: GPIO18
+  pixel_clock_pin: GPIO41
+  resolution: 800x600
+  jpeg_quality: 12
+  max_framerate: 5 fps
+  frame_buffer_count: 2
+
+# ─── TEST 2 ONLY: non-JPEG probe ────────────────────────────────────────────────
+# Use ONLY if the boot log will not give you a PID line. Comment out the esp32_camera
+# block above AND the esp32_camera_web_server block below, then uncomment this.
+# If this initialises and the JPEG one does not, the sensor has no hardware JPEG engine
+# (GC2145/GC0308), and no config change can fix it — the module needs replacing.
+# `pixel_format` is a newer option; if it fails validation, record the exact message.
+#
+# esp32_camera:
+#   name: "AI Cam Outside"
+#   id: outside_camera
+#   external_clock:
+#     pin: GPIO38
+#     frequency: 10MHz
+#   i2c_id: bus_a
+#   data_pins: [GPIO45, GPIO47, GPIO48, GPIO46, GPIO42, GPIO40, GPIO39, GPIO21]
+#   vsync_pin: GPIO17
+#   href_pin: GPIO18
+#   pixel_clock_pin: GPIO41
+#   resolution: 640x480
+#   pixel_format: RGB565
+#   max_framerate: 5 fps
+#   frame_buffer_count: 1
+
+esp32_camera_web_server:
+  - port: 8080          # go2rtc pulls this: ffmpeg:http://192.168.0.201:8080#video=h264
+    mode: stream
+  - port: 8081
+    mode: snapshot
+
+# ─── AUDIO ──────────────────────────────────────────────────────────────────────
+# ONE i2s bus with speaker and microphone as children. Declaring two buses on the same
+# clock pins is a hard error ("Pin N is used in multiple places").
+i2s_audio:
+  - id: i2s_bus
+    i2s_mclk_pin: GPIO10
+    i2s_bclk_pin: GPIO11
+    i2s_lrclk_pin: GPIO12
+
+audio_dac:
+  - platform: es8311            # CORE component — no external_components needed
+    id: es8311_dac
+    i2c_id: bus_a
+    address: 0x18
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    use_mclk: true
+    # NO `force_master`. The ESP32 is I2S master and the ES8311 is SLAVE, per BSP
+    # (I2S_ROLE_MASTER on the channel, .master_mode = false on the codec).
+    # A log line reading `I2S Role: SLAVE` is the SUCCESS condition here, not a fault.
+
+audio_adc:
+  - platform: es7210            # CORE component since 2025.2.0 — do NOT use the vault copy
+    id: es7210_adc
+    i2c_id: bus_a
+    address: 0x40
+    mic_gain: 30db
+
+speaker:
+  - platform: i2s_audio
+    id: spk
+    dac_type: external
+    audio_dac: es8311_dac
+    i2s_audio_id: i2s_bus
+    i2s_dout_pin: GPIO14
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    channel: mono
+    timeout: 500ms      # MUST be a real value. `never` holds the I2S mutex forever and
+                        # silently kills the microphone — no error is logged.
+
+  - platform: mixer
+    id: spk_mixer
+    output_speaker: spk
+    source_speakers:
+      - id: mixer_announcement
+      - id: mixer_media
+
+  - platform: resampler
+    id: resample_media
+    output_speaker: mixer_media
+
+  - platform: resampler
+    id: resample_announcement
+    output_speaker: mixer_announcement
+
+microphone:
+  - platform: i2s_audio
+    id: mic
+    i2s_audio_id: i2s_bus
+    i2s_din_pin: GPIO13
+    adc_type: external
+    pdm: false
+    channel: stereo
+    sample_rate: 16000    # must match the speaker — shared port
+    bits_per_sample: 16bit
+
+# ─── VOICE ──────────────────────────────────────────────────────────────────────
+# micro_wake_word is deliberately OMITTED. The TFLite build OOM-kills the HA Green's
+# compiler on this board family (`cc1plus` killed). Push-button and HA-initiated voice
+# both work without it. To add it, compile OFF the Green per
+# hardware/ai_cam-compile-runbook.md, then uncomment:
+#
+# micro_wake_word:
+#   id: mww
+#   microphone:
+#     microphone: mic
+#     channels: 0
+#     gain_factor: 4
+#   vad:
+#   models:
+#     - model: hey_jarvis
+#   on_wake_word_detected:
+#     - voice_assistant.start:
+#         wake_word: !lambda return wake_word;
+
+voice_assistant:
+  id: va
+  microphone:
+    microphone: mic
+    channels: 0
+    gain_factor: 4
+  media_player: cam_media
+  noise_suppression_level: 2
+  auto_gain: 31dBFS
+  volume_multiplier: 2.0
+  on_error:
+    - if:
+        condition:
+          and:
+            - lambda: return code != "duplicate_wake_up_detected";
+            - lambda: return code != "stt-no-text-recognized";
+        then:
+          - logger.log:
+              format: "Voice assistant error: %s"
+              args: ['code.c_str()']
+
+media_player:
+  - platform: speaker
+    name: "Speaker"
+    id: cam_media
+    media_pipeline:
+      speaker: resample_media
+    announcement_pipeline:
+      speaker: resample_announcement
+
+# ─── EXPANDER-BACKED I/O ────────────────────────────────────────────────────────
+switch:
+  - platform: gpio
+    name: "Camera Power Down"
+    id: camera_pwdn
+    restore_mode: ALWAYS_OFF     # OFF = EXIO3 LOW = camera POWERED. Never ALWAYS_ON.
+    pin:
+      waveshare_io_ch32v003: io_expander
+      number: 3
+      mode:
+        output: true
+
+  - platform: gpio
+    name: "Amp Enable"
+    id: amp_enable
+    restore_mode: ALWAYS_ON      # EXIO4 HIGH = NS4150B amp on (10K pull-down = off default)
+    pin:
+      waveshare_io_ch32v003: io_expander
+      number: 4
+      mode:
+        output: true
+
+output:
+  - platform: gpio
+    id: led_out
+    pin:
+      waveshare_io_ch32v003: io_expander
+      number: 6                  # EXIO6 = PWR_LED
+      mode:
+        output: true
+
+light:
+  - platform: binary
+    name: "Status LED"
+    id: status_led
+    output: led_out
+
+binary_sensor:
+  - platform: gpio
+    name: "Boot Button"
+    id: btn_boot
+    pin:
+      number: GPIO0
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    on_press:
+      - voice_assistant.start:
+
+  - platform: gpio
+    name: "User Button"
+    id: btn_user
+    pin:
+      number: GPIO15
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+
+button:
+  - platform: template
+    name: "Start Voice Assistant"
+    on_press:
+      - voice_assistant.start:
+
+  - platform: restart
+    name: "Restart"
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+    entity_category: diagnostic
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+      entity_category: diagnostic
+  - platform: version
+    name: "ESPHome Version"      # needed to compare against the working ai_cam build
+    entity_category: diagnostic

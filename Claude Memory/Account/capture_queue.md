@@ -50,6 +50,15 @@
 - [ ] Battery ADC via CH32V003 — needs component extension
 - [ ] Apply the new ES7210 component to ESP32-S3-AUDIO-Board at `.216`
 
+## New — ai_cam_outside camera init (2026-08-04)
+
+- [ ] **Test 0 — read the PID off `.201`, no flash.** Reboot, read the boot log for the ESP-IDF `camera` tag `Camera PID=0x…` line. This one line separates all three hypotheses; the handoff's Test 1 (RGB565 reflash) is strictly more expensive and less informative. Table: `Projects/Smart Home/fixes/2026-08-04-ai-cam-outside-camera-init.md`
+- [ ] **Flash the rewritten `hardware/ai_cam_outside.yaml`** — adds the CH32V003 expander + EXIO3 camera power + settle delay; revives the board as an Assist satellite regardless of the camera.
+- [ ] **Verify the EXIO3 settle delay (10-reboot protocol)** — proposed 2026-08-01, never flashed on any board until now.
+- [ ] **Read the known-good ESPHome version off `ai_cam`** before considering a downgrade — do not guess it.
+- [ ] **Add the `ai_cam_outside` camera to `frigatestandalone.yml`** — block is written in the fixes note; pointless until the camera initialises.
+- [x] **Compile blocker (`ap_fallback_password` missing from secrets.yaml)** — resolved by removing the `ap:` block and `captive_portal:` rather than adding the secret; an open/weak fallback AP alongside `web_server: 80` on an outdoor board is an unauthenticated route onto the LAN.
+
 ## Carried forward — Smart Home
 
 - [ ] **Verify `cctv_cam` (.234) and `porch` (.240)** are powered — may be hardware-down, not config.
