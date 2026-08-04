@@ -141,8 +141,39 @@ Order of response:
 4. **If it keeps dying, compile off-box on the PC.** [[../hardware/ai_cam-compile-runbook]]
    exists for exactly this failure mode (it was written when the Green OOM-killed the
    mWW build) and OTA reaches `.201` with no USB cable. Substitute `ai_cam_outside.yaml`
-   for `ai_cam.yaml` and `192.168.0.201` for `.199`; the `secrets.yaml` step is
-   unchanged, and this config needs no external components at all.
+   for `ai_cam.yaml` and `192.168.0.201` for `.199`; the `secrets.yaml` step is unchanged.
+
+   > **⛔ CORRECTED 2026-08-04** — an earlier version of this note said the config "needs
+   > no external components at all". That is wrong for an off-box build, and it would
+   > have wasted a session. Parallel work on master found that **PyPI ESPHome tops out at
+   > 2026.6.5 and does not ship `waveshare_io_ch32v003`** — only the Green's 2026.7.1
+   > add-on has it. Building this file on the PC therefore fails at validation with an
+   > unknown-component error that gives no hint about the channel gap. The fix is to pin
+   > the official component from the esphome repo at tag `2026.7.1`; the block is in
+   > `ai_cam_outside.yaml`, commented, ready to uncomment. The runbook carries the same
+   > addendum.
+
+## ⚠️ Two configs now exist for this one board — decide before flashing
+
+`hardware/ai_cam_outside.yaml` (node `ai_cam_outside`, **.201**, friendly_name
+"AI Cam Outside") and [[../hardware/landing_ai_cam_2.yaml]] (node `landing_ai_cam_2`,
+**.198**, friendly_name "Landing AI Cam") are **both configs for CAM board #2** — HA
+device *AI CAM 2*, area *Landing*. They were authored in parallel on 2026-08-04 and
+disagree on node name, static IP and device name.
+
+**Flashing the `landing_ai_cam_2` one renames the HA device, which rewrites every entity
+ID for this board** (live form is `landing_ai_cam_2_ai_cam_outside_*`) and breaks anything
+referencing them.
+
+**Recommendation — keep `ai_cam_outside.yaml`:** it preserves the existing entity IDs, it
+is the copy actually on the Green, and it is the one being iterated on. Fold in the two
+things the `landing_ai_cam_2` work got right — the `waveshare_io_ch32v003` pin at tag
+`2026.7.1` (**done**, above) and the **USB-first-flash** point (board #2 probably carries
+Arduino-experiment firmware from the transcript session, so there may be no ESPHome OTA
+to talk to; confirm by MAC — `…83:C8` is the live `ai_cam`, `…86:70` is presumed board 2).
+
+This is Elliot's call, not mine — but leaving both files in `hardware/` is the drift this
+vault has been bitten by before. Retire whichever loses.
 
 Until a build lands on the board, **every camera hypothesis below is untested**.
 

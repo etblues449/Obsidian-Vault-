@@ -179,6 +179,22 @@ i2c:
     scl: GPIO7
     scan: true
 
+# ⛔ ADDED 2026-08-04 (from the parallel landing_ai_cam_2 work on master) — REQUIRED FOR
+# ANY OFF-BOX COMPILE. PyPI ESPHome tops out at 2026.6.5 and does NOT ship
+# `waveshare_io_ch32v003`; only the Green's 2026.7.1 add-on has it. So building this file
+# on the PC per the runbook fails at validation with an unknown-component error, and the
+# message does not hint at the channel gap. Pinning the OFFICIAL component from the
+# esphome repo at tag 2026.7.1 makes the file build on both the Green and the PC.
+# Harmless when compiling on the Green. Uncomment for an off-box build:
+#
+# external_components:
+#   - source:
+#       type: git
+#       url: https://github.com/esphome/esphome
+#       ref: 2026.7.1
+#       path: esphome/components
+#     components: [waveshare_io_ch32v003]
+
 waveshare_io_ch32v003:
   - id: io_expander
     address: 0x24
