@@ -50,6 +50,11 @@
 - [ ] Battery ADC via CH32V003 — needs component extension
 - [ ] Apply the new ES7210 component to ESP32-S3-AUDIO-Board at `.216`
 
+## New — from the 2026-08-04 handoff, Task 1 (WebRTC card)
+
+- [~] **WebRTC card "Custom element not found"** — *(2026-08-04: diagnosed from AlexxIT/WebRTC **v3.6.1** source; corrected card + 12-check harness committed. **Not verified live** — this session had no LAN/Nabu Casa access to `192.168.0.200`.)* **Remaining, on the hub:** check Settings → Dashboards → ⋮ → Resources for `/webrtc/webrtc-camera.js?v=v3.6.1` → present means hard-refresh/clear site data; absent means read the `webrtc` setup traceback in System → Logs. Then add the card via **Add card → Manual**. See [[../Projects/Smart Home/fixes/2026-08-04-webrtc-card-not-found]].
+- [ ] **Two handoff steps for Task 1 are wrong — don't chase them.** `webrtc.create_link` / `dash_cast` are registered in `async_setup` step 6, *not* `async_setup_entry`, so a config entry doesn't gate them; and since `manifest.json` sets `config_flow: true`, the JS serving at all proves `async_setup` ran, which means **a config entry already exists** (no entry → 404, not card source).
+
 ## Carried forward — Smart Home
 
 - [ ] **Verify `cctv_cam` (.234) and `porch` (.240)** are powered — may be hardware-down, not config.
