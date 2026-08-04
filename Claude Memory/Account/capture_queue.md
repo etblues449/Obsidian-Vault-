@@ -83,6 +83,38 @@
 - [ ] Reconcile espspeaker yaml (`timeout: never`, `force_master: true`) with the I²S-mutex law — retest on hardware.
 - [ ] Resolve `living_room_ai_cam_*` vs `ai_cam_*` naming once ha-doctor reports which is live; update the losing side.
 
+## New — from Task 3, Assist person-detection automations (2026-08-04)
+
+Runbook: [[../Projects/Smart Home/automations/2026-08-04-assist-person-automations]]
+
+- [~] **Task 3 — Assist automations BUILT, validated offline, NOT INSTALLED.** Package,
+  offline validator (35/35, proven red on 5 injected regressions) and live preflight
+  (exercised against a mock hub in 3 modes) all committed. **Nothing has executed on the HA
+  Green** — the build session could not reach `192.168.0.200`. Built ≠ running.
+- [ ] **Install the package on the hub** — preflight, enable
+  `packages: !include_dir_named packages`, copy the file, Check configuration, restart,
+  preflight `--post`.
+- [ ] **Work tests A–E** in the runbook. Task 3 is not done until test D's automation trace
+  shows the `choose` step taking the `delivery` branch with `reply.id` set — the spoken
+  reply alone does not prove the branch matched rather than the default firing.
+- [ ] **Confirm the legacy `notify.mobile_app_*` service name** (the one item the handoff
+  left explicitly unresolved). `assist-preflight.mjs` prints it; if it is not
+  `notify.mobile_app_jelly_bean_s_phone`, change `legacy_mobile_service` in
+  `script.jarvis_person_notify`. Affects image attachments only.
+- [ ] **Decide the `start_conversation` trade-off** — the "Claude" conversation agent
+  unblocks it but routes every voice command through the LLM. Check for a "prefer handling
+  commands locally" option first.
+- [ ] **`notify.big_pad` unconfirmed** — the handoff lists 3 notify entities, ha-doctor
+  counted 2 on 2026-08-02. The package targets only the two phone entities; preflight
+  reports which of the three actually exist.
+- [ ] **`ha-config/` is NOT yet the hub backup.** The directory now exists and holds one
+  vault-authored file. The separate open action — pull `automations.yaml`, `bedroom-2.yaml`,
+  `frigate.yaml`, scenes/scripts and the live `ai_cam.yaml` off the hub — is untouched. The
+  ~19 lounge automations still exist nowhere but the hub.
+- [ ] **Add `ai_cam_outside` to `frigatestandalone.yml`** — copy of the `ai_cam` block
+  pointing at `rtsp://192.168.0.200:8554/ai_cam_outside` + a Frigate restart. Pointless until
+  Task 2 gets that camera initialising.
+
 ## Carried forward — capture
 
 - [~] **Fix empty Tasker captures** — needs BOTH the Tasker variable fix AND a server-side junk filter. *(2026-08-02: junk filter SHIPPED — quarantines to `JARVIS/Inbox/_rejected/`, reported loudly. The Tasker variable fix is STILL OPEN; see the item near the top.)*

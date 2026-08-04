@@ -1,0 +1,467 @@
+# jarvis_assist_person.yaml — Home Assistant package
+#
+# Task 3 (handoff 2026-08-04): turn the verified Assist Satellite capability on
+# ai_cam into working automations, driven by Frigate person detection over MQTT.
+#
+# WHY A PACKAGE, NOT automations.yaml
+#   The Frigate HA integration is NOT installed on this hub — `integration_entities('frigate')`
+#   returns nothing. MQTT is therefore the only route to Frigate's detections, and MQTT
+#   entities cannot be created from the automation editor. A package keeps the MQTT
+#   entities, the helpers, the script and the automations in ONE file that can be dropped
+#   in, removed, or version-controlled as a unit.
+#
+# INSTALL
+#   1. Copy this file to  <ha-config>/packages/jarvis_assist_person.yaml
+#   2. In configuration.yaml (once, if not already present):
+#        homeassistant:
+#          packages: !include_dir_named packages
+#   3. Developer Tools → YAML → Check configuration, then Restart.
+#   See ../README.md and the runbook in
+#   Claude Memory/Projects/Smart Home/automations/2026-08-04-assist-person-automations.md
+#
+# GROUND TRUTH (verified 2026-08-04 unless noted)
+#   Frigate camera name .............. ai_cam            (only camera in frigatestandalone.yml)
+#   Person count topic ............... frigate/ai_cam/person          "0" clear, "1"+ present
+#   Snapshot topic ................... frigate/ai_cam/person/snapshot JPEG bytes
+#   Motion topic ..................... frigate/ai_cam/motion          ON/OFF
+#   Detection enable/state ........... frigate/ai_cam/detect/set  ·  frigate/ai_cam/detect/state
+#   Frigate availability (LWT) ....... frigate/available              online/offline
+#   Satellite ........................ assist_satellite.living_room_ai_cam_assist_satellite
+#                                      state idle, supported_features 3 (ANNOUNCE|START_CONVERSATION)
+#   Speaker .......................... media_player.living_room_ai_cam_ai_cam_speaker
+#   Camera ........................... camera.living_room_ai_cam_ai_cam
+#   Light ............................ light.living_room_light        (corroborated by ha-doctor 2026-08-02)
+#   Presence ......................... person.elliot_horton           (NOT person.elliot)
+#
+# DELIBERATELY NOT USED
+#   assist_satellite.start_conversation — blocked by core:
+#   `async_internal_start_conversation` refuses when the pipeline's conversation engine is
+#   the built-in agent. Switching the pipeline to the "Claude" agent unblocks it but routes
+#   every voice command through the LLM. That is a standing decision for Elliot, not a
+#   silent change made by an automation file. `ask_question` needs no such change because
+#   it ends the pipeline at STT and matches sentences itself.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MQTT entities — Frigate's detections, made first-class in HA
+# ─────────────────────────────────────────────────────────────────────────────
+mqtt:
+  binary_sensor:
+    # Frigate publishes an integer COUNT, not ON/OFF. Converting it to a binary_sensor
+    # here is what makes edge-triggering possible downstream: an MQTT trigger fires on
+    # every message (including repeats of the same count), whereas a state trigger with
+    # from:"off" to:"on" fires once per genuine arrival. Every automation below triggers
+    # on the edge, which is why none of them need a "has the count actually changed" guard.
+    - name: "AI Cam Person"
+      unique_id: jarvis_ai_cam_person
+      state_topic: "frigate/ai_cam/person"
+      value_template: "{{ 'ON' if (value | int(0)) > 0 else 'OFF' }}"
+      payload_on: "ON"
+      payload_off: "OFF"
+      device_class: occupancy
+      availability_topic: "frigate/available"
+      payload_available: "online"
+      payload_not_available: "offline"
+
+    - name: "AI Cam Motion"
+      unique_id: jarvis_ai_cam_motion
+      state_topic: "frigate/ai_cam/motion"
+      payload_on: "ON"
+      payload_off: "OFF"
+      device_class: motion
+      availability_topic: "frigate/available"
+      payload_available: "online"
+      payload_not_available: "offline"
+
+  camera:
+    # The best JPEG of the last detected person. This is the ONLY source of an image for
+    # phone notifications — there is no Frigate integration to provide one.
+    - name: "AI Cam Person Snapshot"
+      unique_id: jarvis_ai_cam_person_snapshot
+      topic: "frigate/ai_cam/person/snapshot"
+
+  switch:
+    # Privacy control. Publishing to detect/set is instant and reversible and needs no
+    # edit to frigatestandalone.yml or a Frigate restart.
+    - name: "AI Cam Detection"
+      unique_id: jarvis_ai_cam_detect
+      command_topic: "frigate/ai_cam/detect/set"
+      state_topic: "frigate/ai_cam/detect/state"
+      payload_on: "ON"
+      payload_off: "OFF"
+      icon: mdi:motion-sensor
+      availability_topic: "frigate/available"
+      payload_available: "online"
+      payload_not_available: "offline"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────────────────────────
+input_boolean:
+  ai_cam_light_auto:
+    # Set when the person automation turns the light on; checked and cleared when it turns
+    # it off. Without it, the "clear" automation would also switch off a light Elliot had
+    # turned on himself, which is the fastest way to get an automation deleted.
+    name: AI Cam light was switched on automatically
+    icon: mdi:lightbulb-auto
+
+  ai_cam_auto_privacy:
+    # DEFAULT OFF, deliberately. Turning this ON disables Frigate detection whenever Elliot
+    # is home — which also silences "AI Cam Person", and with it the person-to-light
+    # automation. That trade-off is real and is his call, so it ships inert.
+    name: AI Cam privacy follows presence
+    icon: mdi:shield-account
+
+  ai_cam_simple_alert_only:
+    # DEFAULT OFF = the challenge automation handles away-mode detections.
+    # Turn ON to fall back to a plain spoken alert instead.
+    # These two must never both run: one satellite, one speaker — firing announce and
+    # ask_question at the same instant produces overlapping speech and a lost answer.
+    name: AI Cam simple alert instead of challenge
+    icon: mdi:bullhorn
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Script — one notification path, used by every automation below
+# ─────────────────────────────────────────────────────────────────────────────
+script:
+  jarvis_person_notify:
+    alias: JARVIS - notify phones about a person at ai_cam
+    mode: parallel
+    max: 10
+    icon: mdi:cellphone-message
+    fields:
+      title:
+        description: Notification title
+        required: true
+        selector: { text: }
+      message:
+        description: Notification body
+        required: true
+        selector: { text: }
+      with_image:
+        description: Attach the Frigate person snapshot
+        required: false
+        selector: { boolean: }
+    sequence:
+      - variables:
+          # The legacy mobile_app service is the ONLY route that accepts an image attachment;
+          # the notify ENTITY service (notify.send_message) has no image field. This name is
+          # inferred from the device slug — device_tracker.jelly_bean_s_phone and
+          # sensor.jelly_bean_s_phone_battery_level both confirm the slug, but the service
+          # itself was NOT confirmed in Developer Tools. `assist-preflight.mjs` prints the
+          # definitive name; if it differs, change this one line.
+          legacy_mobile_service: notify.mobile_app_jelly_bean_s_phone
+
+      # Verified path, always runs: notify entities + notify.send_message.
+      - action: notify.send_message
+        continue_on_error: true
+        target:
+          entity_id:
+            - notify.jelly_bean_s_phone
+            - notify.jb_s_phone
+        data:
+          title: "{{ title }}"
+          message: "{{ message }}"
+
+      # Image path, best-effort. If the guessed service name is wrong this step fails and is
+      # swallowed — the text notification above has already been delivered, so a wrong guess
+      # costs the picture, never the alert.
+      - if:
+          - condition: template
+            value_template: "{{ with_image | default(false) }}"
+        then:
+          - action: "{{ legacy_mobile_service }}"
+            continue_on_error: true
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              data:
+                image: /api/camera_proxy/camera.ai_cam_person_snapshot
+                ttl: 0
+                priority: high
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Automations
+# ─────────────────────────────────────────────────────────────────────────────
+automation:
+  # ── 1a. Person → living room light on ──────────────────────────────────────
+  - id: jarvis_ai_cam_person_light_on
+    alias: AI Cam - person detected turns the living room light on
+    description: >-
+      Edge-triggered on the Frigate person count going above zero. Records that the light
+      was switched on automatically so the companion "clear" automation knows it may
+      switch it back off.
+    mode: single
+    max_exceeded: silent
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.ai_cam_person
+        from: "off"
+        to: "on"
+    conditions:
+      - condition: state
+        entity_id: light.living_room_light
+        state: "off"
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id: light.living_room_light
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.ai_cam_light_auto
+
+  # ── 1b. Person clear → living room light off ───────────────────────────────
+  # Separate automation, per the handoff: under mode:single a single automation holding a
+  # delay would drop the re-detection that should cancel the switch-off.
+  - id: jarvis_ai_cam_person_light_off
+    alias: AI Cam - no person for 2 minutes turns the living room light off
+    description: >-
+      Only ever switches off a light this package switched on. `for: 2 minutes` on the
+      trigger means a person stepping briefly out of frame restarts the timer instead of
+      dropping the room into darkness.
+    mode: single
+    max_exceeded: silent
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.ai_cam_person
+        from: "on"
+        to: "off"
+        for: "00:02:00"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.ai_cam_light_auto
+        state: "on"
+    actions:
+      - action: light.turn_off
+        target:
+          entity_id: light.living_room_light
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.ai_cam_light_auto
+
+  # ── 2. Person while away → spoken alert ────────────────────────────────────
+  - id: jarvis_ai_cam_person_announce_away
+    alias: AI Cam - person detected while away speaks an alert
+    description: >-
+      The simple alternative to the challenge automation. Inert unless
+      input_boolean.ai_cam_simple_alert_only is ON, so the two can never talk over each
+      other on the single satellite speaker.
+    mode: single
+    max_exceeded: silent
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.ai_cam_person
+        from: "off"
+        to: "on"
+    conditions:
+      - condition: state
+        entity_id: person.elliot_horton
+        state: not_home
+      - condition: state
+        entity_id: input_boolean.ai_cam_simple_alert_only
+        state: "on"
+    actions:
+      - action: assist_satellite.announce
+        target:
+          entity_id: assist_satellite.living_room_ai_cam_assist_satellite
+        data:
+          message: >-
+            Attention. This property is monitored and recorded, and the homeowner has been
+            notified.
+          preannounce: true
+      - action: script.jarvis_person_notify
+        data:
+          title: Person detected - living room
+          message: >-
+            A person was detected at {{ now().strftime('%H:%M') }} while you were away. A
+            spoken alert was played.
+          with_image: true
+      # Cooldown. `mode: single` drops any trigger arriving while this automation is still
+      # running, so holding the run open for 10 minutes IS the cooldown — no helper, no
+      # self-referencing last_triggered template that would break if the alias is renamed.
+      - delay: "00:10:00"
+
+  # ── 3. Privacy switch — Frigate detection follows presence ─────────────────
+  - id: jarvis_ai_cam_privacy_follows_presence
+    alias: AI Cam - detection follows presence
+    description: >-
+      Publishes to frigate/ai_cam/detect/set via the MQTT switch. Ships INERT: enabling
+      input_boolean.ai_cam_auto_privacy stops detection while Elliot is home, which also
+      stops the person-to-light automation working while he is in.
+    mode: queued
+    max: 5
+    triggers:
+      - trigger: state
+        entity_id: person.elliot_horton
+        to: home
+        id: arrived
+      - trigger: state
+        entity_id: person.elliot_horton
+        to: not_home
+        id: left
+    conditions:
+      - condition: state
+        entity_id: input_boolean.ai_cam_auto_privacy
+        state: "on"
+    actions:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: arrived
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: switch.ai_cam_detection
+          - conditions:
+              - condition: trigger
+                id: left
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.ai_cam_detection
+
+  # ── 4. The challenge automation ────────────────────────────────────────────
+  - id: jarvis_ai_cam_challenge_person
+    alias: AI Cam - challenge a person detected while away
+    description: >-
+      Speaks a question through the satellite and branches on the matched answer id.
+      Two behaviours designed around, both from the handoff: ask_question BLOCKS the
+      automation while it waits (so mode:single plus a trailing delay is the cooldown), and
+      if nobody answers or nothing matches, reply.id is never set — which falls through to
+      `default`, the intruder path. That fall-through is the feature, not the failure mode.
+    mode: single
+    max_exceeded: silent
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.ai_cam_person
+        from: "off"
+        to: "on"
+    conditions:
+      - condition: state
+        entity_id: person.elliot_horton
+        state: not_home
+      - condition: state
+        entity_id: input_boolean.ai_cam_simple_alert_only
+        state: "off"
+    actions:
+      - action: assist_satellite.ask_question
+        target:
+          entity_id: assist_satellite.living_room_ai_cam_assist_satellite
+        data:
+          question: >-
+            Hello. Elliot is not home at the moment. Could you tell me who is calling?
+          preannounce: true
+          # Answer ids must not be bare yes/no/on/off — YAML parses those as booleans and
+          # the comparison below would never match. Sentences are matched by hassil, the
+          # same engine as HA's built-in intents: [square brackets] are optional,
+          # (a|b) are alternatives.
+          answers:
+            - id: delivery
+              sentences:
+                - "[i have a] delivery"
+                - "[i have a] (parcel|package)"
+                - "post"
+                - "(royal mail|amazon|evri|dpd)"
+            - id: family
+              sentences:
+                - "[it is] family"
+                - "[it is] (mum|mom|dad|my mum|my mom)"
+                - "[i am] a relative"
+            - id: friend
+              sentences:
+                - "[it is] a friend"
+                - "[i am] a friend [of elliot]"
+                - "friend"
+            - id: resident
+              sentences:
+                - "[it is] me"
+                - "[it is] elliot"
+                - "its me"
+            - id: leaving
+              sentences:
+                - "[sorry] wrong house"
+                - "wrong address"
+                - "[i am] leaving"
+                - "nothing"
+        response_variable: reply
+      # `reply.id | default('')` rather than `reply.id ==` — when nothing matched, `id` is
+      # absent from the response, and the default filter turns that into a clean miss
+      # instead of an undefined-attribute comparison.
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ reply.id | default('') == 'delivery' }}"
+            sequence:
+              - action: assist_satellite.announce
+                target:
+                  entity_id: assist_satellite.living_room_ai_cam_assist_satellite
+                data:
+                  message: >-
+                    Thank you. Please leave the parcel in the porch, out of sight of the
+                    road.
+              - action: script.jarvis_person_notify
+                data:
+                  title: Delivery at the door
+                  message: "Answered 'delivery' at {{ now().strftime('%H:%M') }}. Told to leave it in the porch."
+                  with_image: true
+
+          - conditions:
+              - condition: template
+                value_template: "{{ reply.id | default('') in ['family', 'friend'] }}"
+            sequence:
+              - action: assist_satellite.announce
+                target:
+                  entity_id: assist_satellite.living_room_ai_cam_assist_satellite
+                data:
+                  message: >-
+                    Thanks. Elliot has been notified and should get back to you shortly.
+              - action: script.jarvis_person_notify
+                data:
+                  title: "Visitor: {{ reply.id | default('unknown') }}"
+                  message: "Said '{{ reply.sentence | default('(no sentence)') }}' at {{ now().strftime('%H:%M') }}."
+                  with_image: true
+
+          - conditions:
+              - condition: template
+                value_template: "{{ reply.id | default('') == 'resident' }}"
+            sequence:
+              - action: assist_satellite.announce
+                target:
+                  entity_id: assist_satellite.living_room_ai_cam_assist_satellite
+                data:
+                  message: Welcome home.
+              - action: light.turn_on
+                target:
+                  entity_id: light.living_room_light
+
+          - conditions:
+              - condition: template
+                value_template: "{{ reply.id | default('') == 'leaving' }}"
+            sequence:
+              - action: assist_satellite.announce
+                target:
+                  entity_id: assist_satellite.living_room_ai_cam_assist_satellite
+                data:
+                  message: No problem. Thank you.
+
+        # No answer, or an answer that matched nothing. Both land here on purpose.
+        default:
+          - action: assist_satellite.announce
+            target:
+              entity_id: assist_satellite.living_room_ai_cam_assist_satellite
+            data:
+              message: >-
+                You are being recorded and the homeowner has been alerted. Please leave the
+                property.
+              preannounce: true
+          - action: script.jarvis_person_notify
+            data:
+              title: UNANSWERED person at the camera
+              message: >-
+                Challenged at {{ now().strftime('%H:%M') }} - no recognised answer
+                {%- if reply.sentence is defined and reply.sentence %} (heard "{{ reply.sentence }}")
+                {%- else %} (silence){% endif %}. Recording continues.
+              with_image: true
+
+      # Cooldown, same idiom as automation 2: the run stays open so mode:single drops
+      # re-triggers. Shorter here because a genuine visitor may reasonably be re-challenged.
+      - delay: "00:05:00"
