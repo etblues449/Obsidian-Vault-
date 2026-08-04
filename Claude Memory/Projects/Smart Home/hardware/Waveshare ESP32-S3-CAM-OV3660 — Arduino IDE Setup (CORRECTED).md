@@ -319,3 +319,36 @@ Two useful nuances the schematic adds:
 - Vendor BSP component: `waveshare/esp32_s3_cam_ovxxxx` on components.espressif.com
 - CH32V003 I/O expander in ESPHome: https://esphome.io/components/waveshare_io_ch32v003/ · component source: https://github.com/fuzzybear62/esphome-waveshare_io_ch32v003
 - Waveshare product page: https://www.waveshare.com/esp32-s3-cam-ov5640.htm · docs: https://docs.waveshare.com/ESP32-S3-CAM-OVxxxx
+
+
+## Verification (2026-08-04) — Arduino path COMPILE-PROVEN + vendor's own Arduino example found
+
+Today's session closed the last gap in this guide ("not flash-tested in Arduino"):
+
+1. **Waveshare ships an official Arduino example for this board** —
+   `waveshareteam/ESP32-S3-CAM-OVxxxx` → `examples/Arduino-v3.2.0/examples/02_CameraWebServer`
+   (Apache-2.0). Two things it confirms:
+   - Its `camera_pins.h` repurposes the **`CAMERA_MODEL_ESP_EYE` slot** to carry the real
+     pins (XCLK 38 / SIOD 8 / SIOC 7 / VSYNC 17 / HREF 18 / PCLK 41 / D0–D7
+     45,47,48,46,42,40,39,21) — identical to this guide's map, zero mismatches. So with
+     *vendor* files "ESP_EYE" is right, while with *stock* Espressif files it is wrong —
+     the same define means different pins. That trap is exactly what sank the AI-Mode loop.
+   - Its `io_extension` driver sets all EXIO pins to output with a LOW latch and raises
+     only EXIO6 (power LED) — i.e. the vendor also drives **EXIO3 LOW** in Arduino,
+     confirming the power-gating fix in this guide (register map re-confirmed:
+     0x02 mode / 0x03 out / 0x04 in / 0x05 PWM / 0x06 ADC).
+2. **A corrected, ready-to-flash sketch now exists and COMPILES**: vendor example +
+   explicit `IO_EXTENSION_Output(IO_3, 0)` power-on + 20 ms settle + PSRAM SVGA branch.
+   Built clean on esp32 core **3.3.11**, FQBN `esp32s3` with `PSRAM=opi, FlashSize=16M,
+   PartitionScheme=app3M_fat9M_16MB, CDCOnBoot=cdc`:
+   `Sketch uses 1,026,695 bytes (32%) of 3,145,728`. Delivered to Elliot as
+   `WS_S3_CAM_OV3660_WebServer.zip` (2026-08-04 Cowork session). Remaining unverified
+   step is only the on-hardware flash (needs the physical board).
+3. **Board-identity note:** ai_cam (.199) was alive on ESPHome fw on 2026-08-02, so the
+   AI-Mode Arduino uploads most likely landed on the **2nd board** — which would explain
+   `landing_ai_cam_2` showing unavailable ever since. Revival path:
+   [[landing_ai_cam_2]] via USB/web.esphome.io (Arduino fw has no ESPHome OTA).
+4. **Off-box builds:** see the 2026-08-04 addendum in [[ai_cam-compile-runbook]] — PyPI
+   ESPHome (≤2026.6.5) lacks `waveshare_io_ch32v003`; pin it from the esphome repo at
+   tag `2026.7.1`.
+
