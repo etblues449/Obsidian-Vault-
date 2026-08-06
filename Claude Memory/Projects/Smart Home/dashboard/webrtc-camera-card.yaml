@@ -1,0 +1,89 @@
+# WebRTC card — Living Room (ai_cam)
+#
+# Add via: dashboard → Edit → Add card → **Manual**.
+# NOT via the view's "Edit YAML" / View configuration dialog — that expects a
+# `cards:` list at the top level and cannot validate a bare card config.
+#
+# Verified against AlexxIT/WebRTC v3.6.1 source on 2026-08-04:
+#   custom_components/webrtc/www/webrtc-camera.js
+#   custom_components/webrtc/__init__.py
+#
+# Every option below was checked against `setConfig` / the card's config
+# destructuring — see fixes/2026-08-04-webrtc-card-not-found.md for the read.
+
+type: custom:webrtc-camera
+
+# `url` = a go2rtc stream NAME (not an HA entity). Paired with `server` below it
+# gives the direct go2rtc path. Do NOT swap this for `entity:` — that routes
+# through HA's camera proxy and loses the direct path.
+url: ai_cam
+
+# Sent to the integration as `&server=`, which builds ws://192.168.0.200:1984/api/ws.
+# Keep the trailing slash: __init__.py does urljoin("ws" + server[4:], "api/ws").
+# Supplying `server` here means the card never reads hass.data["webrtc"], so it
+# works even if no WebRTC config entry exists.
+server: http://192.168.0.200:1984/
+
+title: Living Room
+
+# CORRECTED — must be the bare entity_id, NOT /api/camera_proxy/<entity>.
+#
+# The card auto-derives `poster_remote = poster.indexOf('://') > 0 ||
+# poster.charAt(0) === '/'`. A leading "/" therefore sets poster_remote=true,
+# which assigns the URL straight to <video poster>. That fetch carries no
+# Authorization header and no ?token=, and HA core's CameraView returns
+# **403 Forbidden** for exactly that case — so the poster would never load.
+#
+# A bare "camera.*" value keeps poster_remote=false, so the card routes it
+# through its own signed /api/webrtc/ws path, where ws_poster() special-cases
+# `poster.startswith("camera.")` and serves the image authenticated.
+poster: camera.living_room_ai_cam_ai_cam
+
+mode: webrtc,webrtc/tcp,mse
+media: video
+muted: true
+
+style: "video {aspect-ratio: 4/3; object-fit: contain;}"
+
+# Adds fullscreen, save-screenshot, PiP, play/pause, a volume control (only
+# shown if the stream actually has an audio track — this one does not), and a
+# stream switcher (only if `streams` has >1 entry).
+ui: true
+
+digital_ptz:
+  mouse_wheel_zoom: true
+  touch_pinch_zoom: true
+  persist: true
+
+# Templates are supported in exactly three options: shortcuts, style, ptz.
+#
+# The card does: JSON.stringify(shortcuts) -> eval as a JS template literal
+# (with `states` in scope) -> JSON.parse. The whole thing sits in a try/catch
+# that only console.debug()s on failure, so ONE bad entity reference silently
+# removes the ENTIRE shortcuts row with no visible error.
+#
+# Two defences applied below:
+#   1. `?.` optional chaining, so a missing/unavailable entity yields
+#      'mdi:led-off' instead of throwing and killing every shortcut.
+#   2. The template value is wrapped in double quotes, which makes the
+#      ": " inside the ternary harmless. The unquoted form is a YAML parse
+#      error (a colon followed by a space ends the key), which is why the
+#      no-space `?'mdi:led-on':'mdi:led-off'` workaround was needed before.
+#      Quoting removes the trap instead of tiptoeing around it.
+shortcuts:
+  - name: Status LED
+    icon: "${ states['light.living_room_ai_cam_status_led']?.state === 'on' ? 'mdi:led-on' : 'mdi:led-off' }"
+    service: light.toggle
+    service_data:
+      entity_id: light.living_room_ai_cam_status_led
+
+  - name: Talk
+    icon: mdi:account-voice
+    service: assist_satellite.announce
+    service_data:
+      entity_id: assist_satellite.living_room_ai_cam_assist_satellite
+      message: "Hello — someone's looking at the camera."
+
+  - name: Camera settings
+    icon: mdi:cog
+    more_info: camera.living_room_ai_cam_ai_cam

@@ -40,7 +40,7 @@
 - [ ] **Confirm the n8n.cloud account state and formally retire it** (C1). Verified only that no n8n-format commit exists after 2026-07-08 — not the account itself.
 - [ ] **Answer the open device question:** the Termux checks from the last session — pad or Fold 7? `ro.build.characteristics=device` only rules out a TV build. All Termux battery/wakelock notes in this vault are Fold-7 specific.
 - [x] **Fix the 4-way session-start list drift** — `.claude/skills/vault-conventions/SKILL.md` still carried the superseded 7-file list (missing Work Financial Forecasting) and is preloaded into every agent. *(Fixed 2026-08-02.)*
-- [ ] **S3 — Dangling wikilink `[[hardware/ai_cam]]`** in the Smart Home index; the file on disk is `hardware/ai_cam.yaml`. (The other 6 dangling links listed above are already resolved — that section is stale in your favour.)
+- [ ] **S3 — Dangling wikilink `[[hardware/ai_cam]]`** in the Smart Home index; the file on disk is `hardware/ai_cam.yaml`. (The other 6 dangling links listed above are already resolved — that section is stale in your favour.) **Same pattern, added 2026-08-04: `[[hardware/landing_ai_cam_2]]` — file on disk is `hardware/landing_ai_cam_2.yaml`.** Both are the "wikilink to a `.yaml` file" case; fix both together (either add the extension in the link, or keep `.md` stubs beside the yamls). Noticed while reconciling PR #81 against master; left unedited there so the fix isn't buried in an unrelated PR.
 
 ## New — AI Cam unused hardware (from upstream 6313897)
 
@@ -49,6 +49,11 @@
 - [ ] Touch — RST EXIO0, INT GPIO9
 - [ ] Battery ADC via CH32V003 — needs component extension
 - [ ] Apply the new ES7210 component to ESP32-S3-AUDIO-Board at `.216`
+
+## New — from the 2026-08-04 handoff, Task 1 (WebRTC card)
+
+- [~] **WebRTC card "Custom element not found"** — *(2026-08-04: diagnosed from AlexxIT/WebRTC **v3.6.1** source; corrected card + 12-check harness committed. **Not verified live** — this session had no LAN/Nabu Casa access to `192.168.0.200`.)* **Remaining, on the hub:** check Settings → Dashboards → ⋮ → Resources for `/webrtc/webrtc-camera.js?v=v3.6.1` → present means hard-refresh/clear site data; absent means read the `webrtc` setup traceback in System → Logs. Then add the card via **Add card → Manual**. See [[../Projects/Smart Home/fixes/2026-08-04-webrtc-card-not-found]].
+- [ ] **Two handoff steps for Task 1 are wrong — don't chase them.** `webrtc.create_link` / `dash_cast` are registered in `async_setup` step 6, *not* `async_setup_entry`, so a config entry doesn't gate them; and since `manifest.json` sets `config_flow: true`, the JS serving at all proves `async_setup` ran, which means **a config entry already exists** (no entry → 404, not card source).
 
 ## Carried forward — Smart Home
 

@@ -18,6 +18,12 @@ refs corrected to `media_player.tv_jelly_beans_tv_2`) and the open question of
 `living_room_ai_cam_*` vs `ai_cam_*` entity naming, which `ha-doctor.mjs` resolves
 against the live registry.
 
+**Card fragments** (not full dashboards — paste via Add card → Manual):
+
+| File | Status |
+|---|---|
+| `webrtc-camera-card.yaml` | Living Room WebRTC card. Verified against AlexxIT/WebRTC **v3.6.1** source 2026-08-04. Corrects two bugs in the handoff version (`poster` 403; shortcuts row silently deleted by a missing entity). Diagnosis: [[../fixes/2026-08-04-webrtc-card-not-found]] · harness: `../scripts/verify-webrtc-card.mjs` |
+
 **Required custom deps (HACS)** for the canonical file: mushroom, bubble-card,
 decluttering-card, card-mod, advanced-camera-card, auto-entities, apexcharts-card
 (≥2.2.0), browser_mod v2 — plus the native Spotify integration providing
