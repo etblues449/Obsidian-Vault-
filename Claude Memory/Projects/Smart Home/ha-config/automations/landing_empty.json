@@ -1,0 +1,23 @@
+{
+  "id": "landing_empty",
+  "alias": "Landing - Empty",
+  "triggers": [
+    {
+      "trigger": "state",
+      "entity_id": "binary_sensor.landing_landing_presence",
+      "to": "off",
+      "for": {
+        "seconds": 60
+      }
+    }
+  ],
+  "actions": [
+    {
+      "action": "light.turn_off",
+      "target": {
+        "entity_id": "light.upstairs_led_bulb"
+      }
+    }
+  ],
+  "mode": "single"
+}
