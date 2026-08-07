@@ -1,0 +1,113 @@
+# Home Assistant Shell Commands for Smart Pad TV Control
+# Author: Claude Code session 2026-08-04
+# Branch: claude/samsung-phone-pad-connection-v3ycjz
+#
+# Add these to your Home Assistant configuration.yaml on the Pad
+# Each command connects to the phone's Termux SSH server and issues ADB commands
+#
+# Prerequisites:
+#   - Pad running Home Assistant
+#   - Phone running Termux with SSH server (port 8022)
+#   - Pad on same network as phone (192.168.0.0/24)
+#   - ADB enabled on Pad (Settings → Developer Options → USB Debugging)
+#   - Passwordless SSH key auth configured from phone to Pad
+
+shell_command:
+  # Toggle Pad display power
+  # Input: keyevent 26 (KEYCODE_POWER)
+  pad_power: "ssh -p 8022 u0_a569@192.168.0.215 'adb connect 192.168.0.191:5555 && adb shell input keyevent 26'"
+
+  # Launch YouTube app
+  # Package: com.google.android.youtube
+  # Activity: com.google.android.apps.youtube.app.WatchPlatformActivity
+  pad_youtube: "ssh -p 8022 u0_a569@192.168.0.215 'adb connect 192.168.0.191:5555 && adb shell am start -n com.google.android.youtube/com.google.android.apps.youtube.app.WatchPlatformActivity'"
+
+  # Return to home screen
+  # Input: keyevent 3 (KEYCODE_HOME)
+  pad_home: "ssh -p 8022 u0_a569@192.168.0.215 'adb connect 192.168.0.191:5555 && adb shell input keyevent 3'"
+
+  # Launch Netflix app
+  # Package: com.netflix.mediaclient
+  # Activity: com.netflix.mediaclient.MainActivity
+  pad_netflix: "ssh -p 8022 u0_a569@192.168.0.215 'adb connect 192.168.0.191:5555 && adb shell am start -n com.netflix.mediaclient/com.netflix.mediaclient.MainActivity'"
+
+  # Increase volume
+  # Input: keyevent 24 (KEYCODE_VOLUME_UP)
+  pad_volume_up: "ssh -p 8022 u0_a569@192.168.0.215 'adb connect 192.168.0.191:5555 && adb shell input keyevent 24'"
+
+  # Decrease volume
+  # Input: keyevent 25 (KEYCODE_VOLUME_DOWN)
+  pad_volume_down: "ssh -p 8022 u0_a569@192.168.0.215 'adb connect 192.168.0.191:5555 && adb shell input keyevent 25'"
+
+# ============================================================================
+# Configuration Details
+# ============================================================================
+#
+# SSH Details:
+#   Host: 192.168.0.215 (Phone Termux)
+#   Port: 8022 (Termux SSH server default)
+#   User: u0_a569 (Termux user ID for app context)
+#
+# ADB Target:
+#   Address: 192.168.0.191:5555 (Pad with ADB tcpip enabled)
+#   Note: Each command pre-connects to ensure fresh connection
+#
+# ============================================================================
+# To Test in Home Assistant:
+# ============================================================================
+#
+# 1. Save this config to configuration.yaml
+# 2. Go to Developer Tools → YAML → Check Configuration
+# 3. Restart Home Assistant
+# 4. Go to Developer Tools → Services
+# 5. Search for "shell_command"
+# 6. Call individual commands:
+#    - shell_command.pad_power
+#    - shell_command.pad_youtube
+#    - shell_command.pad_home
+#    - shell_command.pad_netflix
+#    - shell_command.pad_volume_up
+#    - shell_command.pad_volume_down
+#
+# Watch the Home Assistant logs (Developer Tools → Logs) for any SSH/ADB errors
+#
+# ============================================================================
+# Alternative Launcher Packages (if defaults differ):
+# ============================================================================
+#
+# YouTube:
+#   com.youtube.tv (TV version, if installed)
+#   com.google.android.youtube (regular YouTube, used above)
+#
+# Netflix:
+#   com.netflix.mediaclient (standard, used above)
+#
+# Other common apps:
+#   Amazon Prime Video: com.amazon.venezia / com.amazon.venezia.MainActivity
+#   Disney+: com.disney.disneyplus / com.disney.disneyplus.MainActivity
+#   HBO Max: com.hbo.max / com.hbo.max.MainActivity
+#   Google Play: com.android.vending / com.android.vending.AssetBrowserActivity
+#   Settings: com.android.settings / com.android.settings.Settings
+#   Files: com.android.documentsui / com.android.documentsui.DocumentsActivity
+#
+# To find other apps:
+#   adb shell pm list packages | grep <searchterm>
+#   adb shell dumpsys window | grep "mCurrentFocus"
+#
+# ============================================================================
+# Common Android Input Events (keyevent):
+# ============================================================================
+#
+# 3  = KEYCODE_HOME (home button)
+# 4  = KEYCODE_BACK (back button)
+# 24 = KEYCODE_VOLUME_UP
+# 25 = KEYCODE_VOLUME_DOWN
+# 26 = KEYCODE_POWER (power button)
+# 27 = KEYCODE_CAMERA
+# 82 = KEYCODE_MENU
+# 85 = KEYCODE_CHANNEL_UP
+# 86 = KEYCODE_CHANNEL_DOWN
+# 88 = KEYCODE_BRIGHTNESS_DOWN
+# 221 = KEYCODE_BRIGHTNESS_UP
+#
+# ============================================================================
