@@ -317,7 +317,9 @@ timing, not a fault.
 ## Frigate — for when the camera initialises
 
 `frigatestandalone.yml` currently defines exactly one camera. Add alongside `ai_cam`,
-then restart Frigate. **Pointless until the camera initialises** — do not add it first.
+then restart Frigate. **UNBLOCKED 2026-08-19** — the camera initialises and `:8080` serves
+frames, so this is now the live next step. Do it *after* the 10-reboot protocol, not before:
+wiring Frigate to a stream that may still drop out on boot buries the regression signal.
 
 ```yaml
   ai_cam_outside:

@@ -6,11 +6,35 @@
 # copy, which was reconstructed from a description rather than from the real file.
 #
 # ┌──────────────────────────────────────────────────────────────────────────┐
-# │ STATUS 2026-08-04: the CAMERA fails to init, AND the BUILD does not      │
-# │ complete. The build is the blocker — the camera fix below has NEVER been │
-# │ flashed, so the leading hypothesis is still completely untested.         │
+# │ ✅ STATUS 2026-08-19: THE CAMERA WORKS. Verified on hardware.            │
+# │                                                                          │
+# │ Boot log on .201 at 21:50 shows `Setup esp32_camera took 373ms` with NO  │
+# │ ESP_ERR_NOT_SUPPORTED, and dump_config() printing Resolution 800x600 /   │
+# │ Pixel Format JPEG / JPEG Quality 12 — lines that only print when         │
+# │ esp_camera_init() returned OK. http://192.168.0.201:8080 serves a live   │
+# │ MJPEG frame in a browser.                                                │
+# │                                                                          │
+# │ TWO HYPOTHESES BELOW ARE DEAD — do not act on them:                      │
+# │  • "GC2145/GC0308, no JPEG engine, replace the module." Pixel Format     │
+# │    JPEG initialised, which REQUIRES a hardware JPEG engine. TEST 1       │
+# │    (RGB565) IS MOOT. The module does not need replacing.                 │
+# │  • "2026.7.3 regression, downgrade ESPHome." It works ON 2026.7.3.       │
+# │                                                                          │
+# │ STILL NOT PROVEN: (1) which binary is on the board — the running image   │
+# │ self-reports `compiled on 2026-08-02 01:02:49`, so the two 2026-08-04    │
+# │ corrections may NOT be in it; check the Device Builder last-install      │
+# │ timestamp. (2) The EXIO3 settle delay is verified 2/10, not 10/10 — the  │
+# │ original fault was intermittent. A regression to 0x106 means             │
+# │ priority: 700 → 620, NOT a hardware swap.                                │
 # └──────────────────────────────────────────────────────────────────────────┘
 #
+# ⚠️ FIRST FLASH OF THIS BOARD MUST BE OVER USB, not OTA, if the board has been
+# running non-ESPHome firmware (e.g. the Arduino CameraWebServer experiments) — there is
+# no ESPHome OTA responder in that image to accept the push. Hold BOOT, tap RST, release
+# BOOT, then flash. Once an ESPHome build is on it, OTA to 192.168.0.201 works normally.
+# (Folded in from landing_ai_cam_2.yaml, which this file supersedes — see below.)
+#
+# ─── HISTORICAL: the 2026-08-04 build failure (resolved, kept for the pattern) ───
 # Build failure (Device Builder 1.7.0, ESPHome 2026.7.3, log kept alongside this file as
 # ai_cam_outside-install-2026-08-04.log): "WebSocket connection closed" at 16m58s, with
 # the log ending at "-- Project sdkconfig file ...". That is the END OF CMAKE CONFIGURE —
@@ -187,6 +211,9 @@ i2c:
 # esphome repo at tag 2026.7.1 makes the file build on both the Green and the PC.
 # Harmless when compiling on the Green. Uncomment for an off-box build:
 #
+# OFF-BOX BUILDS ONLY — uncomment for `esphome run` on the PC. PyPI ESPHome tops out at
+# 2026.6.5 and does NOT ship waveshare_io_ch32v003; the Green's 2026.7.1 add-on does, so
+# on-Green builds need nothing here. Leave commented when building on the Green.
 # external_components:
 #   - source:
 #       type: git

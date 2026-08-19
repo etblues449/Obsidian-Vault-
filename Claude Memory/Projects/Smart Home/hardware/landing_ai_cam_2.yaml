@@ -1,3 +1,40 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# ⛔ SUPERSEDED AS A DEVICE CONFIG — 2026-08-19. DO NOT FLASH THIS FILE.
+#
+# This and ai_cam_outside.yaml are both configs for the SAME physical board:
+# CAM board #2 / HA device "AI CAM 2", area Landing. They were authored in parallel and
+# disagree on node name, IP and device name.
+#
+# DECISION: ai_cam_outside.yaml wins as the device config.
+#   • It preserves the existing HA entity IDs. Flashing THIS file renames the node to
+#     `landing_ai_cam_2`, which rewrites every entity ID for the board (live form is
+#     `landing_ai_cam_2_ai_cam_outside_*`) and breaks anything referencing them.
+#   • It is the copy that is actually on the Green.
+#   • Its camera is VERIFIED WORKING on hardware as of 2026-08-19 — initialises and
+#     streams at http://192.168.0.201:8080. This file's camera path is untested.
+#
+# ══ BUT THIS FILE IS NOT DEAD — IT IS THE ONLY VAULT COPY OF WORK STILL TO BE PORTED ══
+#
+# A feature diff against ai_cam_outside.yaml (run 2026-08-19) shows this file uniquely
+# holds, and ai_cam_outside.yaml LACKS:
+#
+#   • `voice_assistant:` — the entire Assist satellite pipeline   (8 refs here, 0 there)
+#   • `micro_wake_word` — wake-word detection                     (9 refs here, 1 there)
+#   • SD card: the `sdmmc` component, the "SD Card" sensor, and
+#     the "Save Snapshot to SD" button                            (present here, absent there)
+#   • A fuller es8311 speaker configuration                       (4 refs here, 1 there)
+#
+# DO NOT DELETE THIS FILE until those are ported into ai_cam_outside.yaml and verified on
+# hardware. Port them ONE AT A TIME onto a board whose camera currently works — the camera
+# fix is only 2/10 verified, and a large simultaneous change would make any regression
+# impossible to attribute.
+#
+# Things this file got right that HAVE already been folded into ai_cam_outside.yaml:
+#   • the `waveshare_io_ch32v003` external-component pin at tag 2026.7.1, for off-box
+#     builds only (PyPI ESPHome tops out at 2026.6.5 and lacks the component)
+#   • the USB-first-flash requirement after non-ESPHome firmware
+# ══════════════════════════════════════════════════════════════════════════════
+
 # landing_ai_cam_2.yaml — 2nd Waveshare ESP32-S3-CAM-OV3660 ("Landing AI Cam"), ported
 # 2026-08-04 from the PROVEN ai_cam.yaml (hardware/ai_cam.yaml in this vault) per the
 # ai_cam-compile-runbook "Same recipe for the fleet" section. Deltas from ai_cam.yaml:
