@@ -2,7 +2,52 @@
 
 **Date:** 2026-08-04 · **Board:** `ai_cam_outside` @ `192.168.0.201` · HA device **AI CAM 2**, area **Landing**
 **Config:** [[../hardware/ai_cam_outside.yaml]] (rewritten, this session)
-**Status:** diagnosis corrected; config shipped; **not yet flashed or verified on hardware**
+**Status:** ✅ **RESOLVED 2026-08-19 — camera initialises and streams.** Everything below is kept as the diagnostic record; the ⛔ blocks marked *(dead)* were disproved by the hardware.
+
+---
+
+## ✅ RESOLUTION — 2026-08-19, verified on hardware
+
+**Observed, not inferred.** Boot log, `.201`, 21:50:
+
+```
+[C][component:209]: Setup esphome.coroutine took 300ms
+[C][component:209]: Setup esp32_camera took 373ms
+...
+[C][esp32_camera:139]:   Resolution: 800x600 (SVGA)
+[C][esp32_camera:140]:   Pixel Format: JPEG
+[C][esp32_camera:153]:   JPEG Quality: 12
+```
+
+No `ESP_ERR_NOT_SUPPORTED`. The resolution / pixel-format / quality lines only print when
+`esp_camera_init()` returned OK — the driver read a valid sensor PID and accepted the format.
+`http://192.168.0.201:8080` renders a live MJPEG frame in a browser (checked 22:07 — dark,
+expected at night with no IR, but non-uniform, so real sensor data rather than a dead output).
+
+### What this kills
+
+| Hypothesis | Verdict | Why |
+|---|---|---|
+| Sensor is a GC2145/GC0308 with no JPEG engine → **replace the module** | **DEAD** | `Pixel Format: JPEG` initialised. That path requires a hardware JPEG compression engine. **Test 1 (RGB565) is moot — do not run it.** |
+| ESPHome 2026.7.3 regression per esphome/esphome#16926 → **downgrade** | **DEAD** | It works *on* 2026.7.3. No downgrade needed. Removing `min_version` stays correct as headroom, not as the fix. |
+| EXIO3 power gating | **Consistent with the fix being present** | `Setup esphome.coroutine took 300ms` is the priority-700 hook's blocking `delay(300)`, running after the gpio switch platform drove EXIO3 LOW and before `esp32_camera` set up. `Camera Power Down` (EXIO3) and `Amp Enable` (EXIO4) both registered via the CH32V003 at I²C `0x24`. |
+
+I²C bus scan found `0x18`, `0x24`, `0x40`. `0x3C` is absent and that is expected — the sensor sits
+on the camera's own SCCB pins (`I2C Pins: SDA:-1 SCL:-1`), not this bus. Any future reasoning from
+a `0x3C` scan result on *this* bus is unsound.
+
+### What is still NOT established
+
+1. **Which binary is running.** The log self-reports `ESPHome version 2026.7.3 compiled on
+   2026-08-02 01:02:49` — the **08-02** build, not a fresh one. Pin map, 10 MHz XCLK on GPIO38,
+   800x600 JPEG q12 and the 300 ms hook all match the vault file exactly, but it is **not proven**
+   that the 08-04 corrections (`min_version` removal, idempotent `switch.turn_off: camera_pwdn`)
+   are in the running image. Check the Device Builder last-install timestamp before assuming so.
+2. **The settle delay is verified 2/10, not 10/10.** The original failure was intermittent, so two
+   consecutive clean boots in one log prove nothing durable. Run the protocol below. A regression to
+   `0x106` means `priority: 700` → `620` — **not** a hardware swap.
+3. **Picture quality in daylight.** Only a dark-frame has been seen. If it stays black under a phone
+   torch, check the peel-off film Waveshare ships over the lens.
 
 ---
 
