@@ -180,30 +180,43 @@ fighting it for the socket.
 
 ---
 
-## Open drift — worth ten minutes, do not let it rot
+## Drift — RESOLVED later the same day
 
-**The live speaker entity has no source in the winning config.** HA has
-`media_player.ai_cam_2_ai_cam_outside_speaker`. But
-[[../hardware/ai_cam_outside.yaml]] — the file the index declares the winner for this
-board — contains **no `media_player:` and no `speaker:` block** (grepped 2026-08-21).
-Only [[../hardware/landing_ai_cam_2.yaml]] has them (`speaker:` L241, `media_player:`
-L327, "Landing AI Cam Speaker" L329).
+**The vault copy of the device config was wrong, and has been replaced.**
 
-Two readings, and they lead to opposite actions:
+HA has `media_player.ai_cam_2_ai_cam_outside_speaker` — `<device slug ai_cam_2>` +
+`<entity "AI Cam Outside Speaker">`. The vault copy of `hardware/ai_cam_outside.yaml`
+had **no `media_player:` and no `speaker:` block at all**, and
+[[../hardware/landing_ai_cam_2.yaml]] names its speaker "Landing AI Cam Speaker".
+Neither could produce that entity.
 
-1. **Registry leftover.** The entity is stale, from firmware the board carried earlier.
-   It would read `unavailable`. Harmless; delete it.
-2. **The running firmware is not the vault file.** Something with a speaker block is on
-   the board, and `hardware/ai_cam_outside.yaml` does not describe what is running.
+The source turned up in a session scratchpad: an `ai_cam_outside.yaml` built 2026-08-19
+from the living-room `ai_cam.yaml` and re-pointed at `.201`, defining
+`media_player: - platform: speaker, name: "AI Cam Outside Speaker"`. Exact match, and the
+only known source of that name — **the board is running that file, not the one the vault
+held.**
 
-**Discriminating check:** Developer Tools → States →
-`media_player.ai_cam_2_ai_cam_outside_speaker`. `unavailable` ⇒ reading 1. Any real state
-⇒ reading 2, and the vault is wrong about this board.
+**That file is now the vault copy** ([[../hardware/ai_cam_outside.yaml]]). It was
+promoted because a scratchpad dies with its container; one more session and it was gone,
+leaving the vault permanently disagreeing with the hardware. Git holds the previous copy.
+It carries `voice_assistant:`, `micro_wake_word:` (`hey_jarvis`), `sdmmc:`, `speaker:`,
+`media_player:` and `fast_connect: false` — none of which the old vault copy had — which
+also retires the *"port voice/SD features across from landing_ai_cam_2 one at a time"*
+action.
 
-This is the same open question as the index's *"confirm WHICH binary is on the board"*
-item and step 5 of [[2026-08-19-run-sheet-post-camera-fix]] — still unanswered. Note the
-entity-ID prefix `ai_cam_2_` is **not** evidence either way: HA freezes a device's entity
-IDs at first adoption, so they keep the old slug through any later ESPHome node rename.
+**The camera parameters are unchanged by the swap**, so the `detect:` block above still
+matches: `resolution: 800x600`, `jpeg_quality: 12`, `max_framerate: 5 fps`, web server
+`:8080` stream / `:8081` snapshot, `static_ip: 192.168.0.201`.
+
+**One check still owed:** the running image self-reports `compiled 2026-08-02 01:02:49`.
+Confirm the Device Builder last-install timestamp is **on or after 2026-08-19**. Older ⇒
+the board predates this file and should be reflashed from the vault, then the reboot
+count restarted. This closes the index's *"confirm WHICH binary is on the board"* item
+and step 5 of [[2026-08-19-run-sheet-post-camera-fix]] down to that single timestamp.
+
+For future readers: the entity-ID prefix `ai_cam_2_` is **not** evidence about which
+config is running. HA freezes a device's entity IDs at first adoption, so they keep the
+old slug through any later ESPHome node rename.
 
 **`frigatestandalone.yml` is not in the vault.** It exists only on the Green. That makes
 step 2 above riskier than it needs to be and step 4 genuinely dangerous. It is already

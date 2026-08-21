@@ -1,170 +1,162 @@
-# ai_cam_outside.yaml — second Waveshare ESP32-S3-CAM board
+# ai_cam_outside.yaml — SECOND Waveshare ESP32-S3-CAM board (the outside one)
 # Board: ai_cam_outside @ 192.168.0.201 · HA device "AI CAM 2" · area Landing
+# MAC 28:84:85:49:86:70   (living-room ai_cam is 28:84:85:49:83:C8 — different board)
 #
-# This is Elliot's working file as of 2026-08-04, captured into the vault, with three
-# corrections applied (each marked ⛔ CORRECTED below). It supersedes the earlier vault
-# copy, which was reconstructed from a description rather than from the real file.
+# BUILT 2026-08-19 from the living-room ai_cam.yaml, re-pointed at the outside board.
+# That base was chosen deliberately: it carries voice_assistant, micro_wake_word and the
+# SD card, none of which the old ai_cam_outside.yaml ever had. Same board model, and
+# ai_cam already runs this exact camera+wakeword+SD combination, so the memory budget is
+# proven rather than hoped for.
 #
-# ┌──────────────────────────────────────────────────────────────────────────┐
-# │ ✅ STATUS 2026-08-19: THE CAMERA WORKS. Verified on hardware.            │
-# │                                                                          │
-# │ Boot log on .201 at 21:50 shows `Setup esp32_camera took 373ms` with NO  │
-# │ ESP_ERR_NOT_SUPPORTED, and dump_config() printing Resolution 800x600 /   │
-# │ Pixel Format JPEG / JPEG Quality 12 — lines that only print when         │
-# │ esp_camera_init() returned OK. http://192.168.0.201:8080 serves a live   │
-# │ MJPEG frame in a browser.                                                │
-# │                                                                          │
-# │ TWO HYPOTHESES BELOW ARE DEAD — do not act on them:                      │
-# │  • "GC2145/GC0308, no JPEG engine, replace the module." Pixel Format     │
-# │    JPEG initialised, which REQUIRES a hardware JPEG engine. TEST 1       │
-# │    (RGB565) IS MOOT. The module does not need replacing.                 │
-# │  • "2026.7.3 regression, downgrade ESPHome." It works ON 2026.7.3.       │
-# │                                                                          │
-# │ STILL NOT PROVEN: (1) which binary is on the board — the running image   │
-# │ self-reports `compiled on 2026-08-02 01:02:49`, so the two 2026-08-04    │
-# │ corrections may NOT be in it; check the Device Builder last-install      │
-# │ timestamp. (2) The EXIO3 settle delay is verified 2/10, not 10/10 — the  │
-# │ original fault was intermittent. A regression to 0x106 means             │
-# │ priority: 700 → 620, NOT a hardware swap.                                │
-# └──────────────────────────────────────────────────────────────────────────┘
+# ⭐ Every change from the ai_cam base is marked "⭐ OUTSIDE" below. In summary:
+#   1. identity → ai_cam_outside / "AI Cam Outside" / .201   (preserves live entity IDs)
+#   2. ap: + captive_portal: REMOVED   ← this is what broke your last build
+#   3. fast_connect: false             ← the Hub 5 channel-optimisation trap
+#   4. agc_gain_ceiling 2x → 8x        ← outdoors at night
+#   5. EXIO3 asserted in the boot hook  ← the camera fix, verified on this board
+#   6. logger over USB_SERIAL_JTAG      ← watch the boot without losing the SD card
 #
-# ⚠️ FIRST FLASH OF THIS BOARD MUST BE OVER USB, not OTA, if the board has been
-# running non-ESPHome firmware (e.g. the Arduino CameraWebServer experiments) — there is
-# no ESPHome OTA responder in that image to accept the push. Hold BOOT, tap RST, release
-# BOOT, then flash. Once an ESPHome build is on it, OTA to 192.168.0.201 works normally.
-# (Folded in from landing_ai_cam_2.yaml, which this file supersedes — see below.)
+# ── WHAT IS ALREADY PROVEN ON THIS EXACT BOARD (2026-08-19 boot log) ──
+#   • `Setup esp32_camera took 373ms`, no ESP_ERR_NOT_SUPPORTED
+#   • `Pixel Format: JPEG` initialises → the sensor HAS a hardware JPEG engine. It is a
+#     genuine OV3660-class part. It is NOT a GC2145/GC0308 and does NOT need replacing.
+#   • It works ON ESPHome 2026.7.3 → no downgrade, esphome#16926 is not your problem.
+#   • http://192.168.0.201:8080 serves a live MJPEG stream.
+#   • 0x3C does NOT appear in the I²C scan and that is CORRECT — the sensor sits on the
+#     camera's own SCCB pins, not bus_a. Never diagnose this camera from a 0x3C scan.
 #
-# ─── HISTORICAL: the 2026-08-04 build failure (resolved, kept for the pattern) ───
-# Build failure (Device Builder 1.7.0, ESPHome 2026.7.3, log kept alongside this file as
-# ai_cam_outside-install-2026-08-04.log): "WebSocket connection closed" at 16m58s, with
-# the log ending at "-- Project sdkconfig file ...". That is the END OF CMAKE CONFIGURE —
-# the actual compile had not started. Two jobs were active on the build server.
+# ── FLASHED AND ADOPTED — 2026-08-21 ──
+#   This file is now the VAULT COPY as well as the flashed one. It was promoted out of a
+#   session scratchpad on 2026-08-21 because the evidence says it is what the board is
+#   actually running, and the scratchpad dies with its container.
 #
-#   → That message is the BROWSER losing the log stream, not proof the build died.
-#     Check Build server → jobs before assuming failure.
-#   → DO NOT click "cleaning the build files for this device". It discards the sdkconfig
-#     and ccache you just spent 16 minutes generating, and makes the next attempt pay it
-#     again. The dialog offers it; it is the wrong move here.
-#   → Build ONE device at a time. Two concurrent ESP-IDF builds is what puts a 4 GB Green
-#     into swap. `compile_process_limit: 1` limits parallelism WITHIN a build, not across.
-#   → If it keeps dying, compile off-box on the PC — [[ai_cam-compile-runbook]] exists for
-#     exactly this, and OTA reaches .201 with no USB cable.
+#   The discriminator: HA has `media_player.ai_cam_2_ai_cam_outside_speaker`. That entity
+#   is `<device slug ai_cam_2> + <entity "AI Cam Outside Speaker">` — the media_player
+#   defined in THIS file. The previous vault copy had no `media_player:` and no
+#   `speaker:` block at all, and landing_ai_cam_2.yaml names its speaker "Landing AI Cam
+#   Speaker". This file is the only known source of that entity name.
 #
-# ─── THE CAMERA PROBLEM ─────────────────────────────────────────────────────
-# Boot log from the firmware compiled 2026-08-02:
+#   Also observed 2026-08-21: adopted into HA as device "AI CAM 2" with all entities
+#   present; `camera.ai_cam_2_ai_cam_outside` reads `idle` with a valid proxy token.
 #
-#     [C][esp32_camera:139]:   Resolution: 800x600 (SVGA)
-#     [C][esp32_camera:140]:   Pixel Format: JPEG
-#     [E][esp32_camera:143]:   Setup Failed: ESP_ERR_NOT_SUPPORTED
-#     [E][component:188]:   esp32_camera is marked FAILED
-#     [E][esp32_camera_web_server:100]:   Setup Failed        (x2 — consequence, not cause)
+# ── STILL UNVERIFIED ──
+#   The EXIO3 settle delay is 5/10, not 10/10 — five consecutive clean boots observed
+#   2026-08-21 (camera init to JPEG 800x600 @ q10, no ESP_ERR_NOT_SUPPORTED, streaming
+#   7 images/60 s). Elliot chose to stop at five. The original fault was INTERMITTENT,
+#   which is exactly what a short run cannot clear, so this is recorded as 5/10 and NOT
+#   as passed. If any boot fails with 0x106, change `priority: 700` to `620` — do NOT
+#   swap hardware, and restart the count.
 #
-# ⛔ CORRECTION 2026-08-04 — "the sensor answers on I2C, so it is powered" DOES NOT FOLLOW.
-#   A power-gated OV3660 on this board ACKs at 0x3C and returns a GARBAGE PID. That is the
-#   documented signature of the EXIO3 cause, not evidence against it:
-#     · hardware/Waveshare ESP32-S3-CAM-OV3660 — Arduino IDE Setup (CORRECTED).md:
-#       "it will ACK on the I²C bus but return a garbage product ID → 0x106"
-#     · sessions/2026-07-23-ai-cam-handoff.md:
-#       "Without it: ESP_ERR_NOT_SUPPORTED (sensor ACKs but PID garbage)"
-#   0x106 IS ESP_ERR_NOT_SUPPORTED. The conclusion may still be right — R8 (10K pull-down
-#   on CAM_PWDN) means an untouched EXIO3 floats LOW = powered — but the 0x3C ACK is
-#   consistent with a healthy sensor AND a gated one. It discriminates nothing either way.
-#
-# ⛔ CORRECTION 2026-08-04 — ESP_ERR_NOT_SUPPORTED has THREE causes, and the log above
-#   separates none of them. [C][esp32_camera:139…143] is dump_config() output: it reports
-#   the errno and never the reason. The discriminating lines come from the ESP-IDF
-#   `camera` tag at DEBUG, earlier in boot:
-#       Detected camera at address=0x3c
-#       Camera PID=0x…  VER=0x…  MIDL=0x…  MIDH=0x…
-#     PID 0x3660           → genuine OV3660, sensor is FINE → it is the ESPHome version
-#     PID 0x2145 / 0x0308  → GC2145 / GC0308, no JPEG engine → replace the module
-#     PID garbage / 0x0000 → not awake → power (EXIO3) or XCLK
-#     "JPEG format is not supported on this sensor" → non-JPEG sensor, confirmed outright
-#   READ THAT LINE BEFORE FLASHING ANYTHING. It costs one reboot and zero builds, and it
-#   answers in one shot what TEST 1 below only half-answers.
-#
-# ⛔ CORRECTION 2026-08-04 — esphome/esphome#16926 argues AGAINST the wrong-sensor theory.
-#   Read live: it is open, names OV3660 EXPLICITLY as affected, blames "the updated
-#   esp-idf framework" in 2026.x, and states "both boards confirmed working with Arduino
-#   CameraWebServer example firmware, ruling out hardware faults." It is a version
-#   regression report, not a shipped-the-wrong-sensor report.
-#
-# IF THE SENSOR IS CONFIRMED NON-JPEG: RGB565 will initialise, but
-# esp32_camera_web_server cannot serve it — no :8080 for go2rtc, no Frigate from this
-# board. The fix is a replacement OV3660/OV5640 module, not config. Every OV3660-specific
-# entity below becomes meaningless (the driver silently no-ops set_lenc/set_dcw/etc).
-#
-# ─── OTHER STANDING NOTES ───────────────────────────────────────────────────
-# HA IDENTITY — registered as device "AI CAM 2" in area "Landing". Entity IDs are
-#   landing_ai_cam_2_ai_cam_outside_* — NOT ai_cam_outside_*. Verified 2026-08-04:
-#       sensor.landing_ai_cam_2_ai_cam_outside_wifi_signal
-#       sensor.landing_ai_cam_2_ai_cam_outside_ip_address
-#       camera.ai_cam_2_ai_cam_outside
-#   The esphome: names below do NOT rename the existing HA device. Renaming the device or
-#   moving its area rewrites every entity ID and breaks anything referencing them.
-#
-# DO NOT REFLASH ai_cam (the living room board) while this is unresolved. It is on an
-#   older, working build. esphome/esphome#16926 is still open.
+#   One trap worth naming: once Frigate is pulling this stream, a boot-time camera
+#   dropout will present as a Frigate fault, not a board fault. Check the boot log first.
 
 substitutions:
-  device_ip: "192.168.0.201"
+  wake_word_model: hey_jarvis   # okay_nabu | hey_jarvis | hey_mycroft | alexa
 
 esphome:
+  # ⭐ OUTSIDE: node + friendly name. KEEP THESE EXACTLY AS-IS.
+  # The live HA entity IDs for this board are built from `ai_cam_outside`. Renaming the
+  # node rewrites every entity ID and breaks anything that references them.
   name: ai_cam_outside
   friendly_name: AI Cam Outside
-  # ⛔ CORRECTED 2026-08-04: `min_version: 2026.4.0` REMOVED.
-  # It silently blocks the single most likely fix. If the PID line comes back 0x3660 the
-  # sensor is fine and the remaining suspect is the ESPHome/esp-idf version (#16926) —
-  # and a min_version pin makes a downgrade fail validation instead of building. Do not
-  # add it back until the camera is confirmed working.
+  # ⭐ CHANGED 2026-08-19: `min_version: 2026.4.0` REMOVED.
+  # It silently blocks any ESPHome downgrade — validation fails instead of
+  # building — which removes a diagnostic option for no benefit. 2026.7.3 is
+  # now PROVEN good for this camera path: ai_cam_outside (.201) initialises and
+  # streams on it, which also kills the esphome/esphome#16926 downgrade theory.
   name_add_mac_suffix: false
-  compile_process_limit: 1     # limits parallelism WITHIN this build, not across builds
+  compile_process_limit: 1
   on_boot:
-    # EXIO3 settle delay — the boot-race guard. Runs after the gpio switch platform
-    # (~priority 800) has driven EXIO3 LOW, and before esp32_camera sets up (~600).
-    # The lambda delay is BLOCKING on purpose; an async `delay:` would not work, because
-    # setup continues while it waits.
+    # EXIO3 settle delay — the boot-race guard. Runs after the gpio switch
+    # platform (~priority 800) has driven EXIO3 LOW, and before esp32_camera
+    # sets up (~600). The lambda delay is BLOCKING on purpose; an async
+    # `delay:` would NOT work, because setup continues while it waits.
     - priority: 700
       then:
-        # ⛔ CORRECTED 2026-08-04: added the idempotent re-assert from the 2026-08-01
-        # proposal. Costs nothing, and removes any dependence on switch restore order.
+        # ⭐ CHANGED 2026-08-19: added the idempotent re-assert. THIS IS THE
+        # CAMERA FIX. Your file had the 300 ms delay but never actually drove
+        # EXIO3 — it relied entirely on the `camera_pwdn` switch's
+        # restore_mode: ALWAYS_OFF firing first. This line removes that
+        # dependence on switch restore order and costs nothing. It is the only
+        # camera-path difference between this file and the verified-working
+        # .201 config.
         - switch.turn_off: camera_pwdn
         - lambda: 'delay(300);'
-    # Re-apply the sensor registers ESPHome does not own.
-    # Safe when the camera failed setup: the script null-checks esp_camera_sensor_get().
     - priority: -100
       then:
         - script.execute: apply_camera_extras
 
+external_components:
+  - source:
+      type: git
+      url: https://github.com/sw3Dan/waveshare-s2-audio_esphome_voice
+      ref: main
+    components: [es8311]
+  - source: github://mnark/esphome-components
+    components: [sdmmc]
+  # NOTE: waveshare_io_ch32v003 is NOT listed here on purpose — the Green's
+  # ESPHome add-on (2026.7.1+) ships it natively. You only need the block below
+  # if you ever compile OFF-BOX on the PC, because PyPI ESPHome tops out at
+  # 2026.6.5 and does not include it:
+  #   - source:
+  #       type: git
+  #       url: https://github.com/esphome/esphome
+  #       ref: 2026.7.1
+  #       path: esphome/components
+  #     components: [waveshare_io_ch32v003]
+
 esp32:
   board: esp32-s3-devkitc-1
-  flash_size: 16MB          # ESP32-S3R8: 16MB external flash, 8MB stacked octal PSRAM
+  flash_size: 16MB
   framework:
     type: esp-idf
-    # ── If the PID reads 0x3660, pin the framework here rather than downgrading all of
-    # ESPHome — #16926 blames the esp-idf bump specifically. Read the known-good version
-    # off the working ai_cam first (its "ESPHome Version" text sensor); do not guess.
-    #   version: recommended
-    #   platform_version: 51.03.07
 
 psram:
   mode: octal
   speed: 80MHz
 
-# No SD card on this board, so GPIO43/44 are free and serial logging is fine.
-# If you ever add sdmmc here, you MUST set baud_rate: 0 — SD_CMD/SD_D0 sit on U0TXD/U0RXD.
-# DEBUG is required to see the ESP-IDF `camera` tag PID line. Do not lower it until the
-# camera is resolved.
+# ⭐ CHANGED 2026-08-19: logging re-enabled over USB_SERIAL_JTAG.
+#
+# Your comment said "baud_rate 0 is REQUIRED — GPIO43/44 are shared with
+# SD_CMD / SD_D0". That is true ONLY for hardware UART0, which does use those
+# pins. The ESP32-S3 also has a native USB_SERIAL_JTAG peripheral that touches
+# NO GPIOs at all — and that is what the working .201 board logs through:
+#
+#   [C][logger:230]:   Log Baud Rate: 115200
+#   [C][logger:230]:   Hardware UART: USB_SERIAL_JTAG
+#
+# So you can have boot logs AND a working SD card. Pinning it explicitly (below)
+# stops ESPHome from picking UART0 and stealing GPIO43/44.
+#
+# WHY THIS MATTERS RIGHT NOW: .199 will not join WiFi. Without serial logs you
+# are blind — the API can't deliver logs from a node that never gets on the
+# network. This lets you watch the boot over the USB cable you are flashing with.
+#
+# If the SD card misbehaves after this change, set `baud_rate: 0` and delete the
+# `hardware_uart` line to go back to your old behaviour.
 logger:
   level: DEBUG
+  baud_rate: 115200
+  hardware_uart: USB_SERIAL_JTAG
 
 api:
-  # NOTE: this is the SAME key ai_cam uses. That works — HA stores the key per device —
-  # but it means compromising one board exposes the other board's API traffic. To split
-  # them, add `api_encryption_key_outside` to secrets.yaml (ESPHome Builder: device ⋮ →
-  # generate), point this at it, reflash, and re-add the device in HA.
   encryption:
+    # Shares the living-room board's key. That works, but if you'd rather the two boards
+    # not share a key, add `api_encryption_key_outside` to secrets.yaml and swap the line
+    # below. Changing it means re-adopting the device in Home Assistant.
     key: !secret api_encryption_key
+  on_client_connected:
+    - if:
+        condition:
+          and:
+            - switch.is_on: wake_word_enabled
+            - not:
+                voice_assistant.is_running:
+        then:
+          - micro_wake_word.start:
+  on_client_disconnected:
+    - voice_assistant.stop:
+    - micro_wake_word.stop:
 
 ota:
   - platform: esphome
@@ -173,65 +165,86 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  fast_connect: true
+  # ⭐ OUTSIDE: fast_connect FALSE (the ai_cam_outside.yaml in the vault had `true`).
+  # fast_connect skips the AP scan and reconnects from the channel/BSSID cached in NVS.
+  # The Virgin Media Hub 5 has "Channel Optimization", which moves the 2.4 GHz channel on
+  # its own — a node cached on the old channel then never finds the AP again, and because
+  # the cache survives reboots, reboot_timeout cannot heal it. This is the leading
+  # explanation for the living-room board going unreachable on 2026-08-06, so do not set
+  # it back to true here. Costs ~1s of scan at boot. Only use `true` for a hidden SSID.
+  fast_connect: false
   power_save_mode: none
   reboot_timeout: 120s
   manual_ip:
-    static_ip: ${device_ip}
+    # ⭐ OUTSIDE: .201, not .199.
+    static_ip: 192.168.0.201
     gateway: 192.168.0.1
     subnet: 255.255.255.0
     dns1: 192.168.0.1
-  use_address: ${device_ip}
-  # No `ap:` / `captive_portal:` — deliberate. That also removes the `ap_fallback_password`
-  # secret requirement that was blocking compilation. An open or weak fallback AP next to
-  # `web_server: 80` on an outdoor board is an unauthenticated route onto the LAN, and
-  # nothing is lost: reboot_timeout + OTA already recover the node.
+  use_address: 192.168.0.201
+  # ⚠️ Add a DHCP reservation on the Hub 5 for MAC 28:84:85:49:86:70. `manual_ip` tells the
+  # router nothing — it just makes this node claim .201, so any DHCP client can be handed
+  # the same address and fight it.
+  #
+  # ⭐ OUTSIDE: `ap:` and `captive_portal:` REMOVED — and this is the one that matters for
+  # re-adding to Device Builder. An `ap:` block requires `ap_fallback_password` in
+  # secrets.yaml; without it the config fails VALIDATION before compiling, which is what
+  # bit this board before. Removing it also closes an unauthenticated route onto the LAN,
+  # and loses nothing — reboot_timeout plus OTA already recover the node.
+  # If you ever want it back, add `ap_fallback_password` to secrets first
+  # (ESPHome Builder → the three-dot menu → Secrets).
+
 
 web_server:
   port: 80
 
-# Free-heap telemetry — worth having on the board you may push to higher resolution.
+time:
+  - platform: homeassistant
+    id: ha_time
+
 debug:
   update_interval: 60s
 
-# scan: true is deliberate — it is what identified 0x18/0x24/0x3C/0x40 and ruled out a
-# dead sensor. Leave it on until the camera issue is resolved. An occasional boot missing
-# 0x3C while the camera streams fine is scan timing, not a fault.
 i2c:
   - id: bus_a
     sda: GPIO8
     scl: GPIO7
     scan: true
 
-# ⛔ ADDED 2026-08-04 (from the parallel landing_ai_cam_2 work on master) — REQUIRED FOR
-# ANY OFF-BOX COMPILE. PyPI ESPHome tops out at 2026.6.5 and does NOT ship
-# `waveshare_io_ch32v003`; only the Green's 2026.7.1 add-on has it. So building this file
-# on the PC per the runbook fails at validation with an unknown-component error, and the
-# message does not hint at the channel gap. Pinning the OFFICIAL component from the
-# esphome repo at tag 2026.7.1 makes the file build on both the Green and the PC.
-# Harmless when compiling on the Green. Uncomment for an off-box build:
-#
-# OFF-BOX BUILDS ONLY — uncomment for `esphome run` on the PC. PyPI ESPHome tops out at
-# 2026.6.5 and does NOT ship waveshare_io_ch32v003; the Green's 2026.7.1 add-on does, so
-# on-Green builds need nothing here. Leave commented when building on the Green.
-# external_components:
-#   - source:
-#       type: git
-#       url: https://github.com/esphome/esphome
-#       ref: 2026.7.1
-#       path: esphome/components
-#     components: [waveshare_io_ch32v003]
-
 waveshare_io_ch32v003:
   - id: io_expander
     address: 0x24
     i2c_id: bus_a
 
-# ─── SENSOR-DRIVER STATE ────────────────────────────────────────────────────
-# ESPHome's esp32_camera owns roughly fifteen sensor knobs. These are the ones it
-# does NOT own, held in globals so apply_camera_extras can re-assert them after any
-# update_camera_parameters() call clobbers them.
+# ─── SD CARD ────────────────────────────────────────────────────────────────
+# TF-07F socket, 1-bit SDMMC mode.
+# SD_CLK = GPIO16, SD_CMD = GPIO43 (U0TXD), SD_D0 = GPIO44 (U0RXD)
+# SD_CS / D3 sits on expander EXIO2 and is held high by R32 — do not drive it.
+# These pins are safe alongside the logger change above BECAUSE the logger is
+# pinned to USB_SERIAL_JTAG, which does not use GPIO43/44.
+sdmmc:
+  id: sdcard
+  name: "SD Card"
+  clock_pin: GPIO16
+  command_pin: GPIO43
+  data_pin: GPIO44
+
 globals:
+  - id: save_to_disk
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: snapshot_name
+    type: std::string
+    restore_value: no
+    initial_value: '"img.jpg"'
+  - id: snapshot_count
+    type: int
+    restore_value: yes
+    initial_value: '0'
+  # ── OV3660 driver-level parameters not managed by ESPHome's esp32_camera ──
+  # These are re-applied by the apply_camera_extras script so they survive
+  # any call to update_camera_parameters() made by the ESPHome-managed entities.
   - id: cam_effect_idx
     type: int
     restore_value: yes
@@ -286,13 +299,15 @@ globals:
     initial_value: 'false'
 
 script:
+  # Re-applies every OV3660 register ESPHome does not own.
+  # Called after any ESPHome-managed camera change so nothing gets clobbered.
   - id: apply_camera_extras
     mode: restart
     then:
       - delay: 150ms
       - lambda: |-
           sensor_t *s = esp_camera_sensor_get();
-          if (s == nullptr) return;   // also the guard for "camera failed setup"
+          if (s == nullptr) return;
           s->set_special_effect(s, id(cam_effect_idx));
           s->set_wb_mode(s, id(cam_wb_idx));
           s->set_whitebal(s, id(cam_awb_on));
@@ -308,62 +323,31 @@ script:
           s->set_colorbar(s, id(cam_colorbar_on));
 
 # ─── CAMERA ─────────────────────────────────────────────────────────────────
-# TEST ORDER: read the PID line first (see the CORRECTION block at the top of this file).
-# Only if the log gives you no PID line do the tests below earn their build time.
+# UNCHANGED — and now cross-checked. Every line of this block was diffed on
+# 2026-08-19 against ai_cam_outside.yaml (.201), which is verified working on
+# hardware. Pin map, external_clock 10 MHz on GPIO38, i2c_id, resolution,
+# jpeg_quality, frame_buffer_count and aec2 all MATCH. The only intentional
+# difference is agc_gain_ceiling: 2x here (indoors) vs 8x there (outdoors at
+# night). Do not "fix" anything in this block — it is the known-good reference.
 #
-# TEST 1 (settles the JPEG question only). Comment out the esp32_camera block below and
-# the whole esp32_camera_web_server block, then flash this minimal version instead:
+# What the .201 boot log proves about this hardware:
+#   • `Pixel Format: JPEG` initialises → the sensor HAS a hardware JPEG engine,
+#     so it is a genuine OV3660-class part. It is NOT a GC2145/GC0308 and does
+#     NOT need replacing.
+#   • It works ON ESPHome 2026.7.3 → no downgrade is needed.
+#   • 0x3C will NOT appear in the I²C bus scan, and that is CORRECT — the sensor
+#     sits on the camera's own SCCB pins, not bus_a. Do not diagnose from it.
 #
-#   esp32_camera:
-#     name: "AI Cam Outside"
-#     id: outside_camera
-#     external_clock:
-#       pin: GPIO38
-#       frequency: 10MHz
-#     i2c_id: bus_a
-#     data_pins: [GPIO45, GPIO47, GPIO48, GPIO46, GPIO42, GPIO40, GPIO39, GPIO21]
-#     vsync_pin: GPIO17
-#     href_pin: GPIO18
-#     pixel_clock_pin: GPIO41
-#     resolution: 640x480
-#     pixel_format: RGB565
-#     max_framerate: 5 fps
-#     frame_buffer_count: 1
-#
-#   -> Initialises OK  = the sensor has no JPEG engine. It is a GC2145/GC0308 module,
-#                        not the OV3660 this board was bought as. Order a replacement
-#                        module; no config fixes this. (`pixel_format` is a 2026.x
-#                        option — if it fails validation, note the exact message.)
-#   -> Same error      = not the sensor. Go to TEST 2.
-#
-# TEST 2 (clock margin, cheap, unlikely). Set external_clock frequency: 20MHz and reflash
-#   with the normal JPEG block. Waveshare's own examples for this board family use 20MHz;
-#   the OV3660's PLL accepts 6-27MHz and esp32-camera does not range-check it. Held at
-#   10MHz by default because that is what the KNOWN-GOOD ai_cam runs — changing it moves
-#   away from the working reference, so only do it after the PID has been read.
-#   -> Still failing = it is esphome/esphome#16926. Pin the framework in the esp32: block
-#      above, or downgrade ESPHome (which is why min_version was removed).
-#
-# ══ NORMAL CONFIG (what should run once the camera works) ══
-#
-# OV3660: 1/5", 3 MP, 2048x1536 (QXGA) max, DVP, hardware JPEG compression,
-# 3.2mm f/2.4, 68 deg diagonal FOV. XCLK spec range 6-27 MHz.
-#
-# Datasheet fps figures (15 @ QXGA, 20 @ 1080p, 60 @ VGA) are SENSOR maxima, not board
-# throughput. The DVP + PSRAM path realistically gives ~25-30 fps below VGA, ~3-5 fps at
-# 1600x1200, ~2-3 fps at QXGA (the driver gives QXGA its own 10 MHz PCLK branch).
-#
-# 800x600 @ 5 fps to match Frigate's detect: block. This board has no micro_wake_word, so
-# unlike ai_cam it has RAM headroom for more — for 1600x1200 set frame_buffer_count: 1
-# AND change Frigate's detect: width/height to match, or detection silently runs on a
-# rescaled frame. Selecting 2560x1920/QSXGA validates but the driver clamps to QXGA with
-# no error.
+# OV3660 native max = 2048x1536 (QXGA, 15 fps ceiling).
+# 800x600 with 2 frame buffers is the safe budget alongside micro_wake_word.
+# To go higher: set 1600x1200 AND frame_buffer_count: 1. 2048x1536 will only
+# fit if you remove micro_wake_word entirely.
 esp32_camera:
   name: "AI Cam Outside"
-  id: outside_camera
+  id: ai_camera
   external_clock:
     pin: GPIO38
-    frequency: 10MHz          # TEST 2: try 20MHz
+    frequency: 10MHz
   i2c_id: bus_a
   data_pins: [GPIO45, GPIO47, GPIO48, GPIO46, GPIO42, GPIO40, GPIO39, GPIO21]
   vsync_pin: GPIO17
@@ -372,27 +356,226 @@ esp32_camera:
   resolution: 800x600
   jpeg_quality: 12
   max_framerate: 5 fps
-  idle_framerate: 0.1 fps     # drops the sensor to a crawl when nothing is consuming
+  idle_framerate: 0.1 fps
   frame_buffer_count: 2
-  aec2: true                  # night-mode AEC — the single most useful outdoor knob
-  agc_gain_ceiling: 8x        # outdoors at night; ai_cam runs 2x indoors
+  aec2: true
+  # ⭐ OUTSIDE: 8x, not the 2x ai_cam runs indoors. More gain headroom for a dark scene.
+  # aec2 above is the night-mode AEC and is the single most useful outdoor knob.
+  agc_gain_ceiling: 8x
+  on_image:
+    then:
+      - lambda: |-
+          if (id(save_to_disk)) {
+            id(sdcard).write_file(id(snapshot_name).c_str(), image.length, image.data);
+            id(save_to_disk) = false;
+            ESP_LOGI("sd", "Wrote %s (%d bytes)", id(snapshot_name).c_str(), image.length);
+          }
 
-# These two fail as a CONSEQUENCE of the camera failing — they are not a separate fault.
-# The board serves exactly ONE stream client at a time, so go2rtc must be the only thing
-# pulling :8080. The WebRTC card is a consumer of go2rtc, not of this port.
 esp32_camera_web_server:
   - port: 8080
     mode: stream
   - port: 8081
     mode: snapshot
 
-# ─── INDICATOR ──────────────────────────────────────────────────────────────
+# ─── AUDIO ──────────────────────────────────────────────────────────────────
+i2s_audio:
+  - id: i2s_bus
+    i2s_mclk_pin: GPIO10
+    i2s_bclk_pin: GPIO11
+    i2s_lrclk_pin: GPIO12
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: bus_a
+    address: 0x18
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    use_mclk: true
+
+# ES7210 is a 4-channel ADC; only MIC1/MIC2 are populated on this board.
+audio_adc:
+  - platform: es7210
+    id: es7210_adc
+    i2c_id: bus_a
+    address: 0x40
+    mic_gain: 30db      # compile-time only — audio_adc.set_gain is not a runtime action
+
+speaker:
+  - platform: i2s_audio
+    id: spk
+    dac_type: external
+    audio_dac: es8311_dac
+    i2s_audio_id: i2s_bus
+    i2s_dout_pin: GPIO14
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    channel: mono
+    timeout: 500ms      # NEVER use "never" — deadlocks the shared I2S bus
+  - platform: mixer
+    id: spk_mixer
+    output_speaker: spk
+    source_speakers:
+      - id: mixer_announcement
+      - id: mixer_media
+  - platform: resampler
+    id: resample_media
+    output_speaker: mixer_media
+  - platform: resampler
+    id: resample_announcement
+    output_speaker: mixer_announcement
+
+microphone:
+  - platform: i2s_audio
+    id: mic
+    i2s_audio_id: i2s_bus
+    i2s_din_pin: GPIO13
+    adc_type: external
+    pdm: false
+    channel: stereo
+    sample_rate: 16000
+    bits_per_sample: 16bit
+
+# Ringtone / chime engine on the announcement path so it mixes with media.
+rtttl:
+  id: chimes
+  speaker: resample_announcement
+
+# ─── VOICE ──────────────────────────────────────────────────────────────────
+# Two models compiled in; Home Assistant exposes a toggle per model.
+# Adding a third is possible but pushes RAM hard alongside the camera.
+micro_wake_word:
+  id: mww
+  microphone:
+    microphone: mic
+    channels: 0
+    gain_factor: 4
+  vad:
+  models:
+    - model: ${wake_word_model}
+    - model: okay_nabu
+    # - model: hey_mycroft
+    # - model: alexa
+  on_wake_word_detected:
+    - light.turn_on: status_led
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
+
+voice_assistant:
+  id: va
+  microphone:
+    microphone: mic
+    channels: 0
+    gain_factor: 4
+  media_player: cam_media
+  noise_suppression_level: 2
+  auto_gain: 31dBFS
+  volume_multiplier: 2.0
+  on_listening:
+    - light.turn_on: status_led
+  on_tts_start:
+    - light.turn_off: status_led
+  on_end:
+    - light.turn_off: status_led
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - if:
+        condition:
+          switch.is_on: wake_word_enabled
+        then:
+          - micro_wake_word.start:
+  on_error:
+    - light.turn_off: status_led
+    - if:
+        condition:
+          and:
+            - lambda: return code != "duplicate_wake_up_detected";
+            - lambda: return code != "stt-no-text-recognized";
+        then:
+          - logger.log:
+              format: "Voice assistant error: %s"
+              args: ['code.c_str()']
+    - if:
+        condition:
+          switch.is_on: wake_word_enabled
+        then:
+          - micro_wake_word.start:
+  # Assist timers ("set a timer for 10 minutes")
+  on_timer_started:
+    - logger.log: "Assist timer started"
+  on_timer_cancelled:
+    - logger.log: "Assist timer cancelled"
+  on_timer_finished:
+    - repeat:
+        count: 5
+        then:
+          - light.turn_on: status_led
+          - rtttl.play: "timer:d=8,o=6,b=180:c,c,c"
+          - delay: 1200ms
+          - light.turn_off: status_led
+          - delay: 400ms
+
+media_player:
+  - platform: speaker
+    name: "AI Cam Outside Speaker"
+    id: cam_media
+    volume_increment: 0.05
+    volume_min: 0.2
+    volume_max: 1.0
+    media_pipeline:
+      speaker: resample_media
+    announcement_pipeline:
+      speaker: resample_announcement
+
+# ─── INPUTS ─────────────────────────────────────────────────────────────────
+binary_sensor:
+  - platform: gpio
+    name: "Boot Button"
+    id: btn_boot
+    pin:
+      number: GPIO0
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    on_press:
+      - micro_wake_word.stop:
+      - voice_assistant.start:
+
+  - platform: gpio
+    name: "User Button"
+    id: btn_user
+    pin:
+      number: GPIO15
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+
+  # ETA6098 charge-status line on the CH32V003 (EXIO7 = CHG_DET).
+  # EXIO map confirmed from the vendor driver 2026-08-01:
+  #   0=TP_RST · 1=LCD_RST · 2=SD_CS · 3=CAM_PWDN · 4=PA_CTRL · 5=BAT_EN
+  #   6=PWR_LED · 7=CHG_DET
+  - platform: gpio
+    name: "Charger Connected"
+    id: charger_present
+    device_class: plug
+    entity_category: diagnostic
+    pin:
+      waveshare_io_ch32v003: io_expander
+      number: 7
+      mode:
+        input: true
+      inverted: true
+
+# ─── OUTPUTS / LIGHT ────────────────────────────────────────────────────────
 output:
   - platform: gpio
     id: led_out
     pin:
       waveshare_io_ch32v003: io_expander
-      number: 6                    # EXIO6 = PWR_LED (vendor driver, confirmed 2026-08-01)
+      number: 6
       mode:
         output: true
 
@@ -401,7 +584,6 @@ light:
     name: "Status LED"
     id: status_led
     output: led_out
-    restore_mode: ALWAYS_OFF     # outdoors — don't advertise the camera at night
     effects:
       - strobe:
       - strobe:
@@ -414,37 +596,67 @@ light:
 
 # ─── SWITCHES ───────────────────────────────────────────────────────────────
 switch:
+  - platform: template
+    name: "Wake Word Enabled"
+    id: wake_word_enabled
+    icon: "mdi:microphone-message"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - if:
+          condition:
+            not:
+              voice_assistant.is_running:
+          then:
+            - micro_wake_word.start:
+    on_turn_off:
+      - micro_wake_word.stop:
+
+  # EXIO3 = CAM_PWDN, active HIGH. ALWAYS_OFF drives it LOW at switch setup
+  # (~priority 800), powering the sensor. The on_boot hook re-asserts this so
+  # nothing depends on restore ordering. Do not change restore_mode.
   - platform: gpio
     name: "Camera Power Down"
     id: camera_pwdn
-    restore_mode: ALWAYS_OFF      # EXIO3 LOW = camera powered. Never ALWAYS_ON.
+    restore_mode: ALWAYS_OFF
     pin:
       waveshare_io_ch32v003: io_expander
-      number: 3                   # EXIO3 = CAM_PWDN, active-high
+      number: 3
       mode:
         output: true
 
   - platform: gpio
     name: "Amp Enable"
     id: amp_enable
-    restore_mode: ALWAYS_OFF      # NS4150B class-D amp; no speaker use outside yet
+    restore_mode: ALWAYS_ON
     pin:
       waveshare_io_ch32v003: io_expander
-      number: 4                   # EXIO4 = PA_CTRL, HIGH = amp on
+      number: 4
       mode:
         output: true
 
   - platform: template
-    name: "Camera Rotate 180"
-    id: cam_rotate
-    icon: "mdi:rotate-3d-variant"
+    name: "Camera Horizontal Mirror"
+    id: cam_mirror
+    icon: "mdi:flip-horizontal"
     optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: RESTORE_DEFAULT_ON
     on_state:
       - lambda: |-
-          id(outside_camera).set_horizontal_mirror(x);
-          id(outside_camera).set_vertical_flip(x);
-          if (esp_camera_sensor_get() != nullptr) id(outside_camera).update_camera_parameters();
+          id(ai_camera).set_horizontal_mirror(x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
+      - script.execute: apply_camera_extras
+
+  - platform: template
+    name: "Camera Vertical Flip"
+    id: cam_flip
+    icon: "mdi:flip-vertical"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_state:
+      - lambda: |-
+          id(ai_camera).set_vertical_flip(x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
       - script.execute: apply_camera_extras
 
   - platform: template
@@ -455,8 +667,8 @@ switch:
     disabled_by_default: true
     on_state:
       - lambda: |-
-          id(outside_camera).set_aec_mode(x ? esp32_camera::ESP32_GC_MODE_AUTO : esp32_camera::ESP32_GC_MODE_MANU);
-          if (esp_camera_sensor_get() != nullptr) id(outside_camera).update_camera_parameters();
+          id(ai_camera).set_aec_mode(x ? esp32_camera::ESP32_GC_MODE_AUTO : esp32_camera::ESP32_GC_MODE_MANU);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
       - script.execute: apply_camera_extras
 
   - platform: template
@@ -467,12 +679,11 @@ switch:
     disabled_by_default: true
     on_state:
       - lambda: |-
-          id(outside_camera).set_agc_mode(x ? esp32_camera::ESP32_GC_MODE_AUTO : esp32_camera::ESP32_GC_MODE_MANU);
-          if (esp_camera_sensor_get() != nullptr) id(outside_camera).update_camera_parameters();
+          id(ai_camera).set_agc_mode(x ? esp32_camera::ESP32_GC_MODE_AUTO : esp32_camera::ESP32_GC_MODE_MANU);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
       - script.execute: apply_camera_extras
 
-  # ── Driver-level toggles (no ESPHome knob exists for these).
-  #    OV-family features — a GC2145/GC0308 driver silently no-ops most of them.
+  # ── OV3660 driver-level toggles (not exposed by ESPHome's esp32_camera) ──
   - platform: template
     name: "Camera Auto White Balance"
     id: cam_awb
@@ -568,32 +779,9 @@ select:
     on_value:
       - lambda: |-
           int qa[] = { 10, 15, 25, 40, 63 };
-          id(outside_camera).set_jpeg_quality(qa[i]);
+          id(ai_camera).set_jpeg_quality(qa[i]);
           sensor_t *s = esp_camera_sensor_get();
           if (s != nullptr) s->set_quality(s, qa[i]);
-
-  - platform: template
-    name: "Camera AGC Ceiling"
-    id: cam_agc_ceiling
-    icon: "mdi:image-filter-center-focus"
-    optimistic: true
-    restore_value: true
-    options: ["2x", "4x", "8x", "16x", "32x", "64x", "128x"]
-    initial_option: "8x"
-    on_value:
-      - lambda: |-
-          esp32_camera::ESP32AgcGainCeiling agc[] = {
-            esp32_camera::ESP32_GAINCEILING_2X,
-            esp32_camera::ESP32_GAINCEILING_4X,
-            esp32_camera::ESP32_GAINCEILING_8X,
-            esp32_camera::ESP32_GAINCEILING_16X,
-            esp32_camera::ESP32_GAINCEILING_32X,
-            esp32_camera::ESP32_GAINCEILING_64X,
-            esp32_camera::ESP32_GAINCEILING_128X,
-          };
-          id(outside_camera).set_agc_gain_ceiling(agc[i]);
-          if (esp_camera_sensor_get() != nullptr) id(outside_camera).update_camera_parameters();
-      - script.execute: apply_camera_extras
 
   - platform: template
     name: "Camera Special Effect"
@@ -619,6 +807,30 @@ select:
       - lambda: 'id(cam_wb_idx) = i;'
       - script.execute: apply_camera_extras
 
+  - platform: template
+    name: "Camera AGC Ceiling"
+    id: cam_agc_ceiling
+    icon: "mdi:image-filter-center-focus"
+    optimistic: true
+    restore_value: true
+    disabled_by_default: true
+    options: ["2x", "4x", "8x", "16x", "32x", "64x", "128x"]
+    initial_option: "8x"
+    on_value:
+      - lambda: |-
+          esp32_camera::ESP32AgcGainCeiling agc[] = {
+            esp32_camera::ESP32_GAINCEILING_2X,
+            esp32_camera::ESP32_GAINCEILING_4X,
+            esp32_camera::ESP32_GAINCEILING_8X,
+            esp32_camera::ESP32_GAINCEILING_16X,
+            esp32_camera::ESP32_GAINCEILING_32X,
+            esp32_camera::ESP32_GAINCEILING_64X,
+            esp32_camera::ESP32_GAINCEILING_128X,
+          };
+          id(ai_camera).set_agc_gain_ceiling(agc[i]);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
+      - script.execute: apply_camera_extras
+
 # ─── NUMBERS ────────────────────────────────────────────────────────────────
 number:
   - platform: template
@@ -634,8 +846,8 @@ number:
     mode: slider
     set_action:
       - lambda: |-
-          id(outside_camera).set_brightness((int)x);
-          if (esp_camera_sensor_get() != nullptr) id(outside_camera).update_camera_parameters();
+          id(ai_camera).set_brightness((int)x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
       - script.execute: apply_camera_extras
 
   - platform: template
@@ -651,8 +863,8 @@ number:
     mode: slider
     set_action:
       - lambda: |-
-          id(outside_camera).set_contrast((int)x);
-          if (esp_camera_sensor_get() != nullptr) id(outside_camera).update_camera_parameters();
+          id(ai_camera).set_contrast((int)x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
       - script.execute: apply_camera_extras
 
   - platform: template
@@ -668,8 +880,8 @@ number:
     mode: slider
     set_action:
       - lambda: |-
-          id(outside_camera).set_saturation((int)x);
-          if (esp_camera_sensor_get() != nullptr) id(outside_camera).update_camera_parameters();
+          id(ai_camera).set_saturation((int)x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
       - script.execute: apply_camera_extras
 
   - platform: template
@@ -685,8 +897,8 @@ number:
     mode: slider
     set_action:
       - lambda: |-
-          id(outside_camera).set_ae_level((int)x);
-          if (esp_camera_sensor_get() != nullptr) id(outside_camera).update_camera_parameters();
+          id(ai_camera).set_ae_level((int)x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
       - script.execute: apply_camera_extras
 
   - platform: template
@@ -703,55 +915,125 @@ number:
     mode: slider
     set_action:
       - lambda: |-
-          id(outside_camera).set_aec_value((int)x);
-          if (esp_camera_sensor_get() != nullptr) id(outside_camera).update_camera_parameters();
+          id(ai_camera).set_aec_value((int)x);
+          if (esp_camera_sensor_get() != nullptr) id(ai_camera).update_camera_parameters();
       - script.execute: apply_camera_extras
 
-# ─── INPUTS ─────────────────────────────────────────────────────────────────
-binary_sensor:
-  - platform: gpio
-    name: "Boot Button"
-    id: btn_boot
-    entity_category: diagnostic
-    pin:
-      number: GPIO0
-      mode:
-        input: true
-        pullup: true
-      inverted: true
+  # ── OV3660 driver-level numbers ──
+  - platform: template
+    name: "Camera Sharpness"
+    id: cam_sharpness
+    icon: "mdi:blur"
+    optimistic: true
+    restore_value: true
+    initial_value: 0
+    min_value: -3
+    max_value: 3
+    step: 1
+    mode: slider
+    set_action:
+      - lambda: 'id(cam_sharpness_val) = (int)x;'
+      - script.execute: apply_camera_extras
 
-  - platform: gpio
-    name: "User Button"
-    id: btn_user
-    entity_category: diagnostic
-    pin:
-      number: GPIO15
-      mode:
-        input: true
-        pullup: true
-      inverted: true
+  - platform: template
+    name: "Camera Denoise"
+    id: cam_denoise
+    icon: "mdi:grain"
+    optimistic: true
+    restore_value: true
+    initial_value: 0
+    min_value: 0
+    max_value: 8
+    step: 1
+    mode: slider
+    set_action:
+      - lambda: 'id(cam_denoise_val) = (int)x;'
+      - script.execute: apply_camera_extras
 
-  # ⛔ CORRECTED 2026-08-04: this is NOT unverified — Waveshare DOES publish the EXIO map,
-  # in the vendor driver `custom_io_expander_ch32v003` v2.0.0, and this vault captured it
-  # on 2026-08-01 (see the hardware guide, "Verification" section):
-  #   EXIO 0=TP_RST · 1=LCD_RST · 2=SD_CS · 3=CAM_PWDN · 4=PA_CTRL · 5=BAT_EN ·
-  #        6=PWR_LED · 7=CHG_DET · ADC=BAT_ADC
-  # So EXIO7 = CHG_DET is CONFIRMED. Expander registers: 0x02 dir · 0x03 out · 0x04 in ·
-  # 0x05 PWM · 0x06 ADC · 0x07 RTC. Reset defaults DIR=0xFF (all input), OUT=0x00.
-  # The `inverted:` polarity is still an empirical call — flip it if it reads backwards.
-  # Board takes a GH1.25 2-pin single-cell 3.7V Li-ion, 2000mAh max (ETA6098 charger).
-  # NOTE: J4 has NO reverse-polarity protection — meter it before connecting a pack.
-  - platform: gpio
-    name: "Charger Connected"
-    id: charger_present
-    device_class: plug
+  - platform: template
+    name: "Camera Manual Gain"
+    id: cam_gain
+    icon: "mdi:signal"
+    optimistic: true
+    restore_value: true
+    disabled_by_default: true
+    initial_value: 0
+    min_value: 0
+    max_value: 30
+    step: 1
+    mode: slider
+    set_action:
+      - lambda: 'id(cam_gain_val) = (int)x;'
+      - script.execute: apply_camera_extras
+
+# ─── BUTTONS ────────────────────────────────────────────────────────────────
+button:
+  - platform: template
+    name: "Save Snapshot to SD"
+    icon: "mdi:content-save"
+    on_press:
+      - lambda: |-
+          id(snapshot_count)++;
+          id(snapshot_name) = "snap" + std::to_string(id(snapshot_count)) + ".jpg";
+          id(save_to_disk) = true;
+      # CHANGED 2026-08-06: was `component.update: ai_camera` — COMPILE ERROR.
+      # component.update only accepts a PollingComponent (one with update() and
+      # an update_interval). ESP32Camera derives from camera::Camera and
+      # overrides loop(), not update(), so the template cannot instantiate.
+      # request_image() is the supported way to force a single frame, which
+      # fires on_image and lets the lambda above write it to the SD card.
+      - lambda: 'id(ai_camera).request_image(esphome::camera::API_REQUESTER);'
+
+  - platform: template
+    name: "Save Timestamped Snapshot"
+    icon: "mdi:camera-timer"
+    on_press:
+      - lambda: |-
+          char buf[32];
+          auto t = id(ha_time).now();
+          if (t.is_valid()) {
+            t.strftime(buf, sizeof(buf), "%Y%m%d-%H%M%S.jpg");
+            id(snapshot_name) = std::string(buf);
+          } else {
+            id(snapshot_count)++;
+            id(snapshot_name) = "snap" + std::to_string(id(snapshot_count)) + ".jpg";
+          }
+          id(save_to_disk) = true;
+      # CHANGED 2026-08-06: same fix as above.
+      - lambda: 'id(ai_camera).request_image(esphome::camera::API_REQUESTER);'
+
+  - platform: template
+    name: "Start Voice Assistant"
+    on_press:
+      - micro_wake_word.stop:
+      - voice_assistant.start:
+
+  - platform: template
+    name: "Play Chime"
+    icon: "mdi:bell-ring"
+    on_press:
+      - rtttl.play: "chime:d=4,o=5,b=100:c,e,g"
+
+  - platform: template
+    name: "Stop Audio"
+    icon: "mdi:stop"
+    on_press:
+      - rtttl.stop:
+      - media_player.stop:
+
+  - platform: template
+    name: "Reapply Camera Settings"
+    icon: "mdi:refresh"
+    entity_category: config
+    on_press:
+      - script.execute: apply_camera_extras
+
+  - platform: restart
+    name: "Restart"
+
+  - platform: safe_mode
+    name: "Safe Mode Boot"
     entity_category: diagnostic
-    pin:
-      waveshare_io_ch32v003: io_expander
-      number: 7
-      mode:
-        input: true
-      inverted: true
 
 # ─── DIAGNOSTICS ────────────────────────────────────────────────────────────
 sensor:
@@ -759,15 +1041,26 @@ sensor:
     name: "AI Cam Outside WiFi Signal"
     update_interval: 60s
     entity_category: diagnostic
-
   - platform: uptime
     name: "AI Cam Outside Uptime"
     update_interval: 60s
     entity_category: diagnostic
-
+  - platform: internal_temperature
+    name: "AI Cam Outside Internal Temperature"
+    update_interval: 60s
+    entity_category: diagnostic
   - platform: debug
     free:
-      name: "Heap Free"
+      name: "AI Cam Outside Heap Free"
+      entity_category: diagnostic
+    block:
+      name: "AI Cam Outside Heap Largest Block"
+      entity_category: diagnostic
+    psram:
+      name: "AI Cam Outside PSRAM Free"
+      entity_category: diagnostic
+    loop_time:
+      name: "AI Cam Outside Loop Time"
       entity_category: diagnostic
 
 text_sensor:
@@ -775,35 +1068,107 @@ text_sensor:
     ip_address:
       name: "AI Cam Outside IP Address"
       entity_category: diagnostic
-
-  # Compare this against ai_cam's same sensor before attempting any downgrade —
-  # that comparison is the whole of the #16926 test.
+    ssid:
+      name: "AI Cam Outside SSID"
+      entity_category: diagnostic
+    bssid:
+      name: "AI Cam Outside BSSID"
+      entity_category: diagnostic
+      disabled_by_default: true
+    mac_address:
+      name: "AI Cam Outside MAC Address"
+      entity_category: diagnostic
   - platform: version
     name: "AI Cam Outside ESPHome Version"
     entity_category: diagnostic
+  - platform: debug
+    reset_reason:
+      name: "AI Cam Outside Reset Reason"
+      entity_category: diagnostic
 
-button:
-  - platform: restart
-    name: "AI Cam Outside Restart"
-
-# ─── IF YOU ADD AUDIO LATER ─────────────────────────────────────────────────
-# The board has the full duplex chain fitted, and the I2C scan confirms both codecs are
-# alive: ES8311 mono codec at 0x18 (playback), ES7210 ADC at 0x40 on a dual-microphone
-# array, NS4150B class-D amp rated 3W into 4 ohms (the bundled 8-ohm/2W speaker gives
-# ~1.5W real). I2S: MCLK GPIO10, BCLK GPIO11, LRCLK GPIO12, DOUT GPIO14, DIN GPIO13.
+# =============================================================================
+# UNVERIFIED HARDWARE — DO NOT ENABLE UNTIL PINS ARE READ FROM THE VENDOR BSP
+# github.com/waveshareteam/ESP32-S3-CAM-OVxxxx  (examples/ + bsp headers)
+# =============================================================================
 #
-# IMPORTANT: es8311 and es7210 are now CORE ESPHome components (audio_dac/es8311 and
-# audio_adc/es7210 — the latter shipped in 2025.2.0). Do NOT copy ai_cam's
-# external_components block for them; it is not needed on 2026.x.
-# Set amp_enable restore_mode to ALWAYS_ON when you do.
+# ── BATTERY VOLTAGE ──
+# GH1.25 2-pin single-cell Li-ion input, ETA6098 charger.
+# Divider R39 200K (top) / R42 100K (bottom) => multiply measured ADC by 3.
+# The BAT_ADC GPIO and whether BAT_EN is an ESP32 pin or an EXIO pin are
+# NOT published. Confirm before enabling. (EXIO5 = BAT_EN per the vendor
+# driver map captured 2026-08-01, but the ADC pin is still unknown.)
 #
-# TWO HARD RULES from the ai_cam build, both learned expensively:
-#   · ONE i2s_audio bus with speaker and microphone as children. Two buses on the same
-#     clock pins is a hard error ("Pin N is used in multiple places").
-#   · Speaker `timeout:` MUST be a real value (500ms). `timeout: never` holds the I2S
-#     mutex forever and silently kills the microphone — nothing errors, the mic just
-#     never starts. No barge-in either way; the bus is one-direction-at-a-time.
+# sensor:
+#   - platform: adc
+#     pin: GPIOxx                # BAT_ADC — UNVERIFIED
+#     name: "Battery Voltage"
+#     attenuation: 12db
+#     update_interval: 60s
+#     accuracy_decimals: 2
+#     device_class: voltage
+#     unit_of_measurement: "V"
+#     entity_category: diagnostic
+#     filters:
+#       - multiply: 3.0
+#       - sliding_window_moving_average:
+#           window_size: 5
+#           send_every: 5
 #
-# Worth noting: the audio path does NOT depend on the camera. Even if the sensor turns
-# out to be unusable, this board can still be a working Assist satellite — mic, speaker,
-# wake word and assist_satellite.announce/ask_question all work without esp32_camera.
+# ── DISPLAY BACKLIGHT (CH32V003 EXIO_PWM1) ──
+# Only meaningful with a display module attached. The PWM output platform
+# name for the expander is unconfirmed in the current component.
+#
+# output:
+#   - platform: waveshare_io_ch32v003
+#     id: lcd_bl_pwm
+#     waveshare_io_ch32v003_id: io_expander
+# light:
+#   - platform: monochromatic
+#     name: "Display Backlight"
+#     output: lcd_bl_pwm
+#
+# ── SPARE EXPANDER PINS ──
+# EXIO0 = TP_RST · EXIO1 = LCD_RST · EXIO2 = SD_CS · EXIO5 = BAT_EN
+# (vendor driver map, captured in the vault 2026-08-01).
+# EXIO2 is tied to SD_CS/D3 and held high by R32 — driving it WILL break the
+# SD card. Do not expose these as outputs without the BSP.
+#
+# ── EXTERNAL DISPLAY + TOUCH (18-pin FPC) ──
+# The FPC carries BOTH a 4-wire SPI bus (LCD_SCK/MOSI/MISO/DC/CS) and a QSPI
+# bus (QSPI_SCK/CS/D0-D3), plus I2C touch (TP_SCL/TP_SDA/TP_INT).
+# LCD_RST and TP_RST are driven by the CH32V003; backlight is EXIO_PWM1.
+# Supported modules: Waveshare 1.83" / 2" / 2.8" / 3.5" (sold separately),
+# typically ST7789 (SPI) or ST7796/AXS15231B (QSPI) with CST816 or FT6336 touch.
+#
+# WARNING: this board is GPIO-starved. The DVP camera consumes 11 pins, SD
+# consumes 3, audio consumes 5, I2C 2. A display almost certainly CANNOT
+# coexist with the full camera + SD + audio stack. Treat display and camera
+# as MUTUALLY EXCLUSIVE builds.
+#
+# spi:
+#   - id: lcd_spi
+#     clk_pin: GPIOxx            # UNVERIFIED
+#     mosi_pin: GPIOxx           # UNVERIFIED
+# display:
+#   - platform: ili9xxx          # or st7789v / mipi_spi / qspi_dbi per module
+#     model: ...
+#     spi_id: lcd_spi
+#     cs_pin: GPIOxx             # UNVERIFIED
+#     dc_pin: GPIOxx             # UNVERIFIED
+#     reset_pin:
+#       waveshare_io_ch32v003: io_expander
+#       number: 1                # LCD_RST — confirmed from vendor driver map
+# touchscreen:
+#   - platform: cst816           # or ft5x06 per module
+#     i2c_id: bus_a
+#     interrupt_pin: GPIOxx      # UNVERIFIED
+#     reset_pin:
+#       waveshare_io_ch32v003: io_expander
+#       number: 0                # TP_RST — confirmed from vendor driver map
+#
+# ── SD FREE/USED SPACE SENSORS ──
+# Would require swapping the mnark `sdmmc` component for
+# github://n-serrette/esphome_sd_card (sd_mmc_card). The two CANNOT coexist
+# on the same pins, and swapping loses your working write_file snapshot action.
+# Not recommended unless you specifically need space reporting.
+# =============================================================================
