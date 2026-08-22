@@ -112,3 +112,6 @@
 - [ ] **S2 — If the live `/api/chat` events surprise the tolerant parser**, the UI will print a diagnostics line with exactly what the core sent — capture that line; it's the one input needed to pin the protocol precisely.
 - [ ] **S3 — After the gate passes:** consider Side-button double-press → JARVIS (Settings → Advanced features → Side button) as the physical "say a word" until the satellites carry room wake.
 
+
+> **⚠️ Evidence corrected 2026-08-22 (same session):** the S1 push item above says "Last push 2026-07-22 — a month of on-device work is unbacked". CLAUDE.md's change history records a `jarvis-core` push on **2026-08-06**, so the true gap at session time is **16 days**. The action stands (push the Fold's jarvis-core incl. `jarvis2/`); the urgency figure is corrected here.
+
