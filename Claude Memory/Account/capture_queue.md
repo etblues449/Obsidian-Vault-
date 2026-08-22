@@ -122,3 +122,14 @@
 - [ ] **Install JARVIS v2 from the RE-DELIVERED package** — SHA-256 `13471b120b80dd33368c670cf808ce8b01a36f3e7f865319dd4f820dd5dc44b9` (`jarvis2-v2.tar.gz` + `install-jarvis2.sh`). The earlier same-day build's artifact (SHA `8923a59a…`) is unretrievable from its chat — do not hunt for it; the spec is identical and re-verified 43/43.
 - [ ] **Run the §6 smoke test** in `JARVIS_V2_REPORT_2026-08-22.md`, including the cold-reboot check, and report any failing step with a screenshot of Status → diagnostics.
 
+
+
+> **⚠️ SHA superseded 2026-08-22 (second session):** the S1 item "Run the JARVIS v2
+> on-device gate" above references package SHA `8923a59a…` — that package never
+> reached the phone. The live package is the **re-issue, SHA-256
+> `3d70a9cf774e8aea3b54b8a262eecbcdd1c9fdb54fdcbc701b410516af28f096`**, verified
+> 41/41 (up from 32/32). Install command:
+> `sh install.sh jarvis2-package.tar.gz 3d70a9cf774e8aea3b54b8a262eecbcdd1c9fdb54fdcbc701b410516af28f096`
+> — then the same one-time steps and 5-minute gate. See the addendum in
+> `Projects/Smart Home/sessions/2026-08-22.md`.
+
