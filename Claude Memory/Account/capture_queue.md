@@ -142,3 +142,80 @@
 - [ ] **Execution gap**: vault action-queue + heartbeat drain on boot/tick (cloud-to-local pattern, £0).
 - [ ] Small adopts: capabilities-from-registry prompt line · recency voice cue + tonal checkpoint · t_since_user diagnostic · numeric-honesty rule · session-template headers · persona live-reload.
 
+
+
+---
+
+## New — 2026-08-23 session (North-Star P0/P1; v2 rejected)
+
+> **⚠️ CANCELS four earlier items, not "completes" them.** Jelly Bean saw JARVIS v2 and
+> rejected it (*"I hate it"*). The six-tab `jarvis-app.mjs` on **:8737** is the locked
+> daily driver. Therefore every v2 install / smoke-test / SHA item above is **CANCELLED**:
+>
+> - ~~S1 — Run the JARVIS v2 on-device gate (SHA `8923a59a…`)~~ — **cancelled**
+> - ~~Install JARVIS v2 from the RE-DELIVERED package (SHA `13471b12…`)~~ — **cancelled**
+> - ~~SHA superseded → re-issue `3d70a9cf…`~~ — **cancelled**
+> - ~~Install JARVIS v2.0.1 (SHA `f89a2dea…`) + §6 smoke test~~ — **cancelled**
+>
+> The v2 packages stay in `Assistant Core/packages/` for history only. Do not install them.
+
+### Phase 0 — self-knowledge
+
+- [x] **Ship `self-knowledge.mjs` to jarvis-core** — done and **verified on device**:
+      found **13 callable tools** (not 14 — `vault-lib.mjs` is a helper, never registers),
+      drift check OK. SHA `c49c93b5…`.
+- [ ] **Close the Phase 0 loop — wire `capabilitiesBlock` into the prompts.** Generated but
+      unused: `lib/brain.mjs` and the four `systemPrompt()` builders (`jarvis-app.mjs`,
+      `jarvis-voice.mjs`, `jarvis.mjs`, `heartbeat.mjs`) don't read it. Built ≠ used.
+
+### Phase 1 — security hardening (IN PROGRESS)
+
+- [~] **Hardline blocklist — BUILT + TESTED 25/25 in the sandbox, NOT on the phone.**
+      `lib/hardline.mjs`, standalone/pure/zero-dep, 19 patterns, recursive arg scan.
+      **Nothing to claim on-device yet.** Sandbox SHA `ae0738511c…` **must be recomputed at
+      package time.** Two bugs found by the tests and fixed — PowerShell flags need
+      order-free lookaheads, and **never put `\b` before a hyphenated flag** (it broke the
+      `-Recurse` match).
+- [ ] **S1 — Ship it + wire it.** Package via `Assistant Core/packages/` base64 →
+      raw-GitHub fetch → `tr -d '\r'` decode → SHA gate → installer that backs up
+      `agent.mjs` to `agent.mjs.bak`, drops the lib, applies **one import + one guard block**
+      (after `onToolUse`, **before** `isSafeMode` — so catastrophic actions are refused even
+      when safe mode is off), runs `node --check lib/agent.mjs`.
+- [ ] **S1 — On-device proof.** A catastrophic *confirmed* `pc_control` command is refused
+      **and** a normal command still runs. Paste the output; no claim without it.
+- [ ] **S2 — Widen `scanForInjection`** in `lib/rails.mjs` with data-exfil patterns
+      (send/forward/email all…, `curl|bash`, "export your…"). Same mechanism, more regexes.
+- [ ] **S2 — Document `.jarvis-safe` as the panic button** (no new code) and confirm
+      `isSafeMode` covers every tool path.
+- [x] **Do NOT rebuild the injection gate or kill switch** — recon confirmed both already
+      exist in `lib/rails.mjs` and are good. Resolved by verification, not by building.
+
+### Vercel Carousel (secondary app)
+
+- [x] **Secure `/api/chat` + `/api/capture`** — fail-closed bearer gate shipped and
+      **verified live**: no token → 401, wrong → 401, correct → 200 + pong, capture → 401.
+      Root cause of the earlier "still open": **Vercel deploys `main`, the work was on
+      `master`** — merged.
+- [ ] **S1 — Rotate `JARVIS_API_TOKEN`** — the value was exposed in a chat transcript.
+      (Deliberately not recorded in the vault.)
+- [ ] **S2 — Switch the Vercel production branch to `master`** to kill the standing
+      main/master drift risk.
+- [x] **Fix the orphaned `.claude/skills/android-development` submodule** — gitlink with no
+      `.gitmodules` was breaking the Vercel clone. De-submoduled.
+
+### Working practice — carry into every future session
+
+- [ ] **⚠️ File-attachment uploads are broken for Jelly Bean.** Every `.txt`/file
+      attachment arrives **empty**. **Ask for pasted text or a screenshot** — screenshots
+      have been 100% reliable. Do not ask for file uploads.
+
+### Carried forward, still open
+
+- [ ] **Push the Fold's `jarvis-core` to GitHub `main`** — last recorded push 2026-08-06.
+      Still the least-protected part of the system.
+- [ ] **Tidy `Projects/Smart Home/_index.md`** — its top Status + Next Actions still lead
+      with the cancelled v2 gate; a top-down reader is misled until a full rewrite lands.
+- [ ] **Retire the `database` stub** per the supabase playbook (decide PostgREST vs driver).
+- [ ] **Execution gap (P3)** — vault action-queue + heartbeat drain on boot/tick, durable
+      and idempotent ("assume you will be killed"). £0.
+
