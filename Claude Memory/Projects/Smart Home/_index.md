@@ -110,3 +110,21 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 
 Full detail: [[smart_home]]
 Sessions: [[sessions/2026-08-22]] — JARVIS v2 UI + auto-start built & offline-verified · [[sessions/2026-08-04]] — camera transcript closed (compile proof), landing config, MASTER_PLAN v2, full diagnosis · [[sessions/2026-08-02]] — live ai_cam evidence + first full HA diagnosis · [[sessions/2026-08-01-hagreen-handoff]] · [[sessions/2026-07-29]] — AI Cam complete: mics, wake word, ES7210 component · [[sessions/2026-07-23-ai-cam-handoff]] — full AI Cam build log · [[sessions/2026-06-13]] — on-device JARVIS stand-up · [[sessions/2026-06-08]] — RuView CSI node fixed
+
+
+
+## DECISION 2026-08-22 - the six-tab jarvis-app.mjs (port 8737) is THE app. jarvis2 v2 is shelved.
+
+After seeing v2 on 1875, Jelly Bean rejected it. Locked decision, do not relitigate: the
+existing six-tab core UI at http://localhost:8737/ (jarvis-core/jarvis-app.mjs) is the daily
+driver and the thing to improve going forward. Improvements happen ON THIS app.
+
+- v2 launcher stopped and its Termux:Boot script (~/.termux/boot/jarvis-boot) removed ->
+  archived to ~/_archive_jarvis_20260822/boot/. At boot only start-jarvis.sh (-> 8737) runs.
+- v2 code left in place at jarvis-core/jarvis2/ (harmless, unwired); full archive of old
+  JARVIS attempts is a separate pending cleanup step.
+- The jarvis2 v2 package/report from earlier today remain in the vault for history only,
+  NOT the product. Any future session: build on jarvis-app.mjs, not jarvis2.
+- Still TODO: archive the 546M ~/jarvis sprawl (2nd vault clone + gstack + openclaude) and
+  the stray vault clones -> one canonical vault (~/Obsidian-Vault-, master).
+
