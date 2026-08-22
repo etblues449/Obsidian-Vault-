@@ -115,3 +115,10 @@
 
 > **⚠️ Evidence corrected 2026-08-22 (same session):** the S1 push item above says "Last push 2026-07-22 — a month of on-device work is unbacked". CLAUDE.md's change history records a `jarvis-core` push on **2026-08-06**, so the true gap at session time is **16 days**. The action stands (push the Fold's jarvis-core incl. `jarvis2/`); the urgency figure is corrected here.
 
+
+
+## New — 2026-08-22 (jarvis2 re-delivery session)
+
+- [ ] **Install JARVIS v2 from the RE-DELIVERED package** — SHA-256 `13471b120b80dd33368c670cf808ce8b01a36f3e7f865319dd4f820dd5dc44b9` (`jarvis2-v2.tar.gz` + `install-jarvis2.sh`). The earlier same-day build's artifact (SHA `8923a59a…`) is unretrievable from its chat — do not hunt for it; the spec is identical and re-verified 43/43.
+- [ ] **Run the §6 smoke test** in `JARVIS_V2_REPORT_2026-08-22.md`, including the cold-reboot check, and report any failing step with a screenshot of Status → diagnostics.
+
