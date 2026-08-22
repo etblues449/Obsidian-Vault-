@@ -128,3 +128,27 @@ driver and the thing to improve going forward. Improvements happen ON THIS app.
 - Still TODO: archive the 546M ~/jarvis sprawl (2nd vault clone + gstack + openclaude) and
   the stray vault clones -> one canonical vault (~/Obsidian-Vault-, master).
 
+
+
+## Phase 0 COMPLETE 2026-08-22 — honest self-knowledge from the live registry
+
+First step of the North-Star roadmap (see JARVIS strategy report). Shipped
+`self-knowledge.mjs` into jarvis-core (SHA-verified via vault base64 -> curl).
+Reads lib/tools.mjs allTools() and emits SELF_KNOWLEDGE.md + self-knowledge.json;
+`--check` is a drift gate (exit 1 if docs disagree with the live registry).
+Additive only: no existing core file changed.
+
+**Caught on first run:** the registry has **13 callable tools, not 14**. tools/
+has 14 .mjs files but `vault-lib.mjs` is a shared HELPER (exports safePath/SKIP_DIRS),
+not a registered tool — so the honest count is 13: database, forget, ha_control,
+ha_list, ha_state, pc_control, remember, set_alarm, set_timer, update_memory,
+vault_list, vault_read, vault_search. This is exactly the "documented != running"
+gap the phase exists to close. Drift check: OK on device.
+
+Package: Assistant Core/packages/phase0.tar.gz.b64 + install-phase0.sh
+(SHA c49c93b51fe3f76612c8c4ca831b265ffe2957e712648137477dd9cb89ed4172).
+
+**Next (separate approval):** wire self-knowledge.json's capabilitiesBlock into the
+system prompt in lib/brain.mjs / the four prompt-building files, so JARVIS USES this
+honesty. Then Phase 1 (security: injection gate + kill switch + tool-approval).
+
