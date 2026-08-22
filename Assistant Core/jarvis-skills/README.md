@@ -41,13 +41,14 @@ engine because it needs a small Tasker change, not a cron.
 ```
 Assistant Core/jarvis-skills/
 ├── runner.mjs            ← the whole engine: reads vault, calls Groq, writes output
-├── test/local-test.mjs   ← offline test harness (no key, no network) — 9 assertions
+├── test/local-test.mjs   ← offline test harness (no key, no network) — 26 assertions
 ├── README.md             ← this file
 └── MIGRATION.md          ← turn-on steps, decommission n8n, rollback, cost proof
 
 .github/workflows/
 ├── _jarvis-run-skill.yml       ← reusable engine (checkout → run → commit)
 ├── jarvis-1-morning-brief.yml   ← daily 07:00 London
+├── jarvis-2-capture-router.yml    ← on: push to the inbox (event-driven)
 ├── jarvis-3-connection-finder.yml ← Sunday 14:00 London
 ├── jarvis-4-weekly-synthesis.yml  ← Friday 18:00 London
 └── jarvis-6-pattern-detector.yml  ← Monday 08:00 London
@@ -57,16 +58,32 @@ Zero npm dependencies. Node 18+ (uses global `fetch` and full-ICU `Intl`).
 
 ---
 
-## How the clock works (DST without surprises)
+## How the clock works (DST and delay without surprises)
 
-GitHub Actions cron is **UTC only and has no daylight-saving awareness**. If you
-just wrote `0 7 * * *` you'd get 07:00 UTC — which is 08:00 in British Summer
-Time. So each workflow fires at **both** candidate UTC hours (e.g. `0 6,7 * * *`)
-and `runner.mjs` applies a **London-time guard**: it computes the real
-`Europe/London` time via `Intl.DateTimeFormat` and only proceeds if the local
-hour (and weekday, for weekly skills) matches the target. Exactly one of the two
-daily firings passes, all year round. The other exits cleanly in ~2 seconds
-having done nothing.
+GitHub Actions cron is **UTC only, has no daylight-saving awareness, and is
+best-effort** — on free runners it routinely starts jobs 30 minutes to 3 hours
+late. Each workflow therefore fires at **both** candidate UTC hours (e.g.
+`0 6 * * *` and `0 7 * * *`) as two *attempts* at the same period.
+
+`runner.mjs` does **not** check the clock. It asks one question — *"has this
+period's output already been written?"* — via each skill's `done(ctx)`:
+
+| Skill | Period key |
+|---|---|
+| Morning Brief | `briefings/<london date>.md` exists |
+| Connection Finder | `connections/<london date>.md` exists |
+| Weekly Synthesis | `synthesis/<ISO week>.md` exists |
+| Pattern Detector | `patterns.md` contains `<!-- week:<ISO week> -->` |
+
+Whichever attempt GitHub actually gets to first does the work; the other exits
+in ~2 seconds with `reason=already-done`. This is DST-safe (no hour arithmetic),
+delay-safe (a brief written at 10:00 is still today's brief) and self-healing.
+
+> **Do not reintroduce an exact-hour guard.** Until 2026-08-02 the guard was
+> `london.hour !== guard.hour`, and because GitHub starts jobs late it failed on
+> *every* scheduled run: the workflow reported success and wrote nothing. All 11
+> scheduled runs in the repo's history skipped this way. Evidence: job
+> `30693257169` — `London now: ... 10:11`, `want hour=7`.
 
 ## How the single write path is kept (C3)
 
@@ -101,7 +118,8 @@ JARVIS_FAKE_NOW="2026-07-03T17:00:00Z" GROQ_API_KEY=xxx \
   node "Assistant Core/jarvis-skills/runner.mjs" --skill=weekly-synthesis
 ```
 
-Flags: `--skill=<id>` (required), `--force` (ignore the time guard),
+Flags: `--skill=<id>` (required), `--force` (regenerate even if this
+period's output exists),
 `--dry-run` (skip the Groq call, emit stub text). Env: `GROQ_API_KEY`,
 `GROQ_MODEL` (default `llama-3.3-70b-versatile`), `VAULT_ROOT` (default = repo
 root), `JARVIS_FAKE_NOW` (ISO string to override "now").
@@ -112,17 +130,22 @@ root), `JARVIS_FAKE_NOW` (ISO string to override "now").
 node "Assistant Core/jarvis-skills/test/local-test.mjs"
 ```
 
-Builds a throwaway fixture vault, runs all four skills across BST instants,
-and asserts the guards, ISO-week numbering, output paths, and the rolling
-`patterns.md` prepend. 9 assertions, fully offline.
+Builds a throwaway fixture vault, runs all five skills across BST instants, and
+asserts period-idempotency (including that a *delayed* cron still writes — the
+2026-08-02 regression), ISO-week numbering, output paths, the rolling
+`patterns.md` prepend, and every capture-router routing rule. 26 assertions,
+fully offline, no Groq key needed.
 
 ---
 
 ## Add or change a skill
 
 Everything is in `runner.mjs` → the `SKILLS` object. Each entry declares its
-`guard` ({hour, dow?}), how it `build(ctx)`s the prompt + output path, and
-whether it `create`s a dated file or `prepend`s to a rolling one. Add a new key,
+`done(ctx)` (the period-idempotency check — **must** be keyed on the same period
+as the output path, or the skill will either duplicate or never run), how it
+`build(ctx)`s the prompt + output path, and whether it `create`s a dated file or
+`prepend`s to a rolling one. An event-driven skill instead sets `kind: 'router'`
+and an async `run(ctx)` that does its own writes (see `capture-router`). Add a new key,
 then add a caller workflow in `.github/workflows/` that `uses:`
 `_jarvis-run-skill.yml` with your `skill:` id and cron. No other plumbing.
 

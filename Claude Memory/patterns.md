@@ -1,5 +1,47 @@
 # Patterns Detected
 
+*Last updated: 2026-08-01 (automated · JARVIS Skill 6: Pattern Detector · GitHub Actions + Groq)*
+
+## Week ending 2026-08-01
+
+## Capture Timing
+
+The last 7 days (2026-07-25 → 2026-08-01) show minimal activity, with no new captures provided within this timeframe. Given the lack of recent data, the analysis will focus on the patterns and trends observed in the available captures up to 2026-07-07.
+
+## Action Patterns
+
+- **Reminder and alarm requests**: Previous weeks have shown a need for reminder and alarm functionality, as seen in captures like `2026-07-04-2309`.
+- **Queries about JARVIS's capabilities**: Captures such as `2026-07-07-0032` indicate Elliot's interest in understanding JARVIS's decision-making abilities and configuration requirements.
+- **Smart-home intent**: Although not prominent in recent captures, smart-home functionality remains an area of interest, with past requests for lighting control.
+
+## Decision Patterns
+
+- **Unresolved questions**: The URI question, a recurring theme in previous reports, remains unresolved.
+- **Exploration of JARVIS's capabilities**: The presence of queries about JARVIS's status and decision-making ability, such as in `2026-07-07-0032`, suggests an ongoing effort to understand the system's boundaries and capabilities.
+
+## Behavioural Patterns
+
+- Elliot's use of brief, concise language in captures continues.
+- A mix of actual use and testing behavior is observed, though the latter is less prominent in recent weeks.
+- The introduction of new queries about JARVIS's status and capabilities indicates an exploratory phase, focusing on understanding what the system can do and how it works.
+
+## Insights
+
+- The current period's lack of new captures limits the identification of new trends or shifts in behavior.
+- Previous weeks' data suggest a focus on exploring JARVIS's capabilities, particularly regarding reminders, alarms, and decision-making.
+- The smart-home aspect, while not currently prominent, remains an area of interest based on past captures.
+
+## Next Week Suggestion
+
+1. **Address standing questions**: Provide clear resolutions or pathways to resolve open questions, such as the URI query.
+2. **Enhance feedback mechanisms**: Implement or improve confirmation feedback for captures to reduce duplicate submissions and enhance user confidence.
+3. **Document JARVIS's capabilities**: Create or update documentation and guides outlining JARVIS's features, including its decision-making capabilities, to help Elliot understand its full potential.
+4. **Refine smart-home integration**: Ensure smart-home functionality is robust and user-friendly, resolving entity naming mismatches and ensuring requests are accurately fulfilled.
+
+Given the lack of new data, these suggestions are based on patterns observed in previous weeks. As new captures become available, the analysis will be updated to reflect current trends and behaviors.
+
+---
+
 *Last updated: 2026-07-09 (automated · JARVIS Skill 6: Pattern Detector · GitHub Actions + Groq)*
 
 ## Week ending 2026-07-09

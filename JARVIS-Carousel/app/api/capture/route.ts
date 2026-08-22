@@ -1,8 +1,12 @@
+import { requireAuth } from '../_auth'
+
 export const maxDuration = 60
 
 const WEBHOOK = 'https://jellybean1875.app.n8n.cloud/webhook/jarvis-capture'
 
 export async function POST(req: Request) {
+  const denied = requireAuth(req)
+  if (denied) return denied
   let body: any
   try {
     body = await req.json()

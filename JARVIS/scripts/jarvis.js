@@ -205,7 +205,11 @@ async function fireHomeAssistant(requestUrl, Notice, ha) {
 
 // --- Write a vault note -------------------------------------------------------
 async function writeNote(app, Notice, r, original) {
-  const folder = CONFIG.folders[r.kind] || "Inbox";
+  // Fallback MUST be JARVIS/Inbox — the skill engine, the digest and the ask
+  // path all read JARVIS/Inbox/ only. Falling back to root "Inbox" silently
+  // hid every unclassifiable capture from the engine between 2026-06-19 and
+  // 2026-08-02. An unknown kind is exactly the case that must stay visible.
+  const folder = CONFIG.folders[r.kind] || "JARVIS/Inbox";
   if (!app.vault.getAbstractFileByPath(folder)) {
     try {
       await app.vault.createFolder(folder);

@@ -1,0 +1,846 @@
+# Jelly Bean's House — dashboard (raw config editor)
+# 4 views: Home / Rooms / Cameras / System
+# Requires HACS: Mushroom, Bubble Card, decluttering-card, mini-graph-card,
+#                Advanced Camera Card, card-mod (optional)
+# Theme: "Jelly Bean" (/config/themes/jellybean.yaml)
+
+decluttering_templates:
+  jb_light:
+    default:
+      - icon: mdi:lightbulb
+    card:
+      type: custom:mushroom-light-card
+      entity: "[[entity]]"
+      name: "[[name]]"
+      icon: "[[icon]]"
+      layout: horizontal
+      use_light_color: true
+      show_brightness_control: true
+      show_color_control: true
+      show_color_temp_control: false
+      collapsible_controls: true
+      tap_action:
+        action: toggle
+      hold_action:
+        action: more-info
+
+  jb_presence:
+    default:
+      - name: Presence
+    card:
+      type: custom:mushroom-template-card
+      entity: "[[presence]]"
+      primary: "[[name]]"
+      secondary: >-
+        {% if is_state('[[presence]]','on') %}Occupied{% elif
+        is_state('[[presence]]','off') %}Clear{% else %}Sensor offline{% endif %}
+      icon: >-
+        {{ 'mdi:motion-sensor' if is_state('[[presence]]','on') else
+        'mdi:motion-sensor-off' }}
+      icon_color: >-
+        {% if is_state('[[presence]]','on') %}green{% elif
+        is_state('[[presence]]','off') %}grey{% else %}red{% endif %}
+      layout: horizontal
+      tap_action:
+        action: more-info
+
+  jb_node:
+    card:
+      type: custom:mushroom-template-card
+      entity: "[[wifi]]"
+      primary: "[[name]]"
+      secondary: >-
+        {% set r = states('[[wifi]]') %}{% if r in
+        ['unknown','unavailable','none',''] %}Offline{% else %}{{ r | int(0) }}
+        dBm{% endif %}
+      icon: >-
+        {% set r = states('[[wifi]]') %}{% if r in
+        ['unknown','unavailable','none',''] %}mdi:wifi-off{% elif r | int(0) >
+        -60 %}mdi:wifi-strength-4{% elif r | int(0) > -70
+        %}mdi:wifi-strength-3{% elif r | int(0) > -80 %}mdi:wifi-strength-2{%
+        else %}mdi:wifi-strength-1{% endif %}
+      icon_color: >-
+        {% set r = states('[[wifi]]') %}{% if r in
+        ['unknown','unavailable','none',''] %}red{% elif r | int(0) > -70
+        %}green{% elif r | int(0) > -80 %}amber{% else %}orange{% endif %}
+      layout: horizontal
+      tap_action:
+        action: more-info
+
+  jb_scene:
+    card:
+      type: custom:mushroom-template-card
+      primary: "[[name]]"
+      icon: "[[icon]]"
+      icon_color: "[[color]]"
+      layout: vertical
+      fill_container: true
+      tap_action:
+        action: perform-action
+        perform_action: scene.turn_on
+        target:
+          entity_id: "[[scene]]"
+
+title: Jelly Bean's House
+views:
+  # ══════════════════════════════════════════════════════════════
+  #  HOME
+  # ══════════════════════════════════════════════════════════════
+  - title: Home
+    path: home
+    icon: mdi:home-variant
+    type: sections
+    max_columns: 3
+    dense_section_placement: true
+    theme: Jelly Bean
+    sections:
+      # ── Greeting + status strip ──────────────────────────────
+      - type: grid
+        column_span: 3
+        cards:
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set h = now().hour %}{% if h < 5 %}Good night{% elif h < 12
+              %}Good morning{% elif h < 18 %}Good afternoon{% else %}Good
+              evening{% endif %}, Elliot
+            secondary: >-
+              {% set n = states.light | selectattr('state','eq','on') | list |
+              count %}{% set occ =
+              ['binary_sensor.lounge_presence','binary_sensor.bedroom_presence','binary_sensor.landing_presence']
+              | map('states') | select('eq','on') | list | count %}{{ n }} light{{
+              's' if n != 1 }} on · {{ occ }} room{{ 's' if occ != 1 }} occupied
+            icon: mdi:home-heart
+            icon_color: >-
+              {{ 'blue' if states.light | selectattr('state','eq','on') | list |
+              count > 0 else 'grey' }}
+            layout: horizontal
+            multiline_secondary: true
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-chips-card
+            alignment: start
+            chips:
+              - type: template
+                entity: binary_sensor.lounge_presence
+                icon: mdi:sofa
+                content: Lounge
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.lounge_presence','on')
+                  else 'grey' }}
+                tap_action:
+                  action: navigate
+                  navigation_path: rooms
+              - type: template
+                entity: binary_sensor.bedroom_presence
+                icon: mdi:bed
+                content: Bedroom
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.bedroom_presence','on')
+                  else 'grey' }}
+                tap_action:
+                  action: navigate
+                  navigation_path: rooms
+              - type: template
+                entity: binary_sensor.landing_presence
+                icon: mdi:stairs
+                content: Landing
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.landing_presence','on')
+                  else 'grey' }}
+                tap_action:
+                  action: navigate
+                  navigation_path: rooms
+              - type: template
+                entity: climate.ember
+                icon: mdi:thermometer
+                content: >-
+                  {{ state_attr('climate.ember','current_temperature') | round(1)
+                  }}°
+                icon_color: orange
+                tap_action:
+                  action: more-info
+              - type: template
+                entity: input_boolean.away_mode
+                icon: >-
+                  {{ 'mdi:shield-home' if is_state('input_boolean.away_mode','on')
+                  else 'mdi:shield-home-outline' }}
+                content: Away
+                icon_color: >-
+                  {{ 'red' if is_state('input_boolean.away_mode','on') else
+                  'grey' }}
+                tap_action:
+                  action: toggle
+              - type: template
+                entity: input_boolean.guest_mode
+                icon: mdi:account-group
+                content: Guest
+                icon_color: >-
+                  {{ 'purple' if is_state('input_boolean.guest_mode','on') else
+                  'grey' }}
+                tap_action:
+                  action: toggle
+
+      # ── Alert banner (only when something is wrong) ──────────
+      - type: grid
+        column_span: 3
+        visibility:
+          - condition: and
+            conditions:
+              - condition: state
+                entity: input_boolean.away_mode
+                state: "on"
+              - condition: state
+                entity: binary_sensor.ai_cam_person_occupancy
+                state: "on"
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Person detected while away
+            secondary: AI Cam has seen someone — tap to view the camera
+            icon: mdi:alert-decagram
+            icon_color: red
+            layout: horizontal
+            multiline_secondary: true
+            tap_action:
+              action: navigate
+              navigation_path: cameras
+            card_mod:
+              style: |
+                ha-card {
+                  background: rgba(240,68,56,0.10);
+                  border: 1px solid rgba(240,68,56,0.35);
+                }
+
+      # ── Scenes ───────────────────────────────────────────────
+      - type: grid
+        column_span: 3
+        cards:
+          - type: heading
+            heading: Scenes
+            heading_style: subtitle
+            icon: mdi:palette-outline
+          - type: grid
+            columns: 4
+            square: false
+            cards:
+              - type: custom:decluttering-card
+                template: jb_scene
+                variables:
+                  - name: Evening
+                  - icon: mdi:weather-sunset
+                  - color: amber
+                  - scene: scene.evening
+              - type: custom:decluttering-card
+                template: jb_scene
+                variables:
+                  - name: Night
+                  - icon: mdi:weather-night
+                  - color: indigo
+                  - scene: scene.night
+              - type: custom:decluttering-card
+                template: jb_scene
+                variables:
+                  - name: Movie
+                  - icon: mdi:movie-open-outline
+                  - color: deep-purple
+                  - scene: scene.movie
+              - type: custom:decluttering-card
+                template: jb_scene
+                variables:
+                  - name: All Off
+                  - icon: mdi:power
+                  - color: red
+                  - scene: scene.all_off
+
+      # ── Rooms ────────────────────────────────────────────────
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Rooms
+            heading_style: subtitle
+            icon: mdi:floor-plan
+          - type: custom:bubble-card
+            card_type: button
+            button_type: name
+            name: Lounge
+            icon: mdi:sofa
+            entity: light.lounge_lights
+            show_state: true
+            sub_button:
+              - entity: binary_sensor.lounge_presence
+                icon: mdi:motion-sensor
+                show_name: false
+                show_background: false
+            button_action:
+              tap_action:
+                action: navigate
+                navigation_path: rooms
+          - type: custom:bubble-card
+            card_type: button
+            button_type: name
+            name: Bedroom
+            icon: mdi:bed
+            entity: light.bedroom_light
+            show_state: true
+            sub_button:
+              - entity: binary_sensor.bedroom_presence
+                icon: mdi:motion-sensor
+                show_name: false
+                show_background: false
+            button_action:
+              tap_action:
+                action: navigate
+                navigation_path: rooms
+          - type: custom:bubble-card
+            card_type: button
+            button_type: name
+            name: Landing
+            icon: mdi:stairs
+            entity: light.stairs_smart_bulb
+            show_state: true
+            sub_button:
+              - entity: binary_sensor.landing_presence
+                icon: mdi:motion-sensor
+                show_name: false
+                show_background: false
+            button_action:
+              tap_action:
+                action: navigate
+                navigation_path: rooms
+          - type: custom:bubble-card
+            card_type: button
+            button_type: name
+            name: Kids Room
+            icon: mdi:teddy-bear
+            entity: light.kids_bedroom
+            show_state: true
+            button_action:
+              tap_action:
+                action: navigate
+                navigation_path: rooms
+
+      # ── Now playing (hidden when nothing is on) ──────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Now Playing
+            heading_style: subtitle
+            icon: mdi:play-circle-outline
+          - type: custom:mushroom-media-player-card
+            entity: media_player.tv_jelly_beans_tv_2
+            name: Lounge TV
+            use_media_info: true
+            show_volume_level: true
+            volume_controls:
+              - volume_mute
+              - volume_set
+            media_controls:
+              - play_pause_stop
+              - previous
+              - next
+            visibility:
+              - condition: state
+                entity: media_player.tv_jelly_beans_tv_2
+                state_not: "off"
+              - condition: state
+                entity: media_player.tv_jelly_beans_tv_2
+                state_not: unavailable
+          - type: custom:mushroom-media-player-card
+            entity: media_player.jelly_bean_s_soundbar_media_player
+            name: Soundbar
+            use_media_info: true
+            show_volume_level: true
+            volume_controls:
+              - volume_mute
+              - volume_set
+            visibility:
+              - condition: state
+                entity: media_player.jelly_bean_s_soundbar_media_player
+                state_not: "off"
+              - condition: state
+                entity: media_player.jelly_bean_s_soundbar_media_player
+                state_not: unavailable
+          - type: custom:mushroom-media-player-card
+            entity: media_player.sambed
+            name: Bedroom TV
+            use_media_info: true
+            show_volume_level: true
+            visibility:
+              - condition: state
+                entity: media_player.sambed
+                state_not: "off"
+              - condition: state
+                entity: media_player.sambed
+                state_not: unavailable
+
+      # ── AI Cam glance ────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: AI Cam
+            heading_style: subtitle
+            icon: mdi:cctv
+            badges:
+              - type: entity
+                entity: binary_sensor.ai_cam_person_occupancy
+                show_state: false
+                color: red
+          - type: picture-entity
+            entity: camera.ai_cam
+            camera_view: auto
+            show_name: false
+            show_state: false
+            tap_action:
+              action: navigate
+              navigation_path: cameras
+
+  # ══════════════════════════════════════════════════════════════
+  #  ROOMS
+  # ══════════════════════════════════════════════════════════════
+  - title: Rooms
+    path: rooms
+    icon: mdi:floor-plan
+    type: sections
+    max_columns: 3
+    dense_section_placement: true
+    theme: Jelly Bean
+    sections:
+      # ── Lounge ───────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Lounge
+            heading_style: title
+            icon: mdi:sofa
+          - type: custom:decluttering-card
+            template: jb_presence
+            variables:
+              - name: Kitchen Radar
+              - presence: binary_sensor.lounge_presence
+          - type: custom:decluttering-card
+            template: jb_light
+            variables:
+              - entity: light.lounge_lights
+              - name: Main
+              - icon: mdi:ceiling-light
+          - type: custom:decluttering-card
+            template: jb_light
+            variables:
+              - entity: light.living_room_light
+              - name: Side
+              - icon: mdi:floor-lamp
+          - type: custom:decluttering-card
+            template: jb_light
+            variables:
+              - entity: light.left_smart_bulb
+              - name: Left
+              - icon: mdi:lightbulb
+          - type: custom:decluttering-card
+            template: jb_light
+            variables:
+              - entity: light.right_smart_bulb
+              - name: Right
+              - icon: mdi:lightbulb
+          - type: custom:decluttering-card
+            template: jb_light
+            variables:
+              - entity: light.rgbic_tv_backlight
+              - name: TV Backlight
+              - icon: mdi:television-ambient-light
+          - type: tile
+            entity: switch.rgbic_tv_backlight_dreamview
+            name: DreamView Sync
+            icon: mdi:television-play
+          - type: custom:mushroom-media-player-card
+            entity: media_player.tv_jelly_beans_tv_2
+            name: TV
+            use_media_info: true
+            show_volume_level: true
+          - type: thermostat
+            entity: climate.ember
+            features:
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - heat
+                  - "off"
+
+      # ── Bedroom ──────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Bedroom
+            heading_style: title
+            icon: mdi:bed
+          - type: custom:decluttering-card
+            template: jb_presence
+            variables:
+              - name: Presence
+              - presence: binary_sensor.bedroom_presence
+          - type: custom:decluttering-card
+            template: jb_light
+            variables:
+              - entity: light.bedroom_light
+              - name: Bedroom Light
+              - icon: mdi:ceiling-light
+          - type: custom:mushroom-media-player-card
+            entity: media_player.sambed
+            name: Bedroom TV
+            use_media_info: true
+            show_volume_level: true
+          - type: tile
+            entity: assist_satellite.home_assistant_voice
+            name: Bedside Voice
+            icon: mdi:account-voice
+
+      # ── Landing ──────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Landing
+            heading_style: title
+            icon: mdi:stairs
+          - type: custom:decluttering-card
+            template: jb_presence
+            variables:
+              - name: Presence
+              - presence: binary_sensor.landing_presence
+          - type: custom:decluttering-card
+            template: jb_light
+            variables:
+              - entity: light.stairs_smart_bulb
+              - name: Stairs
+              - icon: mdi:stairs-box
+          - type: custom:decluttering-card
+            template: jb_light
+            variables:
+              - entity: light.upstairs_led_bulb
+              - name: Upstairs
+              - icon: mdi:lightbulb
+
+      # ── Kids Room ────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Kids Room
+            heading_style: title
+            icon: mdi:teddy-bear
+          - type: custom:decluttering-card
+            template: jb_light
+            variables:
+              - entity: light.kids_bedroom
+              - name: Kids Light
+              - icon: mdi:lightbulb
+          - type: custom:mushroom-template-card
+            primary: Bedtime Countdown
+            secondary: Runs the 19:45 warning + 20:00 flash
+            icon: mdi:sleep
+            icon_color: indigo
+            layout: horizontal
+            multiline_secondary: true
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.kids_bedtime_final_countdown
+
+  # ══════════════════════════════════════════════════════════════
+  #  CAMERAS
+  # ══════════════════════════════════════════════════════════════
+  - title: Cameras
+    path: cameras
+    icon: mdi:cctv
+    type: sections
+    max_columns: 3
+    dense_section_placement: true
+    theme: Jelly Bean
+    sections:
+      # ── AI Cam live ──────────────────────────────────────────
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: AI Cam — Live
+            heading_style: title
+            icon: mdi:video
+          - type: custom:advanced-camera-card
+            cameras:
+              - camera_entity: camera.ai_cam
+                live_provider: image
+                id: ai_cam
+                image:
+                  mode: camera
+                  refresh_seconds: 1
+                triggers:
+                  occupancy: true
+                  motion: true
+            dimensions:
+              aspect_ratio_mode: static
+              aspect_ratio: "4:3"
+            profiles:
+              - low-performance
+            performance:
+              features:
+                max_simultaneous_engine_requests: 1
+            live:
+              preload: false
+              show_image_during_load: true
+              auto_play:
+                - selected
+            view:
+              default: live
+              triggers:
+                show_trigger_status: true
+                filter_selected_camera: false
+                actions:
+                  trigger: live
+                  untrigger: default
+            menu:
+              style: hover-card
+              position: left
+              alignment: left
+            status_bar:
+              style: hover-card
+              position: top
+          - type: picture-entity
+            entity: image.ai_cam_person
+            name: Last Person Seen
+            show_state: false
+            camera_view: auto
+            visibility:
+              - condition: state
+                entity: binary_sensor.ai_cam_person_occupancy
+                state: "on"
+
+      # ── Detection ────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Detection
+            heading_style: title
+            icon: mdi:motion-sensor
+          - type: tile
+            entity: binary_sensor.ai_cam_person_occupancy
+            name: Person
+            color: red
+          - type: tile
+            entity: binary_sensor.ai_cam_motion
+            name: Motion
+            color: amber
+          - type: tile
+            entity: sensor.ai_cam_person_count
+            name: People in Frame
+            icon: mdi:account-multiple
+          - type: entities
+            title: Frigate — AI Cam
+            show_header_toggle: false
+            entities:
+              - entity: switch.ai_cam_detect
+                name: Detection
+              - entity: switch.ai_cam_motion
+                name: Motion Detection
+              - entity: switch.ai_cam_recordings
+                name: Recordings
+              - entity: switch.ai_cam_snapshots
+                name: Snapshots
+              - type: divider
+              - entity: sensor.ai_cam_review_status
+                name: Review Status
+
+      # ── Other cameras ────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Other Cameras
+            heading_style: title
+            icon: mdi:camera-outline
+          - type: picture-entity
+            entity: camera.cctv_cam
+            name: CCTV (XIAO)
+            camera_view: auto
+            show_state: false
+          - type: picture-entity
+            entity: camera.porch_cam
+            name: Porch
+            camera_view: auto
+            show_state: false
+
+  # ══════════════════════════════════════════════════════════════
+  #  SYSTEM
+  # ══════════════════════════════════════════════════════════════
+  - title: System
+    path: system
+    icon: mdi:chip
+    type: sections
+    max_columns: 3
+    dense_section_placement: true
+    theme: Jelly Bean
+    sections:
+      # ── Node health ──────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: ESPHome Nodes
+            heading_style: title
+            icon: mdi:access-point-network
+          - type: custom:decluttering-card
+            template: jb_node
+            variables:
+              - name: Lounge / Kitchen Radar
+              - wifi: sensor.lounge_wifi_signal
+          - type: custom:decluttering-card
+            template: jb_node
+            variables:
+              - name: Bedroom Radar
+              - wifi: sensor.bedroom_wifi_signal
+          - type: custom:decluttering-card
+            template: jb_node
+            variables:
+              - name: Landing Radar
+              - wifi: sensor.landing_wifi_signal
+          - type: custom:decluttering-card
+            template: jb_node
+            variables:
+              - name: AI Cam
+              - wifi: sensor.living_room_ai_cam_ai_cam_wifi_signal
+          - type: custom:decluttering-card
+            template: jb_node
+            variables:
+              - name: RuView CSI
+              - wifi: sensor.ruview_csi_node_3_wifi_signal
+
+      # ── Voice ────────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Voice
+            heading_style: title
+            icon: mdi:microphone
+          - type: tile
+            entity: assist_satellite.home_assistant_voice
+            name: Voice PE — Lounge
+            icon: mdi:account-voice
+          - type: tile
+            entity: assist_satellite.living_room_ai_cam_assist_satellite
+            name: AI Cam Satellite
+            icon: mdi:account-voice
+          - type: tile
+            entity: media_player.living_room_ai_cam_ai_cam_speaker
+            name: AI Cam Speaker
+            features:
+              - type: media-player-volume-slider
+          - type: tile
+            entity: button.living_room_ai_cam_start_voice_assistant
+            name: Start Listening
+            icon: mdi:microphone-message
+            tap_action:
+              action: perform-action
+              perform_action: button.press
+              target:
+                entity_id: button.living_room_ai_cam_start_voice_assistant
+          - type: entities
+            title: Pipeline
+            show_header_toggle: false
+            entities:
+              - entity: select.living_room_ai_cam_assistant
+                name: Assistant
+              - entity: select.living_room_ai_cam_finished_speaking_detection
+                name: End-of-speech
+              - entity: input_number.soundbar_saved_volume
+                name: Saved Soundbar Volume
+
+      # ── AI Cam hardware + tuning ─────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: AI Cam Hardware
+            heading_style: title
+            icon: mdi:memory
+          - type: tile
+            entity: light.living_room_ai_cam_status_led
+            name: Status LED
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: switch.living_room_ai_cam_amp_enable
+                name: Amplifier
+              - entity: switch.living_room_ai_cam_camera_power_down
+                name: Camera Power Down
+              - entity: binary_sensor.living_room_ai_cam_boot_button
+                name: Boot Button
+              - entity: binary_sensor.living_room_ai_cam_user_button
+                name: User Button
+              - type: divider
+              - entity: button.living_room_ai_cam_restart
+                name: Restart Device
+          - type: entities
+            title: Image Tuning
+            show_header_toggle: false
+            entities:
+              - entity: select.living_room_ai_cam_camera_quality
+                name: Quality
+              - entity: select.living_room_ai_cam_camera_agc_ceiling
+                name: AGC Ceiling
+              - type: divider
+              - entity: number.living_room_ai_cam_camera_brightness
+                name: Brightness
+              - entity: number.living_room_ai_cam_camera_contrast
+                name: Contrast
+              - entity: number.living_room_ai_cam_camera_saturation
+                name: Saturation
+              - entity: number.living_room_ai_cam_camera_exposure_level
+                name: Exposure
+              - type: divider
+              - entity: switch.living_room_ai_cam_camera_auto_exposure
+                name: Auto Exposure
+              - entity: switch.living_room_ai_cam_camera_auto_gain
+                name: Auto Gain
+              - entity: switch.living_room_ai_cam_camera_rotate_180
+                name: Rotate 180°
+
+      # ── Diagnostics ──────────────────────────────────────────
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Diagnostics
+            heading_style: title
+            icon: mdi:heart-pulse
+          - type: custom:mini-graph-card
+            name: WiFi Signal — 24h
+            hours_to_show: 24
+            points_per_hour: 4
+            line_width: 2
+            show:
+              fill: fade
+              extrema: true
+            entities:
+              - entity: sensor.living_room_ai_cam_ai_cam_wifi_signal
+                name: AI Cam
+                color: "#2F6BFF"
+              - entity: sensor.lounge_wifi_signal
+                name: Lounge
+                color: "#12B76A"
+              - entity: sensor.landing_wifi_signal
+                name: Landing
+                color: "#F5A524"
+          - type: entities
+            title: AI Cam
+            show_header_toggle: false
+            entities:
+              - entity: sensor.living_room_ai_cam_ai_cam_ip_address
+                name: IP Address
+              - entity: sensor.living_room_ai_cam_ai_cam_uptime
+                name: Uptime
+              - entity: sensor.living_room_ai_cam_ai_cam_esphome_version
+                name: Firmware
+              - entity: update.living_room_ai_cam_firmware
+                name: Update
+          - type: entities
+            title: Modes
+            show_header_toggle: false
+            entities:
+              - entity: input_boolean.away_mode
+                name: Away Mode
+              - entity: input_boolean.guest_mode
+                name: Guest Mode
