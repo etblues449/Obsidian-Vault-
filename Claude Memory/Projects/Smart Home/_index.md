@@ -152,3 +152,94 @@ Package: Assistant Core/packages/phase0.tar.gz.b64 + install-phase0.sh
 system prompt in lib/brain.mjs / the four prompt-building files, so JARVIS USES this
 honesty. Then Phase 1 (security: injection gate + kill switch + tool-approval).
 
+
+
+---
+
+## 2026-08-23 — STATUS SUPERSEDED + Phase 1 in progress
+
+> **⚠️ Two entries above this line are now STALE. Read this block as authoritative.**
+>
+> 1. **Status, first bullet ("2026-08-22: JARVIS v2 interface + auto-start BUILT &
+>    OFFLINE-VERIFIED … on-device smoke test is the open gate")** — **superseded.**
+>    Jelly Bean saw v2 and rejected it (*"I hate it"*). The smoke test is **cancelled,
+>    not pending.** v2 is shelved: launcher stopped, Termux:Boot script removed
+>    (archived to `~/_archive_jarvis_20260822/boot/`), code dormant at
+>    `jarvis-core/jarvis2/`. Package SHA `f89a2dea…` is history, not a product.
+> 2. **Next Actions, first item ("JARVIS v2 — run the on-device smoke test + one-time
+>    boot steps")** — **cancelled**, same reason.
+>
+> The locked decision (six-tab `jarvis-app.mjs` on **:8737** is THE app) stands as
+> recorded in the DECISION 2026-08-22 block above. All improvements happen on that app.
+
+### Current state — the honest three-way split
+
+| Thing | Written | On the phone | Actually running |
+|---|---|---|---|
+| Phase 0 `self-knowledge.mjs` | ✅ | ✅ | ✅ (13 tools, drift check OK) |
+| Phase 0 `capabilitiesBlock` → prompts | ✅ spec | ❌ | ❌ **not wired** |
+| Phase 1 `lib/hardline.mjs` | ✅ 25/25 tests | ❌ | ❌ **sandbox only** |
+| Phase 1 `agent.mjs` import + guard | ✅ exact edit drafted | ❌ | ❌ awaiting go |
+
+### jarvis-core facts established by recon (do not re-derive)
+
+- **13 callable tools, not 14** — `tools/vault-lib.mjs` is a helper (`safePath`,
+  `SKIP_DIRS`), no `name`/`run`, never registers.
+- **`executeToolCall` in `lib/agent.mjs` is the single choke point.** Order: tool exists →
+  parse args → validate → `gated` → `onToolUse` → safe-mode → confirm → run +
+  `scanForInjection` + audit.
+- **The injection gate and kill switch already exist and are good** (`lib/rails.mjs`:
+  `scanForInjection` 10 patterns, `isSafeMode()` via env / config / `.jarvis-safe` file,
+  append-only JSONL audit, per-London-day token tally). **Do not rebuild them.**
+- **`~/jarvis-core/.jarvis-safe` is the panic button** — its presence refuses every gated
+  action. Toggle: `node jarvis-rails.mjs safe on|off`.
+- **Riskiest tool: `tools/pc-control.mjs`** — arbitrary PowerShell via the PC bridge
+  (`192.168.0.191:3000`, token-guarded). Confirmation was the *only* gate; no floor under
+  a confirmed command. That is precisely what Phase 1 fixes.
+
+### North-Star roadmap (locked)
+
+Target = **Trustworthy Companion**: durable honest memory, non-drifting personality,
+honest self-knowledge, crash-safe propose→approve→commit — all inside the six-tab app.
+**P0** self-knowledge ✅ · **P1** security 🔄 ← here · **P2** persona-drift · **P3**
+execution-gap queue · **P4** memory depth · **P5** code-sentinel · **P6** living-mind
+snapshot (opt-in, static; never on the mic path) · **P7** board of advisors (opt-in,
+multi-model only).
+
+### Also this session
+
+- **Vercel Carousel API secured — verified live** (`jarvis-carousel.vercel.app`):
+  fail-closed bearer gate on `/api/chat` + `/api/capture`. Probes: no token → 401, wrong
+  → 401, correct → 200 + pong, capture → 401. **Root cause of the earlier "still open":
+  Vercel deploys branch `main`, work was on `master`** — merged. **Standing risk:
+  main/master drift — switch the Vercel production branch to `master`.** Secondary app;
+  the phone core does not depend on it.
+- **Orphaned submodule fixed** — `.claude/skills/android-development` gitlink with no
+  `.gitmodules` was breaking the Vercel clone.
+- **Working practice: file-attachment uploads are broken for Jelly Bean** — attachments
+  arrive empty. **Pasted text and screenshots only.**
+
+### Next actions (supersede the v2 items above)
+
+- [ ] **P1 — ship the hardline blocklist**: package `lib/hardline.mjs` SHA-verified via
+      `Assistant Core/packages/`, one-paste installer with `agent.mjs.bak` backup, apply
+      the import + guard block, `node --check lib/agent.mjs` clean, then **on-device proof**
+      that a catastrophic *confirmed* `pc_control` command is refused **and** a normal one
+      still runs.
+- [ ] **P1 — widen `scanForInjection`** with data-exfil patterns (send/forward/email all…,
+      `curl|bash`, "export your…").
+- [ ] **P1 — document `.jarvis-safe` as the panic button**; confirm `isSafeMode` covers
+      every tool path.
+- [ ] **Close the Phase 0 loop** — wire `self-knowledge.json`'s `capabilitiesBlock` into
+      `lib/brain.mjs` and/or the four `systemPrompt()` builders, so JARVIS *uses* the honesty.
+- [ ] **Push the Fold's `jarvis-core` to GitHub `main`** — last recorded push 2026-08-06.
+      Carried over; still the least-protected part of the system.
+- [ ] **Rotate the Carousel `JARVIS_API_TOKEN`** (exposed in chat; value not recorded here).
+- [ ] Housekeeping: tidy this file's top Status + Next Actions sections in a full rewrite
+      so a top-down reader isn't misled by the superseded v2 entries.
+- [ ] Deferred cleanup: archive the 546M `~/jarvis` sprawl (2nd vault clone + `gstack` +
+      `openclaude`) and stray vault clones → one canonical vault (`~/Obsidian-Vault-`, master).
+
+Session: [[sessions/2026-08-23]] — Phase 0 closed, Phase 1 built & tested (not shipped),
+v2 rejected, Carousel API secured.
+
