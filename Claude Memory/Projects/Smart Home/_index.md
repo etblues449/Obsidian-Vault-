@@ -243,3 +243,13 @@ multi-model only).
 Session: [[sessions/2026-08-23]] — Phase 0 closed, Phase 1 built & tested (not shipped),
 v2 rejected, Carousel API secured.
 
+
+
+## Session 2026-08-23 close — status & next actions
+- Phase 0 (self-knowledge) ✅ done on device (13 tools). Phase 1 blocklist built+tested
+  (25/25), **not yet shipped** — pending: package + install + on-device verify.
+- Deferred: close Phase 0 loop (wire capabilitiesBlock into prompt); widen injection
+  scanner; document `.jarvis-safe`; archive 546M `~/jarvis` sprawl; rotate Vercel
+  `JARVIS_API_TOKEN`; switch Vercel production branch master->retire main drift.
+- Session record: [[sessions/2026-08-23]]. Full handoff delivered to user as HANDOFF.md.
+
