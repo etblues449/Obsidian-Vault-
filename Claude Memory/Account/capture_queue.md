@@ -219,3 +219,20 @@
 - [ ] **Execution gap (P3)** — vault action-queue + heartbeat drain on boot/tick, durable
       and idempotent ("assume you will be killed"). £0.
 
+
+
+## 2026-08-23 — from JARVIS security session
+DONE:
+- [x] Vercel Carousel API secured + verified live (401/200 probes)
+- [x] App decision locked: six-tab :8737 daily driver; v2 shelved
+- [x] Phase 0 self-knowledge generator shipped + verified (13 tools)
+- [x] Phase 1 hardline blocklist built + tested 25/25 (sandbox)
+OUTSTANDING:
+- [ ] Ship + install + verify Phase 1 hardline blocklist on device (NEXT)
+- [ ] Widen scanForInjection with data-exfil patterns
+- [ ] Document `.jarvis-safe` as panic button
+- [ ] (opt) Close Phase 0 loop: wire capabilitiesBlock into prompt
+- [ ] Rotate Vercel JARVIS_API_TOKEN (exposed in chat)
+- [ ] Switch Vercel production branch to master (kill main/master drift)
+- [ ] Archive 546M ~/jarvis sprawl -> one canonical vault
+
