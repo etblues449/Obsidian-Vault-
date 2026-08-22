@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/sh
 # JARVIS v2 installer — run once in Termux:  sh ~/storage/downloads/install-jarvis2.sh
 set -e
-SHA_EXPECTED="13471b120b80dd33368c670cf808ce8b01a36f3e7f865319dd4f820dd5dc44b9"
+SHA_EXPECTED="f89a2deae4e2af76c9148a7465e1207164eeb240e984624f6b057eedb3601147"
 echo "== JARVIS v2 install =="
 [ -d "$HOME/storage" ] || { echo "Running termux-setup-storage first — allow the permission, then re-run this."; termux-setup-storage; exit 1; }
 PKG=""
