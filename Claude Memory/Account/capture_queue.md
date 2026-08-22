@@ -113,3 +113,41 @@
 - [ ] **Confirm board identity by MAC** — `28:84:85:49:83:C8` = live ai_cam; check whether `…:86:70` answers as the Arduino-flashed board.
 - [ ] **P0 unchanged and still open: back up hub-side config into `ha-config/`** — automations, bedroom-2, frigate, scenes/scripts, the FLASHED ai_cam.yaml, `ui-lovelace-minimal.yaml`. One SD failure erases the lot.
 
+
+## New — from the 2026-08-22 JARVIS v2 session (interface + auto-start rebuild)
+
+- [ ] **S1 — Run the JARVIS v2 on-device gate.** Install `jarvis2-package.tar.gz` (SHA-256 `8923a59ac88b45f0dc3480c44909440e1293dec9b05ddd1786b708ce2551dab4`) via `install.sh`, then the one-time steps: Termux:Boot from F-Droid opened once · battery Unrestricted for Termux + Termux:Boot · Chrome → `localhost:1875` → Install. Then the 5-minute smoke test (speak → streamed reply → "thanks" ends it) **and the cold-reboot check** (reboot, tap the icon, Termux never opened). Report: `JARVIS_V2_REPORT_2026-08-22.md` §6.
+- [ ] **S1 — Push the Fold's `jarvis-core` (now incl. `jarvis2/`) to GitHub `main`.** Last push 2026-07-22 — a month of on-device work is unbacked; still the least-protected part of the system. SSH key `fold7-termux` already set up.
+- [ ] **S2 — If the live `/api/chat` events surprise the tolerant parser**, the UI will print a diagnostics line with exactly what the core sent — capture that line; it's the one input needed to pin the protocol precisely.
+- [ ] **S3 — After the gate passes:** consider Side-button double-press → JARVIS (Settings → Advanced features → Side button) as the physical "say a word" until the satellites carry room wake.
+
+
+> **⚠️ Evidence corrected 2026-08-22 (same session):** the S1 push item above says "Last push 2026-07-22 — a month of on-device work is unbacked". CLAUDE.md's change history records a `jarvis-core` push on **2026-08-06**, so the true gap at session time is **16 days**. The action stands (push the Fold's jarvis-core incl. `jarvis2/`); the urgency figure is corrected here.
+
+
+
+## New — 2026-08-22 (jarvis2 re-delivery session)
+
+- [ ] **Install JARVIS v2 from the RE-DELIVERED package** — SHA-256 `13471b120b80dd33368c670cf808ce8b01a36f3e7f865319dd4f820dd5dc44b9` (`jarvis2-v2.tar.gz` + `install-jarvis2.sh`). The earlier same-day build's artifact (SHA `8923a59a…`) is unretrievable from its chat — do not hunt for it; the spec is identical and re-verified 43/43.
+- [ ] **Run the §6 smoke test** in `JARVIS_V2_REPORT_2026-08-22.md`, including the cold-reboot check, and report any failing step with a screenshot of Status → diagnostics.
+
+
+
+> **⚠️ SHA superseded 2026-08-22 (second session):** the S1 item "Run the JARVIS v2
+> on-device gate" above references package SHA `8923a59a…` — that package never
+> reached the phone. The live package is the **re-issue, SHA-256
+> `3d70a9cf774e8aea3b54b8a262eecbcdd1c9fdb54fdcbc701b410516af28f096`**, verified
+> 41/41 (up from 32/32). Install command:
+> `sh install.sh jarvis2-package.tar.gz 3d70a9cf774e8aea3b54b8a262eecbcdd1c9fdb54fdcbc701b410516af28f096`
+> — then the same one-time steps and 5-minute gate. See the addendum in
+> `Projects/Smart Home/sessions/2026-08-22.md`.
+
+
+### 2026-08-22 later — supersedes the two earlier jarvis2 SHA entries above
+- [ ] **Install JARVIS v2.0.1** — same one-paste command; installer now expects SHA `f89a2dea…3601147` (loopback bind fix). Then run the §6 smoke test.
+- [ ] **Verify Vercel voice-app auth** (July audit #1) — curl check in `JARVIS_PATTERN_AUDIT_2026-08-22.md`; if 200, fix auth or pause the project.
+- [ ] **Retire the `database` stub** per the supabase playbook (decide PostgREST-vs-driver first).
+- [ ] **Security pass v2.1**: audit-log redaction · pc_control hardline blocklist · per-tool caps · pre-commit secret hook · incident runbook · rails score on v2 Status sheet · confirm MAX_ITERATIONS bound.
+- [ ] **Execution gap**: vault action-queue + heartbeat drain on boot/tick (cloud-to-local pattern, £0).
+- [ ] Small adopts: capabilities-from-registry prompt line · recency voice cue + tonal checkpoint · t_since_user diagnostic · numeric-honesty rule · session-template headers · persona live-reload.
+
