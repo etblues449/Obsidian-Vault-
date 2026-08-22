@@ -133,3 +133,12 @@
 > — then the same one-time steps and 5-minute gate. See the addendum in
 > `Projects/Smart Home/sessions/2026-08-22.md`.
 
+
+### 2026-08-22 later — supersedes the two earlier jarvis2 SHA entries above
+- [ ] **Install JARVIS v2.0.1** — same one-paste command; installer now expects SHA `f89a2dea…3601147` (loopback bind fix). Then run the §6 smoke test.
+- [ ] **Verify Vercel voice-app auth** (July audit #1) — curl check in `JARVIS_PATTERN_AUDIT_2026-08-22.md`; if 200, fix auth or pause the project.
+- [ ] **Retire the `database` stub** per the supabase playbook (decide PostgREST-vs-driver first).
+- [ ] **Security pass v2.1**: audit-log redaction · pc_control hardline blocklist · per-tool caps · pre-commit secret hook · incident runbook · rails score on v2 Status sheet · confirm MAX_ITERATIONS bound.
+- [ ] **Execution gap**: vault action-queue + heartbeat drain on boot/tick (cloud-to-local pattern, £0).
+- [ ] Small adopts: capabilities-from-registry prompt line · recency voice cue + tonal checkpoint · t_since_user diagnostic · numeric-honesty rule · session-template headers · persona live-reload.
+
