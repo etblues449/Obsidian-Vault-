@@ -49,7 +49,7 @@ Deeply automated, presence-aware home across lounge, bedroom, upstairs using HA 
 
 ## Next Actions
 - [ ] **JARVIS v2 — run the on-device smoke test + one-time boot steps** (Termux:Boot from F-Droid opened once; battery Unrestricted for Termux + Termux:Boot; Chrome → localhost:1875 → Install; then the 5-minute gate in `JARVIS_V2_REPORT_2026-08-22.md` §6 incl. the cold-reboot check)
-- [ ] **Push the Fold's `jarvis-core` (now incl. `jarvis2/`) to GitHub `main`** — last push 2026-07-22; a month of on-device work is unbacked. SSH key `fold7-termux` is already set up.
+- [ ] **Push the Fold's `jarvis-core` (now incl. `jarvis2/`) to GitHub `main`** — last recorded push **2026-08-06** (CLAUDE.md change history); 16 days of on-device work unbacked at session time. SSH key `fold7-termux` is already set up.
 - [x] **Merge PR #71** — MERGED 2026-08-02 (`bd91acb`)
 - [x] **Run ha-doctor** — first full run 2026-08-02 via Nabu Casa: [[diagnostics/2026-08-02-ha-doctor]] (naming settled, TV decided, areas mapped). Remaining: one LAN run for direct node probes + error_log
 - [x] **Analyse + close the AI-Mode camera transcript** — root-caused (power, not pins); corrected sketch compile-verified and delivered; guide + runbook addenda committed (2026-08-04). See [[diagnostics/2026-08-04-full-home-diagnosis]] Part 1
