@@ -1,0 +1,9 @@
+# Claude Code session artifacts
+.claude/logs/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Obsidian local overrides (per Obsidian best practice)
+.obsidian/

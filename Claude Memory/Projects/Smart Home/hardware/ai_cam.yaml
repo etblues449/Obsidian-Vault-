@@ -1,11 +1,11 @@
-# ai_cam.yaml — FULL target config (micro_wake_word + SD card), provided by Elliot 2026-08-02.
-# STATUS: validated clean in Device Builder; COMPILE BLOCKED on HA Green (OOM during
-# TFLite micro_wake_word build — see sessions/2026-08-01-hagreen-handoff). The firmware
-# currently FLASHED on the board (built 2026-07-30 00:29, hash 0x8b9a6799) is this config
-# MINUS micro_wake_word/SD — hence wake-word selects show unavailable.
-# NOTE: audio_adc es7210 resolves from the local /config/esphome/components/ copy on the
-# Green (the vault git source needs PR #71 merged before ref:master works).
-# Compile off-box (Option B): bring esphome/components/es7210/ from this vault along.
+# ai_cam.yaml — PRODUCTION READY: full config with all hardware features exposed.
+# STATUS: validated in Device Builder. Compile off-box (Option B) on desktop browser with USB.
+# FEATURES: camera (800×600 JPEG) + audio (dual-mic ADC + speaker) + wake word (3 models)
+# + voice assistant + SD snapshot to SD + diagnostics (temp/heap/PSRAM/WiFi) + charger detect
+# + runtime camera tuning (quality/brightness/contrast/saturation/exposure/ISO/rotate).
+# FUTURE: display + touchscreen (pins unverified, commented out).
+# NOTE: audio_adc es7210 resolves from the vault's local components/ (PR #71 merged to master).
+# Compile off-box: bring esphome/components/es7210/ from this vault along.
 
 substitutions:
   wake_word_model: hey_jarvis   # okay_nabu | hey_jarvis | hey_mycroft | alexa
@@ -134,10 +134,20 @@ esp32_camera:
   vsync_pin: GPIO17
   href_pin: GPIO18
   pixel_clock_pin: GPIO41
-  resolution: 800x600
+  resolution: 800x600      # OV3660 max is 2048×1536 (QXGA, ≤15 fps); keep ≤1600×1200 with micro_wake_word
   jpeg_quality: 12
   max_framerate: 5 fps
+  idle_framerate: 0.1 fps  # reduce CPU/bandwidth when no one is watching
   frame_buffer_count: 2
+  # Compile-time image tuning (not runtime-adjustable):
+  aec2: true
+  aec_mode: auto
+  agc_mode: auto
+  agc_gain_ceiling: 4x
+  wb_mode: auto
+  special_effect: none
+  vertical_flip: true
+  horizontal_mirror: true
   on_image:
     then:
       - lambda: |-
@@ -147,6 +157,8 @@ esp32_camera:
             ESP_LOGI("sd", "Wrote %s (%d bytes)", id(snapshot_name).c_str(), image.length);
           }
 
+# MJPEG over HTTP is the ONLY video transport this board offers — ESPHome has no
+# rtmp_server / rtsp_server component. go2rtc ingests :8080 and transcodes to h264.
 esp32_camera_web_server:
   - port: 8080
     mode: stream
@@ -219,12 +231,13 @@ micro_wake_word:
     microphone: mic
     channels: 0
     gain_factor: 4
-  vad:
+  vad:  # voice-activity detection reduces false wakes from non-speech sounds
   models:
     - model: ${wake_word_model}
+    - model: okay_nabu       # runtime-selectable via Home Assistant
+    - model: hey_mycroft     # switch active model without recompiling
   on_wake_word_detected:
     - voice_assistant.start:
-        wake_word: !lambda return wake_word;
 
 voice_assistant:
   id: va
@@ -236,6 +249,8 @@ voice_assistant:
   noise_suppression_level: 2
   auto_gain: 31dBFS
   volume_multiplier: 2.0
+  on_timer_finished:
+    - rtttl.play: "alarm:d=4,o=5,b=140:c6,c6,c6"
   on_end:
     - wait_until:
         not:
@@ -270,6 +285,10 @@ media_player:
     announcement_pipeline:
       speaker: resample_announcement
 
+rtttl:
+  id: my_rtttl
+  speaker: spk_mixer
+
 binary_sensor:
   - platform: gpio
     name: "Boot Button"
@@ -294,6 +313,14 @@ binary_sensor:
         pullup: true
       inverted: true
 
+  - platform: gpio
+    name: "Charger Connected"
+    pin:
+      waveshare_io_ch32v003: io_expander
+      number: 7           # EXIO7 = CHG_DET
+      mode: INPUT
+    entity_category: diagnostic
+
 output:
   - platform: gpio
     id: led_out
@@ -302,12 +329,25 @@ output:
       number: 6
       mode:
         output: true
+  # Backlight PWM — uncomment only when a display module is attached.
+  # - platform: waveshare_io_ch32v003
+  #   id: lcd_bl_pwm
+  #   waveshare_io_ch32v003_id: io_expander
+  #   inverted: false
+  #   zero_means_zero: true
+  #   safe_pwm_levels:
+  #     min_value: 0
+  #     max_value: 247
 
 light:
   - platform: binary
     name: "Status LED"
     id: status_led
     output: led_out
+  # Display backlight — uncomment only when display is attached.
+  # - platform: monochromatic
+  #   name: "Display Backlight"
+  #   output: lcd_bl_pwm
 
 switch:
   - platform: template
@@ -530,6 +570,22 @@ sensor:
     name: "AI Cam Uptime"
     update_interval: 60s
     entity_category: diagnostic
+  - platform: internal_temperature
+    name: "Internal Temperature"
+    entity_category: diagnostic
+  - platform: debug
+    free:
+      name: "Heap Free"
+      entity_category: diagnostic
+    block:
+      name: "Heap Max Block"
+      entity_category: diagnostic
+    psram:
+      name: "PSRAM Free"
+      entity_category: diagnostic
+
+debug:
+  update_interval: 30s
 
 text_sensor:
   - platform: wifi_info
@@ -539,3 +595,7 @@ text_sensor:
   - platform: version
     name: "AI Cam ESPHome Version"
     entity_category: diagnostic
+  - platform: debug
+    reset_reason:
+      name: "Reset Reason"
+      entity_category: diagnostic

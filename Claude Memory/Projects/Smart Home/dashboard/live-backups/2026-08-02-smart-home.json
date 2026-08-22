@@ -1,0 +1,1651 @@
+{
+ "title": "Smart Home",
+ "views": [
+  {
+   "title": "Home",
+   "path": "home",
+   "icon": "mdi:home",
+   "cards": [
+    {
+     "type": "custom:mushroom-chips-card",
+     "chips": [
+      {
+       "type": "template",
+       "icon": "mdi:lightbulb",
+       "content": "{{ states.light | selectattr('state','eq','on') | list | count }}\n",
+       "icon_color": "blue"
+      },
+      {
+       "type": "entity",
+       "entity": "input_boolean.away_mode",
+       "icon": "mdi:home-export-outline",
+       "tap_action": {
+        "action": "toggle"
+       }
+      },
+      {
+       "type": "entity",
+       "entity": "input_boolean.guest_mode",
+       "icon": "mdi:account-group",
+       "tap_action": {
+        "action": "toggle"
+       }
+      }
+     ],
+     "card_mod": {
+      "style": "ha-card { background: none !important; box-shadow: none !important; padding: 8px 0 0 0; }\n"
+     }
+    },
+    {
+     "type": "custom:button-card",
+     "show_icon": false,
+     "show_label": true,
+     "name": "Hello, Elliot!",
+     "label": "Welcome home.",
+     "styles": {
+      "card": [
+       {
+        "background": "none"
+       },
+       {
+        "box-shadow": "none"
+       },
+       {
+        "padding": "12px 16px 0"
+       }
+      ],
+      "name": [
+       {
+        "font-size": "24px"
+       },
+       {
+        "font-weight": 700
+       },
+       {
+        "color": "white"
+       },
+       {
+        "justify-self": "start"
+       }
+      ],
+      "label": [
+       {
+        "font-size": "13px"
+       },
+       {
+        "color": "#A0B4D6"
+       },
+       {
+        "justify-self": "start"
+       }
+      ]
+     }
+    },
+    {
+     "type": "horizontal-stack",
+     "cards": [
+      {
+       "type": "custom:button-card",
+       "entity": "binary_sensor.lounge_presence_lounge_presence",
+       "name": "Lounge",
+       "icon": "mdi:sofa",
+       "show_label": true,
+       "label": "[[[ return entity && entity.state === 'on' ? 'Occupied' : entity && entity.state === 'off' ? 'Empty' : 'Unavailable' ]]]",
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "/lounge"
+       },
+       "state": [
+        {
+         "value": "on",
+         "styles": {
+          "card": [
+           {
+            "background": "#1E56D9"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "label": [
+           {
+            "color": "#E8F0FF"
+           }
+          ],
+          "icon": [
+           {
+            "color": "white"
+           }
+          ]
+         }
+        },
+        {
+         "value": "off",
+         "styles": {
+          "card": [
+           {
+            "background": "#0D1B3E"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "label": [
+           {
+            "color": "#A0B4D6"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#A0B4D6"
+           }
+          ]
+         }
+        }
+       ],
+       "styles": {
+        "card": [
+         {
+          "border-radius": "20px"
+         },
+         {
+          "box-shadow": "none"
+         },
+         {
+          "padding": "20px 16px"
+         },
+         {
+          "height": "100px"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "15px"
+         },
+         {
+          "font-weight": 600
+         },
+         {
+          "justify-self": "start"
+         },
+         {
+          "align-self": "end"
+         }
+        ],
+        "label": [
+         {
+          "font-size": "11px"
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "icon": [
+         {
+          "width": "28px"
+         },
+         {
+          "align-self": "start"
+         },
+         {
+          "justify-self": "start"
+         }
+        ]
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "binary_sensor.bedroom_bedroom_presence",
+       "name": "Bedroom",
+       "icon": "mdi:bed",
+       "show_label": true,
+       "label": "[[[ return entity && entity.state === 'on' ? 'Occupied' : entity && entity.state === 'off' ? 'Empty' : 'Offline' ]]]",
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "/bedroom"
+       },
+       "state": [
+        {
+         "value": "on",
+         "styles": {
+          "card": [
+           {
+            "background": "#1E56D9"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "label": [
+           {
+            "color": "#E8F0FF"
+           }
+          ],
+          "icon": [
+           {
+            "color": "white"
+           }
+          ]
+         }
+        },
+        {
+         "value": "off",
+         "styles": {
+          "card": [
+           {
+            "background": "#0D1B3E"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "label": [
+           {
+            "color": "#A0B4D6"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#A0B4D6"
+           }
+          ]
+         }
+        },
+        {
+         "value": "unavailable",
+         "styles": {
+          "card": [
+           {
+            "background": "#071128"
+           }
+          ],
+          "name": [
+           {
+            "color": "#3A5080"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#2A3F6A"
+           }
+          ]
+         }
+        }
+       ],
+       "styles": {
+        "card": [
+         {
+          "border-radius": "20px"
+         },
+         {
+          "box-shadow": "none"
+         },
+         {
+          "padding": "20px 16px"
+         },
+         {
+          "height": "100px"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "15px"
+         },
+         {
+          "font-weight": 600
+         },
+         {
+          "justify-self": "start"
+         },
+         {
+          "align-self": "end"
+         }
+        ],
+        "label": [
+         {
+          "font-size": "11px"
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "icon": [
+         {
+          "width": "28px"
+         },
+         {
+          "align-self": "start"
+         },
+         {
+          "justify-self": "start"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "type": "horizontal-stack",
+     "cards": [
+      {
+       "type": "custom:button-card",
+       "entity": "binary_sensor.landing_landing_presence",
+       "name": "Landing",
+       "icon": "mdi:stairs",
+       "show_label": true,
+       "label": "[[[ return entity && entity.state === 'on' ? 'Occupied' : entity && entity.state === 'off' ? 'Empty' : 'Unavailable' ]]]",
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "/landing"
+       },
+       "state": [
+        {
+         "value": "on",
+         "styles": {
+          "card": [
+           {
+            "background": "#1E56D9"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "label": [
+           {
+            "color": "#E8F0FF"
+           }
+          ],
+          "icon": [
+           {
+            "color": "white"
+           }
+          ]
+         }
+        },
+        {
+         "value": "off",
+         "styles": {
+          "card": [
+           {
+            "background": "#0D1B3E"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "label": [
+           {
+            "color": "#A0B4D6"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#A0B4D6"
+           }
+          ]
+         }
+        }
+       ],
+       "styles": {
+        "card": [
+         {
+          "border-radius": "20px"
+         },
+         {
+          "box-shadow": "none"
+         },
+         {
+          "padding": "20px 16px"
+         },
+         {
+          "height": "100px"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "15px"
+         },
+         {
+          "font-weight": 600
+         },
+         {
+          "justify-self": "start"
+         },
+         {
+          "align-self": "end"
+         }
+        ],
+        "label": [
+         {
+          "font-size": "11px"
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "icon": [
+         {
+          "width": "28px"
+         },
+         {
+          "align-self": "start"
+         },
+         {
+          "justify-self": "start"
+         }
+        ]
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "light.kids_bedroom",
+       "name": "Kids Room",
+       "icon": "mdi:teddy-bear",
+       "show_label": true,
+       "label": "[[[ return entity.state === 'on' ? 'Light on' : 'Light off' ]]]",
+       "tap_action": {
+        "action": "navigate",
+        "navigation_path": "/kids"
+       },
+       "state": [
+        {
+         "value": "on",
+         "styles": {
+          "card": [
+           {
+            "background": "#1E56D9"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "label": [
+           {
+            "color": "#E8F0FF"
+           }
+          ],
+          "icon": [
+           {
+            "color": "white"
+           }
+          ]
+         }
+        },
+        {
+         "value": "off",
+         "styles": {
+          "card": [
+           {
+            "background": "#0D1B3E"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "label": [
+           {
+            "color": "#A0B4D6"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#A0B4D6"
+           }
+          ]
+         }
+        }
+       ],
+       "styles": {
+        "card": [
+         {
+          "border-radius": "20px"
+         },
+         {
+          "box-shadow": "none"
+         },
+         {
+          "padding": "20px 16px"
+         },
+         {
+          "height": "100px"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "15px"
+         },
+         {
+          "font-weight": 600
+         },
+         {
+          "justify-self": "start"
+         },
+         {
+          "align-self": "end"
+         }
+        ],
+        "label": [
+         {
+          "font-size": "11px"
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "icon": [
+         {
+          "width": "28px"
+         },
+         {
+          "align-self": "start"
+         },
+         {
+          "justify-self": "start"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "type": "horizontal-stack",
+     "cards": [
+      {
+       "type": "custom:button-card",
+       "name": "Evening",
+       "icon": "mdi:weather-sunset",
+       "tap_action": {
+        "action": "call-service",
+        "service": "light.turn_on",
+        "service_data": {
+         "entity_id": [
+          "light.right_smart_bulb",
+          "light.left_smart_bulb",
+          "light.living_room_light",
+          "light.rgbic_tv_backlight",
+          "light.stairs_smart_bulb"
+         ],
+         "brightness_pct": 60,
+         "rgb_color": [
+          255,
+          180,
+          107
+         ]
+        }
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "#0D1B3E"
+         },
+         {
+          "border-radius": "16px"
+         },
+         {
+          "box-shadow": "none"
+         },
+         {
+          "padding": "14px 8px"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "11px"
+         },
+         {
+          "color": "white"
+         }
+        ],
+        "icon": [
+         {
+          "color": "#1E56D9"
+         },
+         {
+          "width": "22px"
+         }
+        ]
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "name": "Night",
+       "icon": "mdi:weather-night",
+       "tap_action": {
+        "action": "call-service",
+        "service": "light.turn_on",
+        "service_data": {
+         "entity_id": [
+          "light.right_smart_bulb",
+          "light.left_smart_bulb",
+          "light.living_room_light",
+          "light.rgbic_tv_backlight"
+         ],
+         "brightness_pct": 20,
+         "rgb_color": [
+          255,
+          147,
+          41
+         ]
+        }
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "#0D1B3E"
+         },
+         {
+          "border-radius": "16px"
+         },
+         {
+          "box-shadow": "none"
+         },
+         {
+          "padding": "14px 8px"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "11px"
+         },
+         {
+          "color": "white"
+         }
+        ],
+        "icon": [
+         {
+          "color": "#1E56D9"
+         },
+         {
+          "width": "22px"
+         }
+        ]
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "name": "Movie",
+       "icon": "mdi:movie-open",
+       "tap_action": {
+        "action": "call-service",
+        "service": "light.turn_on",
+        "service_data": {
+         "entity_id": [
+          "light.right_smart_bulb",
+          "light.left_smart_bulb",
+          "light.living_room_light"
+         ],
+         "brightness_pct": 100,
+         "color_temp_kelvin": 6500
+        }
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "#0D1B3E"
+         },
+         {
+          "border-radius": "16px"
+         },
+         {
+          "box-shadow": "none"
+         },
+         {
+          "padding": "14px 8px"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "11px"
+         },
+         {
+          "color": "white"
+         }
+        ],
+        "icon": [
+         {
+          "color": "#1E56D9"
+         },
+         {
+          "width": "22px"
+         }
+        ]
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "name": "All Off",
+       "icon": "mdi:power",
+       "tap_action": {
+        "action": "call-service",
+        "service": "light.turn_off",
+        "service_data": {
+         "entity_id": [
+          "light.right_smart_bulb",
+          "light.left_smart_bulb",
+          "light.living_room_light",
+          "light.rgbic_tv_backlight",
+          "light.stairs_smart_bulb",
+          "light.bedroom_light",
+          "light.upstairs_led_bulb",
+          "light.kids_bedroom"
+         ]
+        }
+       },
+       "styles": {
+        "card": [
+         {
+          "background": "#0D1B3E"
+         },
+         {
+          "border-radius": "16px"
+         },
+         {
+          "box-shadow": "none"
+         },
+         {
+          "padding": "14px 8px"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "11px"
+         },
+         {
+          "color": "white"
+         }
+        ],
+        "icon": [
+         {
+          "color": "#E05555"
+         },
+         {
+          "width": "22px"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "type": "media-control",
+     "entity": "media_player.jelly_beans_tv",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; color: white !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "vertical-stack",
+     "cards": [
+      {
+       "type": "heading",
+       "heading": "RuView WiFi Sensing",
+       "heading_style": "title",
+       "icon": "mdi:wifi-marker"
+      },
+      {
+       "type": "tile",
+       "entity": "binary_sensor.ruview_csi_node_3_presence",
+       "name": "Presence",
+       "icon": "mdi:account-check",
+       "color": "teal",
+       "vertical": false,
+       "state_content": [
+        "state",
+        "last-changed"
+       ]
+      },
+      {
+       "type": "horizontal-stack",
+       "cards": [
+        {
+         "type": "gauge",
+         "entity": "sensor.ruview_csi_node_3_breathing_rate",
+         "name": "Breathing",
+         "unit": "bpm",
+         "min": 0,
+         "max": 30,
+         "needle": true,
+         "severity": {
+          "green": 10,
+          "yellow": 0,
+          "red": 25
+         }
+        },
+        {
+         "type": "gauge",
+         "entity": "sensor.ruview_csi_node_3_heart_rate",
+         "name": "Heart Rate",
+         "unit": "bpm",
+         "min": 0,
+         "max": 120,
+         "needle": true,
+         "severity": {
+          "green": 50,
+          "yellow": 0,
+          "red": 100
+         }
+        }
+       ]
+      },
+      {
+       "type": "horizontal-stack",
+       "cards": [
+        {
+         "type": "tile",
+         "entity": "sensor.ruview_csi_node_3_persons",
+         "name": "Persons",
+         "icon": "mdi:account-group",
+         "color": "blue"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.ruview_csi_node_3_motion",
+         "name": "Motion",
+         "icon": "mdi:motion-sensor",
+         "color": "amber"
+        },
+        {
+         "type": "tile",
+         "entity": "sensor.ruview_csi_node_3_anomaly",
+         "name": "Anomaly",
+         "icon": "mdi:alert-circle-outline",
+         "color": "red"
+        }
+       ]
+      },
+      {
+       "type": "history-graph",
+       "title": "Presence & Vitals (last hour)",
+       "hours_to_show": 1,
+       "entities": [
+        {
+         "entity": "binary_sensor.ruview_csi_node_3_presence",
+         "name": "Presence"
+        },
+        {
+         "entity": "sensor.ruview_csi_node_3_breathing_rate",
+         "name": "Breathing"
+        },
+        {
+         "entity": "sensor.ruview_csi_node_3_heart_rate",
+         "name": "Heart Rate"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Lounge",
+   "path": "lounge",
+   "icon": "mdi:sofa",
+   "cards": [
+    {
+     "type": "custom:button-card",
+     "show_icon": false,
+     "show_label": false,
+     "name": "🛋️ Lounge",
+     "styles": {
+      "card": [
+       {
+        "background": "none"
+       },
+       {
+        "box-shadow": "none"
+       },
+       {
+        "padding": "16px 16px 4px"
+       }
+      ],
+      "name": [
+       {
+        "font-size": "24px"
+       },
+       {
+        "font-weight": 700
+       },
+       {
+        "color": "white"
+       },
+       {
+        "justify-self": "start"
+       }
+      ]
+     }
+    },
+    {
+     "type": "glance",
+     "title": "Presence",
+     "show_name": true,
+     "show_state": true,
+     "entities": [
+      {
+       "entity": "binary_sensor.lounge_presence_lounge_presence",
+       "name": "Presence"
+      },
+      {
+       "entity": "binary_sensor.lounge_presence_lounge_moving_target",
+       "name": "Moving"
+      },
+      {
+       "entity": "binary_sensor.lounge_presence_lounge_still_target",
+       "name": "Still"
+      }
+     ],
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; color: white !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "horizontal-stack",
+     "cards": [
+      {
+       "type": "custom:button-card",
+       "entity": "media_player.jelly_beans_tv",
+       "name": "TV",
+       "icon": "mdi:television",
+       "show_label": true,
+       "label": "[[[ return entity.state ]]]",
+       "tap_action": {
+        "action": "toggle"
+       },
+       "state": [
+        {
+         "value": "on",
+         "styles": {
+          "card": [
+           {
+            "background": "#1E56D9"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "label": [
+           {
+            "color": "#E8F0FF"
+           }
+          ],
+          "icon": [
+           {
+            "color": "white"
+           }
+          ]
+         }
+        },
+        {
+         "value": "off",
+         "styles": {
+          "card": [
+           {
+            "background": "#0D1B3E"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "label": [
+           {
+            "color": "#A0B4D6"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#A0B4D6"
+           }
+          ]
+         }
+        }
+       ],
+       "styles": {
+        "card": [
+         {
+          "border-radius": "20px"
+         },
+         {
+          "box-shadow": "none"
+         },
+         {
+          "padding": "16px"
+         },
+         {
+          "height": "80px"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "13px"
+         },
+         {
+          "font-weight": 600
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "label": [
+         {
+          "font-size": "11px"
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "icon": [
+         {
+          "width": "24px"
+         },
+         {
+          "justify-self": "start"
+         }
+        ]
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "switch.rgbic_tv_backlight_dreamview",
+       "name": "Dreamview",
+       "icon": "mdi:television-ambient-light",
+       "tap_action": {
+        "action": "toggle"
+       },
+       "state": [
+        {
+         "value": "on",
+         "styles": {
+          "card": [
+           {
+            "background": "#1E56D9"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "icon": [
+           {
+            "color": "white"
+           }
+          ]
+         }
+        },
+        {
+         "value": "off",
+         "styles": {
+          "card": [
+           {
+            "background": "#0D1B3E"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#A0B4D6"
+           }
+          ]
+         }
+        }
+       ],
+       "styles": {
+        "card": [
+         {
+          "border-radius": "20px"
+         },
+         {
+          "box-shadow": "none"
+         },
+         {
+          "padding": "16px"
+         },
+         {
+          "height": "80px"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "13px"
+         },
+         {
+          "font-weight": 600
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "icon": [
+         {
+          "width": "24px"
+         },
+         {
+          "justify-self": "start"
+         }
+        ]
+       }
+      },
+      {
+       "type": "custom:button-card",
+       "entity": "switch.rgbic_tv_backlight_music_mode",
+       "name": "Music",
+       "icon": "mdi:music",
+       "tap_action": {
+        "action": "toggle"
+       },
+       "state": [
+        {
+         "value": "on",
+         "styles": {
+          "card": [
+           {
+            "background": "#1E56D9"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "icon": [
+           {
+            "color": "white"
+           }
+          ]
+         }
+        },
+        {
+         "value": "off",
+         "styles": {
+          "card": [
+           {
+            "background": "#0D1B3E"
+           }
+          ],
+          "name": [
+           {
+            "color": "white"
+           }
+          ],
+          "icon": [
+           {
+            "color": "#A0B4D6"
+           }
+          ]
+         }
+        }
+       ],
+       "styles": {
+        "card": [
+         {
+          "border-radius": "20px"
+         },
+         {
+          "box-shadow": "none"
+         },
+         {
+          "padding": "16px"
+         },
+         {
+          "height": "80px"
+         }
+        ],
+        "name": [
+         {
+          "font-size": "13px"
+         },
+         {
+          "font-weight": 600
+         },
+         {
+          "justify-self": "start"
+         }
+        ],
+        "icon": [
+         {
+          "width": "24px"
+         },
+         {
+          "justify-self": "start"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "type": "light",
+     "entity": "light.living_room_light",
+     "name": "Living room",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "light",
+     "entity": "light.right_smart_bulb",
+     "name": "Right bulb",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "light",
+     "entity": "light.left_smart_bulb",
+     "name": "Left bulb",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "light",
+     "entity": "light.rgbic_tv_backlight",
+     "name": "TV backlight",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "light",
+     "entity": "light.stairs_smart_bulb",
+     "name": "Stairs",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "glance",
+     "title": "Radar",
+     "show_name": true,
+     "show_state": true,
+     "entities": [
+      {
+       "entity": "sensor.lounge_presence_lounge_moving_distance",
+       "name": "Moving"
+      },
+      {
+       "entity": "sensor.lounge_presence_lounge_still_distance",
+       "name": "Still"
+      },
+      {
+       "entity": "sensor.lounge_presence_lounge_detection_distance",
+       "name": "Range"
+      }
+     ],
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; color: white !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "media-control",
+     "entity": "media_player.jelly_beans_tv",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; color: white !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "custom:spotify-card",
+     "account": "spotify_elliot_horton",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\n"
+     }
+    }
+   ]
+  },
+  {
+   "title": "Bedroom",
+   "path": "bedroom",
+   "icon": "mdi:bed",
+   "cards": [
+    {
+     "type": "custom:button-card",
+     "show_icon": false,
+     "show_label": false,
+     "name": "🛏️ Bedroom",
+     "styles": {
+      "card": [
+       {
+        "background": "none"
+       },
+       {
+        "box-shadow": "none"
+       },
+       {
+        "padding": "16px 16px 4px"
+       }
+      ],
+      "name": [
+       {
+        "font-size": "24px"
+       },
+       {
+        "font-weight": 700
+       },
+       {
+        "color": "white"
+       },
+       {
+        "justify-self": "start"
+       }
+      ]
+     }
+    },
+    {
+     "type": "glance",
+     "title": "Presence",
+     "show_name": true,
+     "show_state": true,
+     "entities": [
+      {
+       "entity": "binary_sensor.bedroom_bedroom_presence",
+       "name": "Presence"
+      },
+      {
+       "entity": "binary_sensor.bedroom_bedroom_motion",
+       "name": "Motion"
+      },
+      {
+       "entity": "binary_sensor.bedroom_bedroom_still_presence",
+       "name": "Still"
+      }
+     ],
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "light",
+     "entity": "light.bedroom_light",
+     "name": "Bedroom light",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "media-control",
+     "entity": "media_player.sambed",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "media-control",
+     "entity": "media_player.spotify_elliot_horton",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    }
+   ]
+  },
+  {
+   "title": "Landing",
+   "path": "landing",
+   "icon": "mdi:stairs",
+   "cards": [
+    {
+     "type": "custom:button-card",
+     "show_icon": false,
+     "show_label": false,
+     "name": "🪜 Landing",
+     "styles": {
+      "card": [
+       {
+        "background": "none"
+       },
+       {
+        "box-shadow": "none"
+       },
+       {
+        "padding": "16px 16px 4px"
+       }
+      ],
+      "name": [
+       {
+        "font-size": "24px"
+       },
+       {
+        "font-weight": 700
+       },
+       {
+        "color": "white"
+       },
+       {
+        "justify-self": "start"
+       }
+      ]
+     }
+    },
+    {
+     "type": "glance",
+     "title": "Presence",
+     "show_name": true,
+     "show_state": true,
+     "entities": [
+      {
+       "entity": "binary_sensor.landing_landing_presence",
+       "name": "Presence"
+      },
+      {
+       "entity": "binary_sensor.landing_landing_motion",
+       "name": "Motion"
+      },
+      {
+       "entity": "binary_sensor.landing_landing_still_presence",
+       "name": "Still"
+      }
+     ],
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "light",
+     "entity": "light.upstairs_led_bulb",
+     "name": "Upstairs LED",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    }
+   ]
+  },
+  {
+   "title": "Kids",
+   "path": "kids",
+   "icon": "mdi:teddy-bear",
+   "cards": [
+    {
+     "type": "custom:button-card",
+     "show_icon": false,
+     "show_label": false,
+     "name": "🧸 Kids Bedroom",
+     "styles": {
+      "card": [
+       {
+        "background": "none"
+       },
+       {
+        "box-shadow": "none"
+       },
+       {
+        "padding": "16px 16px 4px"
+       }
+      ],
+      "name": [
+       {
+        "font-size": "24px"
+       },
+       {
+        "font-weight": 700
+       },
+       {
+        "color": "white"
+       },
+       {
+        "justify-self": "start"
+       }
+      ]
+     }
+    },
+    {
+     "type": "light",
+     "entity": "light.kids_bedroom",
+     "name": "Kids light",
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    },
+    {
+     "type": "custom:button-card",
+     "name": "Trigger Bedtime Countdown",
+     "icon": "mdi:clock-alert",
+     "tap_action": {
+      "action": "call-service",
+      "service": "automation.trigger",
+      "service_data": {
+       "entity_id": "automation.kids_bedtime_countdown"
+      }
+     },
+     "styles": {
+      "card": [
+       {
+        "background": "#0D1B3E"
+       },
+       {
+        "border-radius": "20px"
+       },
+       {
+        "box-shadow": "none"
+       },
+       {
+        "padding": "16px"
+       }
+      ],
+      "name": [
+       {
+        "font-size": "14px"
+       },
+       {
+        "font-weight": 600
+       },
+       {
+        "color": "white"
+       },
+       {
+        "justify-self": "start"
+       }
+      ],
+      "icon": [
+       {
+        "color": "#1E56D9"
+       },
+       {
+        "width": "26px"
+       },
+       {
+        "justify-self": "start"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "title": "CCTV",
+   "path": "cctv",
+   "icon": "mdi:cctv",
+   "cards": [
+    {
+     "type": "custom:button-card",
+     "show_icon": false,
+     "show_label": false,
+     "name": "📷 CCTV",
+     "styles": {
+      "card": [
+       {
+        "background": "none"
+       },
+       {
+        "box-shadow": "none"
+       },
+       {
+        "padding": "16px 16px 4px"
+       }
+      ],
+      "name": [
+       {
+        "font-size": "24px"
+       },
+       {
+        "font-weight": 700
+       },
+       {
+        "color": "white"
+       },
+       {
+        "justify-self": "start"
+       }
+      ]
+     }
+    },
+    {
+     "camera_view": "auto",
+     "fit_mode": "cover",
+     "type": "picture-glance",
+     "title": "CCTV CAM",
+     "camera_image": "camera.porch_camera_porch_camera",
+     "entities": [
+      {
+       "entity": "binary_sensor.cctv_cam_person",
+       "name": "Person"
+      },
+      {
+       "entity": "binary_sensor.cctv_cam_motion",
+       "name": "Motion"
+      }
+     ],
+     "card_mod": {
+      "style": "ha-card { border-radius: 20px !important; box-shadow: none !important; overflow: hidden; background: #0D1B3E !important; }\n"
+     }
+    },
+    {
+     "type": "glance",
+     "title": "Detection",
+     "show_name": true,
+     "show_state": true,
+     "entities": [
+      {
+       "entity": "binary_sensor.cctv_cam_motion",
+       "name": "Motion"
+      }
+     ],
+     "card_mod": {
+      "style": "ha-card { background: #0D1B3E !important; border-radius: 20px !important; box-shadow: none !important; }\nha-card * { color: white !important; }\n"
+     }
+    }
+   ]
+  }
+ ]
+}
