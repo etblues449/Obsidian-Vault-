@@ -1,0 +1,4 @@
+# Runtime telemetry from the skill-usage PreToolUse hook. Per-session append-only
+# churn — committing it would collide constantly on master, which the Fold 7, the PC
+# and GitHub Actions all write to. Measurement data, not vault content.
+.claude/logs/
