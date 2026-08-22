@@ -104,3 +104,11 @@
 - [ ] **Confirm board identity by MAC** — `28:84:85:49:83:C8` = live ai_cam; check whether `…:86:70` answers as the Arduino-flashed board.
 - [ ] **P0 unchanged and still open: back up hub-side config into `ha-config/`** — automations, bedroom-2, frigate, scenes/scripts, the FLASHED ai_cam.yaml, `ui-lovelace-minimal.yaml`. One SD failure erases the lot.
 
+
+## New — from the 2026-08-22 JARVIS v2 session (interface + auto-start rebuild)
+
+- [ ] **S1 — Run the JARVIS v2 on-device gate.** Install `jarvis2-package.tar.gz` (SHA-256 `8923a59ac88b45f0dc3480c44909440e1293dec9b05ddd1786b708ce2551dab4`) via `install.sh`, then the one-time steps: Termux:Boot from F-Droid opened once · battery Unrestricted for Termux + Termux:Boot · Chrome → `localhost:1875` → Install. Then the 5-minute smoke test (speak → streamed reply → "thanks" ends it) **and the cold-reboot check** (reboot, tap the icon, Termux never opened). Report: `JARVIS_V2_REPORT_2026-08-22.md` §6.
+- [ ] **S1 — Push the Fold's `jarvis-core` (now incl. `jarvis2/`) to GitHub `main`.** Last push 2026-07-22 — a month of on-device work is unbacked; still the least-protected part of the system. SSH key `fold7-termux` already set up.
+- [ ] **S2 — If the live `/api/chat` events surprise the tolerant parser**, the UI will print a diagnostics line with exactly what the core sent — capture that line; it's the one input needed to pin the protocol precisely.
+- [ ] **S3 — After the gate passes:** consider Side-button double-press → JARVIS (Settings → Advanced features → Side button) as the physical "say a word" until the satellites carry room wake.
+
