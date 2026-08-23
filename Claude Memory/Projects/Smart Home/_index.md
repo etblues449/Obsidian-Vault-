@@ -383,3 +383,26 @@ OFF, 0 requests / 0 tokens today (0% of 100000).
 
 Session: [[sessions/2026-08-23]] · Safety reference: [[Assistant Core/JARVIS_SAFETY_FLOORS]]
 
+
+
+## 2026-08-23 — Phase 0 loop CLOSED + Phase 1 hardline VERIFIED + jarvis-core backed up
+
+Supersedes the "Phase 0 regression" and "Phase 1 built but not shipped" notes above.
+
+- **Phase 0 regression fixed at root.** `self-knowledge.json` had degraded to 1 tool ("tools")
+  because the generator was overwritten by a static-parse variant. Re-ran the SHA-verified
+  `install-phase0.sh` → regenerated from the live registry: **13 tools**, drift check **OK**.
+  Not hardcoded — the block carries each tool's real description.
+- **Phase 0 loop closed in the DAILY app.** `jarvis-app.mjs` (:8737) `systemPrompt()` now reads
+  `self-knowledge.json`'s `capabilitiesBlock` and injects it above the honesty rules
+  (`jarvis.mjs`, the one-off REPL, is deliberately not the patch target). Assertion-guarded patch,
+  `jarvis-app.mjs.bak` kept. Verified on device: 13/13 tools rendered, fallback unused, app 200.
+- **Phase 1 was already on the phone** (contrary to the earlier note) and is now **proven**: with
+  confirmation hardcoded to yes, `rm -rf /` is refused and `Get-Date` still runs. Guard sits
+  between `onToolUse` and `isSafeMode` — no bypass.
+- **`jarvis-core` pushed to `origin/main`** (`bb97f5d..2834aad`), closing a 17-day backup gap
+  (last push 2026-08-06). This retires the long-standing "on-device work is unbacked" risk for
+  everything up to today.
+
+Next: Phase 2 — persona-drift fix. See [[sessions/2026-08-23]].
+
