@@ -332,3 +332,21 @@ OUTSTANDING:
   Deployments → latest Production → Redeploy** (env changes do not apply to an already-built
   deployment — the likely reason it failed).
 
+
+- [x] **ROOT CAUSE of the dead capture pipeline + stopped briefings: obsidian-git deleted
+  `.github/workflows/` entirely.** *(FIXED 2026-08-23 — commit `4bdb3bf1` (2026-08-06) removed all 6
+  workflow files; `7f9097d9` (07-04) and `9fd5e00e` (07-14) did the same earlier. Obsidian cannot see
+  dotfolders, so obsidian-git's `git add -A` stages them as deletions. All six restored from
+  `a38848c9`; verified on origin/master. **Pre-commit hook installed and PROVEN** — a staged deletion
+  of a workflow was refused. Capture Router ran successfully 2026-08-23T02:49Z, first pipeline run in
+  18 days.)*
+- [x] **"8 files deleted from master 2026-08-02 by an unidentified client"** — *(EXPLAINED 2026-08-23:
+  same obsidian-git `add -A` mechanism. Not a mystery client; no PC involvement. Closes that
+  investigation.)*
+- [ ] **Build a phone-side `capture` tool** — jarvis-core has 13 tools and none of them captures, so
+  the only capture route is still Tasker → the paid n8n webhook (broken since 2026-07-09). A tool
+  writing directly to `~/Obsidian-Vault-/JARVIS/Inbox/` (same single-write-path model as memory)
+  makes capture voice-driven, £0, and retires n8n entirely. **This is the next build.**
+- [ ] **Watch for a 4th deletion attempt** — if obsidian-git starts failing to commit, that is the
+  hook doing its job, not a bug. Read the message before overriding with `--no-verify`.
+
