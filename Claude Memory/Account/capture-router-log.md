@@ -30,3 +30,4 @@
 | `b7b4d42d` | 2026-08-02 | task_20260624-155912-set-alarm-to-leave-house-at-8-15-for-sch.md | 5 | kept in inbox |
 | `dffd2379` | 2026-08-23 | 2026-08-22-2123-probe.md | 5 | kept in inbox |
 | `f1a6b8e9` | 2026-08-23 | note_20260823-024853-capture-pipeline-revived.md | 5 | kept in inbox |
+| `c37d64c4` | 2026-08-23 | note_20260823-030045-capture-tool-is-live-first-note-written-by-ja.md | 5 | kept in inbox |
