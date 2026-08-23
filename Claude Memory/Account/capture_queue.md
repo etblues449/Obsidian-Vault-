@@ -295,3 +295,29 @@ OUTSTANDING:
 - [ ] **Archive the 546M `~/jarvis` sprawl** → one canonical vault.
 - [ ] **Tasker capture leg** — capture idle since 2026-07-09; briefings from that corpus are stale.
 
+
+- [x] **Phase 4 — crash-safe propose→approve→commit loop.** *(DONE 2026-08-23 — `lib/ledger.mjs`
+  append-only JSONL, wired into `lib/agent.mjs` at 7 points. The `pending = new Map()` in
+  jarvis-app.mjs was process memory: a crash between propose and approve lost the approval silently.
+  Orphans now surfaced, never auto-replayed. Verified on device with a real declined `set_timer`:
+  trail `proposed > declined`, 0 open. Commit `b658634`. CLI: `node jarvis-ledger.mjs`.)*
+- [x] **North-Star roadmap complete** — Phases 0–4 all verified running on the Fold, not merely
+  documented.
+
+### Standing delivery rules (learned the hard way, apply to EVERY future installer)
+1. **Ship source as plain `.mjs` in the vault**, never hand-transcribed base64 (a corrupted blob was
+   caught by the SHA gate on 2026-08-23).
+2. **Cache-bust every fetch AND assert on file content** — SHA proves integrity, not freshness. A
+   stale edge once served a matching old installer + old payload that verified clean.
+3. **When a corrected file must ship immediately, change the filename.** Cache-busting alone did not
+   defeat a sticky edge; `ledger-v2.mjs` did.
+4. **Anchors in patchers must be regex and whitespace-insensitive**, and the installer must verify
+   every anchor exists exactly once *before* modifying anything.
+
+### Still open (unchanged today)
+- [ ] **Rotate the exposed Carousel `JARVIS_API_TOKEN`** — leaked in an earlier chat, still live.
+- [ ] **Archive the 546M `~/jarvis` sprawl** → one canonical vault.
+- [ ] **Tasker capture leg** — capture idle since 2026-07-09; briefings from that corpus are stale.
+- [ ] Consider surfacing `drainReport()` on the app's Status tab so unfinished actions are visible
+      without the CLI.
+
