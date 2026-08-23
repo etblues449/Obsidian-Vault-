@@ -281,3 +281,17 @@ OUTSTANDING:
 - [ ] **Do not ship source as hand-transcribed base64** — use plain `.mjs` in the vault with per-file
   SHA. `Assistant Core/packages/persona.tar.gz.b64` is corrupt and superseded.
 
+
+- [x] **Phase 3 — durable memory.** *(DONE 2026-08-23 — atomic write + `.bak` + read-back
+  verification + mass-loss guard in `lib/memory.mjs`. Old in-place write destroyed ALL facts when
+  interrupted (proven). Verified on device: real round-trip 1 → add → remove → 1, health ok.
+  Commit `958fa63`.)*
+- [x] **Prove the memory path end-to-end** *(DONE 2026-08-23 — `jarvis_memory.md` exists with 1 fact;
+  a deliberate add/remove round-trip on the real file was verified on disk. Supersedes the older
+  "no fact has ever been stored / MEMORY 0" item above, which was stale.)*
+- [ ] **Next North-Star pillar: crash-safe propose→approve→commit loop** (the execution gap —
+  durable queue + drain-on-startup; £0 via vault rows + the existing heartbeat).
+- [ ] **Rotate the exposed Carousel `JARVIS_API_TOKEN`** — still open, still live.
+- [ ] **Archive the 546M `~/jarvis` sprawl** → one canonical vault.
+- [ ] **Tasker capture leg** — capture idle since 2026-07-09; briefings from that corpus are stale.
+
