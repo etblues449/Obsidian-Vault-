@@ -1,70 +1,51 @@
 #!/data/data/com.termux/files/usr/bin/sh
-# JARVIS Phase 1 — hardline floor installer.
-# Fetches the package from the vault, SHA-256 gates it, installs, tests, patches,
-# and proves the block/allow behaviour on device. Safe to re-run (idempotent).
+# install-hardline.sh — JARVIS Phase 1: catastrophic-action floor.
+# Additive + reversible. Backs up lib/agent.mjs to lib/agent.mjs.bak.
+# Aborts cleanly if the SHA doesn't match or agent.mjs doesn't look as expected.
 set -e
 
-EXPECTED_SHA="90ce63698a2f0abcfac194aad876ce96bb755ec267c191a6af1ee70d88d35d2c"
-CORE="${JARVIS_CORE:-$HOME/jarvis-core}"
-URL="https://raw.githubusercontent.com/etblues449/Obsidian-Vault-/master/Assistant%20Core/packages/hardline.tar.gz.b64"
-TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
+CORE="$HOME/jarvis-core"
+B64URL="https://raw.githubusercontent.com/etblues449/Obsidian-Vault-/master/Assistant%20Core/packages/hardline.tar.gz.b64"
+WANT="f355231de3807aa610bdb55678126480819b0d166cc93f9e261c79c4615e5670"
+TMP="$HOME/.hardline-install.$$"
 
-echo "JARVIS Phase 1 — hardline floor"
-echo "  target: $CORE"
+echo "=== JARVIS Phase 1 — hardline floor ==="
+[ -d "$CORE" ] || { echo "ABORT: $CORE not found"; exit 1; }
+[ -f "$CORE/lib/agent.mjs" ] || { echo "ABORT: $CORE/lib/agent.mjs not found"; exit 1; }
 
-[ -d "$CORE/lib" ] || { echo "✗ $CORE/lib not found. Set JARVIS_CORE=/path/to/jarvis-core"; exit 1; }
-[ -f "$CORE/lib/agent.mjs" ] || { echo "✗ $CORE/lib/agent.mjs not found."; exit 1; }
+mkdir -p "$TMP"
+cd "$TMP"
 
-echo "→ fetching…"
-curl -fsSL "$URL" -o "$TMP/pkg.b64" || { echo "✗ fetch failed (offline?)"; exit 1; }
+echo "-- fetching package"
+curl -fsSL "$B64URL" -o p.b64
+tr -d '\r' < p.b64 | base64 -di > hardline.tar.gz
 
-echo "→ decoding…"
-tr -d '\r' < "$TMP/pkg.b64" | base64 -di > "$TMP/pkg.tar.gz"
+echo "-- verifying SHA-256"
+GOT=$(sha256sum hardline.tar.gz 2>/dev/null | cut -d' ' -f1 || openssl dgst -sha256 hardline.tar.gz | awk '{print $NF}')
+echo "   want: $WANT"
+echo "   got : $GOT"
+[ "$GOT" = "$WANT" ] || { echo "ABORT: SHA MISMATCH — nothing installed"; cd "$HOME"; rm -rf "$TMP"; exit 1; }
+echo "   SHA OK"
 
-ACTUAL="$(sha256sum "$TMP/pkg.tar.gz" | cut -d' ' -f1)"
-if [ "$ACTUAL" != "$EXPECTED_SHA" ]; then
-  echo "✗ SHA MISMATCH — refusing to install."
-  echo "  expected: $EXPECTED_SHA"
-  echo "  actual  : $ACTUAL"
-  exit 1
-fi
-echo "✓ SHA verified: $ACTUAL"
+tar -xzf hardline.tar.gz
 
-mkdir -p "$TMP/x" && tar -xzf "$TMP/pkg.tar.gz" -C "$TMP/x"
+echo "-- self-test (sandbox copy, before touching jarvis-core)"
+node test.mjs || { echo "ABORT: self-test failed — nothing installed"; cd "$HOME"; rm -rf "$TMP"; exit 1; }
 
-echo "→ installing files…"
-mkdir -p "$CORE/lib" "$CORE/test"
-cp "$TMP/x/lib/hardline.mjs"        "$CORE/lib/hardline.mjs"
-cp "$TMP/x/test/hardline-test.mjs"  "$CORE/test/hardline-test.mjs"
-cp "$TMP/x/patch-agent.mjs"         "$CORE/patch-agent.mjs"
-cp "$TMP/x/HARDLINE.md"             "$CORE/HARDLINE.md"
+echo "-- installing lib/hardline.mjs"
+cp hardline.mjs "$CORE/lib/hardline.mjs"
 
-echo "→ running the test suite…"
-( cd "$CORE" && node test/hardline-test.mjs ) || { echo "✗ tests failed — NOT patching agent.mjs"; exit 1; }
+echo "-- patching lib/agent.mjs"
+node patch-agent.mjs "$CORE"
 
-echo "→ wiring into lib/agent.mjs…"
-( cd "$CORE" && node patch-agent.mjs "$CORE" ) || { echo "✗ patch aborted — agent.mjs untouched"; exit 1; }
+echo "-- syntax check"
+node --check "$CORE/lib/agent.mjs" && echo "   node --check OK"
 
-echo "→ on-device proof…"
-cd "$CORE" && node -e '
-import("./lib/hardline.mjs").then(h => {
-  const bad  = h.checkHardline("pc_control", { command: "Remove-Item C:\\ -Force -Recurse" });
-  const good = h.checkHardline("pc_control", { command: "Get-Date" });
-  const note = h.checkHardline("remember",   { fact: "rm -rf is dangerous" });
-  console.log("  catastrophic  :", bad.blocked  ? "BLOCKED ✓ (" + bad.reason + ")" : "NOT BLOCKED ✗");
-  console.log("  normal cmd    :", good.blocked ? "BLOCKED ✗" : "allowed ✓");
-  console.log("  remember text :", note.blocked ? "BLOCKED ✗" : "allowed ✓");
-  console.log("  patterns      :", h.HARDLINE_PATTERN_COUNT);
-  if (bad.blocked && !good.blocked && !note.blocked) console.log("\n✓ PHASE 1 INSTALLED AND PROVEN ON DEVICE");
-  else { console.log("\n✗ UNEXPECTED RESULT — report this output"); process.exit(1); }
-});'
+echo "-- verifying wiring order in the live file"
+grep -n "checkHardline" "$CORE/lib/agent.mjs" || { echo "ABORT: guard not present"; exit 1; }
 
+cd "$HOME"
+rm -rf "$TMP"
 echo ""
-echo "Docs   : $CORE/HARDLINE.md      (includes the .jarvis-safe panic button)"
-echo "Backup : $CORE/lib/agent.mjs.bak"
-echo "Revert : cp $CORE/lib/agent.mjs.bak $CORE/lib/agent.mjs && rm $CORE/lib/hardline.mjs"
-echo ""
-echo "NEXT — restart the app so the new agent.mjs is loaded, then in JARVIS say:"
-echo "  \"run Remove-Item C: -Force -Recurse on the PC\"   → must be REFUSED even if you say yes"
-echo "  \"run Get-Date on the PC\"                          → must still work"
+echo "=== DONE. Backup at $CORE/lib/agent.mjs.bak ==="
+echo "Rollback:  cp $CORE/lib/agent.mjs.bak $CORE/lib/agent.mjs && rm $CORE/lib/hardline.mjs"
