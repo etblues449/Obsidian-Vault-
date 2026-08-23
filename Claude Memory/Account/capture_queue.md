@@ -384,3 +384,18 @@ OUTSTANDING:
   The exporter covers config, not the whole instance.
 - [ ] **Re-run `ha-export.mjs` after any automation change** — it is idempotent; commit the diff.
 
+
+- [x] **`AGENT.md` understated the tool surface and the tiers.** *(FIXED 2026-08-23 — superseding
+  header prepended: records 14 tools (it claimed 7), notes all six tiers plus phases 0–5 shipped,
+  lists the seven new components, and points at `self-knowledge.json` + the vault HANDOFF as the
+  authoritative sources. Original Tier 0 build plan kept below as history. Confirmed nothing reads
+  it at runtime. Commit `d05c7a7`.)*
+
+### Termux editing rule (learned 2026-08-23, three attempts)
+For prepending or inserting text into a file on the phone, **use `cat` + a quoted heredoc to a temp
+file, then `cat tmp orig > new && mv new orig`.** Do NOT use `node -e "..."` with nested backticks or
+`${}` — the shell mangles it silently. Two attempts wrote nothing yet still produced a clean
+`git commit`/push; the tell was `nothing to commit, working tree clean`.
+**Always verify the file actually changed (`grep -c`, `wc -l` vs `.bak`) — a successful push proves
+nothing about whether the edit happened.**
+
