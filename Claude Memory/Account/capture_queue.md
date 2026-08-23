@@ -366,3 +366,21 @@ OUTSTANDING:
   briefing for the first time since 2026-08-04 now the workflows are restored. If none appears by
   tomorrow morning, check Actions rather than assuming.
 
+
+- [x] **P0 — Back up hub-side config into the vault.** *(DONE 2026-08-23 — built
+  `Assistant Core/ha-diagnostics/ha-export.mjs`, a re-runnable exporter using HA's config REST API.
+  Exported 11/11 automations + 5/5 scenes (0 scripts exist) to
+  `Claude Memory/Projects/Smart Home/ha-config/` as real YAML + `snapshot.json` + restore README.
+  **Verified restorable** — PyYAML parses them back into 11 and 5 objects; emitter tested against the
+  `": "`, `to: 'on'` and `-00:15:00` quoting traps that would silently corrupt a restore. Commit
+  `c0ce5ebd`.)*
+- [x] **Automation count corrected** — the live hub has **11** automations, not 8 (2026-08-02 record)
+  and not "~19" (older notes). 5 scenes, 0 scripts, 709 entities.
+- [ ] **Finish the hub backup — the YAML-managed files are still hub-only.** `bedroom-2.yaml`,
+  `frigate.yaml`, `configuration.yaml` + packages, the flashed `ai_cam.yaml`, and
+  `ui-lovelace-minimal.yaml` are not exposed by any API. Copy via Studio Code Server or Samba into
+  the same `ha-config/` folder.
+- [ ] **Enable a scheduled full HA backup off-hub** (Nabu Casa cloud backup, or Samba to the PC).
+  The exporter covers config, not the whole instance.
+- [ ] **Re-run `ha-export.mjs` after any automation change** — it is idempotent; commit the diff.
+
