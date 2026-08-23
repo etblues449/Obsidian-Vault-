@@ -399,3 +399,17 @@ file, then `cat tmp orig > new && mv new orig`.** Do NOT use `node -e "..."` wit
 **Always verify the file actually changed (`grep -c`, `wc -l` vs `.bak`) — a successful push proves
 nothing about whether the edit happened.**
 
+
+- [x] **`AGENT.md` understates the tool surface and the tiers.** *(FIXED 2026-08-23 — superseding
+  header prepended: records the real **14** tools (it claimed 7), notes all six tiers shipped (it
+  described 3-6 as future work), lists the seven things shipped today, and points at
+  `self-knowledge.json` as the live source. Historical build plan kept below. Commit `d05c7a7`.
+  Confirmed nothing reads it at runtime.)*
+- [x] **`JARVIS/HANDOFF.md` stale (2026-07-23).** *(FIXED 2026-08-23 — superseding section appended.)*
+
+### Delivery rule #6 (new, learned 2026-08-23)
+**On the phone, write documentation with `cat` + a quoted heredoc, not `node -e`.** Two attempts to
+prepend a header via Node were mangled by shell quoting before Node ran; both **silently committed
+nothing** while still pushing a commit. Always verify a doc edit with `grep -c` and `wc -l` — *a
+commit landing is not proof the file changed.*
+
