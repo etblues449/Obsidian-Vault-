@@ -1,0 +1,235 @@
+# automations.yaml — exported from Home Assistant 2026-08-23T03:34:42.704Z
+# Source: http://192.168.0.200:8123  |  regenerate: node ha-export.mjs
+# UI-managed automations only. YAML-managed packages are NOT captured here.
+- id: bedroom_enter
+  alias: Bedroom - Enter
+  triggers:
+    -
+      trigger: state
+      entity_id: binary_sensor.bedroom_bedroom_presence
+      to: 'on'
+  actions:
+    -
+      action: light.turn_on
+      target:
+        entity_id: light.bedroom_light
+      data:
+        brightness_pct: 70
+        color_temp_kelvin: 4000
+  mode: single
+- id: bedroom_empty
+  alias: Bedroom - Empty
+  triggers:
+    -
+      trigger: state
+      entity_id: binary_sensor.bedroom_bedroom_presence
+      to: 'off'
+      for:
+        minutes: 2
+  actions:
+    -
+      action: light.turn_off
+      target:
+        entity_id: light.bedroom_light
+  mode: single
+- id: landing_enter
+  alias: Landing - Enter
+  triggers:
+    -
+      trigger: state
+      entity_id: binary_sensor.landing_landing_presence
+      to: 'on'
+  actions:
+    -
+      action: light.turn_on
+      target:
+        entity_id: light.upstairs_led_bulb
+      data:
+        brightness_pct: 100
+  mode: single
+- id: landing_empty
+  alias: Landing - Empty
+  triggers:
+    -
+      trigger: state
+      entity_id: binary_sensor.landing_landing_presence
+      to: 'off'
+      for:
+        seconds: 60
+  actions:
+    -
+      action: light.turn_off
+      target:
+        entity_id: light.upstairs_led_bulb
+  mode: single
+- id: system_nightly_notebooklm_sync
+  alias: System - Nightly NotebookLM Sync
+  triggers:
+    -
+      trigger: time
+      at: 03:00:00
+  actions:
+    -
+      action: shell_command.rebuild_notebook_kb
+  mode: single
+- id: duck_soundbar_esp_speaker
+  alias: Duck soundbar when voice active
+  description: Save volume and duck on wake, restore exact volume on idle
+  triggers:
+    -
+      trigger: state
+      entity_id: assist_satellite.home_assistant_voice
+      from: idle
+      id: wake
+    -
+      trigger: state
+      entity_id: assist_satellite.home_assistant_voice
+      to: idle
+      id: done
+  conditions: []
+  actions:
+    -
+      choose:
+        -
+          conditions:
+            -
+              condition: trigger
+              id: wake
+          sequence:
+            -
+              action: input_number.set_value
+              target:
+                entity_id: input_number.soundbar_saved_volume
+              data:
+                value: '{{ state_attr(''media_player.jelly_bean_s_soundbar_media_player'', ''volume_level'') }}'
+            -
+              action: media_player.volume_set
+              target:
+                entity_id: media_player.jelly_bean_s_soundbar_media_player
+              data:
+                volume_level: 0.08
+        -
+          conditions:
+            -
+              condition: trigger
+              id: done
+          sequence:
+            -
+              delay:
+                milliseconds: 600
+            -
+              action: media_player.volume_set
+              target:
+                entity_id: media_player.jelly_bean_s_soundbar_media_player
+              data:
+                volume_level: '{{ states(''input_number.soundbar_saved_volume'') | float }}'
+  mode: restart
+  max_exceeded: silent
+- id: kitchen_enter_daytime
+  alias: Kitchen - Enter
+  triggers:
+    -
+      entity_id:
+        - binary_sensor.living_room_kitchen_presence_kitchen_moving_target
+      to:
+        - 'on'
+      trigger: state
+  actions:
+    -
+      action: light.turn_on
+      target:
+        entity_id:
+          - light.kitchen_light
+          - light.kitchen_2
+          - light.kitchen_3
+      data:
+        brightness_pct: 100
+        color_temp_kelvin: 5000
+  mode: single
+- id: kitchen_empty
+  alias: Kitchen - Empty
+  triggers:
+    -
+      entity_id:
+        - binary_sensor.living_room_kitchen_presence_kitchen_presence
+      to:
+        - 'off'
+      for:
+        hours: 0
+        minutes: 10
+        seconds: 0
+      trigger: state
+  actions:
+    -
+      action: light.turn_off
+      target:
+        entity_id:
+          - light.kitchen_light
+          - light.kitchen_2
+          - light.kitchen_3
+      data: {}
+  mode: single
+- id: '1785805077324'
+  alias: AI Cam person detected -> living room light
+  triggers:
+    -
+      trigger: mqtt
+      topic: frigate/ai_cam/person
+  conditions:
+    -
+      condition: template
+      value_template: '{{ trigger.payload | int(0) > 0 }}'
+  actions:
+    -
+      action: light.turn_on
+      target:
+        entity_id:
+          - light.left_smart_bulb
+          - light.right_smart_bulb
+          - light.rgbic_tv_backlight
+      data: {}
+  mode: single
+- id: '1785805193192'
+  alias: AI Cam person cleared -> living room light off
+  triggers:
+    -
+      trigger: mqtt
+      topic: frigate/ai_cam/person
+  conditions:
+    -
+      condition: template
+      value_template: '{{ trigger.payload | int(0) == 0 }}'
+  actions:
+    -
+      action: light.turn_off
+      target:
+        entity_id:
+          - light.rgbic_tv_backlight
+          - light.left_smart_bulb
+          - light.right_smart_bulb
+          - light.stairs_smart_bulb
+      data: {}
+  mode: single
+- id: viewerforfrigate_1786314338541
+  alias: Home
+  triggers:
+    -
+      alias: On event detection
+      trigger: mqtt
+      topic: frigate/events
+  conditions:
+    -
+      alias: If event just appeared
+      condition: template
+      value_template: '{{ trigger.payload_json is defined and trigger.payload_json.after is defined and (trigger.payload_json.type == "new") }}'
+  actions:
+    -
+      action: notify.notify
+      metadata: {}
+      data:
+        message: Check
+        data:
+          image: '{{ ''/api/frigate/notifications/'' ~ (trigger.payload_json.after.id | string) ~ ''/thumbnail.jpg'' }}'
+          url: viewerforfrigate://camera-preview?camera={{ trigger.payload_json.after.camera | string | urlencode }}&server=http%3A%2F%2F192.168.0.200%3A5000
+          clickAction: deep-link://viewerforfrigate://camera-preview?camera={{ trigger.payload_json.after.camera | string | urlencode }}&server=http%3A%2F%2F192.168.0.200%3A5000
+  mode: single
