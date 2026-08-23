@@ -253,3 +253,133 @@ v2 rejected, Carousel API secured.
   `JARVIS_API_TOKEN`; switch Vercel production branch master->retire main drift.
 - Session record: [[sessions/2026-08-23]]. Full handoff delivered to user as HANDOFF.md.
 
+
+
+---
+
+## ✅ PHASE 1 COMPLETE — verified on device 2026-08-23
+
+**Supersedes the "Session 2026-08-23 close" block above.** Phase 1 is no longer
+"built, not shipped" — it is installed, wired, and proven executing on the Fold 7.
+
+### The honest three-way split, updated
+
+| Thing | Written | On the phone | Actually running |
+|---|---|---|---|
+| Phase 0 `self-knowledge.mjs` | ✅ | ✅ | ✅ (13 tools, drift OK) |
+| Phase 0 `capabilitiesBlock` → prompts | ✅ spec | ❌ | ❌ **still not wired** |
+| Phase 1 `lib/hardline.mjs` | ✅ | ✅ | ✅ **proven on device** |
+| Phase 1 `agent.mjs` import + guard | ✅ | ✅ line 22 + line 149 | ✅ **proven on device** |
+| Phase 1 widened `scanForInjection` | ✅ | ✅ | ✅ **31/31 against live file** |
+
+### 1. Hardline blocklist — catastrophic floor
+
+`lib/hardline.mjs` (20 patterns) refuses irreversible commands **even when
+confirmation returns yes**. Wired into `executeToolCall` after `onToolUse?.()` and
+**before** `isSafeMode()` — so a catastrophic command is refused whether safe mode
+is on or off, and with no path around it via the confirm gate.
+
+Covers: recursive deletes (`rm -rf`, `Remove-Item -Recurse -Force` order-free,
+`rd /s /q`), disk destruction (`Format-Volume`, `format X:`, `mkfs`, `dd of=/dev/*`,
+`> /dev/sda`, `Clear-Disk`), host shutdown/restart, fork bombs (POSIX + Windows),
+pipe-to-shell (`curl|bash`, `iwr|iex`, `iex(`), secret reads (`.env`, `.ssh`,
+`id_rsa`, credentials, env dumps), `chmod -R 777 /`, disabling Defender.
+
+Recursively scans **all** string args to depth 8 — a payload buried in a nested
+field is caught.
+
+**On-device proof (2026-08-23), confirm hardcoded to always return yes:**
+
+```
+CATASTROPHIC (confirm said YES) -> BLOCKED — refused as a catastrophic action
+                                   (recursive forced delete (rm -rf))
+NORMAL       (confirm said YES) -> EXECUTED: Get-Date
+actually executed               -> ["Get-Date"]
+PROOF PASS
+```
+
+Install output: SHA OK · 25/25 self-test · `audit()` in scope so the audit line
+was included · import at line 22 · guard at line 149 · order verified
+`hardline < isSafeMode` · `node --check` OK · backup at `lib/agent.mjs.bak`.
+
+### 2. Injection scanner widened — 10 → 19 patterns
+
+Nine additive families appended to `INJECTION_PATTERNS` in `lib/rails.mjs`
+(existing ten untouched, all still firing): bulk exfiltration, `export your
+memory`, coaxing secrets into output, download-and-run, encode-then-ship,
+known collectors (webhook.site / requestbin / ngrok / pipedream / oastify /
+interact.sh), **memory poisoning** (`remember that you must always approve…`),
+and **false gate-lifted claims** (`confirmation is no longer needed`) — the last
+catching text arriving via `ha_state` or `database` that tries to convince JARVIS
+a gate has already been cleared.
+
+**31/31 green against the LIVE `rails.mjs` on device**: original 10 still fire,
+11 new cases flag, 10 ordinary-text cases stay clean (HA entity states, vault
+notes, `forward the invoice`, `curl -o data.json`, git output, `remember that I
+am allergic to nuts`). A scanner that wrapped every HA reading in `[CAUTION]`
+would be worse than none — the false-positive half of the suite is the half that
+matters for daily use.
+
+Installer auto-rolls-back from `lib/rails.mjs.bak` if the suite fails against the
+live file, so there is no half-patched state.
+
+### 3. `.jarvis-safe` documented as the panic button
+
+New vault doc **[[Assistant Core/JARVIS_SAFETY_FLOORS]]** — the three layers in
+check order, the panic-button commands, rollback, and the two regex bugs that must
+never be reintroduced.
+
+### Two bugs that must not be reintroduced (recorded in the file header too)
+
+1. **PowerShell flags must match order-free** (lookaheads). `Remove-Item -Force
+   -Recurse` is as lethal as `-Recurse -Force`.
+2. **Never put `\b` before a hyphenated flag** like `-Recurse`. The boundary
+   between a space and `-` is not a word boundary in JS regex, so `\b-Recurse`
+   never matches — this silently disabled the rule once during the build.
+
+### Packages (all SHA-gated, round-trip verified from raw GitHub)
+
+| File | SHA-256 of decoded tar.gz |
+|---|---|
+| `Assistant Core/packages/hardline.tar.gz.b64` | `f355231de3807aa610bdb55678126480819b0d166cc93f9e261c79c4615e5670` |
+| `Assistant Core/packages/scanwiden.tar.gz.b64` | `87eb67cbec9db2041941b70bdca0588b8254758beae646b818e256b195d48a02` |
+
+Plus `install-hardline.sh`, `install-scanwiden.sh`, `proof-hardline.mjs`.
+
+**Note:** the SHA `ae0738…` recorded in the previous handoff for `hardline.mjs` is
+**dead** — it came from a sandbox that no longer exists. The file was rebuilt from
+spec this session; `f355231d…` (tar.gz) is authoritative. Also: **20 patterns, not
+the 19 specified** — `rd /s /q` was added as an obvious hole beside the other two
+recursive deletes.
+
+### Rollback
+
+```sh
+cp ~/jarvis-core/lib/agent.mjs.bak ~/jarvis-core/lib/agent.mjs
+cp ~/jarvis-core/lib/rails.mjs.bak ~/jarvis-core/lib/rails.mjs
+rm ~/jarvis-core/lib/hardline.mjs
+```
+
+### Post-install health
+
+App restarted clean on **:8737 → HTTP 200**. `jarvis-rails.mjs status`: safe mode
+OFF, 0 requests / 0 tokens today (0% of 100000).
+
+### Next actions after Phase 1
+
+- [ ] **Close the Phase 0 loop** — wire `self-knowledge.json`'s `capabilitiesBlock`
+      into `lib/brain.mjs` and/or the four `systemPrompt()` builders, so JARVIS
+      *uses* the honesty it now computes. **This is the highest-value remaining
+      small item.**
+- [ ] **Push the Fold's `jarvis-core` to GitHub `main`** — last recorded push
+      2026-08-06. Now carries `hardline.mjs` + two patched files. Still the
+      least-protected part of the whole system, and the gap widens every session.
+- [ ] **P2 — persona-drift fix** (next roadmap phase).
+- [ ] Rotate the Carousel `JARVIS_API_TOKEN`; switch Vercel production branch to
+      `master` to end main/master drift.
+- [ ] Housekeeping: full rewrite of this file's top Status + Next Actions so a
+      top-down reader isn't misled by the superseded v2 entries.
+- [ ] Deferred cleanup: archive the 546M `~/jarvis` sprawl → one canonical vault.
+
+Session: [[sessions/2026-08-23]] · Safety reference: [[Assistant Core/JARVIS_SAFETY_FLOORS]]
+
