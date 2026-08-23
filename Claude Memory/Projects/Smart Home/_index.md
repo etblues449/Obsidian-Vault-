@@ -431,3 +431,26 @@ source as plain `.mjs` in the vault, not hand-transcribed base64.
 
 See [[sessions/2026-08-23]]. Next: Phase 3.
 
+
+
+## 2026-08-23 — PHASE 3 COMPLETE: durable memory
+
+`lib/memory.mjs` used to rewrite the whole fact file with one `writeFileSync` per remember, and
+never checked the result. Proven consequence: an interrupted write destroyed **all** facts, and
+JARVIS would still report success. Now every mutation is atomic (temp → fsync → rename), keeps a
+`.bak`, and is **read back from disk and verified** before returning — `verified: true` only when the
+fact is provably stored, otherwise restore + fail loudly. Plus a mass-loss guard and a new
+`memoryHealth()`.
+
+No git commit was added — single write path (obsidian-git on `master`) stays intact.
+
+**Verified on device:** real-memory round-trip start 1 → add verified → on disk → remove verified →
+end 1; health ok, backup present, no stale temps; app 200. Sandbox: 38/38 + crash-kill 6/6 valid.
+Commit `958fa63` on `origin/main`.
+
+Two stale beliefs in this vault corrected: `jarvis_memory.md` **does** exist (1 fact), and
+`memory.mjs` contains **no** git commit (an earlier grep matched `lines.push`).
+
+North-Star: Phase 0 ✓ · 1 ✓ · 2 ✓ · 3 ✓. Remaining pillar: crash-safe propose→approve→commit loop.
+See [[sessions/2026-08-23]].
+
