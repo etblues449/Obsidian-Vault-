@@ -236,3 +236,14 @@ OUTSTANDING:
 - [ ] Switch Vercel production branch to master (kill main/master drift)
 - [ ] Archive 546M ~/jarvis sprawl -> one canonical vault
 
+
+
+## 2026-08-23 UPDATE — Phase 0 loop-closing
+- [ ] FIX regressed self-knowledge.json (shows 1 tool "tools", should be 13) — re-run
+      shipped `node self-knowledge.mjs`; if still 1, re-run install-phase0.sh
+- [ ] Wire capabilitiesBlock by READING self-knowledge.json (not hardcoded)
+- [ ] Patch `jarvis-app.mjs` systemPrompt() (the :8737 daily app), NOT jarvis.mjs
+- Verified 13 tools: database, forget, ha_control, ha_list, ha_state, pc_control,
+  remember, set_alarm, set_timer, update_memory, vault_list, vault_read, vault_search
+- Tools dir: ~/jarvis-core/tools/ (vault-lib.mjs is a helper, not a tool)
+
