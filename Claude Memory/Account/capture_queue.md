@@ -247,3 +247,22 @@ OUTSTANDING:
   remember, set_alarm, set_timer, update_memory, vault_list, vault_read, vault_search
 - Tools dir: ~/jarvis-core/tools/ (vault-lib.mjs is a helper, not a tool)
 
+
+
+## New — 2026-08-23 session close
+
+- [x] **Phase 0 regression: `self-knowledge.json` showed 1 tool.** *(FIXED 2026-08-23 — re-ran the
+  SHA-verified `install-phase0.sh`; regenerated from the live registry, 13 tools, drift OK. Root
+  cause: the shipped generator had been overwritten by a static-parse variant.)*
+- [x] **Phase 0 loop: wire `capabilitiesBlock` into the prompt.** *(DONE 2026-08-23 — patched
+  `jarvis-app.mjs` (:8737), the daily app, NOT `jarvis.mjs`. Reads the JSON at render time;
+  verified 13/13 rendered, fallback unused.)*
+- [x] **Phase 1 hardline blocklist on device.** *(VERIFIED 2026-08-23 — was already installed;
+  proven with confirm=yes: `rm -rf /` refused, `Get-Date` executed. Guard between `onToolUse`
+  and `isSafeMode`.)*
+- [x] **S1 — `jarvis-core` unbacked on the Fold.** *(CLOSED 2026-08-23 — pushed to `origin/main`,
+  `bb97f5d..2834aad`. Previous push 2026-08-06; 17 days of work was device-only.)*
+- [ ] **Rotate the exposed Carousel `JARVIS_API_TOKEN`** — leaked in an earlier chat; still live.
+- [ ] **Phase 2 — persona-drift fix** (next roadmap phase).
+- [ ] **Archive the 546M `~/jarvis` sprawl** → one canonical vault (`~/Obsidian-Vault-`, master).
+
