@@ -321,3 +321,14 @@ OUTSTANDING:
 - [ ] Consider surfacing `drainReport()` on the app's Status tab so unfinished actions are visible
       without the CLI.
 
+
+- [~] **Carousel `JARVIS_API_TOKEN` rotation — ATTEMPTED, NOT COMPLETED. Jelly Bean's decision:
+  leave it (2026-08-23). Do not re-raise.** Verified state at that moment: the gate is live and
+  fail-closed (no token → 401 on both `jarvis-carousel.vercel.app` and the git-master URL), but the
+  **exposed token still returns 200** — the env var change/redeploy did not take (the clipboard held
+  790 chars, not the 64-char token). Nothing on the phone consumes this token, so there is no
+  device-side exposure; the risk is confined to the public Vercel endpoint. If it is ever revisited:
+  Vercel → jarvis-carousel → Settings → Environment Variables → edit `JARVIS_API_TOKEN` → **then
+  Deployments → latest Production → Redeploy** (env changes do not apply to an already-built
+  deployment — the likely reason it failed).
+
