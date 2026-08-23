@@ -18,13 +18,18 @@ echo "== Phase 2: persona (single source of truth) =="
 cd "$CORE"
 
 # --- fetch + verify each file ------------------------------------------------
+# NOTE: raw.githubusercontent edges cache aggressively. A stale-but-consistent
+# (old installer + old file) pair once passed SHA verification and installed a
+# known-broken patcher. Every fetch is cache-busted.
+CB=$(date +%s)$$
 fetch() {
-  curl -fsSL -A jarvis -o "$2" "$B/$1"
+  curl -fsSL -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' -A jarvis -o "$2" "$B/$1?cb=$CB"
   ACT=$(sha256sum "$2" | cut -d' ' -f1)
   if [ "$ACT" != "$3" ]; then
     echo "x SHA mismatch on $1"
     echo "   expected $3"
     echo "   got      $ACT"
+    echo "   (if this persists, an edge is serving a stale copy - retry in a minute)"
     rm -f "$2"
     exit 1
   fi
@@ -59,6 +64,12 @@ mv .persona.new lib/persona.mjs
 mv .patch-persona.new patch-persona.mjs
 node --check lib/persona.mjs || rollback
 echo "OK installed lib/persona.mjs"
+
+# --- sanity: the patcher we fetched must be the fixed one --------------------
+grep -q "Insert BEFORE the first top-level import" patch-persona.mjs || {
+  echo "x fetched patcher is the OLD version (stale cache) - aborting"
+  rollback
+}
 
 # --- gate: rewire the four entry points --------------------------------------
 echo "-- rewiring entry points --"
