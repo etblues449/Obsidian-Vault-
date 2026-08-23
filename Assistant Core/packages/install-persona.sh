@@ -11,7 +11,7 @@ CORE="$HOME/jarvis-core"
 B="https://raw.githubusercontent.com/etblues449/Obsidian-Vault-/master/Assistant%20Core/packages/persona"
 
 SHA_PERSONA="0c82b8e14634880715b1942e300a106cb9cd221b797aea3878032e3c0f5ff961"
-SHA_PATCH="96bb93829166a9c7daa28218527c1675dedd6244760ebc3a3e8f09312a91cc84"
+SHA_PATCH="27486f7ddf6d140696bdad216c60e6bece4b44ca0a9e7ff89dcdcb7d38c0315f"
 
 echo "== Phase 2: persona (single source of truth) =="
 [ -d "$CORE/lib" ] || { echo "x $CORE/lib not found"; exit 1; }
@@ -38,9 +38,10 @@ fetch patch-persona.mjs .patch-persona.new "$SHA_PATCH"
 STAMP=$(date +%Y%m%d-%H%M%S)
 BK=".persona-rollback-$STAMP"
 mkdir -p "$BK"
-for f in jarvis.mjs jarvis-app.mjs jarvis-voice.mjs heartbeat.mjs lib/persona.mjs; do
-  [ -f "$f" ] && cp "$f" "$BK/$(basename $f)"
+for f in jarvis.mjs jarvis-app.mjs jarvis-voice.mjs heartbeat.mjs; do
+  [ -f "$f" ] && cp "$f" "$BK/$f"
 done
+[ -f lib/persona.mjs ] && cp lib/persona.mjs "$BK/persona.mjs"
 echo "OK backups in $CORE/$BK"
 
 rollback() {
@@ -48,8 +49,8 @@ rollback() {
   for f in jarvis.mjs jarvis-app.mjs jarvis-voice.mjs heartbeat.mjs; do
     [ -f "$BK/$f" ] && cp "$BK/$f" "$f"
   done
-  [ -f "$BK/persona.mjs" ] && cp "$BK/persona.mjs" lib/persona.mjs
-  rm -f .persona.new .patch-persona.new
+  if [ -f "$BK/persona.mjs" ]; then cp "$BK/persona.mjs" lib/persona.mjs; else rm -f lib/persona.mjs; fi
+  rm -f .persona.new .patch-persona.new patch-persona.mjs
   echo "OK restored. Nothing changed."
   exit 1
 }
@@ -69,7 +70,7 @@ for f in jarvis.mjs jarvis-app.mjs jarvis-voice.mjs heartbeat.mjs; do
 done
 echo "OK all four parse clean"
 
-# --- gate: the actual point - one shared persona, no inline prompts left ------
+# --- gate: one shared persona, no inline prompts left ------------------------
 node - <<'PROOF' || rollback
 import { readFileSync } from 'node:fs'
 const files = ['jarvis.mjs','jarvis-app.mjs','jarvis-voice.mjs','heartbeat.mjs']
