@@ -350,3 +350,19 @@ OUTSTANDING:
 - [ ] **Watch for a 4th deletion attempt** — if obsidian-git starts failing to commit, that is the
   hook doing its job, not a bug. Read the message before overriding with `--no-verify`.
 
+
+- [x] **Build a phone-side `capture` tool.** *(DONE 2026-08-23 — `tools/capture.mjs`, tool #14.
+  JARVIS writes notes straight to `JARVIS/Inbox/` with matching frontmatter; atomic write +
+  read-back verification; refuses placeholder junk at source. Proven end to end: real
+  `executeToolCall` → ledger trail `proposed > started > ran` → file on disk → obsidian-git push →
+  **Capture Router success 2026-08-23T03:01:49Z**. Commits `c3ab509` / `f372df06`.)*
+- [x] **Retire the paid n8n webhook from the capture path.** *(DONE 2026-08-23 — capture no longer
+  touches n8n or Tasker. C1 (£0) has no live exception on this route.)*
+- [~] **Fix the Tasker variable at source** — *moot for capture now that JARVIS writes notes itself.
+  Only still relevant if a home-screen Tasker shortcut is wanted; otherwise close it.*
+- [ ] **Confirm the n8n.cloud account state and formally cancel it** — nothing on the capture path
+  needs it any more, so this is now purely account housekeeping.
+- [ ] **Watch the first scheduled runs land** — morning brief `cron 0 6/0 7` should produce a
+  briefing for the first time since 2026-08-04 now the workflows are restored. If none appears by
+  tomorrow morning, check Actions rather than assuming.
+
