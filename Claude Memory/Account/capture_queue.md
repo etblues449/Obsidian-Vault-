@@ -413,3 +413,16 @@ prepend a header via Node were mangled by shell quoting before Node ran; both **
 nothing** while still pushing a commit. Always verify a doc edit with `grep -c` and `wc -l` — *a
 commit landing is not proof the file changed.*
 
+
+- [x] **Archive the 546M `~/jarvis` sprawl.** *(DONE 2026-08-23 — 547M moved to
+  `~/_archive_jarvis_20260823-044851/`. **Moved, not deleted** — one `mv` restores it. Verified
+  after: jarvis-core + Obsidian-Vault- intact, app 200, memory intact. Also archived the 4
+  home-screen shortcuts that pointed into it (`JARVIS-new`, `digest.sh`, `jarvis.sh`, `sync.sh` —
+  all v1 scripts superseded by the :8737 app and the capture tool). Survivors: `JARVIS` symlink and
+  `JARVIS.sh`.)*
+- [x] **Tools badge under-reported (10 vs 14).** *(FIXED 2026-08-23 — the badge read the
+  vault-filtered list. `/api/tools` now returns `{tools, total, hidden}`; badge reads `total`.
+  Live: total 14, shown 11, hidden 3. Commit `49b0313`.)*
+- [ ] **Delete `~/_archive_jarvis_*` once you're satisfied nothing broke** — 547M reclaimed. Leave
+  it a week; `/data` is at 90% so it's worth doing eventually, but there's no rush.
+
