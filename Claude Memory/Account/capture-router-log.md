@@ -28,3 +28,5 @@
 | `07ae56e8` | 2026-08-02 | task_20260617-005443-have-a-cuppa-in-10-minutes.md | 5 | kept in inbox |
 | `151c40f6` | 2026-08-02 | task_20260620-205637-set-alarm-for-8am-tomorrow.md | 5 | kept in inbox |
 | `b7b4d42d` | 2026-08-02 | task_20260624-155912-set-alarm-to-leave-house-at-8-15-for-sch.md | 5 | kept in inbox |
+| `dffd2379` | 2026-08-23 | 2026-08-22-2123-probe.md | 5 | kept in inbox |
+| `f1a6b8e9` | 2026-08-23 | note_20260823-024853-capture-pipeline-revived.md | 5 | kept in inbox |
