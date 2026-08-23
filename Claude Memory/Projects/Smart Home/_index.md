@@ -406,3 +406,28 @@ Supersedes the "Phase 0 regression" and "Phase 1 built but not shipped" notes ab
 
 Next: Phase 2 — persona-drift fix. See [[sessions/2026-08-23]].
 
+
+
+## 2026-08-23 — PHASE 2 COMPLETE: persona-drift fixed
+
+`lib/persona.mjs` is now the single source of truth for JARVIS's personality. Before it, all four
+entry points (`jarvis.mjs`, `jarvis-app.mjs`, `jarvis-voice.mjs`, `heartbeat.mjs`) carried their own
+hand-maintained `systemPrompt()` — four different hashes, one pointed at a stale self-knowledge file
+and reporting "1 tool", one still telling JARVIS it had no proactive behaviour a month after Tier 5
+shipped.
+
+Now identity, personality, honesty and memory rules are written once; surfaces differ only where
+they must (voice = speakable output; heartbeat = unattended, read-only, no memory writes).
+
+**Verified on device:** 1 distinct honesty block, 1 distinct personality, 13 tools in every prompt,
+stale Tier-5 denial gone, app 200, heartbeat scheduling intact. Commits `5bfe14e` + `bf68e33` on
+`origin/main`.
+
+**Delivery lesson (applies to every future installer): SHA pinning proves integrity, not freshness.**
+A stale `raw.githubusercontent` edge served the phone a cached old installer AND old payload; since
+the old installer pinned the old SHA, the pair verified clean and a known-broken patcher installed.
+All installers must cache-bust every fetch and assert on file *content*, not just hash. Also: ship
+source as plain `.mjs` in the vault, not hand-transcribed base64.
+
+See [[sessions/2026-08-23]]. Next: Phase 3.
+
