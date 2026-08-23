@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { apiFetch, captureTokenFromUrl } from './lib/apiToken'
 
 type Message = {
   role: 'user' | 'assistant'
@@ -63,6 +64,10 @@ export default function Vault() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const recRef = useRef<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    captureTokenFromUrl()
+  }, [])
 
   useEffect(() => {
     const tick = () =>
@@ -221,7 +226,7 @@ export default function Vault() {
       }
 
       try {
-        const r = await fetch('/api/chat', {
+        const r = await apiFetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: msg }),

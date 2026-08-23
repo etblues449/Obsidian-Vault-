@@ -1,6 +1,6 @@
 # Claude Session Context — JARVIS / Obsidian Vault
 
-**Last Updated:** 2026-08-06
+**Last Updated:** 2026-08-22
 
 This vault is the persistent memory and working directory for all Claude sessions across devices (PC, Fold 7 / Termux, Claudian-in-Obsidian). All code, notes, decisions and artifacts live here.
 
@@ -110,3 +110,4 @@ python3 .claude/skills/qa-boundary-check/scripts/verify-refs.py .
 | 2026-08-06 | `VAULT_PATH` fixed | `~/jarvis-core/.env` | Pointed at non-existent laptop sync path; `remember` tool wrote nothing. Now `/data/data/com.termux/files/home/Obsidian-Vault-`. `jarvis_memory.md` written for first time. |
 | 2026-08-06 | 3 agents updated | `jarvis-voice-ha`, `jarvis-skill-engine`, `jarvis-capture-engineer` | Ground truth 10 days stale: AI Cam complete, mWW regressed, TV entity changed, DST guard was a bug, capture router built |
 | 2026-08-06 | SSH auth on vault + jarvis-core | `~/.ssh/id_ed25519` on Fold | HTTPS PAT blocked pushing `.github/workflows/`; SSH sidesteps workflow scope entirely |
+| 2026-08-22 | JARVIS v2 UI + auto-start built | `jarvis2/` package (for `~/jarvis-core` on the Fold), `~/.termux/boot/jarvis-boot` | Two product failures: app required typing into Termux to start; six-tab UI was "busy". Rebuilt to the 2026 voice-UI convergence (single screen, live transcript, reactor control, one sheet); zero-dep launcher on :1875 proxies + auto-spawns jarvis-app.mjs; Termux:Boot + PWA install. 32/32 offline assertions; on-device smoke test is the open gate. Harness Phase-0 audit this session: agents/skills/orchestrator consistent; `webapp-reviewer` decision still pending. |

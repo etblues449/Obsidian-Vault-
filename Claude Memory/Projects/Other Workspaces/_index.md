@@ -33,3 +33,24 @@ Active smaller threads:
 - [ ] <!-- TO FILL -->
 
 Sessions: *(none yet — add as `sessions/YYYY-MM-DD.md`)*
+
+
+
+## 2026-08-22 — Carousel API secured (July audit #1 closed)
+
+`/api/chat` + `/api/capture` on `jarvis-carousel.vercel.app` were unauthenticated —
+`/api/chat` spent Opus 4.8 per anonymous caller; `/api/capture` injected into the
+n8n→vault pipeline. **Fixed and verified live:**
+- Fail-closed bearer gate `app/api/_auth.ts` (503 if `JARVIS_API_TOKEN` unset, 401 if
+  wrong/absent, constant-time compare, header/`?token=` both accepted). Both routes gated.
+- Client `app/lib/apiToken.ts`: captures `#token=` from URL once, persists to
+  localStorage, scrubs the URL, sends bearer on every `/api` call. Both pages wired.
+- `JARVIS_API_TOKEN` set in Vercel (Production+Preview). Redeployed `d764605`.
+- **Live probe 2026-08-22:** no-token→401, wrong→401, correct→200+pong, capture→401. ✓
+- Root cause of the earlier "still open" reading: Vercel deploys branch **main**; all
+  work lands on **master**. Merged master→main (`d7646051`). **Standing risk: main/master
+  drift** — recommend switching Vercel production branch to master and retiring main.
+- Also fixed: orphaned `.claude/skills/android-development` gitlink (no `.gitmodules`)
+  that warned on every Vercel clone — de-submoduled (`be21d6a0`).
+- **TODO: rotate `JARVIS_API_TOKEN`** — the test value was exposed in-session.
+

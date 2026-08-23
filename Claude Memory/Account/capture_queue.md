@@ -104,3 +104,194 @@
 - [ ] **Confirm board identity by MAC** — `28:84:85:49:83:C8` = live ai_cam; check whether `…:86:70` answers as the Arduino-flashed board.
 - [ ] **P0 unchanged and still open: back up hub-side config into `ha-config/`** — automations, bedroom-2, frigate, scenes/scripts, the FLASHED ai_cam.yaml, `ui-lovelace-minimal.yaml`. One SD failure erases the lot.
 
+
+## New — from the 2026-08-22 JARVIS v2 session (interface + auto-start rebuild)
+
+- [ ] **S1 — Run the JARVIS v2 on-device gate.** Install `jarvis2-package.tar.gz` (SHA-256 `8923a59ac88b45f0dc3480c44909440e1293dec9b05ddd1786b708ce2551dab4`) via `install.sh`, then the one-time steps: Termux:Boot from F-Droid opened once · battery Unrestricted for Termux + Termux:Boot · Chrome → `localhost:1875` → Install. Then the 5-minute smoke test (speak → streamed reply → "thanks" ends it) **and the cold-reboot check** (reboot, tap the icon, Termux never opened). Report: `JARVIS_V2_REPORT_2026-08-22.md` §6.
+- [ ] **S1 — Push the Fold's `jarvis-core` (now incl. `jarvis2/`) to GitHub `main`.** Last push 2026-07-22 — a month of on-device work is unbacked; still the least-protected part of the system. SSH key `fold7-termux` already set up.
+- [ ] **S2 — If the live `/api/chat` events surprise the tolerant parser**, the UI will print a diagnostics line with exactly what the core sent — capture that line; it's the one input needed to pin the protocol precisely.
+- [ ] **S3 — After the gate passes:** consider Side-button double-press → JARVIS (Settings → Advanced features → Side button) as the physical "say a word" until the satellites carry room wake.
+
+
+> **⚠️ Evidence corrected 2026-08-22 (same session):** the S1 push item above says "Last push 2026-07-22 — a month of on-device work is unbacked". CLAUDE.md's change history records a `jarvis-core` push on **2026-08-06**, so the true gap at session time is **16 days**. The action stands (push the Fold's jarvis-core incl. `jarvis2/`); the urgency figure is corrected here.
+
+
+
+## New — 2026-08-22 (jarvis2 re-delivery session)
+
+- [ ] **Install JARVIS v2 from the RE-DELIVERED package** — SHA-256 `13471b120b80dd33368c670cf808ce8b01a36f3e7f865319dd4f820dd5dc44b9` (`jarvis2-v2.tar.gz` + `install-jarvis2.sh`). The earlier same-day build's artifact (SHA `8923a59a…`) is unretrievable from its chat — do not hunt for it; the spec is identical and re-verified 43/43.
+- [ ] **Run the §6 smoke test** in `JARVIS_V2_REPORT_2026-08-22.md`, including the cold-reboot check, and report any failing step with a screenshot of Status → diagnostics.
+
+
+
+> **⚠️ SHA superseded 2026-08-22 (second session):** the S1 item "Run the JARVIS v2
+> on-device gate" above references package SHA `8923a59a…` — that package never
+> reached the phone. The live package is the **re-issue, SHA-256
+> `3d70a9cf774e8aea3b54b8a262eecbcdd1c9fdb54fdcbc701b410516af28f096`**, verified
+> 41/41 (up from 32/32). Install command:
+> `sh install.sh jarvis2-package.tar.gz 3d70a9cf774e8aea3b54b8a262eecbcdd1c9fdb54fdcbc701b410516af28f096`
+> — then the same one-time steps and 5-minute gate. See the addendum in
+> `Projects/Smart Home/sessions/2026-08-22.md`.
+
+
+### 2026-08-22 later — supersedes the two earlier jarvis2 SHA entries above
+- [ ] **Install JARVIS v2.0.1** — same one-paste command; installer now expects SHA `f89a2dea…3601147` (loopback bind fix). Then run the §6 smoke test.
+- [ ] **Verify Vercel voice-app auth** (July audit #1) — curl check in `JARVIS_PATTERN_AUDIT_2026-08-22.md`; if 200, fix auth or pause the project.
+- [ ] **Retire the `database` stub** per the supabase playbook (decide PostgREST-vs-driver first).
+- [ ] **Security pass v2.1**: audit-log redaction · pc_control hardline blocklist · per-tool caps · pre-commit secret hook · incident runbook · rails score on v2 Status sheet · confirm MAX_ITERATIONS bound.
+- [ ] **Execution gap**: vault action-queue + heartbeat drain on boot/tick (cloud-to-local pattern, £0).
+- [ ] Small adopts: capabilities-from-registry prompt line · recency voice cue + tonal checkpoint · t_since_user diagnostic · numeric-honesty rule · session-template headers · persona live-reload.
+
+
+
+---
+
+## New — 2026-08-23 session (North-Star P0/P1; v2 rejected)
+
+> **⚠️ CANCELS four earlier items, not "completes" them.** Jelly Bean saw JARVIS v2 and
+> rejected it (*"I hate it"*). The six-tab `jarvis-app.mjs` on **:8737** is the locked
+> daily driver. Therefore every v2 install / smoke-test / SHA item above is **CANCELLED**:
+>
+> - ~~S1 — Run the JARVIS v2 on-device gate (SHA `8923a59a…`)~~ — **cancelled**
+> - ~~Install JARVIS v2 from the RE-DELIVERED package (SHA `13471b12…`)~~ — **cancelled**
+> - ~~SHA superseded → re-issue `3d70a9cf…`~~ — **cancelled**
+> - ~~Install JARVIS v2.0.1 (SHA `f89a2dea…`) + §6 smoke test~~ — **cancelled**
+>
+> The v2 packages stay in `Assistant Core/packages/` for history only. Do not install them.
+
+### Phase 0 — self-knowledge
+
+- [x] **Ship `self-knowledge.mjs` to jarvis-core** — done and **verified on device**:
+      found **13 callable tools** (not 14 — `vault-lib.mjs` is a helper, never registers),
+      drift check OK. SHA `c49c93b5…`.
+- [ ] **Close the Phase 0 loop — wire `capabilitiesBlock` into the prompts.** Generated but
+      unused: `lib/brain.mjs` and the four `systemPrompt()` builders (`jarvis-app.mjs`,
+      `jarvis-voice.mjs`, `jarvis.mjs`, `heartbeat.mjs`) don't read it. Built ≠ used.
+
+### Phase 1 — security hardening (IN PROGRESS)
+
+- [~] **Hardline blocklist — BUILT + TESTED 25/25 in the sandbox, NOT on the phone.**
+      `lib/hardline.mjs`, standalone/pure/zero-dep, 19 patterns, recursive arg scan.
+      **Nothing to claim on-device yet.** Sandbox SHA `ae0738511c…` **must be recomputed at
+      package time.** Two bugs found by the tests and fixed — PowerShell flags need
+      order-free lookaheads, and **never put `\b` before a hyphenated flag** (it broke the
+      `-Recurse` match).
+- [ ] **S1 — Ship it + wire it.** Package via `Assistant Core/packages/` base64 →
+      raw-GitHub fetch → `tr -d '\r'` decode → SHA gate → installer that backs up
+      `agent.mjs` to `agent.mjs.bak`, drops the lib, applies **one import + one guard block**
+      (after `onToolUse`, **before** `isSafeMode` — so catastrophic actions are refused even
+      when safe mode is off), runs `node --check lib/agent.mjs`.
+- [ ] **S1 — On-device proof.** A catastrophic *confirmed* `pc_control` command is refused
+      **and** a normal command still runs. Paste the output; no claim without it.
+- [ ] **S2 — Widen `scanForInjection`** in `lib/rails.mjs` with data-exfil patterns
+      (send/forward/email all…, `curl|bash`, "export your…"). Same mechanism, more regexes.
+- [ ] **S2 — Document `.jarvis-safe` as the panic button** (no new code) and confirm
+      `isSafeMode` covers every tool path.
+- [x] **Do NOT rebuild the injection gate or kill switch** — recon confirmed both already
+      exist in `lib/rails.mjs` and are good. Resolved by verification, not by building.
+
+### Vercel Carousel (secondary app)
+
+- [x] **Secure `/api/chat` + `/api/capture`** — fail-closed bearer gate shipped and
+      **verified live**: no token → 401, wrong → 401, correct → 200 + pong, capture → 401.
+      Root cause of the earlier "still open": **Vercel deploys `main`, the work was on
+      `master`** — merged.
+- [ ] **S1 — Rotate `JARVIS_API_TOKEN`** — the value was exposed in a chat transcript.
+      (Deliberately not recorded in the vault.)
+- [ ] **S2 — Switch the Vercel production branch to `master`** to kill the standing
+      main/master drift risk.
+- [x] **Fix the orphaned `.claude/skills/android-development` submodule** — gitlink with no
+      `.gitmodules` was breaking the Vercel clone. De-submoduled.
+
+### Working practice — carry into every future session
+
+- [ ] **⚠️ File-attachment uploads are broken for Jelly Bean.** Every `.txt`/file
+      attachment arrives **empty**. **Ask for pasted text or a screenshot** — screenshots
+      have been 100% reliable. Do not ask for file uploads.
+
+### Carried forward, still open
+
+- [ ] **Push the Fold's `jarvis-core` to GitHub `main`** — last recorded push 2026-08-06.
+      Still the least-protected part of the system.
+- [ ] **Tidy `Projects/Smart Home/_index.md`** — its top Status + Next Actions still lead
+      with the cancelled v2 gate; a top-down reader is misled until a full rewrite lands.
+- [ ] **Retire the `database` stub** per the supabase playbook (decide PostgREST vs driver).
+- [ ] **Execution gap (P3)** — vault action-queue + heartbeat drain on boot/tick, durable
+      and idempotent ("assume you will be killed"). £0.
+
+
+
+## 2026-08-23 — from JARVIS security session
+DONE:
+- [x] Vercel Carousel API secured + verified live (401/200 probes)
+- [x] App decision locked: six-tab :8737 daily driver; v2 shelved
+- [x] Phase 0 self-knowledge generator shipped + verified (13 tools)
+- [x] Phase 1 hardline blocklist built + tested 25/25 (sandbox)
+OUTSTANDING:
+- [ ] Ship + install + verify Phase 1 hardline blocklist on device (NEXT)
+- [ ] Widen scanForInjection with data-exfil patterns
+- [ ] Document `.jarvis-safe` as panic button
+- [ ] (opt) Close Phase 0 loop: wire capabilitiesBlock into prompt
+- [ ] Rotate Vercel JARVIS_API_TOKEN (exposed in chat)
+- [ ] Switch Vercel production branch to master (kill main/master drift)
+- [ ] Archive 546M ~/jarvis sprawl -> one canonical vault
+
+
+
+## 2026-08-23 UPDATE — Phase 0 loop-closing
+- [ ] FIX regressed self-knowledge.json (shows 1 tool "tools", should be 13) — re-run
+      shipped `node self-knowledge.mjs`; if still 1, re-run install-phase0.sh
+- [ ] Wire capabilitiesBlock by READING self-knowledge.json (not hardcoded)
+- [ ] Patch `jarvis-app.mjs` systemPrompt() (the :8737 daily app), NOT jarvis.mjs
+- Verified 13 tools: database, forget, ha_control, ha_list, ha_state, pc_control,
+  remember, set_alarm, set_timer, update_memory, vault_list, vault_read, vault_search
+- Tools dir: ~/jarvis-core/tools/ (vault-lib.mjs is a helper, not a tool)
+
+
+
+## New — 2026-08-23 session close
+
+- [x] **Phase 0 regression: `self-knowledge.json` showed 1 tool.** *(FIXED 2026-08-23 — re-ran the
+  SHA-verified `install-phase0.sh`; regenerated from the live registry, 13 tools, drift OK. Root
+  cause: the shipped generator had been overwritten by a static-parse variant.)*
+- [x] **Phase 0 loop: wire `capabilitiesBlock` into the prompt.** *(DONE 2026-08-23 — patched
+  `jarvis-app.mjs` (:8737), the daily app, NOT `jarvis.mjs`. Reads the JSON at render time;
+  verified 13/13 rendered, fallback unused.)*
+- [x] **Phase 1 hardline blocklist on device.** *(VERIFIED 2026-08-23 — was already installed;
+  proven with confirm=yes: `rm -rf /` refused, `Get-Date` executed. Guard between `onToolUse`
+  and `isSafeMode`.)*
+- [x] **S1 — `jarvis-core` unbacked on the Fold.** *(CLOSED 2026-08-23 — pushed to `origin/main`,
+  `bb97f5d..2834aad`. Previous push 2026-08-06; 17 days of work was device-only.)*
+- [ ] **Rotate the exposed Carousel `JARVIS_API_TOKEN`** — leaked in an earlier chat; still live.
+- [ ] **Phase 2 — persona-drift fix** (next roadmap phase).
+- [ ] **Archive the 546M `~/jarvis` sprawl** → one canonical vault (`~/Obsidian-Vault-`, master).
+
+
+- [x] **Phase 2 — persona-drift fix.** *(DONE 2026-08-23 — `lib/persona.mjs` is the single source of
+  truth; all four entry points rewired, no inline prompts remain. Verified on device: 1 honesty
+  block, 1 personality, 13 tools everywhere, stale Tier-5 denial gone, app 200, heartbeat intact.
+  Commits `5bfe14e` + `bf68e33` on origin/main.)*
+- [x] **`jarvis.mjs` was reading a stale `SELF_KNOWLEDGE.json`** (capital) reporting "1 tool", and
+  used `require()` inside ESM. *(FIXED 2026-08-23 — stale file retired; the REPL would have thrown
+  on first use.)*
+- [x] **`jarvis-voice.mjs` denied Tier 5** a month after heartbeat shipped. *(FIXED 2026-08-23.)*
+- [ ] **Installer hardening is now a standing rule** — every vault-delivered installer must
+  cache-bust its fetches AND assert on file content, not hash alone. A stale CDN edge served a
+  matching old installer+payload pair that verified clean and installed a broken patcher.
+- [ ] **Do not ship source as hand-transcribed base64** — use plain `.mjs` in the vault with per-file
+  SHA. `Assistant Core/packages/persona.tar.gz.b64` is corrupt and superseded.
+
+
+- [x] **Phase 3 — durable memory.** *(DONE 2026-08-23 — atomic write + `.bak` + read-back
+  verification + mass-loss guard in `lib/memory.mjs`. Old in-place write destroyed ALL facts when
+  interrupted (proven). Verified on device: real round-trip 1 → add → remove → 1, health ok.
+  Commit `958fa63`.)*
+- [x] **Prove the memory path end-to-end** *(DONE 2026-08-23 — `jarvis_memory.md` exists with 1 fact;
+  a deliberate add/remove round-trip on the real file was verified on disk. Supersedes the older
+  "no fact has ever been stored / MEMORY 0" item above, which was stale.)*
+- [ ] **Next North-Star pillar: crash-safe propose→approve→commit loop** (the execution gap —
+  durable queue + drain-on-startup; £0 via vault rows + the existing heartbeat).
+- [ ] **Rotate the exposed Carousel `JARVIS_API_TOKEN`** — still open, still live.
+- [ ] **Archive the 546M `~/jarvis` sprawl** → one canonical vault.
+- [ ] **Tasker capture leg** — capture idle since 2026-07-09; briefings from that corpus are stale.
+
