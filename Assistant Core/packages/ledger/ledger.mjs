@@ -59,7 +59,15 @@ function newId() {
 /** Append one durable record. fsync so a crash can't lose an acknowledged write. */
 function append(entry) {
   const p = ensure()
-  const line = JSON.stringify({ ts: new Date().toISOString(), ...entry }) + '\n'
+  // Heal a torn tail: if an earlier append was interrupted the file may not end
+  // in a newline, and appending here would fuse both records into one unreadable
+  // line — losing the old record AND this one. Start a fresh line first.
+  let prefix = ''
+  try {
+    const cur = readFileSync(p, 'utf8')
+    if (cur.length && !cur.endsWith('\n')) prefix = '\n'
+  } catch {}
+  const line = prefix + JSON.stringify({ ts: new Date().toISOString(), ...entry }) + '\n'
   const fd = openSync(p, 'a')
   try {
     appendFileSync(fd, line, 'utf8')
