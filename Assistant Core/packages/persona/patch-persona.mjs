@@ -53,12 +53,13 @@ for (const [file, cfg] of Object.entries(PLAN)) {
   const { start, end } = cutSystemPrompt(src, file)
   src = src.slice(0, start) + body(cfg) + src.slice(end)
 
-  // Insert the import after the final existing top-level import.
-  const imports = [...src.matchAll(/^import .*$/gm)]
-  if (!imports.length) throw new Error(`${file}: no import lines found`)
-  const last = imports[imports.length - 1]
-  const at = last.index + last[0].length
-  src = src.slice(0, at) + '\n' + IMPORT + src.slice(at)
+  // Insert BEFORE the first top-level import. Imports are hoisted, so order does not
+  // matter, and the first import is always a safe statement boundary. Inserting AFTER
+  // "the last import line" broke on multi-line imports: `import {\n  a,\n} from '...'`
+  // (heartbeat.mjs has exactly that shape - the new import landed inside the braces).
+  const first = src.match(/^import /m)
+  if (!first) throw new Error(`${file}: no import lines found`)
+  src = src.slice(0, first.index) + IMPORT + '\n' + src.slice(first.index)
 
   copyFileSync(path, path + '.persona.bak')
   writeFileSync(path, src)
