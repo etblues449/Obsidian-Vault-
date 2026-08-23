@@ -163,3 +163,84 @@ Git identity    : ehorton@selectlifestyles.co.uk (real email — fake ones break
 **End:** write the session note to `JARVIS/sessions/YYYY-MM-DD.md` yourself via `vault_write`, and update this handoff if state changed.
 
 **Style:** terse replies ("a", "b", "rec it" = just do it). Screenshots to show state. One step at a time — give one command, wait for output, then the next. Never jump ahead. Architecture decisions are locked once made.
+
+
+
+---
+
+# ⚠️ SUPERSEDING UPDATE — 2026-08-23
+
+**Everything above dates from 2026-07-23 and is a month stale. Where it conflicts with this
+section, THIS SECTION WINS.** In particular §2 ("13 tools") and §6 (open actions) are out of date.
+
+Every item below was **verified running on the Fold 7**, not merely written — that distinction is
+the failure mode this project has repeatedly hit ("documented ≠ merged ≠ running").
+
+## Current state — verified on device 2026-08-23
+
+| Area | State | Proof |
+|---|---|---|
+| Tools | **14** (capture added) | registry load + drift gate |
+| Honest self-knowledge | ✅ `self-knowledge.mjs` → `self-knowledge.json`, injected into every prompt | `[drift] OK — matches live registry (14 tools)` |
+| Hardline blocklist | ✅ `lib/hardline.mjs`, 20 patterns | `rm -rf /` refused **with confirm=yes**; `Get-Date` still ran |
+| Injection scanner | ✅ widened 10 → 19 patterns in `lib/rails.mjs` | 31/31 regression suite |
+| Persona | ✅ `lib/persona.mjs` — ONE source of truth for all four surfaces | 1 distinct honesty block, 1 personality |
+| Memory | ✅ atomic + `.bak` + read-back verification | live round-trip; crash-kill 6/6 file valid |
+| Action ledger | ✅ `lib/ledger.mjs` wired into `lib/agent.mjs` (7 points) | real declined tool → trail `proposed > declined` |
+| Capture | ✅ `tools/capture.mjs` writes straight to `JARVIS/Inbox/` | note written → router **success** 03:01:49Z |
+| GitHub Actions engine | ✅ **RESTORED** (was deleted) + pre-commit guard | Capture Router success; guard proven to block |
+
+## The big finding of 2026-08-23 — read this before diagnosing any pipeline problem
+
+**obsidian-git had deleted `.github/workflows/` entirely — three times** (2026-07-04, 07-14, and
+08-06, commit `4bdb3bf1`). Obsidian does not index dotfolders, so `.github/` is invisible to it;
+obsidian-git runs `git add -A` from the vault root and stages the invisible files as **deletions**.
+
+Consequences that looked like unrelated bugs: captures dead since 2026-07-09, briefings stopped at
+2026-08-04, and the old "8 files deleted by an unidentified client" mystery. One cause, three
+symptoms. **Not Tasker, not the webhook, not the runner.**
+
+Fixed: all six workflows restored from `a38848c9`; a **pre-commit hook** at `.git/hooks/pre-commit`
+now refuses any commit that stages a deletion under `.github/` (hooks are local + untracked, so
+obsidian-git cannot remove it). Proven by staging a real deletion — the commit was refused.
+
+**If obsidian-git ever fails to commit, that is the hook working. Read the message before
+`--no-verify`.**
+
+## Capture — the n8n leg is retired
+
+Capture no longer goes Tasker → paid n8n webhook. JARVIS writes the note itself via the `capture`
+tool (kinds: note, task, idea, question, belief, decision), obsidian-git syncs it, the Actions
+router files it. The tool refuses placeholder junk (`your note here`, `undefined`, empty) at source —
+the exact bug that poisoned the inbox. C1 (£0) now has no live exception on this path.
+
+## Standing delivery rules (learned the hard way — apply to EVERY installer)
+
+1. **Ship source as plain `.mjs` in the vault**, never hand-transcribed base64 (a corrupted blob was
+   caught by a SHA gate).
+2. **Cache-bust every fetch AND assert on file content.** SHA proves integrity, **not freshness** —
+   a stale CDN edge once served a matching old installer + old payload that verified clean and
+   installed a known-broken patcher.
+3. **When a corrected file must ship immediately, change the filename.** Cache-busting alone did not
+   defeat a sticky edge; a fresh path cannot be stale.
+4. **Patcher anchors must be regex and whitespace-insensitive**, and the installer must verify every
+   anchor exists exactly once *before* modifying anything.
+5. **Test against a throwaway copy**, never the user's real vault/memory; record real counts before
+   and after and roll back on mismatch.
+
+## Open (as of 2026-08-23)
+
+- **Hub config backup — the single biggest remaining risk.** `automations.yaml`, `bedroom-2.yaml`,
+  `frigate.yaml`, scenes/scripts, the flashed `ai_cam.yaml` and `ui-lovelace-minimal.yaml` exist
+  **only on the HA Green**. One eMMC failure erases them. *(Attempted 2026-08-23; HA was restarting —
+  ping answered, 8123 refused. Retry when it's up. UI-managed automations/scenes/scripts can be
+  exported via the config REST API; YAML-only files need Studio Code Server or Samba.)*
+- Scheduled skills restored but **not yet proven to fire on schedule** — the capture router is
+  push-triggered and is proven; the four cron skills are not. First briefing since 2026-08-04 is the
+  test. Check Actions rather than assuming.
+- `AGENT.md` on the phone still documents 7 tools and understates tiers 3–6. Reconcile or demote.
+- 546M `~/jarvis` sprawl → one canonical vault.
+- n8n.cloud account cancellation (nothing depends on it now — housekeeping).
+- Carousel `JARVIS_API_TOKEN`: rotation attempted, **not completed**; the exposed token still
+  returns 200. **User decision 2026-08-23: leave it. Do not re-raise.**
+
