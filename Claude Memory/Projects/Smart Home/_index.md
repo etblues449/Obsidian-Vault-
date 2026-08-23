@@ -454,3 +454,33 @@ Two stale beliefs in this vault corrected: `jarvis_memory.md` **does** exist (1 
 North-Star: Phase 0 ✓ · 1 ✓ · 2 ✓ · 3 ✓. Remaining pillar: crash-safe propose→approve→commit loop.
 See [[sessions/2026-08-23]].
 
+
+
+## 2026-08-23 — PHASE 4 COMPLETE: execution gap closed. ALL FOUR PILLARS DONE.
+
+`jarvis-app.mjs` held pending approvals in `const pending = new Map()` — process memory. If the app
+died between JARVIS proposing a gated action and Jelly Bean approving it, the Map vanished, the
+approval hit nothing, and it failed **silently**.
+
+`lib/ledger.mjs` is now an append-only JSONL ledger written before the gate opens and again after the
+outcome (`proposed → approved|declined → started → ran|failed`, plus `blocked`/`expired`), wired into
+`lib/agent.mjs` at 7 points so all four surfaces inherit it. `fsync` per append. CLI:
+`node jarvis-ledger.mjs`.
+
+**Locked safety decision: no auto-replay.** An approval that never ran is never resumed on reboot —
+firing an action approved hours earlier is precisely the unrequested action this project forbids.
+`drainReport()` is read-only (asserted in tests); orphans are surfaced for re-approval.
+
+**Verified on device:** 7/7 anchors pre-flight, 11/11 ledger checks, 7/7 wiring points, app 200; a
+real `set_timer` declined through `executeToolCall` produced the trail `proposed > declined` with 0
+open items. Commit `b658634`.
+
+**Delivery rule learned (add to every future installer):** when a corrected file must ship
+immediately, **publish it under a new filename**. A raw.githubusercontent edge served the superseded
+`ledger.mjs` even with cache-busting and no-cache headers; a fresh path cannot be stale.
+
+### North-Star roadmap — COMPLETE
+Phase 0 honest self-knowledge ✓ · Phase 1 safety floors ✓ · Phase 2 non-drifting personality ✓ ·
+Phase 3 durable memory ✓ · Phase 4 crash-safe propose→approve→commit ✓ — all *running* on the Fold,
+each proven on device rather than documented. See [[sessions/2026-08-23]].
+
