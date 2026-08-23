@@ -1,3 +1,5 @@
 # JARVIS memory backup (Phase 3 atomic write) — device-local, never sync
 Claude Memory/Account/jarvis_memory.md.bak
 Claude Memory/Account/jarvis_memory.md.tmp-*
+Claude Memory/Projects/Smart Home/ha-config/hub/**/secrets.yaml
+Claude Memory/Projects/Smart Home/ha-config/hub/secrets.yaml

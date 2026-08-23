@@ -1,0 +1,92 @@
+- id: '1784068420712'
+  name: 'Soundbar '
+  entities:
+    media_player.jelly_bean_s_soundbar_media_player:
+      source_list:
+      - 'Spotify: 1128680193'
+      - 'Spotify: SpotifyAlexaUserName'
+      - TV
+      - 'Bluetooth: iPad (6)'
+      - 'Bluetooth: Leah''s S22'
+      - 'Bluetooth: iPhone'
+      - 'Bluetooth: Elliot''s Z Fold4'
+      group_members: []
+      volume_level: 0.26
+      is_volume_muted: false
+      media_duration: 999
+      media_position: 0
+      media_position_updated_at: '2026-07-14T21:49:21.123193+00:00'
+      source: PRODUCT
+      friendly_name: Jelly Bean's Soundbar Media Player
+      supported_features: 675775
+      state: playing
+  metadata:
+    media_player.jelly_bean_s_soundbar_media_player:
+      entity_only: true
+- id: jb_evening
+  name: Evening
+  entities:
+    light.left_smart_bulb:
+      state: 'on'
+      brightness: 150
+    light.right_smart_bulb:
+      state: 'on'
+      brightness: 150
+    light.stairs_smart_bulb:
+      state: 'on'
+      brightness: 100
+    light.rgbic_tv_backlight:
+      state: 'on'
+- id: jb_night
+  name: Night
+  entities:
+    light.left_smart_bulb:
+      state: 'off'
+    light.right_smart_bulb:
+      state: 'off'
+    light.rgbic_tv_backlight:
+      state: 'off'
+    light.kids_bedroom:
+      state: 'off'
+    light.stairs_smart_bulb:
+      state: 'on'
+      brightness: 25
+- id: jb_movie
+  name: Movie
+  entities:
+    light.left_smart_bulb:
+      state: 'off'
+    light.right_smart_bulb:
+      state: 'off'
+    light.stairs_smart_bulb:
+      state: 'off'
+    light.rgbic_tv_backlight:
+      state: 'on'
+      brightness: 80
+- id: jb_all_off
+  name: All Off
+  entities:
+    light.left_smart_bulb:
+      state: 'off'
+    light.right_smart_bulb:
+      state: 'off'
+    light.stairs_smart_bulb:
+      state: 'off'
+    light.rgbic_tv_backlight:
+      state: 'off'
+    light.kids_bedroom:
+      state: 'off'
+    light.kitchen_light:
+      state: 'off'
+    light.kitchen_2:
+      state: 'off'
+    light.kitchen_3:
+      state: 'off'
+    light.haribo_room:
+      state: 'off'
+    light.living_room_light:
+      state: 'off'
+    light.bedroom:
+      state: 'off'
+    light.upstairs_led_bulb:
+      state: 'off'

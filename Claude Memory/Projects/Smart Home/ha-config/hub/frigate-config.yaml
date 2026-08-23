@@ -1,0 +1,6 @@
+
+mqtt:
+  enabled: False
+
+cameras: {}  # No cameras defined, UI wizard should be used
+version: 0.17-0
