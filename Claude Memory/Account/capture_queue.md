@@ -266,3 +266,18 @@ OUTSTANDING:
 - [ ] **Phase 2 — persona-drift fix** (next roadmap phase).
 - [ ] **Archive the 546M `~/jarvis` sprawl** → one canonical vault (`~/Obsidian-Vault-`, master).
 
+
+- [x] **Phase 2 — persona-drift fix.** *(DONE 2026-08-23 — `lib/persona.mjs` is the single source of
+  truth; all four entry points rewired, no inline prompts remain. Verified on device: 1 honesty
+  block, 1 personality, 13 tools everywhere, stale Tier-5 denial gone, app 200, heartbeat intact.
+  Commits `5bfe14e` + `bf68e33` on origin/main.)*
+- [x] **`jarvis.mjs` was reading a stale `SELF_KNOWLEDGE.json`** (capital) reporting "1 tool", and
+  used `require()` inside ESM. *(FIXED 2026-08-23 — stale file retired; the REPL would have thrown
+  on first use.)*
+- [x] **`jarvis-voice.mjs` denied Tier 5** a month after heartbeat shipped. *(FIXED 2026-08-23.)*
+- [ ] **Installer hardening is now a standing rule** — every vault-delivered installer must
+  cache-bust its fetches AND assert on file content, not hash alone. A stale CDN edge served a
+  matching old installer+payload pair that verified clean and installed a broken patcher.
+- [ ] **Do not ship source as hand-transcribed base64** — use plain `.mjs` in the vault with per-file
+  SHA. `Assistant Core/packages/persona.tar.gz.b64` is corrupt and superseded.
+
