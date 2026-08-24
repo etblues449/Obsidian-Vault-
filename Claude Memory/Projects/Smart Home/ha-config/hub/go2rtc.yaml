@@ -1,0 +1,35 @@
+# go2rtc add-on config  ->  /config/go2rtc.yaml
+#
+# Owns the single MJPEG connection to the ESPHome boards and transcodes to h264.
+# The boards serve exactly ONE stream client at a time; go2rtc holds that slot
+# and fans out to every consumer (Frigate, HA, browsers), which is precisely
+# why this layer earns its place.
+
+streams:
+  ai_cam: ffmpeg:http://192.168.0.199:8080#video=h264
+  ai_cam_outside: ffmpeg:http://192.168.0.201:8080#video=h264
+
+# Override the built-in h264 template. ONLY change vs the default is -g:v.
+# Default was -g 50 = a keyframe every 10s at 5fps, which makes Frigate
+# recordings seek badly and delays clip starts. -g:v 5 = 1 keyframe/second.
+# Everything else here matches what go2rtc was already running.
+ffmpeg:
+  h264: "-codec:v libx264 -g:v 5 -profile:v high -level:v 4.1 -preset:v superfast -tune:v zerolatency -pix_fmt:v yuv420p"
+
+api:
+  listen: ":1984"
+
+# Explicit non-default port. Frigate ships its OWN embedded go2rtc that also
+# wants 8554 - using 8654 here means Frigate can never accidentally resolve
+# rtsp://...:8554/ai_cam against the wrong instance.
+rtsp:
+  listen: ":8654"
+
+webrtc:
+  listen: ":8555"
+
+# ffmpeg: debug was a diagnostic while the producer was failing. It is working
+# now, so drop back to errors only - the debug firehose costs log volume.
+log:
+  level: info
+  ffmpeg: error

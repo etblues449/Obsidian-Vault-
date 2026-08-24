@@ -1,0 +1,188 @@
+substitutions:
+  dev_name: "bedroom"
+  friendly_name: Bedroom
+  ip_static: 192.168.0.171
+
+esphome:
+  name: ${dev_name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: false
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+logger:
+  baud_rate: 0
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  output_power: "8.5dB"
+  power_save_mode: none
+  reboot_timeout: 15min
+  manual_ip:
+    static_ip: ${ip_static}
+    gateway: 192.168.0.1
+    subnet: 255.255.255.0
+    dns1: 192.168.0.1
+  use_address: 192.168.0.171
+  ap:
+    ssid: "Bedroom Fallback Hotspot"
+    password: "fallback123"
+
+captive_portal:
+
+web_server:
+  port: 80
+
+uart:
+  id: ld2410_uart
+  tx_pin: GPIO8
+  rx_pin: GPIO7
+  baud_rate: 256000
+  parity: NONE
+  stop_bits: 1
+  rx_buffer_size: 512
+
+ld2410:
+  id: bedroom_radar
+  uart_id: ld2410_uart
+
+binary_sensor:
+  - platform: ld2410
+    ld2410_id: bedroom_radar
+    has_moving_target:
+      name: "Bedroom Motion"
+    has_still_target:
+      name: "Bedroom Still Presence"
+    has_target:
+      name: "Bedroom Presence"
+      filters:
+        - delayed_off: 15s
+
+sensor:
+  - platform: wifi_signal
+    name: "Bedroom WiFi Signal"
+    update_interval: 60s
+  - platform: uptime
+    name: "Bedroom Uptime"
+    update_interval: 60s
+  - platform: ld2410
+    ld2410_id: bedroom_radar
+    moving_distance:
+      name: "Bedroom Radar Moving Distance"
+      filters:
+        - throttle: 1500ms
+    moving_energy:
+      name: "Bedroom Radar Moving Energy"
+      filters:
+        - throttle: 1500ms
+    still_distance:
+      name: "Bedroom Radar Still Distance"
+      filters:
+        - throttle: 1500ms
+    still_energy:
+      name: "Bedroom Radar Still Energy"
+      filters:
+        - throttle: 1500ms
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "Bedroom IP Address"
+    ssid:
+      name: "Bedroom WiFi SSID"
+    bssid:
+      name: "Bedroom WiFi BSSID"
+  - platform: version
+    name: "Bedroom ESPHome Version"
+  - platform: ld2410
+    ld2410_id: bedroom_radar
+    version:
+      name: "Bedroom LD2410 Firmware Version"
+    mac_address:
+      name: "Bedroom LD2410 MAC Address"
+
+button:
+  - platform: ld2410
+    ld2410_id: bedroom_radar
+    factory_reset:
+      name: "Bedroom LD2410 Factory Reset"
+    restart:
+      name: "Bedroom LD2410 Restart"
+    query_params:
+      name: "Bedroom LD2410 Query Params"
+
+select:
+  - platform: ld2410
+    ld2410_id: bedroom_radar
+    distance_resolution:
+      name: "Bedroom LD2410 Distance Resolution"
+    baud_rate:
+      name: "Bedroom LD2410 Baud Rate"
+
+number:
+  - platform: ld2410
+    ld2410_id: bedroom_radar
+    timeout:
+      name: "Bedroom LD2410 Timeout"
+    max_move_distance_gate:
+      name: "Bedroom Max Move Distance Gate"
+    max_still_distance_gate:
+      name: "Bedroom Max Still Distance Gate"
+    g0:
+      move_threshold:
+        name: "Bedroom Gate 0 Move Threshold"
+      still_threshold:
+        name: "Bedroom Gate 0 Still Threshold"
+    g1:
+      move_threshold:
+        name: "Bedroom Gate 1 Move Threshold"
+      still_threshold:
+        name: "Bedroom Gate 1 Still Threshold"
+    g2:
+      move_threshold:
+        name: "Bedroom Gate 2 Move Threshold"
+      still_threshold:
+        name: "Bedroom Gate 2 Still Threshold"
+    g3:
+      move_threshold:
+        name: "Bedroom Gate 3 Move Threshold"
+      still_threshold:
+        name: "Bedroom Gate 3 Still Threshold"
+    g4:
+      move_threshold:
+        name: "Bedroom Gate 4 Move Threshold"
+      still_threshold:
+        name: "Bedroom Gate 4 Still Threshold"
+    g5:
+      move_threshold:
+        name: "Bedroom Gate 5 Move Threshold"
+      still_threshold:
+        name: "Bedroom Gate 5 Still Threshold"
+    g6:
+      move_threshold:
+        name: "Bedroom Gate 6 Move Threshold"
+      still_threshold:
+        name: "Bedroom Gate 6 Still Threshold"
+    g7:
+      move_threshold:
+        name: "Bedroom Gate 7 Move Threshold"
+      still_threshold:
+        name: "Bedroom Gate 7 Still Threshold"
+    g8:
+      move_threshold:
+        name: "Bedroom Gate 8 Move Threshold"
+      still_threshold:
+        name: "Bedroom Gate 8 Still Threshold"

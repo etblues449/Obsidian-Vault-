@@ -295,3 +295,134 @@ OUTSTANDING:
 - [ ] **Archive the 546M `~/jarvis` sprawl** → one canonical vault.
 - [ ] **Tasker capture leg** — capture idle since 2026-07-09; briefings from that corpus are stale.
 
+
+- [x] **Phase 4 — crash-safe propose→approve→commit loop.** *(DONE 2026-08-23 — `lib/ledger.mjs`
+  append-only JSONL, wired into `lib/agent.mjs` at 7 points. The `pending = new Map()` in
+  jarvis-app.mjs was process memory: a crash between propose and approve lost the approval silently.
+  Orphans now surfaced, never auto-replayed. Verified on device with a real declined `set_timer`:
+  trail `proposed > declined`, 0 open. Commit `b658634`. CLI: `node jarvis-ledger.mjs`.)*
+- [x] **North-Star roadmap complete** — Phases 0–4 all verified running on the Fold, not merely
+  documented.
+
+### Standing delivery rules (learned the hard way, apply to EVERY future installer)
+1. **Ship source as plain `.mjs` in the vault**, never hand-transcribed base64 (a corrupted blob was
+   caught by the SHA gate on 2026-08-23).
+2. **Cache-bust every fetch AND assert on file content** — SHA proves integrity, not freshness. A
+   stale edge once served a matching old installer + old payload that verified clean.
+3. **When a corrected file must ship immediately, change the filename.** Cache-busting alone did not
+   defeat a sticky edge; `ledger-v2.mjs` did.
+4. **Anchors in patchers must be regex and whitespace-insensitive**, and the installer must verify
+   every anchor exists exactly once *before* modifying anything.
+
+### Still open (unchanged today)
+- [ ] **Rotate the exposed Carousel `JARVIS_API_TOKEN`** — leaked in an earlier chat, still live.
+- [ ] **Archive the 546M `~/jarvis` sprawl** → one canonical vault.
+- [ ] **Tasker capture leg** — capture idle since 2026-07-09; briefings from that corpus are stale.
+- [ ] Consider surfacing `drainReport()` on the app's Status tab so unfinished actions are visible
+      without the CLI.
+
+
+- [~] **Carousel `JARVIS_API_TOKEN` rotation — ATTEMPTED, NOT COMPLETED. Jelly Bean's decision:
+  leave it (2026-08-23). Do not re-raise.** Verified state at that moment: the gate is live and
+  fail-closed (no token → 401 on both `jarvis-carousel.vercel.app` and the git-master URL), but the
+  **exposed token still returns 200** — the env var change/redeploy did not take (the clipboard held
+  790 chars, not the 64-char token). Nothing on the phone consumes this token, so there is no
+  device-side exposure; the risk is confined to the public Vercel endpoint. If it is ever revisited:
+  Vercel → jarvis-carousel → Settings → Environment Variables → edit `JARVIS_API_TOKEN` → **then
+  Deployments → latest Production → Redeploy** (env changes do not apply to an already-built
+  deployment — the likely reason it failed).
+
+
+- [x] **ROOT CAUSE of the dead capture pipeline + stopped briefings: obsidian-git deleted
+  `.github/workflows/` entirely.** *(FIXED 2026-08-23 — commit `4bdb3bf1` (2026-08-06) removed all 6
+  workflow files; `7f9097d9` (07-04) and `9fd5e00e` (07-14) did the same earlier. Obsidian cannot see
+  dotfolders, so obsidian-git's `git add -A` stages them as deletions. All six restored from
+  `a38848c9`; verified on origin/master. **Pre-commit hook installed and PROVEN** — a staged deletion
+  of a workflow was refused. Capture Router ran successfully 2026-08-23T02:49Z, first pipeline run in
+  18 days.)*
+- [x] **"8 files deleted from master 2026-08-02 by an unidentified client"** — *(EXPLAINED 2026-08-23:
+  same obsidian-git `add -A` mechanism. Not a mystery client; no PC involvement. Closes that
+  investigation.)*
+- [ ] **Build a phone-side `capture` tool** — jarvis-core has 13 tools and none of them captures, so
+  the only capture route is still Tasker → the paid n8n webhook (broken since 2026-07-09). A tool
+  writing directly to `~/Obsidian-Vault-/JARVIS/Inbox/` (same single-write-path model as memory)
+  makes capture voice-driven, £0, and retires n8n entirely. **This is the next build.**
+- [ ] **Watch for a 4th deletion attempt** — if obsidian-git starts failing to commit, that is the
+  hook doing its job, not a bug. Read the message before overriding with `--no-verify`.
+
+
+- [x] **Build a phone-side `capture` tool.** *(DONE 2026-08-23 — `tools/capture.mjs`, tool #14.
+  JARVIS writes notes straight to `JARVIS/Inbox/` with matching frontmatter; atomic write +
+  read-back verification; refuses placeholder junk at source. Proven end to end: real
+  `executeToolCall` → ledger trail `proposed > started > ran` → file on disk → obsidian-git push →
+  **Capture Router success 2026-08-23T03:01:49Z**. Commits `c3ab509` / `f372df06`.)*
+- [x] **Retire the paid n8n webhook from the capture path.** *(DONE 2026-08-23 — capture no longer
+  touches n8n or Tasker. C1 (£0) has no live exception on this route.)*
+- [~] **Fix the Tasker variable at source** — *moot for capture now that JARVIS writes notes itself.
+  Only still relevant if a home-screen Tasker shortcut is wanted; otherwise close it.*
+- [ ] **Confirm the n8n.cloud account state and formally cancel it** — nothing on the capture path
+  needs it any more, so this is now purely account housekeeping.
+- [ ] **Watch the first scheduled runs land** — morning brief `cron 0 6/0 7` should produce a
+  briefing for the first time since 2026-08-04 now the workflows are restored. If none appears by
+  tomorrow morning, check Actions rather than assuming.
+
+
+- [x] **P0 — Back up hub-side config into the vault.** *(DONE 2026-08-23 — built
+  `Assistant Core/ha-diagnostics/ha-export.mjs`, a re-runnable exporter using HA's config REST API.
+  Exported 11/11 automations + 5/5 scenes (0 scripts exist) to
+  `Claude Memory/Projects/Smart Home/ha-config/` as real YAML + `snapshot.json` + restore README.
+  **Verified restorable** — PyYAML parses them back into 11 and 5 objects; emitter tested against the
+  `": "`, `to: 'on'` and `-00:15:00` quoting traps that would silently corrupt a restore. Commit
+  `c0ce5ebd`.)*
+- [x] **Automation count corrected** — the live hub has **11** automations, not 8 (2026-08-02 record)
+  and not "~19" (older notes). 5 scenes, 0 scripts, 709 entities.
+- [ ] **Finish the hub backup — the YAML-managed files are still hub-only.** `bedroom-2.yaml`,
+  `frigate.yaml`, `configuration.yaml` + packages, the flashed `ai_cam.yaml`, and
+  `ui-lovelace-minimal.yaml` are not exposed by any API. Copy via Studio Code Server or Samba into
+  the same `ha-config/` folder.
+- [ ] **Enable a scheduled full HA backup off-hub** (Nabu Casa cloud backup, or Samba to the PC).
+  The exporter covers config, not the whole instance.
+- [ ] **Re-run `ha-export.mjs` after any automation change** — it is idempotent; commit the diff.
+
+
+- [x] **`AGENT.md` understated the tool surface and the tiers.** *(FIXED 2026-08-23 — superseding
+  header prepended: records 14 tools (it claimed 7), notes all six tiers plus phases 0–5 shipped,
+  lists the seven new components, and points at `self-knowledge.json` + the vault HANDOFF as the
+  authoritative sources. Original Tier 0 build plan kept below as history. Confirmed nothing reads
+  it at runtime. Commit `d05c7a7`.)*
+
+### Termux editing rule (learned 2026-08-23, three attempts)
+For prepending or inserting text into a file on the phone, **use `cat` + a quoted heredoc to a temp
+file, then `cat tmp orig > new && mv new orig`.** Do NOT use `node -e "..."` with nested backticks or
+`${}` — the shell mangles it silently. Two attempts wrote nothing yet still produced a clean
+`git commit`/push; the tell was `nothing to commit, working tree clean`.
+**Always verify the file actually changed (`grep -c`, `wc -l` vs `.bak`) — a successful push proves
+nothing about whether the edit happened.**
+
+
+- [x] **`AGENT.md` understates the tool surface and the tiers.** *(FIXED 2026-08-23 — superseding
+  header prepended: records the real **14** tools (it claimed 7), notes all six tiers shipped (it
+  described 3-6 as future work), lists the seven things shipped today, and points at
+  `self-knowledge.json` as the live source. Historical build plan kept below. Commit `d05c7a7`.
+  Confirmed nothing reads it at runtime.)*
+- [x] **`JARVIS/HANDOFF.md` stale (2026-07-23).** *(FIXED 2026-08-23 — superseding section appended.)*
+
+### Delivery rule #6 (new, learned 2026-08-23)
+**On the phone, write documentation with `cat` + a quoted heredoc, not `node -e`.** Two attempts to
+prepend a header via Node were mangled by shell quoting before Node ran; both **silently committed
+nothing** while still pushing a commit. Always verify a doc edit with `grep -c` and `wc -l` — *a
+commit landing is not proof the file changed.*
+
+
+- [x] **Archive the 546M `~/jarvis` sprawl.** *(DONE 2026-08-23 — 547M moved to
+  `~/_archive_jarvis_20260823-044851/`. **Moved, not deleted** — one `mv` restores it. Verified
+  after: jarvis-core + Obsidian-Vault- intact, app 200, memory intact. Also archived the 4
+  home-screen shortcuts that pointed into it (`JARVIS-new`, `digest.sh`, `jarvis.sh`, `sync.sh` —
+  all v1 scripts superseded by the :8737 app and the capture tool). Survivors: `JARVIS` symlink and
+  `JARVIS.sh`.)*
+- [x] **Tools badge under-reported (10 vs 14).** *(FIXED 2026-08-23 — the badge read the
+  vault-filtered list. `/api/tools` now returns `{tools, total, hidden}`; badge reads `total`.
+  Live: total 14, shown 11, hidden 3. Commit `49b0313`.)*
+- [ ] **Delete `~/_archive_jarvis_*` once you're satisfied nothing broke** — 547M reclaimed. Leave
+  it a week; `/data` is at 90% so it's worth doing eventually, but there's no rush.
+

@@ -1,0 +1,21 @@
+{
+  "exported": "2026-08-23T03:34:42.429Z",
+  "source": "http://192.168.0.200:8123",
+  "groups": {
+    "automations": {
+      "total": 11,
+      "exported": 11,
+      "skipped": []
+    },
+    "scenes": {
+      "total": 5,
+      "exported": 5,
+      "skipped": []
+    },
+    "scripts": {
+      "total": 0,
+      "exported": 0,
+      "skipped": []
+    }
+  }
+}

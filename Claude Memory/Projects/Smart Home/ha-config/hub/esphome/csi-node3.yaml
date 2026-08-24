@@ -1,0 +1,89 @@
+substitutions:
+  device_name: csi-node3
+  friendly_name: "CSI Node 3"
+  static_ip: 192.168.0.209        # pick a free IP + add a DHCP reservation on the Hub
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  min_version: 2026.5.0
+  name_add_mac_suffix: false
+  project:
+    name: francescopace.espectre
+    version: "2.8.0"
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+    version: 5.5.1
+    # ESPectre auto-sets required sdkconfig. If you hit CPU issues, uncomment:
+    # sdkconfig_options:
+    #   CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ: "240"
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/francescopace/espectre
+      ref: "2.8.0"          # or "main" for latest; bump when you update
+    components: [espectre]
+    refresh: 1d
+
+logger:
+  baud_rate: 0              # matches your other nodes; watch logs wirelessly in the add-on
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  output_power: "8.5dB"        # low to avoid brownout; raise if RSSI in logs is worse than -70
+  power_save_mode: none        # CRITICAL for CSI — power save kills the CSI callbacks
+  reboot_timeout: 15min
+  # Single Virgin Hub = no mesh, so BSSID lock optional. If you add WiFi pods:
+  # bssid: !secret wifi_bssid
+  manual_ip:
+    static_ip: ${static_ip}
+    gateway: 192.168.0.1
+    subnet: 255.255.255.0
+    dns1: 192.168.0.1
+  use_address: ${static_ip}
+  ap:
+    ssid: "CSI-Node3 Fallback"
+    password: "fallback123"
+
+captive_portal:
+
+web_server:
+  port: 80
+
+espectre:
+  id: espectre_csi
+  detection_algorithm: mvs        # start on MVS; try "ml" in tuning (no calibration, 100% on S3 in lab)
+  traffic_generator_rate: 94      # 95+ hangs calibration on Mini boards
+  hampel_enabled: true            # on by default in v2.8 — filters spurious CSI spikes
+  # --- Enable ONLY in tuning if you get false positives ---
+  # lowpass_enabled: true         # 11 Hz filter; cuts RF-noise false positives ~51%→2%
+  # motion_off_hits: 5            # hold "detected" longer before clearing (default 3)
+
+sensor:
+  - platform: wifi_signal
+    name: "CSI Node3 WiFi Signal"
+    update_interval: 60s
+  - platform: uptime
+    name: "CSI Node3 Uptime"
+    update_interval: 60s
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "CSI Node3 IP"
+  - platform: version
+    name: "CSI Node3 "
