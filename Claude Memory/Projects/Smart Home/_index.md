@@ -484,3 +484,52 @@ Phase 0 honest self-knowledge ✓ · Phase 1 safety floors ✓ · Phase 2 non-dr
 Phase 3 durable memory ✓ · Phase 4 crash-safe propose→approve→commit ✓ — all *running* on the Fold,
 each proven on device rather than documented. See [[sessions/2026-08-23]].
 
+
+## 2026-08-29 — Intruder alarm identified: HKC Quantum 70 (research complete, nothing installed)
+
+**Panel: HKC Quantum 70**, installed by **ARC Alarms** (Kings Norton, B38 8ND, 0121 475 1596).
+NSI-logged, **EN 50131-1 Grade 2 Class II**. Four devices: front-door contact (above door),
+lounge PIR, kitchen PIR, utility contact+shock.
+
+**The finding that decides the design: the Q70 is a WIRELESS panel.** HKC's own datasheet —
+70 two-way SecureWave wireless detectors, **1 hardwired zone**, integrated WiFi module for
+SecureComm. The logbook's "Circuits 1–4" are paired RF devices, not wired loops. **There are
+no zone terminals to tap**, so the obvious ADC/zone-resistance approach (and a Konnected
+board) has nothing to connect to. An initial zone-tap ESPHome config was written this session
+and **deleted** once the datasheet was read — recording it here so the dead end isn't
+re-walked. *(Vendor datasheet beats the obvious assumption — the same law as the Waveshare
+audio pin map.)*
+
+**Route chosen:**
+- **A (primary, zero hardware):** `jasonmadigan/ha-hkc` via HACS → SecureComm cloud. Gives an
+  `alarm_control_panel` (Full Set→`armed_away`, Part Set A→`armed_home`, Part Set B→
+  `armed_night`, disarm) + one Open/Closed sensor per device. **60 s cloud poll**; unofficial,
+  no warranty. Panel's integrated WiFi means the README's GSM rate-limit warning doesn't apply.
+- **B (supplement, local, instant):** opto-isolated tap on a spare programmable output / SABB
+  bell output → `binary_sensor.alarm_bell_active`. Closes A's 60-second blind spot and removes
+  the internet from the intrusion trigger path. **Ask ARC to terminate the output** — DIY on a
+  Grade 2 NSI system risks the certificate and the maintenance agreement.
+- **C (rejected):** sniffing SecureWave RF. Proprietary, two-way, encrypted.
+
+**⚠ C1 GATE — unresolved.** HKC's SecureComm *cloud* is publicly quoted at ~€9.99+VAT/month
+(varies by region/signup; often bundled by the installer). **Unverified for this account.**
+If it's a live monthly charge, Route A breaks C1 (£0/month forever) and the answer is Route B
+only. Ring ARC before installing anything.
+
+**Honest scope limit:** these four sensors are for **security state, not presence**. Wireless
+alarm PIRs are battery-throttled and, behind a 60 s cloud poll, are unusable for lighting —
+leave that to the mmWave/radar nodes and ai_cam per [[MASTER_PLAN]] §4. The real prize is
+set/part-set/unset as JARVIS's top-level house mode.
+
+**Artefacts:** [[hardware/HKC Quantum 70 — Home Assistant integration]] ·
+`ha-config/hub/esphome/alarm-bell-tap.yaml` · `ha-config/hub/packages/alarm.yaml`
+(both YAML-validated offline; **not flashed, not deployed** — every entity ID in the package
+is a `# CONFIRM` placeholder until ha-hkc is installed and the registry read).
+
+**🔴 SECURITY — unrelated to the alarm, found while reading the hub config.**
+`ha-config/hub/configuration.yaml:17` holds a **plaintext ephember account password**,
+committed to this repo. Move it to `secrets.yaml`, rotate the password, and rewrite it on the
+live hub too. Not actioned this session — rotation is Elliot's call.
+
+**Next:** `0*9`+code for Site ID · ring ARC re: SecureComm billing · HACS install ha-hkc ·
+replace the `# CONFIRM` IDs · ask ARC for the output termination.

@@ -1,0 +1,152 @@
+# ============================================================================
+# packages/alarm.yaml — HKC Quantum 70 house-mode + response layer
+# ----------------------------------------------------------------------------
+# DISABLED BY DEFAULT. Every entity ID marked "# CONFIRM" is a PLACEHOLDER
+# guessed from the ha-hkc README, not read off your registry. ha-hkc is not
+# installed yet, so the real IDs are unknown. Fill them in from
+# Developer Tools -> States AFTER installing, then remove this banner.
+#
+# Enabling this with wrong IDs gives you automations that silently never fire —
+# the worst failure mode in this system (MEMORY.md: "silent failures outrank
+# loud ones"). Confirm first.
+#
+# To load: add to configuration.yaml, once, at the top level:
+#   homeassistant:
+#     packages: !include_dir_named packages
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# House mode. One sensor everything else keys off, so no other automation ever
+# has to know that the alarm is an HKC or that ha-hkc exists.
+# ---------------------------------------------------------------------------
+template:
+  - sensor:
+      - name: "House Security Mode"
+        unique_id: house_security_mode
+        icon: >-
+          {% set s = states('alarm_control_panel.hkc_alarm') %}
+          {% if s == 'armed_away' %}mdi:shield-lock
+          {% elif s in ['armed_home','armed_night'] %}mdi:shield-home
+          {% elif s == 'triggered' %}mdi:shield-alert
+          {% else %}mdi:shield-off{% endif %}
+        state: >-
+          {% set s = states('alarm_control_panel.hkc_alarm') %}
+          {# CONFIRM entity id above #}
+          {% if s == 'armed_away' %}Away
+          {% elif s == 'armed_home' %}Part Set A
+          {% elif s == 'armed_night' %}Part Set B
+          {% elif s == 'triggered' %}ALARM
+          {% elif s == 'disarmed' %}Home
+          {% else %}Unknown{% endif %}
+        attributes:
+          raw_state: "{{ states('alarm_control_panel.hkc_alarm') }}"   # CONFIRM
+
+  - binary_sensor:
+      # True when the alarm is genuinely sounding. Prefers the LOCAL bell tap
+      # and falls back to the cloud state, so this stays correct whether or not
+      # Route B is built, and prefers the fast path when it is.
+      - name: "Intrusion Active"
+        unique_id: intrusion_active
+        device_class: safety
+        state: >-
+          {{ is_state('binary_sensor.alarm_bell_active', 'on')
+             or is_state('alarm_control_panel.hkc_alarm', 'triggered') }}
+          {# alarm_bell_active = alarm-bell-tap.yaml (Route B, may not exist yet)
+             hkc_alarm = CONFIRM #}
+
+      - name: "House Secured"
+        unique_id: house_secured
+        state: >-
+          {{ states('alarm_control_panel.hkc_alarm')
+             in ['armed_away','armed_home','armed_night'] }}   {# CONFIRM #}
+
+automation:
+  # -------------------------------------------------------------------------
+  # 1. Intrusion response. The one automation that must work every time.
+  #    Fires off the local tap the instant it exists; off the cloud otherwise.
+  # -------------------------------------------------------------------------
+  - id: alarm_intrusion_response
+    alias: "Alarm — intrusion response"
+    description: >-
+      Lights to full, notify the Fold. Deliberately does NOT unlock, open, or
+      disarm anything: an alarm response must never reduce security.
+    mode: single
+    trigger:
+      - trigger: state
+        entity_id: binary_sensor.intrusion_active
+        to: "on"
+    action:
+      - action: notify.mobile_app_fold7        # CONFIRM device name
+        data:
+          title: "🚨 ALARM TRIGGERED"
+          message: >-
+            {{ now().strftime('%H:%M:%S') }} — house alarm is sounding.
+          data:
+            priority: high
+            ttl: 0
+            channel: alarm_critical
+      # Lights to full — an intruder response, and it makes any camera footage
+      # usable. Uses a scene so it degrades gracefully if a bulb is offline.
+      - action: light.turn_on
+        target:
+          entity_id: all
+        data:
+          brightness_pct: 100
+        continue_on_error: true
+
+  # -------------------------------------------------------------------------
+  # 2. Setting the alarm is the most reliable "we have left" signal in the
+  #    house — better than any presence heuristic, because a human asserted it.
+  # -------------------------------------------------------------------------
+  - id: alarm_full_set_away_actions
+    alias: "Alarm — Full Set means away"
+    mode: single
+    trigger:
+      - trigger: state
+        entity_id: alarm_control_panel.hkc_alarm    # CONFIRM
+        to: "armed_away"
+    action:
+      - action: light.turn_off
+        target:
+          entity_id: all
+        continue_on_error: true
+      # Add heating setback here once the ephember climate entity is confirmed.
+
+  - id: alarm_disarm_home_actions
+    alias: "Alarm — unset means home"
+    mode: single
+    trigger:
+      - trigger: state
+        entity_id: alarm_control_panel.hkc_alarm    # CONFIRM
+        to: "disarmed"
+    condition:
+      - condition: sun
+        after: sunset
+    action:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.evening_arrival          # CONFIRM — create or change
+        continue_on_error: true
+
+  # -------------------------------------------------------------------------
+  # 3. Watchdog. ha-hkc is an unofficial cloud integration against an API its
+  #    own README says HKC could block at any time. If it dies quietly, the
+  #    two automations above stop working and nothing tells you. This tells you.
+  # -------------------------------------------------------------------------
+  - id: alarm_integration_watchdog
+    alias: "Alarm — integration unavailable"
+    mode: single
+    trigger:
+      - trigger: state
+        entity_id: alarm_control_panel.hkc_alarm    # CONFIRM
+        to:
+          - "unavailable"
+          - "unknown"
+        for: "00:15:00"
+    action:
+      - action: notify.mobile_app_fold7            # CONFIRM
+        data:
+          title: "Alarm integration down"
+          message: >-
+            ha-hkc has been unavailable for 15 minutes. Alarm automations are
+            not running. The panel itself is unaffected.
