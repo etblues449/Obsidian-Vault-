@@ -1,0 +1,156 @@
+# ============================================================================
+# alarm-bell-tap.yaml — local, instant alarm signal from an HKC Quantum 70
+# ----------------------------------------------------------------------------
+# WHY THIS EXISTS
+#   Route A (ha-hkc) polls HKC's cloud every 60 s. Fine for "is the house set?",
+#   not fine for "someone is in the house right now", and it puts the internet
+#   in the trigger path of the one automation that most needs to work when the
+#   internet is down. This node closes exactly that gap and does nothing else.
+#
+# READ FIRST
+#   The Quantum 70 is EN 50131 Grade 2, NSI-logged, maintained by ARC Alarms.
+#   The clean way to do this is to ask ARC to bring a spare PROGRAMMABLE OUTPUT
+#   out to a pair of terminals at the next service visit — then this node reads
+#   those terminals and never touches the bell circuit at all. Doing it yourself
+#   can invalidate the maintenance agreement. Opening the lid on a set system
+#   raises a tamper. See §6 of the integration note.
+#
+# STATUS: NOT BUILT, NOT FLASHED. Nothing here has been run on hardware.
+#
+# ----------------------------------------------------------------------------
+# WIRING — opto-isolated, one part, no galvanic connection to the panel
+#
+#   Panel output (+)  --[ 2k2 1/4W ]--> PC817 pin 1 (anode)
+#   Panel 0V          -------------->  PC817 pin 2 (cathode)
+#
+#   ESP32 3V3         --[ 10k ]------+--> PC817 pin 4 (collector)
+#                                    |
+#                                    +--> GPIO32   (also enable internal pullup)
+#   ESP32 GND         -------------->      PC817 pin 3 (emitter)
+#
+#   The 2k2 sets ~5 mA through the opto LED on a 12 V output — inside the PC817's
+#   50 mA limit with a wide margin, and a negligible load on the panel.
+#   The opto means the ESP32 shares NO ground with the panel. That is the whole
+#   point: no ground loop, no path for an ESP32 fault to reach a graded system.
+#
+#   Output active pulls GPIO32 LOW, hence `inverted: true`.
+#   If ARC give you an active-HIGH output instead, set inverted: false.
+#
+#   A SABB bell output rests HIGH and is pulled LOW to ring (hold-off). If you
+#   are tapping SABB rather than a programmable output, the sense is inverted
+#   again — CONFIRM WITH A MULTIMETER BEFORE TRUSTING THIS, in both the set and
+#   unset states. Do not skip that: a wrong polarity here means the alarm
+#   automation is armed backwards and fires when nothing is wrong.
+#
+#   Power the ESP32 from its OWN 5 V USB supply, NOT from panel AUX. The Q70
+#   draws 90 mA quiescent and its integrated battery is sized for a Grade 2
+#   standby calculation; hanging an ESP32 off it eats the standby margin the
+#   certificate depends on.
+# ============================================================================
+
+substitutions:
+  node_name: alarm-bell-tap
+  friendly: Alarm Bell Tap
+  static_ip: 192.168.0.188   # unallocated as of the 2026-08-04 estate baseline —
+                             # re-check against DHCP before flashing
+
+esphome:
+  name: ${node_name}
+  friendly_name: ${friendly}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+  baud_rate: 0
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  power_save_mode: none
+  reboot_timeout: 0s
+  ap:
+    ssid: "Alarm-Bell-Tap-Fallback"
+    password: fallback123
+  manual_ip:
+    static_ip: ${static_ip}
+    gateway: 192.168.0.1
+    subnet: 255.255.255.0
+    dns1: 192.168.0.1
+  use_address: ${static_ip}
+
+captive_portal:
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+binary_sensor:
+  # The signal this whole node exists for.
+  - platform: gpio
+    name: "Alarm Bell Active"
+    id: bell_active
+    device_class: safety
+    pin:
+      number: GPIO32
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    filters:
+      # 50 ms debounce. Long enough to reject contact bounce and mains-borne
+      # noise on a bell pair; short enough that this is still effectively
+      # instant next to a 60 s cloud poll.
+      - delayed_on_off: 50ms
+
+  # Optional second channel: ask ARC for a "Set" output too and wire it
+  # identically on GPIO33. Gives a local arm-state signal that keeps working
+  # when the internet is down — a useful cross-check on ha-hkc.
+  # - platform: gpio
+  #   name: "Alarm System Set"
+  #   id: system_set
+  #   pin:
+  #     number: GPIO33
+  #     mode:
+  #       input: true
+  #       pullup: true
+  #     inverted: true
+  #   filters:
+  #     - delayed_on_off: 300ms
+
+  - platform: status
+    name: "Alarm Bell Tap Status"
+    entity_category: diagnostic
+
+sensor:
+  - platform: uptime
+    name: "Alarm Bell Tap Uptime"
+    entity_category: diagnostic
+
+  - platform: wifi_signal
+    name: "Alarm Bell Tap WiFi Signal"
+    update_interval: 60s
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: version
+    name: "Alarm Bell Tap ESPHome Version"
+    entity_category: diagnostic
+
+# ----------------------------------------------------------------------------
+# COMMISSIONING — do all four before writing an automation against this node
+#   1. Multimeter across the tapped pair, system UNSET: record the voltage.
+#   2. Same, system SET: record it. If it changed, you are on a set output,
+#      not a bell output — relabel accordingly.
+#   3. Keypad `0#9` (Bell and light test) → "Alarm Bell Active" must go ON,
+#      and back OFF when the test ends.
+#   4. Pull the ESP32's power. The alarm must be completely unaffected — that
+#      is the proof the tap is passive and the certificate argument holds.
+# ----------------------------------------------------------------------------
