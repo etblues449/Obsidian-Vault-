@@ -107,9 +107,21 @@ does not apply to this panel.
 - Attributes for command feedback: *Last Command*, *Last Command State*, *Last Command
   Result*, with timestamps.
 
-**Entity IDs are not knowable until it is installed.** The HA package in
-`ha-config/hub/packages/alarm.yaml` ships with placeholder IDs marked `# CONFIRM` — fix them
-against the real registry before enabling it. Do not guess them.
+**Entity IDs, derived from ha-hkc v1.3.3 source** (not guessed): single-panel installs
+label the device `HKC Alarm System` (`helpers.py:95`), and the panel entity carries no name
+of its own (`alarm_control_panel.py:54`), so:
+
+- `alarm_control_panel.hkc_alarm_system`
+- `sensor.hkc_alarm_system_<zone description>` x4 — descriptions are whatever ARC programmed,
+  so these four are the only IDs still to read off the registry.
+
+A 2-block panel goes "multi-view" and is named per block instead; check Developer Tools
+before assuming. `ha-config/hub/packages/alarm.yaml` is written against the single-view IDs.
+
+**Zone sensors are not binary sensors.** States are `Open` / `Closed` / `Tamper` /
+`Inhibited` / `Unused` / `Unknown` (`sensor.py:133-153`), so `is_state(..., 'on')` never
+matches. A zone also reads `Open` if it triggered within 60 s of panel time — i.e. a PIR
+shows `Open` for up to a minute after it sees you.
 
 ---
 
@@ -170,6 +182,8 @@ keeps the certificate and the contract intact.
 ---
 
 ## 7. Open items
+
+> Step-by-step install sequence: [[fixes/HKC alarm — HA install runbook]]
 
 - [ ] `0*9` + user code → confirm Site ID/password exist (i.e. SecureComm provisioned)
 - [ ] **Ring ARC Alarms 0121 475 1596 — is SecureComm billed? (C1 gate)**

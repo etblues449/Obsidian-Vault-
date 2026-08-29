@@ -1,14 +1,22 @@
 # ============================================================================
 # packages/alarm.yaml — HKC Quantum 70 house-mode + response layer
 # ----------------------------------------------------------------------------
-# DISABLED BY DEFAULT. Every entity ID marked "# CONFIRM" is a PLACEHOLDER
-# guessed from the ha-hkc README, not read off your registry. ha-hkc is not
-# installed yet, so the real IDs are unknown. Fill them in from
-# Developer Tools -> States AFTER installing, then remove this banner.
+# Entity IDs below are DERIVED FROM ha-hkc's SOURCE (v1.3.3), not guessed:
 #
-# Enabling this with wrong IDs gives you automations that silently never fire —
-# the worst failure mode in this system (MEMORY.md: "silent failures outrank
-# loud ones"). Confirm first.
+#   helpers.py:95      single-view device label = "HKC Alarm System"
+#   alarm_control_panel.py:54   panel _attr_name = None  (single view)
+#     -> alarm_control_panel.hkc_alarm_system
+#   sensor.py:47       sensor _attr_name = input_data["description"]
+#     -> sensor.hkc_alarm_system_<hkc's own zone description, slugified>
+#
+# The zone descriptions come from how ARC programmed the panel, so the four
+# sensor IDs are the ONE thing still to confirm. Everything else is exact.
+# After install: Developer Tools -> States, filter "hkc" -> fill in §SENSORS.
+#
+# If your panel was programmed with 2 blocks, ha-hkc goes "multi-view" and the
+# device is named per block instead — then the panel entity is
+# alarm_control_panel.hkc_alarm_system_<block> and every ID here shifts. Check
+# Developer Tools before assuming.
 #
 # To load: add to configuration.yaml, once, at the top level:
 #   homeassistant:
@@ -18,20 +26,27 @@
 # ---------------------------------------------------------------------------
 # House mode. One sensor everything else keys off, so no other automation ever
 # has to know that the alarm is an HKC or that ha-hkc exists.
+#
+# ha-hkc state mapping (alarm_control_panel.py:297-306), from the panel's own
+# block armState — these are exact:
+#   inAlarm      -> triggered
+#   armState 3   -> armed_away   = Full Set      (keypad 0#4)
+#   armState 2   -> armed_night  = Part Set B    (keypad 0#8)
+#   armState 1   -> armed_home   = Part Set A    (keypad 0#7, your "BED")
+#   otherwise    -> disarmed
 # ---------------------------------------------------------------------------
 template:
   - sensor:
       - name: "House Security Mode"
         unique_id: house_security_mode
         icon: >-
-          {% set s = states('alarm_control_panel.hkc_alarm') %}
+          {% set s = states('alarm_control_panel.hkc_alarm_system') %}
           {% if s == 'armed_away' %}mdi:shield-lock
           {% elif s in ['armed_home','armed_night'] %}mdi:shield-home
           {% elif s == 'triggered' %}mdi:shield-alert
           {% else %}mdi:shield-off{% endif %}
         state: >-
-          {% set s = states('alarm_control_panel.hkc_alarm') %}
-          {# CONFIRM entity id above #}
+          {% set s = states('alarm_control_panel.hkc_alarm_system') %}
           {% if s == 'armed_away' %}Away
           {% elif s == 'armed_home' %}Part Set A
           {% elif s == 'armed_night' %}Part Set B
@@ -39,26 +54,47 @@ template:
           {% elif s == 'disarmed' %}Home
           {% else %}Unknown{% endif %}
         attributes:
-          raw_state: "{{ states('alarm_control_panel.hkc_alarm') }}"   # CONFIRM
+          raw_state: "{{ states('alarm_control_panel.hkc_alarm_system') }}"
+          # The panel's actual LCD text, straight off the keypad. ha-hkc
+          # exposes it and it is the best single diagnostic you have.
+          keypad_display: >-
+            {{ state_attr('alarm_control_panel.hkc_alarm_system','Display') }}
 
   - binary_sensor:
       # True when the alarm is genuinely sounding. Prefers the LOCAL bell tap
       # and falls back to the cloud state, so this stays correct whether or not
-      # Route B is built, and prefers the fast path when it is.
+      # the bell tap is built, and prefers the fast path when it is.
       - name: "Intrusion Active"
         unique_id: intrusion_active
         device_class: safety
         state: >-
           {{ is_state('binary_sensor.alarm_bell_active', 'on')
-             or is_state('alarm_control_panel.hkc_alarm', 'triggered') }}
-          {# alarm_bell_active = alarm-bell-tap.yaml (Route B, may not exist yet)
-             hkc_alarm = CONFIRM #}
+             or is_state('alarm_control_panel.hkc_alarm_system', 'triggered') }}
 
       - name: "House Secured"
         unique_id: house_secured
         state: >-
-          {{ states('alarm_control_panel.hkc_alarm')
-             in ['armed_away','armed_home','armed_night'] }}   {# CONFIRM #}
+          {{ states('alarm_control_panel.hkc_alarm_system')
+             in ['armed_away','armed_home','armed_night'] }}
+
+      # ha-hkc sensors are NOT binary — states are Open / Closed / Tamper /
+      # Inhibited / Unused / Unknown (sensor.py:133-153). Tamper and Inhibited
+      # both mean "this zone is not protecting you right now" and neither shows
+      # up as a normal open. Surfacing that is the whole point of this one.
+      - name: "Alarm Zone Fault"
+        unique_id: alarm_zone_fault
+        device_class: problem
+        state: >-
+          {{ expand(states.sensor)
+             | selectattr('entity_id','search','^sensor\\.hkc_alarm_system_')
+             | selectattr('state','in',['Tamper','Inhibited'])
+             | list | count > 0 }}
+        attributes:
+          faulted: >-
+            {{ expand(states.sensor)
+               | selectattr('entity_id','search','^sensor\\.hkc_alarm_system_')
+               | selectattr('state','in',['Tamper','Inhibited'])
+               | map(attribute='name') | list | join(', ') }}
 
 automation:
   # -------------------------------------------------------------------------
@@ -68,7 +104,7 @@ automation:
   - id: alarm_intrusion_response
     alias: "Alarm — intrusion response"
     description: >-
-      Lights to full, notify the Fold. Deliberately does NOT unlock, open, or
+      Lights to full, notify the phone. Deliberately does NOT unlock, open, or
       disarm anything: an alarm response must never reduce security.
     mode: single
     trigger:
@@ -76,17 +112,18 @@ automation:
         entity_id: binary_sensor.intrusion_active
         to: "on"
     action:
-      - action: notify.mobile_app_fold7        # CONFIRM device name
+      - action: notify.mobile_app_jelly_bean_s_phone
         data:
           title: "🚨 ALARM TRIGGERED"
           message: >-
             {{ now().strftime('%H:%M:%S') }} — house alarm is sounding.
+            Panel: {{ state_attr('alarm_control_panel.hkc_alarm_system','Display') }}
           data:
             priority: high
             ttl: 0
             channel: alarm_critical
       # Lights to full — an intruder response, and it makes any camera footage
-      # usable. Uses a scene so it degrades gracefully if a bulb is offline.
+      # usable. continue_on_error so one offline Govee bulb can't abort it.
       - action: light.turn_on
         target:
           entity_id: all
@@ -103,7 +140,7 @@ automation:
     mode: single
     trigger:
       - trigger: state
-        entity_id: alarm_control_panel.hkc_alarm    # CONFIRM
+        entity_id: alarm_control_panel.hkc_alarm_system
         to: "armed_away"
     action:
       - action: light.turn_off
@@ -117,7 +154,7 @@ automation:
     mode: single
     trigger:
       - trigger: state
-        entity_id: alarm_control_panel.hkc_alarm    # CONFIRM
+        entity_id: alarm_control_panel.hkc_alarm_system
         to: "disarmed"
     condition:
       - condition: sun
@@ -125,7 +162,7 @@ automation:
     action:
       - action: scene.turn_on
         target:
-          entity_id: scene.evening_arrival          # CONFIRM — create or change
+          entity_id: scene.evening_arrival     # CONFIRM — create, or repoint
         continue_on_error: true
 
   # -------------------------------------------------------------------------
@@ -138,15 +175,38 @@ automation:
     mode: single
     trigger:
       - trigger: state
-        entity_id: alarm_control_panel.hkc_alarm    # CONFIRM
+        entity_id: alarm_control_panel.hkc_alarm_system
         to:
           - "unavailable"
           - "unknown"
         for: "00:15:00"
     action:
-      - action: notify.mobile_app_fold7            # CONFIRM
+      - action: notify.mobile_app_jelly_bean_s_phone
         data:
           title: "Alarm integration down"
           message: >-
             ha-hkc has been unavailable for 15 minutes. Alarm automations are
             not running. The panel itself is unaffected.
+
+  # -------------------------------------------------------------------------
+  # 4. A zone left inhibited/tampered is a zone not protecting you. Worth one
+  #    notification at set time, when you can still do something about it.
+  # -------------------------------------------------------------------------
+  - id: alarm_zone_fault_on_set
+    alias: "Alarm — zone fault when setting"
+    mode: single
+    trigger:
+      - trigger: state
+        entity_id: alarm_control_panel.hkc_alarm_system
+        to: ["armed_away", "armed_home", "armed_night"]
+    condition:
+      - condition: state
+        entity_id: binary_sensor.alarm_zone_fault
+        state: "on"
+    action:
+      - action: notify.mobile_app_jelly_bean_s_phone
+        data:
+          title: "Alarm set with a zone fault"
+          message: >-
+            Set, but not fully protected —
+            {{ state_attr('binary_sensor.alarm_zone_fault','faulted') }}
