@@ -1,7 +1,8 @@
 # HKC Quantum 70 → Home Assistant: install runbook
 
 **Created:** 2026-08-29 · **Panel:** HKC Quantum 70 · **Hub:** HA Green @ 192.168.0.200
-**Status: NOT YET RUN.** Every step below is written to be executed; none has been.
+**Status: step 0 RUN 2026-08-29 — SecureComm came back "Not installed", so Route A is
+blocked pending an ARC engineer visit.** Steps 2-6 are written to be executed; none has been.
 
 > Read [[hardware/HKC Quantum 70 — Home Assistant integration]] first if you want the
 > reasoning. This file is just the sequence.
@@ -11,37 +12,70 @@ can make the rest pointless, which is why it is step 0.
 
 ---
 
-## Step 0 — the £0 gate (5 min, do this FIRST)
+## Step 0 — SecureComm status ✅ DONE 2026-08-29 — result: **NOT INSTALLED**
 
-The integration talks to HKC's **SecureComm cloud**. The app is free; the *cloud service*
-is publicly quoted around **€9.99+VAT/month**, varying by region and signup date, and is
-often bundled by the installer at no extra charge. **I could not verify which applies to
-you** — and constraint C1 says £0/month forever.
+`0*9` on the keypad returns **"Not installed"**. Verified on the panel, photographed.
 
-**Ring ARC Alarms: 0121 475 1596.** Ask exactly:
+**This blocks Route A completely.** SecureComm is not provisioned, so there is no Site ID and
+no password, so `ha-hkc` has nothing to authenticate with. Do not install the integration
+yet — it cannot connect.
 
-> "Is SecureComm on my panel billed to me, included in my maintenance, or not enabled?"
+The panel hardware is not the problem: HKC's Q70 datasheet lists an **integrated WiFi module
+for the SecureComm app**, so the radio is already in the box. "Not installed" is the panel
+reporting that the SecureComm communicator is not *enabled in programming* and not registered.
 
-- **Included / already paid** → carry on to step 1.
-- **Not enabled** → ask them to enable it; ask the cost before agreeing.
-- **A monthly fee you aren't already paying** → **stop.** Route A is out on C1. Skip to
-  the appendix.
+### Enabling it is an engineer job — do not do it yourself
 
-## Step 1 — get your Site ID and password off the keypad (2 min)
+Enabling SecureComm lives in **engineer mode**: comms menu → SecureComm → enable → enter
+Installation ID and password; and the Wi-Fi scan and password entry are engineer-mode only.
 
-At the panel keypad:
+Published default engineer codes exist. **Do not use one.** On this system that means:
+
+- entering engineer mode on a **Grade 2, NSI-certified** system maintained by a third party,
+  which can void the maintenance agreement,
+- an engineer-access event written into the panel log with your name effectively on it,
+- and ARC will have changed the default code anyway.
+
+Ten minutes of ARC's time removes all of that risk. It is not worth saving.
+
+### Step 0a — the call to ARC (this is now the whole gate)
+
+**ARC Alarms, 0121 475 1596.** Quote the site reference shown on the keypad's idle banner.
+
+Ask, in order:
+
+1. *"`0*9` says SecureComm is Not installed. Can you enable it and register the panel?"*
+2. *"What does that cost — one-off, and is there a monthly SecureComm cloud charge?"*
+   (publicly quoted around €9.99+VAT/month, varies by region and signup, often bundled —
+   **unverified for this account**, which is exactly what you are asking)
+3. *"While you're there: can you bring the Bell and Strobe outputs out to accessible
+   terminals, and can one be programmed to Set/Armed status?"* — that is Route B, and it
+   costs you nothing extra if they are already on site.
+
+**Decision:**
+
+| ARC says | Do |
+|---|---|
+| Enabled, no monthly charge | Route A. Continue to step 1. |
+| Enabled, but a monthly fee | **C1 says stop.** Route B only — see the appendix. |
+| Won't enable / wants real money | Route B only — see the appendix. |
+
+Ask for the outputs (question 3) **whatever the answer to 1 and 2**. Route B is worth having
+even if Route A works, because it is the local, sub-second, internet-independent path.
+
+## Step 1 — get your Site ID and password (2 min) — BLOCKED until step 0a
+
+Once ARC has enabled SecureComm, at the keypad:
 
 ```
 0 * 9   then your user code
 ```
 
-The display shows your **Site ID** and **password**. Write them on paper.
+The display shows your **Site ID** and **password** instead of "Not installed". Write them on
+paper.
 
-- They appear → SecureComm is provisioned. Good.
-- Nothing, or an error → not provisioned. Back to step 0, second bullet.
-
-**Do not type these into the vault, a note, or a commit.** They go straight into HA's
-config flow, which stores them encrypted in `.storage`, and nowhere else.
+**Do not type these into the vault, a note, or a commit.** They go straight into HA's config
+flow, which stores them encrypted in `.storage`, and nowhere else.
 
 ## Step 2 — install ha-hkc through HACS (5 min)
 
@@ -130,23 +164,52 @@ response, set/unset actions, an integration watchdog, and a zone-fault warning a
 
 ---
 
-## Appendix — if step 0 says SecureComm costs money
+## Appendix — Route B, the local path (now the likely primary)
 
-Route A is out on C1. What remains:
+Needed if ARC won't enable SecureComm, or enables it with a monthly charge (C1 says no).
+Worth building **even if Route A works**, because it is local and sub-second.
 
-1. **The local bell tap alone** (`esphome/alarm-bell-tap.yaml`). No cloud, no
-   subscription, £0/month, sub-second. You lose arm/disarm and per-zone state; you keep
-   the single most valuable signal — *the alarm is going off* — and you keep it working
-   when the internet is down.
-2. **Add a "Set" output** on the same node (the config has it commented in, on GPIO33)
-   for a local armed/unarmed signal. That recovers house mode without the cloud.
+### What the panel gives you
 
-Together those give you ~80% of the value for a one-off £6 and an engineer visit, with no
-recurring cost and no dependency on an unofficial API. Ask ARC to terminate both outputs
-at the next service — it is ten minutes of their time and keeps the Grade 2 certificate
-and the maintenance agreement intact.
+The Q70 has **two high-current outputs: Bell and Strobe** (HKC Q70 install manual). Those
+are the tap points. Note your external sounder may be HKC's **RF SABB** — a *wireless* bell —
+in which case the hardwired Bell/Strobe terminals are sitting unused on the board, which
+makes them easier to borrow, not harder.
 
----
+Ask ARC for, in order of preference:
+
+1. **A spare output programmed to "Set/Armed"** plus the **Bell** output, both brought out to
+   accessible terminals. This is the good outcome: local house mode *and* local alarm.
+2. **Bell output only.** Still gets you the single most valuable signal in the system —
+   *the alarm is sounding* — locally, in well under a second, with no internet.
+
+### Then
+
+`ha-config/hub/esphome/alarm-bell-tap.yaml` is written and waiting. It is an opto-isolated
+tap: the ESP32 shares no ground with the panel, draws nothing from it, and pulling its power
+leaves the alarm completely unaffected. GPIO32 is the Bell input; GPIO33 is commented in for
+the Set output — uncomment it if you get outcome 1.
+
+Parts: an ESP32 devkit, a PC817 opto, a 2k2 and a 10k resistor. About £6, all likely already
+in your parts box. Power it from its **own** USB supply, never panel AUX — the Q70's battery
+is sized for a Grade 2 standby calculation and an ESP32 eats that margin.
+
+**Commission it properly** — the four checks at the bottom of the ESPHome file, especially
+the multimeter polarity check in both set and unset states. Get that backwards and the
+intrusion automation fires when nothing is wrong.
+
+### What Route B gives you vs Route A
+
+| | Route A (SecureComm) | Route B (local tap) |
+|---|---|---|
+| Alarm sounding | ≤60 s, via cloud | **sub-second, local** |
+| Set / unset state | yes | only with outcome 1 |
+| Per-zone Open/Closed | yes, all four | no |
+| Arm / disarm from HA | yes | no |
+| Works with no internet | no | **yes** |
+| Monthly cost | **possibly** | £0 |
+
+They are complementary, not alternatives. If ARC enables SecureComm for free, do both.
 
 ## Known limits, stated up front
 

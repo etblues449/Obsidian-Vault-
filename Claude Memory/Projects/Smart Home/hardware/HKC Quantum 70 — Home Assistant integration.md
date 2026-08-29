@@ -56,8 +56,8 @@ This maps 1:1 onto the handwritten crib on the NSI handbook (`OUT = #4`, `BED = 
 
 | Route | Gets you | Cost | Latency | Verdict |
 |---|---|---|---|---|
-| **A — `ha-hkc` via SecureComm** | Arm/disarm + Full Set / Part Set A / Part Set B + a sensor per device | £0 hardware; **subscription risk, see §3** | ~60 s poll | **Do this first.** Zero hardware, panel already has WiFi. |
-| **B — local bell-output tap** | Instant local "alarm is sounding" | ~£6 of parts | sub-second | **Do this second.** It is the answer to A's 60-second blind spot. |
+| **A — `ha-hkc` via SecureComm** | Arm/disarm + Full Set / Part Set A / Part Set B + a sensor per device | £0 hardware; **subscription risk + an engineer visit, see §3** | ~60 s poll | **BLOCKED 2026-08-29 — `0*9` returns "Not installed".** Needs ARC to enable and register it. |
+| **B — local bell/strobe tap** | Instant local "alarm is sounding"; house mode too if a Set output is programmed | ~£6 of parts | sub-second | **Now the likely primary.** Q70 has 2 high-current outputs (Bell, Strobe). |
 | **C — SecureWave RF sniffing** | Per-device events, locally | — | — | **Don't.** Proprietary two-way encrypted 868 MHz. Not a weekend project. |
 
 ### Why A alone is not enough
@@ -185,8 +185,10 @@ keeps the certificate and the contract intact.
 
 > Step-by-step install sequence: [[fixes/HKC alarm — HA install runbook]]
 
-- [ ] `0*9` + user code → confirm Site ID/password exist (i.e. SecureComm provisioned)
-- [ ] **Ring ARC Alarms 0121 475 1596 — is SecureComm billed? (C1 gate)**
+- [x] `0*9` + user code → **"Not installed"** (2026-08-29). SecureComm NOT provisioned.
+- [ ] **Ring ARC Alarms 0121 475 1596** — (a) enable + register SecureComm, (b) what does it
+      cost one-off and monthly (C1 gate), (c) bring Bell + a Set-programmed output out to
+      terminals for the local tap. Ask (c) regardless of the answer to (a)/(b).
 - [ ] Install `ha-hkc` via HACS; record the real entity IDs
 - [ ] Fix the `# CONFIRM` placeholders in `packages/alarm.yaml`, then enable it
 - [ ] Ask ARC to terminate a spare programmable output for the local tap

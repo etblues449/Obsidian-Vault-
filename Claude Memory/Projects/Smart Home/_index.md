@@ -533,3 +533,30 @@ live hub too. Not actioned this session — rotation is Elliot's call.
 
 **Next:** `0*9`+code for Site ID · ring ARC re: SecureComm billing · HACS install ha-hkc ·
 replace the `# CONFIRM` IDs · ask ARC for the output termination.
+
+### 2026-08-29 (later) — VERIFIED ON THE PANEL: SecureComm is **"Not installed"** — Route A blocked
+
+Ran `0*9` at the keypad. It returns **"Not installed"** (photographed). **SecureComm is not
+provisioned on this panel**, so there is no Site ID or password and `ha-hkc` has nothing to
+authenticate with. Route A is blocked — do not install the integration yet, it cannot connect.
+
+Not a hardware gap: the Q70 datasheet lists an **integrated WiFi module for SecureComm**, so
+the radio is in the box. The communicator is simply not enabled in programming or registered.
+Enabling lives in **engineer mode** (comms → SecureComm → enable → Installation ID + password;
+Wi-Fi scan is engineer-only) — **ARC's job**. Not doing it ourselves: entering engineer mode on
+a Grade 2 NSI system maintained by a third party risks the maintenance agreement and writes an
+engineer-access event to the log, and ARC will have changed the default code anyway.
+
+**Route B is now the likely primary.** New sourced fact: the Q70 has **2 high-current outputs
+— Bell and Strobe** (Q70 install manual). Those are the tap points, and the external sounder
+may well be HKC's *wireless* RF SABB, leaving the hardwired terminals unused and free to
+borrow. `alarm-bell-tap.yaml` is written and waiting; GPIO32 = Bell, GPIO33 (commented) = Set.
+
+**One call now gates everything.** ARC Alarms 0121 475 1596 — (a) enable + register SecureComm,
+(b) one-off and monthly cost (C1 gate), (c) bring Bell + a Set-programmed output out to
+accessible terminals. **Ask (c) regardless of the answer to (a)/(b)** — the local tap is worth
+having even if the cloud route turns out free, because it is sub-second and works with no
+internet.
+
+Runbook updated with the result, the call script and a Route A/B comparison:
+[[fixes/HKC alarm — HA install runbook]].
