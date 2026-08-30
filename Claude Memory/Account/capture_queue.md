@@ -426,3 +426,10 @@ commit landing is not proof the file changed.*
 - [ ] **Delete `~/_archive_jarvis_*` once you're satisfied nothing broke** — 547M reclaimed. Leave
   it a week; `/data` is at 90% so it's worth doing eventually, but there's no rush.
 
+## New — from the 2026-08-30 supervisor log triage (`Projects/Smart Home/diagnostics/2026-08-30-supervisor-log-triage.md`)
+
+- [ ] **S2 — Run `ha-supervisor-fix.mjs` against the Green (dry run first).** `HA_TOKEN=<admin token> node "Assistant Core/ha-diagnostics/ha-supervisor-fix.mjs"`. This is the measurement that decides whether the boot-ID failure is *journal too large* or *gatewayd wedged* — the log message is identical for both and the fixes are opposite. Do not guess from the note; the tool answers it in one run.
+- [ ] **S2 — Clear the ESPHome Device Builder (beta) stale options.** Re-run with `--fix`; removes `use_new_device_builder` and `status_use_ping` from `5c53de3b_esphome-beta`. Restart the add-on afterwards at leisure. Warnings stop at the next options load.
+- [ ] **S2 — Repair the host journal** (only if the run says `journal-too-large`). Needs the HA OS **host** shell — SSH port 22222 with a key in `CONFIG/authorized_keys` on the boot partition, or the console; the SSH add-on is a container and cannot see it. `journalctl --rotate` **before** `--vacuum-size=100M` (vacuum only reclaims archived files), then the `10-jarvis-cap.conf` drop-in. Re-run the tool to confirm the boots probe drops under 20s.
+- [ ] **Export the FULL supervisor log and re-triage.** The triage covers a 100-line tail spanning three minutes only — it cannot show how often the boot-ID failure fires or what else is failing outside that window.
+- [ ] **Fold the Supervisor layer into the regular HA health cadence.** `ha-doctor` audits Core only and has never seen either of these defects; run both tools together before/after an HA upgrade.

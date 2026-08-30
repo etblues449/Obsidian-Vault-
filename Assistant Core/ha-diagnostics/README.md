@@ -58,12 +58,100 @@ Then commit the report via the normal single write path (obsidian-git / `git pul
 - Dashboards are stored server-side (`.storage/lovelace*`) and are not readable via the
   REST API — dashboard review stays a vault-side job (see
   `Claude Memory/Projects/Smart Home/dashboard/`).
-- Supervisor/add-on health (Frigate container etc.) needs the Supervisor API, which a
-  long-lived token can't reach. Frigate is checked indirectly: camera entity availability
-  + stream probes.
+- Supervisor/add-on health is **not** covered by `ha-doctor` — it audits Home Assistant
+  Core only. That layer now has its own tool: **`ha-supervisor-fix.mjs`** (below).
+  Frigate remains checked indirectly here: camera entity availability + stream probes.
+  *(Correction, 2026-08-30: this bullet previously said the Supervisor API "can't be
+  reached with a long-lived token". Core proxies the Supervisor API at `/api/hassio`,
+  which an **admin** long-lived token can use — that is the path the new tool takes. It
+  probes and reports which credential actually authenticated rather than assuming;
+  unverified against the Green until first run.)*
 
 ## Cadence
 
 Suggested: run before/after any HA upgrade, after adding a node, and monthly. Reports
 accumulate in `Claude Memory/Projects/Smart Home/diagnostics/` — diffs between runs are
 the drift signal.
+
+
+---
+
+# HA Supervisor Fix — Supervisor-layer diagnostic & repair
+
+`ha-supervisor-fix.mjs`. Built 2026-08-30 from a supervisor log tail that carried two
+unrelated defects. `ha-doctor` could not have seen either: both live below Core, in the
+Supervisor.
+
+## What it checks — and what it repairs
+
+| # | Section | Catches | Repairs? |
+|---|---|---|---|
+| 1 | Auth | which credential path actually reached the Supervisor (in-cluster token vs Core's `/api/hassio` proxy) | — |
+| 2 | Host | OS build, kernel, disk used/free (a full disk and a bloated journal travel together) | — |
+| 3 | **Host logs** | `systemd-journal-gatewayd`: times a cheap tail *and* the boot-ID listing separately, then says which of the two root causes it is | prints exact host-shell steps |
+| 4 | **Add-on options** | every installed add-on's stored options against its current schema — keys the add-on has since dropped | ✅ yes, over the API |
+
+Section 3's two-probe design is the point. A tail read walks the journal backwards from
+the end and is cheap; a boot-ID listing is not, because when gatewayd's native `/boots`
+endpoint is unavailable the Supervisor falls back to scanning the journal. So:
+
+- tail fast, boots fails → **the journal is too large to scan inside Supervisor's 20s budget**
+- tail also fails → **gatewayd itself is down or wedged**
+
+Those need completely different fixes, and the error message alone does not distinguish
+them.
+
+## Run it
+
+```bash
+# From the LAN (Fold 7 / PC). Needs an ADMIN long-lived token — the /api/hassio proxy
+# is admin-only.
+export HA_TOKEN='<admin long-lived access token>'
+node "Assistant Core/ha-diagnostics/ha-supervisor-fix.mjs"                      # dry run
+node "Assistant Core/ha-diagnostics/ha-supervisor-fix.mjs" --fix                # apply
+node "Assistant Core/ha-diagnostics/ha-supervisor-fix.mjs" \
+  --out "Claude Memory/Projects/Smart Home/diagnostics/$(date +%F)-supervisor.md"
+```
+
+On the hub itself (SSH & Web Terminal add-on) `SUPERVISOR_TOKEN` is already in the
+environment and no token needs setting; the script prefers it automatically.
+
+- `--fix` — apply repairs. **Without it the script writes nothing.**
+- `--slug <addon>` — restrict the add-on audit to one add-on.
+- `--json` / `--out <path>` — as `ha-doctor`.
+- `HA_URL` — override hub URL (default `http://192.168.0.200:8123`).
+
+## Safety
+
+- **Dry-run by default.** The only write is `POST /addons/{slug}/options`, only under
+  `--fix`.
+- **It only ever removes keys the add-on's own schema no longer declares.** No value is
+  changed, and an add-on that declares `schema: false` (arbitrary options legal) is
+  skipped entirely.
+- The pre-change options are recorded verbatim in the report as `options_before`, so any
+  removal can be put back by hand.
+- Add-ons are **not** restarted; the report says which ones to restart when convenient.
+- No token is ever written to the report or the vault.
+
+## Known limits (honest)
+
+- **The journal repair is not automatable from here.** Vacuuming and capping the journal
+  needs the HA OS *host* shell — SSH on port **22222** with a key in
+  `CONFIG/authorized_keys` on the boot partition, or the physical console. The SSH & Web
+  Terminal add-on is a container and cannot see the host journal. The script prints the
+  exact command sequence and then verifies the result on the next run.
+- `journalctl --vacuum-*` only reclaims **archived** journal files, so the printed steps
+  `--rotate` first. Skipping that is why vacuuming often reports freeing 0 bytes.
+- The persistent cap is a drop-in under `/etc/systemd/journald.conf.d/`. `/etc` is an
+  overlay on HA OS — it survives reboot, but re-check it after an OS update.
+
+## Tests
+
+```bash
+node "Assistant Core/ha-diagnostics/test/supervisor-fix-test.mjs"
+```
+
+46 assertions, fully offline: the pure logic (stale-key detection, false-value handling,
+verdict classification) plus an end-to-end run against a mock Supervisor API on
+loopback, which asserts that a dry run writes nothing and that `--fix` POSTs options
+with the stale keys gone and every other value byte-identical.
