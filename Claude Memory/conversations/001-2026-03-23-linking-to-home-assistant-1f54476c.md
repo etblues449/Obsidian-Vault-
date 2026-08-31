@@ -90,7 +90,7 @@ Would you like help with the Claude Desktop config file setup?
 
 ## human — 2026-03-23 20:57:07
 
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkMTlhY2E3MTY5YTA0YzliYjg1ZjhhOGZiYzk2YWY5NiIsImlhdCI6MTc3NDI5NjkwNywiZXhwIjoyMDg5NjU2OTA3fQ.dkW3RqrZ26LfmP7h6XIzXb9DGeRuVzE1ITH1PZ_lzh8
+<<REDACTED-HA-LONG-LIVED-TOKEN — committed to a PUBLIC repo 2026-03/04; REVOKE in HA >> Profile >> Security>>
 
 ## assistant — 2026-03-23 20:57:13
 
@@ -108,7 +108,7 @@ Once you've done that, I'm happy to help you set up the Claude Desktop config wi
 
 ## human — 2026-03-23 20:58:11
 
-https://uuxgyehjmsoit9uo770ko6cltmrrzmtb.ui.nabu.casa and eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkMTlhY2E3MTY5YTA0YzliYjg1ZjhhOGZiYzk2YWY5NiIsImlhdCI6MTc3NDI5NjkwNywiZXhwIjoyMDg5NjU2OTA3fQ.dkW3RqrZ26LfmP7h6XIzXb9DGeRuVzE1ITH1PZ_lzh8    write the code for the desktop app
+<<REDACTED-NABU-CASA-URL — remote access endpoint; recover from the Nabu Casa account>> and <<REDACTED-HA-LONG-LIVED-TOKEN — committed to a PUBLIC repo 2026-03/04; REVOKE in HA >> Profile >> Security>>    write the code for the desktop app
 
 ## assistant — 2026-03-23 20:58:17
 

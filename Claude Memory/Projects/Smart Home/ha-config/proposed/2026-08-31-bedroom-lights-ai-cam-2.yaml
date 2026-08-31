@@ -1,0 +1,99 @@
+# Bedroom lights + AI CAM 2 — PROPOSED, NOT APPLIED
+#
+# 2026-08-31. Extends the two existing bedroom automations to use the AI CAM 2
+# voice satellite that now sits in the Bedroom area.
+#
+# ── READ THIS BEFORE PASTING ──────────────────────────────────────────────────
+#
+# 1. This file changes NOTHING on its own. `ha-config/automations.yaml` in this
+#    vault is an EXPORT ("UI-managed automations only ... regenerate: node
+#    ha-export.mjs"), not a source the hub reads. These automations are
+#    UI-managed, so they are applied in Settings -> Automations -> (⋮) -> Edit
+#    in YAML, or by editing the hub's own automations.yaml and reloading.
+#
+# 2. ENTITY IDs ARE UNCONFIRMED. They are derived from
+#    ha-config/hub/esphome/ai-cam-outside.yaml (`friendly_name: AI Cam Outside`),
+#    which gives the `ai_cam_outside_` prefix used below. The live registry has
+#    disagreed with the YAML before on this exact point — the first AI Cam
+#    registered as `living_room_ai_cam_*`, and HA shows THIS device as
+#    "AI CAM 2", so `ai_cam_2_` is a real possibility. Confirm before pasting:
+#
+#      export HA_TOKEN='<admin long-lived token — do not put it in a file>'
+#      curl -s -H "Authorization: Bearer $HA_TOKEN" \
+#        http://192.168.0.200:8123/api/states \
+#        | grep -oE '"entity_id": *"[^"]*(ai_cam|cam_2)[^"]*"' | sort -u
+#
+# 3. THE DEVICE IS CURRENTLY OFFLINE. Every AI CAM 2 entity in the 2026-08-31
+#    screenshot reads "—" (no state), and Wake word / Wake word 2 carry error
+#    badges. Until the board is revived these automations are inert: the button
+#    trigger never fires. Revival config: hardware/landing_ai_cam_2.yaml —
+#    first flash must be USB (the board likely still carries the Arduino
+#    experiment firmware, so there is no ESPHome OTA).
+#
+# 4. AREA DRIFT: the vault records this board as LANDING (`landing_ai_cam_2`);
+#    HA shows it in BEDROOM. Either it was moved or the area is wrong. Worth
+#    settling, because Assist's area-scoped voice targeting depends on it.
+#
+# ──────────────────────────────────────────────────────────────────────────────
+
+# UNCHANGED — kept here so the three automations can be reviewed as one set.
+- id: bedroom_enter
+  alias: Bedroom - Enter
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.bedroom_bedroom_presence
+    to: 'on'
+  actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.bedroom_light
+    data:
+      brightness_pct: 70
+      color_temp_kelvin: 4000
+  mode: single
+
+# CHANGED — added a condition. Everything else is byte-identical to the export.
+- id: bedroom_empty
+  alias: Bedroom - Empty
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.bedroom_bedroom_presence
+    to: 'off'
+    for:
+      minutes: 2
+  conditions:
+  # Voice activity IS occupancy. mmWave reads a still person as an empty room,
+  # so talking to Assist in bed could put the lights out mid-sentence.
+  # Fails safe: if the satellite is unavailable (as it is today) its state is
+  # 'unavailable', which is not in this list, so the condition passes and the
+  # old turn-off behaviour is exactly preserved.
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: assist_satellite.ai_cam_outside
+      state:
+      - listening
+      - processing
+      - responding
+  actions:
+  - action: light.turn_off
+    target:
+      entity_id: light.bedroom_light
+  mode: single
+
+# NEW — the satellite's physical button becomes a bedroom light switch.
+- id: bedroom_ai_cam_2_button
+  alias: Bedroom - AI Cam 2 button toggles light
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.ai_cam_outside_user_button
+    to: 'on'
+  actions:
+  - action: light.toggle
+    target:
+      entity_id: light.bedroom_light
+  # Audible confirmation — the button gives no tactile feedback in the dark.
+  - action: button.press
+    target:
+      entity_id: button.ai_cam_outside_play_chime
+  mode: single

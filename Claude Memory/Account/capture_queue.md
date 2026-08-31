@@ -433,3 +433,19 @@ commit landing is not proof the file changed.*
 - [ ] **S2 — Repair the host journal** (only if the run says `journal-too-large`). Needs the HA OS **host** shell — SSH port 22222 with a key in `CONFIG/authorized_keys` on the boot partition, or the console; the SSH add-on is a container and cannot see it. `journalctl --rotate` **before** `--vacuum-size=100M` (vacuum only reclaims archived files), then the `10-jarvis-cap.conf` drop-in. Re-run the tool to confirm the boots probe drops under 20s.
 - [ ] **Export the FULL supervisor log and re-triage.** The triage covers a 100-line tail spanning three minutes only — it cannot show how often the boot-ID failure fires or what else is failing outside that window.
 - [ ] **Fold the Supervisor layer into the regular HA health cadence.** `ha-doctor` audits Core only and has never seen either of these defects; run both tools together before/after an HA upgrade.
+
+## New — 2026-08-31 CREDENTIAL EXPOSURE (do this first)
+
+- [ ] **S1 — REVOKE EVERY HOME ASSISTANT LONG-LIVED TOKEN, NOW.** `etblues449/Obsidian-Vault-` is a **PUBLIC** repo and had **4 distinct HA long-lived access tokens** committed in `Claude Memory/conversations/` (issued 2026-03-23, 04-08, 04-15, 04-27; all valid to **2036**), alongside **2 real Nabu Casa remote URLs**. Endpoint + token = admin control of the house from anywhere on the internet, for anyone who read the repo. HA → Profile → Security → Long-lived access tokens → delete **all** of them. That single action invalidates every leaked token at once, including the 5th one pasted into a chat transcript on 2026-08-31.
+- [x] **Redact them from the working tree.** *(Done 2026-08-31: 7 token occurrences across 4 notes + 8 Nabu Casa URLs across 7 notes replaced with `<<REDACTED-…>>` markers.)*
+- [ ] **⚠️ The tokens are still in git history and in the public GitHub mirror.** Redaction fixes the tip, not the past. Treat all four as permanently compromised — **revocation is the only real fix**, and history rewriting is blocked here anyway (`permissions.deny` bars force-push; single-writer rule). Optionally also flip the repo to private, but do not treat that as a substitute for revoking.
+- [ ] **Issue ONE replacement token and keep it out of files.** `export HA_TOKEN='…'` in the shell on the Fold only — never in a note, never in a committed `.env`, never pasted into chat. `ha-doctor.mjs` and `ha-supervisor-fix.mjs` both already read it from the environment by design.
+- [ ] **Add a pre-commit secret scan** so this cannot recur — the vault rule ("never write a secret into a note") exists but nothing enforces it. A `grep -E 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.'` gate in `.claude/hooks/` would have caught all four.
+
+## New — 2026-08-31 Bedroom lights + AI CAM 2
+
+- [ ] **Confirm AI CAM 2's real entity IDs before pasting the automation.** Proposal at `Projects/Smart Home/ha-config/proposed/2026-08-31-bedroom-lights-ai-cam-2.yaml` uses the `ai_cam_outside_` prefix derived from `ai-cam-outside.yaml` (`friendly_name: AI Cam Outside`), but HA displays the device as **AI CAM 2**, and the registry has disagreed with the YAML before (the first cam registered as `living_room_ai_cam_*`). One `curl /api/states` settles it.
+- [ ] **AI CAM 2 is OFFLINE** — every entity in the 2026-08-31 screenshot reads `—`, and Wake word / Wake word 2 show error badges. The new button automation is inert until the board is revived: `hardware/landing_ai_cam_2.yaml`, **first flash must be USB** (no ESPHome OTA over the Arduino-experiment firmware).
+- [ ] **Area drift:** the vault records this board as **Landing** (`landing_ai_cam_2`); HA shows it in **Bedroom**. Settle which is true — Assist's area-scoped voice targeting depends on it.
+- [ ] **Applying the automation is a hub-side action.** `ha-config/automations.yaml` in this vault is an *export* ("UI-managed automations only"); editing it changes nothing. Paste via Settings → Automations → Edit in YAML.
+
