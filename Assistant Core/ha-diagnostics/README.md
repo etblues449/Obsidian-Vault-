@@ -184,3 +184,35 @@ Exit codes are distinct so a failure says which failure it was: **2** no token,
 **4** hub unreachable (you are not on its LAN). 8 offline assertions cover the
 filtering, the DEAD flag, `--json`, and all three failure paths.
 
+---
+
+# Apply Bedroom Automations — write them ON the hub
+
+`apply-bedroom-automations.sh`. Pure POSIX sh + curl, **no node** (Termux's nodejs is
+currently broken on an OpenSSL symbol mismatch; curl is proven working on the Fold).
+
+```bash
+export HA_TOKEN='<admin long-lived token>'          # shell only, never a file
+export BEDROOM_LIGHT='light.your_real_bedroom_light'
+export BEDROOM_PRESENCE='binary_sensor.your_presence_sensor'    # optional
+sh "Assistant Core/ha-diagnostics/apply-bedroom-automations.sh"
+```
+
+Writes `bedroom_ai_cam_2_button`, and — only if `BEDROOM_PRESENCE` is given —
+`bedroom_enter` and `bedroom_empty`, via `POST /api/config/automation/config/<id>`.
+Then reloads and **reads each one back off the hub** to prove the write took.
+
+## The refusals are the feature
+
+The 2026-08-31 audit found four automations enabled on this hub that could never fire,
+because they pointed at entities that do not exist. They sat at `state: on` for months
+looking perfectly healthy.
+
+So this script preflights every entity against `/api/states` and **aborts** if any is
+absent or `unavailable` — before writing anything. An abort writes nothing at all, not
+even the automations that would have been fine. **There is deliberately no `--force`.**
+
+17 offline assertions in `test/apply-bedroom-automations-test.mjs` against a mock hub,
+and the refusal paths are tested first and hardest: no light, absent light, unavailable
+light, bad presence sensor, no token.
+
