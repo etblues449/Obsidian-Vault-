@@ -155,3 +155,32 @@ node "Assistant Core/ha-diagnostics/test/supervisor-fix-test.mjs"
 verdict classification) plus an end-to-end run against a mock Supervisor API on
 loopback, which asserts that a dry run writes nothing and that `--fix` POSTs options
 with the stale keys gone and every other value byte-identical.
+
+---
+
+# HA Entities — what is this thing actually called?
+
+`ha-entities.mjs`. One GET, read-only, zero dependencies. Answers the question
+that keeps costing time: **the registry's entity_id, not the one the YAML or a
+screenshot implies.** The vault has been wrong about this twice — the first AI
+Cam registered as `living_room_ai_cam_*`, which matched neither its config nor
+its display name.
+
+```bash
+export HA_TOKEN='<long-lived access token>'      # shell only, never a file
+node "Assistant Core/ha-diagnostics/ha-entities.mjs" cam bedroom light
+```
+
+Arguments are case-insensitive substrings, OR'd, matched against entity_id and
+friendly name. No arguments = every entity. `--json` for machine-readable
+output. `HA_URL` overrides the hub URL.
+
+Output is `entity_id  state  friendly_name`, with `<-- DEAD` against anything
+`unavailable`/`unknown` — a dead entity is the answer as often as a live one,
+and it should not read as a normal value.
+
+Exit codes are distinct so a failure says which failure it was: **2** no token,
+**3** hub answered but rejected the token (401 = wrong/revoked/expired),
+**4** hub unreachable (you are not on its LAN). 8 offline assertions cover the
+filtering, the DEAD flag, `--json`, and all three failure paths.
+
