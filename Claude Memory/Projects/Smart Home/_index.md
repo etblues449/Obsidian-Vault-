@@ -486,3 +486,74 @@ Phase 0 honest self-knowledge ✓ · Phase 1 safety floors ✓ · Phase 2 non-dr
 Phase 3 durable memory ✓ · Phase 4 crash-safe propose→approve→commit ✓ — all *running* on the Fold,
 each proven on device rather than documented. See [[sessions/2026-08-23]].
 
+
+
+---
+
+## ⚠️ SUPERSEDING BLOCK — 2026-09-01 live diagnosis
+
+> Everything above this line predates a full live audit run on **2026-09-01** against the hub API,
+> GitHub Actions logs and the vault. Where the two disagree, **this block is the fact**.
+> Full detail: [[sessions/2026-09-01]].
+
+### Corrections to the Status section above
+- **"Lounge: complete (~19 automations)" is wrong twice over.** The hub has **11** automations
+  (already corrected on 2026-08-23; this file was never updated) and **there is no lounge automation
+  at all** — the radar node is now "Kitchen Presence" and the only automations that fired today were
+  `kitchen_enter_daytime` and `kitchen_room_empty_light_off`.
+- **8 of the 11 automations are no-ops.** Every Govee bulb they target (`left_smart_bulb`,
+  `right_smart_bulb`, `rgbic_tv_backlight`, `stairs_smart_bulb`, `bedroom_light`) has been removed
+  from the Govee account, and `binary_sensor.bedroom_bedroom_presence` /
+  `binary_sensor.landing_landing_presence` do not exist.
+- **"RuView WiFi-CSI sensing: live & phone-free" is wrong.** It is dead:
+  `binary_sensor.ruview_csi_node_3_presence` is unavailable and **no RuView CSI Bridge add-on is
+  installed**. The MQTT device is a retained-discovery ghost.
+- **"£0 migration — PR pending" is stale.** It merged. The four workflows run on schedule.
+- **"Phase-2 capture router — not yet built" is stale.** It is built and has 3/3 successful runs.
+- **"Voice agent LIVE & £0 — `jarvis-voice-lovat.vercel.app`" is wrong.** That host **404s**.
+  `jarvis-carousel.vercel.app` does still serve.
+- **`media_player.tv_jelly_beans_tv_2` does not exist.** Canonical TV is
+  **`media_player.jelly_beans_tv_3`** (decided 2026-08-02; confirmed live 2026-09-01).
+- **"Frigate ruled out (too heavy for HA Green)" is superseded.** Frigate is running and is the only
+  working person detector in the house.
+- **"Landing .205" is wrong** — .205 is **ESPectre, the bedroom node**. The "Landing Wifi" ESPHome
+  entry is loaded but exposes **zero entities**; it is the ghost flagged back in June.
+
+### The one thing to fix first
+**Groq decommissioned `llama-3.3-70b-versatile` on 2026-08-16.** All four scheduled skills share
+`runner.mjs`, so all four have failed every run since the workflows came back on 2026-08-23 —
+**25/25 failed**, zero output for 27 days (last briefing `2026-08-05`).
+
+    Assistant Core/jarvis-skills/runner.mjs:42
+    - const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+    + const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+
+`llama-3.1-8b-instant` (voice agent) was retired the same day → `openai/gpt-oss-20b`.
+After the swap: run each skill once **and confirm a file lands in the vault** — green ≠ written.
+
+### Current live baseline (2026-09-01)
+Core **2026.9.0b4 (beta channel)** · OS 18.2 · 674 entities, **159 unavailable** · 11 automations,
+5 scenes · 51 config entries (8 not loaded, Music Assistant in `setup_retry`) · 14 add-ons
+(Music Assistant + Claude Desktop in `error`) · 7 ESPHome devices, 3 offline · disk 91.2/461.4 GB ·
+backup completed 2026-09-01 05:21 to local + Google Drive · `input_boolean.away_mode` = **on**.
+
+### Next Actions (supersedes the list above)
+- [ ] **Swap the Groq model** (runner.mjs:42) then verify a real write, not a green run
+- [ ] Turn `away_mode` off if home — it guards most automations
+- [ ] Rebuild or delete the 6 dead presence automations (start with the AI Cam pair: trigger works,
+      only its targets are dead)
+- [ ] Reseat the LD2410 on ESPectre (.205) — ESP is healthy, radar is silent on UART; check the
+      ~21-minute uptime for a reboot loop
+- [ ] Restart or remove Music Assistant — clears ~27 unavailable entities
+- [ ] Delete 7 ghost config entries (esphome Bedroom, esphome Porch Camera, cast, samsungtv ×2,
+      dlna_dmr Bose LS Ultra, apple_tv EShare) and the duplicate integrations (TV ×3, soundbar ×2,
+      LS Ultra ×2, EShare ×2)
+- [ ] Collapse "Smart Home" + "Jelly Bean's Dash" into one dashboard, rebuilt against live entities
+- [ ] Decide the Govee question — LAN/Govee2MQTT or accept cloud; today it is cloud-dependent while
+      being documented as local-first
+- [ ] Confirm AI CAM 2 joins the network (fw rebuilt 2026-08-29, still offline) **before** the
+      camera-module swap
+- [ ] Retire the 19 dated YAML snapshots in the Claude project; point it at `ha-config/` instead
+- [ ] Resolve the Vercel scope mismatch (connected account lists 0 projects; Carousel serves)
+- [ ] Decide whether the house hub should stay on the HA beta channel
+
