@@ -555,3 +555,14 @@ backup completed 2026-09-01 05:21 to local + Google Drive · `input_boolean.away
 - [ ] Resolve the Vercel scope mismatch (connected account lists 0 projects; Carousel serves)
 - [ ] Decide whether the house hub should stay on the HA beta channel
 
+
+
+## 2026-09-02: Full audit + live fixes (Claude Code)
+Read-only audit of the whole system against live HA Green + local PC, then targeted fixes. Full note: [[diagnostics/2026-09-02-verified-state]].
+- **Key drift resolved:** the `.205` ESPectre board *is* the `bedroom_espectre` node ("Landing" and "Bedroom" = same physical node). It recovered on 2026-09-02.
+- **Fixed:** Bedroom Enter/Empty automations repointed to `binary_sensor.bedroom_espectre_radar_presence` + `light.bedroom` (dead since May).
+- **Built:** `AI Cam person -> lounge TV + Fire Stick (evening)` + off-when-clear; Fire Stick confirmed `media_player.fire_tv_192_168_0_183`, launches Alph IPTV.
+- **Broken/down:** Music Assistant (add-on error); offline nodes — HA Voice/Jessa (.204), ESP Speaker, AI Cam Outside (.201), CSI Node 3 (.209); ~231/760 entities stale.
+- **Redundant:** a 2nd HA + idle Docker stack on the PC (192.168.0.190) duplicating the Green box.
+- **Retire:** the "14"/"28"/April config snapshots in the project (stale).
+
