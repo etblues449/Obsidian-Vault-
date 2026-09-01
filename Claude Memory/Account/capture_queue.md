@@ -426,3 +426,97 @@ commit landing is not proof the file changed.*
 - [ ] **Delete `~/_archive_jarvis_*` once you're satisfied nothing broke** — 547M reclaimed. Leave
   it a week; `/data` is at 90% so it's worth doing eventually, but there's no rush.
 
+
+
+---
+
+## New — 2026-09-01 full live diagnosis (report: [[../Projects/Smart Home/sessions/2026-09-01]])
+
+> Run from the browser against the hub API, the Actions logs and the vault directly. Nothing here
+> is taken from documentation.
+
+### P0 — do these first
+- [ ] **Swap the Groq model — one line.** `Assistant Core/jarvis-skills/runner.mjs:42`,
+      `'llama-3.3-70b-versatile'` → `'openai/gpt-oss-120b'`. **Groq decommissioned the old model on
+      2026-08-16** (free + developer tiers); all four scheduled skills share `runner.mjs` and have
+      failed **25/25 runs** since the workflows were restored on 08-23. Evidence: Morning Brief #38,
+      2026-09-01 13:29 BST — `Groq HTTP 404: model_not_found`, exit 1, "No write — reason: error".
+      Also fix the doc comments at ~L8 and ~L19. Voice agent's `llama-3.1-8b-instant` retired the
+      same day → `openai/gpt-oss-20b`.
+- [ ] **Then prove it wrote something.** Run each of the 4 skills once and confirm a file lands
+      (`briefings/` is stuck at `2026-08-05`, `connections/` at `2026-08-02`, `synthesis/` at
+      `2026-W31`). Green ≠ written — this system has proved that three times.
+- [ ] **Rebuild or delete 6 dead presence automations.** Every Govee bulb they target is gone from
+      the account: `left_smart_bulb`, `right_smart_bulb`, `rgbic_tv_backlight`, `stairs_smart_bulb`,
+      `bedroom_light`. Triggers `binary_sensor.bedroom_bedroom_presence` and
+      `binary_sensor.landing_landing_presence` don't exist either. Start with the AI Cam pair —
+      the trigger genuinely works, only the targets are dead.
+- [ ] **Bedroom radar — physical fix.** ESPectre (.205) is healthy (−38 dBm, 43.5 °C) but every
+      LD2410 value is `unknown`: dead UART to the module. Reseat TX/RX + power, verify the ESPHome
+      pin map. Also check the ~21-minute uptime for a reboot loop. **Note the IP clash in the docs:
+      .205 is the bedroom node, not Landing.**
+
+### P1
+- [ ] **Music Assistant is down** — add-on `error`, entry `setup_retry`,
+      `Failed to connect to music assistant server http://d5369777-music-assistant:8094`.
+      Owns 17 devices / ~27 unavailable entities. Fixing or removing it clears a sixth of the
+      dead-entity count in one action.
+- [ ] **Claude Desktop add-on** (`db21ed7f_claude_desktop`) in `error`.
+- [ ] **`input_boolean.away_mode` was ON** at audit time — it guards most automations. Check before
+      debugging any rebuilt automation.
+- [ ] **Govee runs over the cloud.** `connection_mode = cloud_api`, lan/mqtt/bluetooth all `off`;
+      `living_room_light` + `upstairs_led_bulb` unavailable. Govee2MQTT is referenced in project
+      memory but **is not installed**. Decide: local path, or stop documenting it as local-first.
+- [ ] **AI CAM 2 firmware was rebuilt 2026-08-29 and still doesn't connect** (31 dead entities).
+      Confirm the board joins the network **before** the planned camera-module swap — the swap
+      assumes the board is otherwise fine.
+- [ ] **Two duplicate dashboards** ("Smart Home", "Jelly Bean's Dash"), both storage-mode, 29 refs
+      each, 10 missing + 5 unavailable. Collapse to one. `ui-lovelace-minimal-v2.yaml` is **not in
+      use** — edits to it do nothing.
+- [ ] **Hub is on Core 2026.9.0b4 — the beta channel.** Not recorded as a decision anywhere.
+
+### P2 — registry cleanup (all verified as 0-device or duplicate)
+- [ ] Delete 7 ghost config entries: esphome "Bedroom (bedroom)", esphome "Porch Camera (porch-cam)",
+      `cast`, samsungtv "Jelly Bean's tv (UE50NU7470)", samsungtv "Sambed", dlna_dmr "Bose LS Ultra
+      Speaker", apple_tv "EShare-5726".
+- [ ] Collapse duplicate integrations: TV integrated 3× (dlna_dmr + samsungtv_smart + samsungtv),
+      soundbar 2× (dlna_dmr + bose), LS Ultra 2×, EShare 2×. Source of the `_2/_3/_4` suffixes and
+      the 7 dead `eshare_5726*` players.
+- [ ] Retire **RuView** in HA and in the docs — node unavailable, no bridge add-on installed.
+- [ ] Delete the **"Landing Wifi"** ESPHome entry — loaded, **zero entities** (the June ghost).
+- [ ] **GitHub integration** — 26 unavailable entities across 7 repos. Re-auth or drop.
+- [ ] Remove the stopped **Get HACS** add-on (one-shot installer; HACS loads independently).
+- [ ] Dismiss the stale supervisor `no_current_backup` flag — a backup completed 2026-09-01 05:21.
+
+### Claude workspace
+- [ ] **Strip the unrelated CLAUDE.md block from the Smart Home project instructions** — it lists
+      App / Faceless-Finance / Fincast / Select-lifestyles-Website- / Studying- and an
+      Expo/FastAPI/MongoDB stack, none of it this project, prepended to every message.
+- [ ] **Correct project memory** — 8 wrong claims (HA version, Voice PE live, TV entity ID, Studio
+      Code Server, node IP map, storage, Frigate, lounge automations). **Keep the *Key learnings*
+      section verbatim** — it is the best artefact in the estate.
+- [ ] **Retire 19 dated YAML snapshots** from project knowledge ("… 28" ×9, "… 14" ×5, "Automation
+      11 April 26", "Lounge Yaml 06 April 26"). Point the project at `ha-config/` instead (exported
+      2026-08-23, 11/11 automations + 5/5 scenes, verified restorable).
+- [ ] **Fold ~14 stray smart-home/JARVIS chats into the project** (ESP32-S3-CAM smart home setup ·
+      2026 hardware order page · Log review · Reading the vault before responding · Path to the vault ·
+      Vault setup and workflow instructions · JARVIS core phases shipped… · Jarvis project handoff… ·
+      chat 1 / chat 2 app interface and automation redesign · 2× duplicate "Jarvis-style app interface" ·
+      2× duplicate "Creating an Obsidian plugin" · Customizing obsidian plugin).
+- [ ] **Close the 5 Tasks still flagged "Needs attention."**
+- [ ] **Vercel scope mismatch** — the connected account lists **0 projects** under "Jelly Bean's
+      projects" (hobby) while `jarvis-carousel.vercel.app` serves and `jarvis-voice-lovat.vercel.app`
+      404s. Resolve before trusting any Vercel automation. (The Carousel `JARVIS_API_TOKEN` rotation
+      you decided on 2026-08-23 to leave is still outstanding by your own record — not re-raised as
+      an action, noted for completeness.)
+
+### Corrections this audit makes to items already in this file
+- [x] **"Watch the first scheduled runs land"** *(2026-08-23)* — **ANSWERED, and the answer is no.**
+      They ran and every one failed on `model_not_found`. Closed by evidence, not by success.
+- [x] **"Capture is still idle / Tasker capture leg"** — the capture *path* is fine; Capture Router
+      is 3/3 green and the phone-side tool works. Nothing has been captured since 2026-08-23 because
+      nothing has been sent, not because anything is broken.
+- [ ] **`_index.md` "Lounge: complete (~19 automations)"** — still wrong in the body of that file;
+      a superseding block was appended 2026-09-01 rather than rewriting it. A full rewrite is still
+      owed (this repeats the standing "Tidy `Projects/Smart Home/_index.md`" item).
+
