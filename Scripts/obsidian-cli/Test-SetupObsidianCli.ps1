@@ -54,6 +54,16 @@ T 'Programs root is tried before bare LOCALAPPDATA\Obsidian' (
 T 'falls back to the running process' ($src -match "Get-Process -Name 'Obsidian'")
 T 'falls back to the uninstall registry' ($src -match 'CurrentVersion\\Uninstall')
 
+# Join-Path throws on a null root and runs before any filter placed after it,
+# so a machine without ProgramFiles(x86) used to blow up here with
+# "Cannot bind argument to parameter 'Path' because it is null". On Linux every
+# one of these variables is null, which makes this the strictest possible case.
+$threw = $false
+$found = $null
+try { $found = Find-ObsidianExe } catch { $threw = $true; Write-Host "        $($_.Exception.Message)" }
+T 'Find-ObsidianExe survives null/absent install roots' (-not $threw)
+T 'Find-ObsidianExe returns null or a real path' ($null -eq $found -or (Test-Path $found))
+
 Write-Host ''
 Write-Host '-- obsidian.json must be written without a BOM --'
 # Windows PowerShell 5.1 Set-Content -Encoding UTF8 emits a BOM, which breaks
@@ -108,5 +118,3 @@ Write-Host ''
 Write-Host '==========================='
 if ($fail -gt 0) { Write-Host "$fail test(s) failed" -ForegroundColor Red; exit 1 }
 Write-Host 'All tests passed.' -ForegroundColor Green
-
-
