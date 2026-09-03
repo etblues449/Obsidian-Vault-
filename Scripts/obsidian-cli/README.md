@@ -203,3 +203,48 @@ Targeting: `file=` resolves like a wikilink (no path, no extension), `path=` is
 exact from the vault root, `vault=` must come first when present. `\n` and `\t`
 work inside `content=`. `--copy` puts the output on the clipboard. `silent` stops
 files opening. `total` turns a list command into a count.
+
+
+
+---
+
+## Windows — verified on the PC, 2026-09-03
+
+Status: **working.** `Setup-ObsidianCli.ps1` reports all checks passed;
+`Test-SetupObsidianCli.ps1` is 33/33 on Windows PowerShell 5.1.
+
+| | |
+|---|---|
+| Install | `%LOCALAPPDATA%\Programs\Obsidian` — the per-user NSIS location |
+| CLI entry point | `Obsidian.com` in that folder |
+| PATH | install dir appended to the **User** `Path` |
+| CLI toggle | `"cli": true` in `%APPDATA%\obsidian\obsidian.json` |
+| PowerShell | 5.1 only on this machine (no `pwsh` 7) |
+
+### Two traps this machine walked straight into
+
+**The install is in `Programs\Obsidian`, not `Obsidian`.** An earlier version of
+the setup script looked in `%LOCALAPPDATA%\Obsidian` and reported "Obsidian not
+found" on a completely normal install. It now checks the real roots first, then
+the running process, then the uninstall registry. Related: `Join-Path` throws on
+a null root and is evaluated *before* any filter placed after it, so the null
+guard for `ProgramFiles(x86)` has to sit on the base, not the joined result.
+
+**PowerShell 5.1 reads and writes with the ANSI codepage by default — and that
+corrupts vault paths.** This vault is `Jelly Bean's Vault — primary`, with an
+em dash. A naive `Get-Content -Raw` → edit → `Set-Content` round-trip mangles
+it, Obsidian can no longer find the vault, and it opens the vault picker
+instead; `obsidian version` then answers `Vault not found.` rather than anything
+that points at encoding. The script now forces real UTF-8 on **both** sides
+(`[System.IO.File]::ReadAllText` / `WriteAllText` with `UTF8Encoding($false)` —
+no BOM, since a BOM breaks Obsidian's JSON parse), and there is a regression
+test that round-trips a path containing an em dash.
+
+This generalises: any script on this machine that edits a JSON or config file
+containing non-ASCII must force UTF-8 explicitly. Do not rely on the PS 5.1
+default.
+
+**`-Fix` takes a backup first** (`obsidian.json.bak`), which is what made the
+above recoverable — restore it, re-apply with correct encoding, and check the
+vault paths match the backup before trusting the result.
+
