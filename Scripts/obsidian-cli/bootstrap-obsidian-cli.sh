@@ -256,6 +256,21 @@ TRUST="$(obsidian_cli_eval "(() => {
 })()")"
 info "trust dialog: ${TRUST#=> }"
 
+# --- wait for the metadata index ---------------------------------------------
+# The socket answers as soon as the app is up, but tags, backlinks and search
+# are served from the metadata cache, which is still being built. Commands that
+# depend on it return empty for the first few seconds — which looks exactly like
+# a broken setup. Wait for the cache instead of racing it.
+for i in $(seq 1 60); do
+  READY="$(obsidian_cli_eval "app.metadataCache.initialized && app.metadataCache.inProgressTaskCount === 0 && app.metadataCache.getCachedFiles().length >= app.vault.getFiles().length")"
+  case "$READY" in *true*) info "metadata index ready after ${i}s"; break ;; esac
+  sleep 1
+done
+case "${READY:-}" in
+  *true*) : ;;
+  *) info "WARNING: metadata index still building — tags/backlinks/search may be thin for a moment" ;;
+esac
+
 # --- safety: never let the headless instance become a git writer -------------
 # obsidian-git is enabled in this vault with autoSaveInterval/autoPushInterval 10
 # and autoPullOnBoot. A container that loaded it would be a second, unattended
