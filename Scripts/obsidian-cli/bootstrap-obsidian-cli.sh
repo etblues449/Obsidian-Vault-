@@ -242,6 +242,20 @@ PY
   fi
 fi
 
+# --- dismiss the first-open trust dialog, choosing Restricted Mode -----------
+# Opening a vault Obsidian has not seen before raises "Do you trust the author
+# of this vault?" and leaves it sitting there. CLI commands still work behind it,
+# but a pending modal is a pending decision — click the safe answer so the state
+# is deliberate rather than merely unanswered.
+TRUST="$(obsidian_cli_eval "(() => {
+  const btns = Array.from(document.querySelectorAll('.modal-container button, .modal button'));
+  const b = btns.find(x => /restricted mode/i.test(x.textContent));
+  if (!b) return 'no dialog';
+  b.click();
+  return 'chose Restricted Mode';
+})()")"
+info "trust dialog: ${TRUST#=> }"
+
 # --- safety: never let the headless instance become a git writer -------------
 # obsidian-git is enabled in this vault with autoSaveInterval/autoPushInterval 10
 # and autoPullOnBoot. A container that loaded it would be a second, unattended
