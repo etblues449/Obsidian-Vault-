@@ -24,6 +24,19 @@ trap cleanup EXIT
 
 echo "Obsidian CLI verification"
 echo "========================="
+
+# Tags, backlinks and search are served from the metadata cache, which is still
+# building for the first seconds after the app starts. Wait for it, otherwise
+# those checks fail intermittently on a cold container.
+printf '\nwaiting for the metadata index'
+for i in $(seq 1 60); do
+  R="$("$OBS" eval code="app.metadataCache.initialized && app.metadataCache.inProgressTaskCount === 0 && app.metadataCache.getCachedFiles().length >= app.vault.getFiles().length" 2>&1)"
+  case "$R" in *true*) printf ' ready (%ss)\n' "$i"; break ;; esac
+  printf '.'
+  sleep 1
+done
+case "${R:-}" in *true*) : ;; *) printf ' still building — results may be thin\n' ;; esac
+
 echo
 echo "-- connectivity --"
 check "version reports 1.x"            '^[0-9]+\.[0-9]+\.[0-9]+'          "$OBS" version
