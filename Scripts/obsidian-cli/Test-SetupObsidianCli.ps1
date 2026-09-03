@@ -40,6 +40,7 @@ $funcs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.Func
 foreach ($f in $funcs) { Invoke-Expression $f.Extent.Text }
 T 'Find-ObsidianExe defined'  ([bool](Get-Command Find-ObsidianExe -ErrorAction SilentlyContinue))
 T 'Write-Utf8NoBom defined'   ([bool](Get-Command Write-Utf8NoBom  -ErrorAction SilentlyContinue))
+T 'Read-Utf8 defined'         ([bool](Get-Command Read-Utf8        -ErrorAction SilentlyContinue))
 
 Write-Host ''
 Write-Host '-- install discovery --'
@@ -74,6 +75,29 @@ $bytes = [System.IO.File]::ReadAllBytes($tmp)
 T 'no UTF-8 BOM at the start' (-not ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF))
 $rt = Get-Content $tmp -Raw | ConvertFrom-Json
 T 'round-trips through ConvertFrom-Json' ([bool]$rt.cli -and $rt.vaults.abc.path -eq 'C:\v')
+Remove-Item $tmp -Force
+
+Write-Host ''
+Write-Host '-- non-ASCII vault paths must survive the round-trip --'
+# Windows PowerShell 5.1 reads and writes with the ANSI codepage by default, so
+# a vault path like "Jelly Bean's Vault \u2014 primary" came back mangled and
+# Obsidian could no longer find the vault. This is that exact case.
+$tmp = Join-Path ([System.IO.Path]::GetTempPath()) "obsidian-test-$([guid]::NewGuid()).json"
+$vaultPath = "C:\Users\me\Documents\Jelly Bean's Vault $([char]0x2014) primary"
+$seed = [pscustomobject]@{ vaults = [pscustomobject]@{ abc = [pscustomobject]@{ path = $vaultPath; open = $true } } }
+Write-Utf8NoBom $tmp ($seed | ConvertTo-Json -Depth 20 -Compress)
+
+$read = Read-Utf8 $tmp | ConvertFrom-Json
+T 'em dash survives the read' ($read.vaults.abc.path -ceq $vaultPath)
+$read | Add-Member -NotePropertyName cli -NotePropertyValue $true -Force
+Write-Utf8NoBom $tmp ($read | ConvertTo-Json -Depth 20 -Compress)
+$again = Read-Utf8 $tmp | ConvertFrom-Json
+T 'em dash survives read -> edit -> write' ($again.vaults.abc.path -ceq $vaultPath)
+T 'cli flag applied alongside it' ([bool]$again.cli)
+# The naive PS 5.1 idiom is what broke it - assert the script does not use it.
+T 'script does not read obsidian.json with bare Get-Content' (
+    -not ($src -match 'Get-Content \$cfgPath')
+)
 Remove-Item $tmp -Force
 
 Write-Host ''
