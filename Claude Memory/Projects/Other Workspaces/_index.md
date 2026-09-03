@@ -54,3 +54,40 @@ n8n→vault pipeline. **Fixed and verified live:**
   that warned on every Vercel clone — de-submoduled (`be21d6a0`).
 - **TODO: rotate `JARVIS_API_TOKEN`** — the test value was exposed in-session.
 
+
+
+## 2026-09-03 — Obsidian CLI live in cloud sessions
+
+The `obsidian:obsidian-cli` skill is a **client** to a running Obsidian desktop
+app — it never reads the vault directly. So making the skill work means running
+the app wherever the CLI is used.
+
+- **Cloud session: working, 20/20 checks green.** Obsidian 1.13.7 installed in
+  the container, running on `Xvfb :99`, vault cloned to
+  `/root/vaults/Obsidian-Vault-` (355 files indexed). `dev:screenshot` produces a
+  real PNG, so the GUI layer is genuinely alive headless.
+- **Container is ephemeral** — re-run `Scripts/obsidian-cli/bootstrap-obsidian-cli.sh`
+  at the start of any session that needs the CLI. Idempotent, cold-start tested.
+- **Windows PC: scripted, not executed.** No device bridge from this session.
+  `Scripts/obsidian-cli/Setup-ObsidianCli.ps1` reports by default and fixes with
+  `-Fix`; its logic is unit-tested (16 tests) but it has not run against a real
+  install. The GUI route is Settings → General → Advanced → Command line
+  interface, then a **new** terminal.
+- **Android/Termux: not possible.** No CLI in the Android build, and Termux
+  cannot run the desktop app. Advanced URI / claude-code-bridge / `git` remain
+  the route on the Fold. Closed — do not re-investigate.
+- **Safety, checked not assumed:** the headless instance loads **no** community
+  plugins (Restricted Mode), so `obsidian-git` — `autoPushInterval: 10`,
+  `autoPullOnBoot: true` — never started, and the clone stayed 0 commits ahead of
+  origin. The bootstrap now asserts this every run and disables risky plugins at
+  runtime.
+
+Key mechanics discovered from `obsidian.asar`, recorded so they need not be
+re-derived: the CLI toggle is `"cli": true` in `obsidian.json`; the IPC socket is
+`$XDG_RUNTIME_DIR/.obsidian-cli.sock` falling back to `$HOME` (the usual cause of
+"unable to find Obsidian" in a container); Windows registers by appending the
+install dir to the **User** PATH and reaching the CLI through the `Obsidian.com`
+redirector.
+
+Docs: `Scripts/obsidian-cli/README.md` · Session: [[sessions/2026-09-03]]
+
