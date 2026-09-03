@@ -47,13 +47,18 @@ function Write-Note($t) { Write-Host "         $t" -ForegroundColor DarkGray }
 # and Scoop installs land elsewhere again, so try the known layouts, then ask
 # the running process, then the uninstall registry. Returns the .exe path.
 function Find-ObsidianExe {
-    $roots = @(
-        (Join-Path $env:LOCALAPPDATA 'Programs\Obsidian'),
-        (Join-Path $env:LOCALAPPDATA 'Obsidian'),
-        (Join-Path $env:ProgramFiles 'Obsidian'),
-        (Join-Path ${env:ProgramFiles(x86)} 'Obsidian'),
-        (Join-Path $env:USERPROFILE 'scoop\apps\obsidian\current')
-    ) | Where-Object { $_ -and (Test-Path $_) }
+    # Join-Path throws on a null root, and it is evaluated before any filter
+    # placed after it - so the null check has to happen on the base, not on the
+    # joined result. ProgramFiles(x86) is absent on plenty of machines.
+    $roots = @()
+    if ($env:LOCALAPPDATA) {
+        $roots += (Join-Path $env:LOCALAPPDATA 'Programs\Obsidian')   # per-user NSIS: the normal case
+        $roots += (Join-Path $env:LOCALAPPDATA 'Obsidian')
+    }
+    if ($env:ProgramFiles)        { $roots += (Join-Path $env:ProgramFiles 'Obsidian') }
+    if (${env:ProgramFiles(x86)}) { $roots += (Join-Path ${env:ProgramFiles(x86)} 'Obsidian') }
+    if ($env:USERPROFILE)         { $roots += (Join-Path $env:USERPROFILE 'scoop\apps\obsidian\current') }
+    $roots = $roots | Where-Object { Test-Path $_ }
 
     foreach ($r in $roots) {
         $exe = Join-Path $r 'Obsidian.exe'
