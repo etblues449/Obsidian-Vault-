@@ -520,3 +520,13 @@ commit landing is not proof the file changed.*
       a superseding block was appended 2026-09-01 rather than rewriting it. A full rewrite is still
       owed (this repeats the standing "Tidy `Projects/Smart Home/_index.md`" item).
 
+
+## New — 2026-09-03 Obsidian CLI setup
+
+- [x] **Set up the `obsidian:obsidian-cli` skill.** *(2026-09-03: Obsidian 1.13.7 installed in the cloud container on Xvfb, vault cloned and indexed (355 files), CLI registered at `~/.local/bin/obsidian`, **20/20 verification checks green** including `dev:screenshot`. Re-establish per session with `Scripts/obsidian-cli/bootstrap-obsidian-cli.sh` — idempotent, cold-start tested.)*
+- [x] **Confirm the headless instance is not a second git writer.** *(2026-09-03: `app.plugins.plugins` empty — Obsidian opens an untrusted vault in Restricted Mode, so `obsidian-git` (autoPushInterval 10, autoPullOnBoot true) never started; clone stayed 0 commits ahead of origin. The bootstrap now asserts this each run rather than relying on it. Feeds the open "identify the client that deleted 8 files from master" item — the cloud container is **ruled out** as a candidate writer, and was not one before today.)*
+- [x] **Gitignore per-machine Obsidian UI state.** *(2026-09-03: `.obsidian/workspace.json` + `workspace-mobile.json` added — never tracked, no history, so nothing is lost.)*
+- [x] **Android/Termux Obsidian CLI — closed as not possible.** *(2026-09-03: the CLI ships inside the desktop Electron app; the Android build has no CLI and Termux cannot run the desktop app. Advanced URI, claude-code-bridge and plain `git` remain the route on the Fold. Recorded so it is not re-investigated.)*
+- [ ] **Run `Scripts/obsidian-cli/Setup-ObsidianCli.ps1` on the Windows PC.** Obsidian was installed there today. The script reports by default and changes nothing; `-Fix` sets `"cli": true` and the user PATH. Parse-checked and logic unit-tested under PowerShell 7.5.3, but **never executed against a real install** — this is the one untested deliverable. Close Obsidian before `-Fix`.
+- [ ] **Add `etblues449/Obsidian-Vault-` to the session's authorised repository set** if direct `git push` from a Claude cloud session is wanted. Today the git proxy refused to inject a credential (403) and everything was committed through the Vault connector instead — which works, but produces one commit per file rather than one session commit.
+
