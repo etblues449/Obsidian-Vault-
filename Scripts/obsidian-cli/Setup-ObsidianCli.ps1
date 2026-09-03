@@ -88,9 +88,15 @@ function Find-ObsidianExe {
     return $null
 }
 
-# Windows PowerShell 5.1's Set-Content -Encoding UTF8 writes a BOM, and a BOM
-# in obsidian.json breaks the app's JSON parse on next start. Always write
-# UTF-8 without one.
+# obsidian.json is UTF-8, and vault paths routinely contain non-ASCII
+# characters (an em dash, an accent, an emoji). Windows PowerShell 5.1 defaults
+# to the system ANSI codepage for BOTH reading and writing, so the naive
+# round-trip silently corrupts the vault path - Obsidian then cannot find the
+# vault and opens the picker instead. Read and write real UTF-8, no BOM (a BOM
+# breaks the app's JSON parse).
+function Read-Utf8($path) {
+    [System.IO.File]::ReadAllText($path, (New-Object System.Text.UTF8Encoding($false)))
+}
 function Write-Utf8NoBom($path, $text) {
     [System.IO.File]::WriteAllText($path, $text, (New-Object System.Text.UTF8Encoding($false)))
 }
@@ -129,7 +135,7 @@ $cfgPath = Join-Path $env:APPDATA 'obsidian\obsidian.json'
 if (-not (Test-Path $cfgPath)) {
     Write-Bad "$cfgPath not found - launch Obsidian once, close it, then re-run."
 } else {
-    $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
+    $cfg = Read-Utf8 $cfgPath | ConvertFrom-Json
     if ([bool]$cfg.cli) {
         Write-Ok 'cli = true (Settings > General > Advanced > Command line interface)'
     } elseif ($Fix) {
