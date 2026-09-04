@@ -619,3 +619,62 @@ commit landing is not proof the file changed.*
       was pushed; the real repo was cloned to `~/jarvis-real` and the work redone against true
       history. **Always `git ls-remote` before assuming a remote is empty.**
 
+
+
+### 2026-09-04 later — new-device bootstrap shipped (`3ee6839`)
+
+The Fold-7 restore is now a checked procedure rather than a remembered one.
+Three files on `origin/main`:
+
+**`jarvis-doctor.mjs`** — pre-flight check answering one question honestly: *will
+JARVIS actually run on this machine?* It derives requirements from the code that
+reads them (`lib/brain.mjs` provider `keyName`, `vault-lib.mjs`'s bare
+`VAULT_PATH`), so it cannot drift from what the app genuinely needs. Blocks on 4
+things, warns on the optional ones, and **loads the real tool registry** — which
+independently confirmed **14 tools**, the figure `_index.md` had as 13.
+
+**`.env.example`** — generated from `grep`ping every `process.env.*` in the
+codebase, not from memory. Pre-fills the two values that are safe to pre-fill,
+leaving only the API key and vault path for a human.
+
+**`SETUP.md`** — the four commands, the required four variables, the Termux
+failures, and an explicit instruction to re-verify P0–P5 rather than trust proofs
+obtained on a device that no longer exists.
+
+#### Two real defects found while building it
+
+- [x] **`.gitignore:3` was `.env.*`, which swallowed `.env.example`.** The
+      template could never have been committed — so on arrival day the clone
+      would have had no template, and the doctor's own advice
+      (*"cp .env.example .env"*) would have pointed at a missing file. **Fixed**
+      with a `!.env.example` negation, verified in both directions: template
+      visible, `.env` still ignored by line 2.
+- [ ] **`lib/brain.mjs:91` still defaults Groq to `llama-3.3-70b-versatile`** —
+      the model decommissioned 2026-08-16 that caused the 25/25 skill failures.
+      A fresh clone with `JARVIS_MODEL` unset fails **every turn** with
+      `model_not_found`, and it looks like a botched install. The doctor blocks on
+      it and `.env.example` pre-fills `openai/gpt-oss-120b`, so the trap is
+      *defused* — but **the bad default is still in the code.** One-line fix,
+      not made this session: change the `defaultModel` on line 91.
+
+#### Verified both directions, not just one
+
+Fresh clone with no `.env` → 4 blocking, exit 1. Valid throwaway `.env` → all
+clear, exit 0. Then three targeted traps, each producing exactly one FAIL:
+the retired model named explicitly; `JARVIS_PROVIDER=anthropic` with only a Groq
+key present (proving it checks *the selected provider's* key, the failure that
+would otherwise look like a working install); and a `VAULT_PATH` pointing at
+nothing. Finally the guide's own path was walked — `cp .env.example .env` then
+the doctor — leaving exactly the two things only Jelly Bean can supply.
+
+Throwaway `.env` used throughout and deleted; no real secrets involved.
+
+#### Delivery rule earned (add to the standing list)
+
+**Do not put triple-backtick fences inside a `cat` heredoc.** `SETUP.md` was
+written once and came out **truncated at ~1/8th** — bash reported
+`here-document delimited by end-of-file`, and the `git add` chained after it
+never ran either. Use indented code blocks instead, and **verify with `wc -l` and
+`tail -1`**, never by the absence of an error. This is delivery rule #6
+(`node -e` mangling) recurring in a new disguise.
+
