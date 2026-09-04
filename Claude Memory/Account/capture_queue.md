@@ -678,3 +678,45 @@ never ran either. Use indented code blocks instead, and **verify with `wc -l` an
 `tail -1`**, never by the absence of an error. This is delivery rule #6
 (`node -e` mangling) recurring in a new disguise.
 
+
+
+### 2026-09-04 later still — dead Groq default fixed at source (`470dce8`)
+
+- [x] **`lib/brain.mjs:91` defaulted Groq to `llama-3.3-70b-versatile`.** *(FIXED — now
+      `openai/gpt-oss-120b`, with a comment recording why. Also corrected the stale header
+      comment at line 15 and the Brain row in `AGENT.md:72`, which still listed the retired
+      model "(assumed — see note)". A fresh clone now works with `JARVIS_MODEL` unset.
+      `node --check` clean.)*
+
+#### The doctor was wrong within ten minutes of being written
+
+Fixing the default exposed a defect in `jarvis-doctor.mjs` itself: it **hardcoded**
+`'llama-3.3-70b-versatile'` as brain.mjs's default in both its logic and its message. So the
+moment the code was fixed, the doctor kept reporting the old value and failing a now-correct
+install.
+
+**This is the project's signature failure — "documented ≠ running" — reappearing inside the
+tool built to prevent it.** A checker that restates what the code defines goes stale exactly
+as fast as a document does. Caught only because the fix was verified rather than assumed.
+
+**Fixed properly:** `PROVIDERS` is now exported from `lib/brain.mjs` (additive; nothing else
+changed) and the doctor imports the live table. It derives the key name *and* the default
+model from the running code, and reports the effective model **with its provenance** —
+`(from .env)` or `(brain.mjs default)`. It can no longer disagree with the code it checks.
+
+Verified three ways after the change: no `JARVIS_MODEL` → passes, naming
+`openai/gpt-oss-120b (brain.mjs default)`; a retired model in `.env` → still fails, so an old
+`.env` pasted onto a new device is caught; `JARVIS_PROVIDER=anthropic` with only a Groq key →
+still fails on the derived key name.
+
+`SETUP.md`'s "trap that will bite you" section was rewritten as history rather than left
+warning about a fixed bug, and now says what to do the **next** time a provider retires a
+model: add it to `DEAD_MODELS`, change `defaultModel`. No API reports retirement, so that
+list is maintained by hand — a known limit, written down rather than left to be rediscovered.
+
+#### Standing rule earned
+
+**A checker must derive from the code, never restate it.** If a verification tool contains a
+constant that also exists in the thing it verifies, the two will drift — and the checker will
+report the stale value with full confidence, which is worse than not checking at all.
+
