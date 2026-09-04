@@ -7,13 +7,15 @@ description: >-
   or reschedule Morning Brief, Connection Finder, Weekly Synthesis or Pattern Detector; when a
   scheduled skill produces nothing or produces ungrounded output; and when verifying that a
   documented schedule is actually merged and running. This is the ENGINE that generates Claude
-  Memory/briefings/ — not the "morning" skill that renders a brief for display.
+  Memory/briefings/ — not the "morning" skill that renders a brief for display, and not the
+  phone app (that is jarvis-core-dev).
 when_to_use: >-
   Trigger on: a scheduled skill produced nothing, a briefing is empty or ungrounded, cron or
   DST is wrong, add/reschedule a skill, verify a documented schedule is actually merged and
   running, Groq quota or corpus caps, the £0 constraint. Do NOT trigger when the user simply
-  wants to READ or DISPLAY today's brief — that is the separate 'morning' skill. This owns the
-  engine that WRITES Claude Memory/briefings/.
+  wants to READ or DISPLAY today's brief — that is the separate 'morning' skill. Do NOT trigger
+  for changes to the phone app at ~/jarvis-core — that is jarvis-core-dev. This owns the engine
+  that WRITES Claude Memory/briefings/.
 ---
 
 # Skill engine ops
@@ -36,7 +38,7 @@ Read `vault-conventions` for output paths and the write path.
 ```
 engine   Assistant Core/jarvis-skills/runner.mjs   (zero npm deps, Node 18+)
 caps     CORPUS_CAP 30000   PER_FILE_CAP 4000   MEMORY_CAP 6000   (chars)
-model    Groq llama-3.3-70b-versatile   (free tier)
+model    Groq openai/gpt-oss-120b   (free tier)   ← see "Model retirement" below
 secret   GROQ_API_KEY
 exits    0 = wrote a file OR guard-skipped     1 = real error
 run      node runner.mjs --skill=<name> [--force] [--dry-run]
@@ -44,6 +46,18 @@ test     node test/local-test.mjs      (offline, no key, no network)
 ```
 
 Skills 2, 5, 7 are event-driven and belong to `capture-pipeline`, not here.
+
+## Model retirement is a live failure mode, not a footnote
+
+**Groq decommissioned `llama-3.3-70b-versatile` on 2026-08-16** (free and developer tiers).
+All four skills share `runner.mjs`, so all four failed **25 runs out of 25** — for 27 days,
+with no briefing written since 2026-08-05. The runs reported *green*. `llama-3.1-8b-instant`
+went the same day.
+
+No API announces a retirement. When output stops, check the model **before** the schedule:
+a `model_not_found` 404 looks nothing like a cron problem in the Actions summary, but it is
+the first thing to rule out. The phone app carried the identical dead default until
+2026-09-04 — the same retirement bit two subsystems independently.
 
 ## A schedule with no workflow file is not a schedule
 
@@ -53,9 +67,27 @@ Before calling any skill live, prove three independent things:
 2. The cron is correct for Europe/London **at both BST and GMT**.
 3. A run has actually appeared in the Actions tab.
 
-Documented ≠ merged ≠ running. Conflating these is the standing failure of this
-subsystem: the README describes five workflow files, and `.github/workflows/` does not
-exist on `master`. The engine is currently code with no trigger.
+Documented ≠ merged ≠ running. Conflating these is the standing failure of this subsystem,
+and it has bitten twice for two different reasons — see the gotchas.
+
+**And a run appearing is not a file being written.** A green Actions run has three times
+meant nothing was produced: an over-strict hour guard, a masked skip, and a dead model. After
+any fix, confirm a **file landed in the vault**. Green is not evidence.
+
+## `.github/` is invisible to Obsidian — and that deletes it
+
+The workflows vanished from `master` three separate times (`7f9097d9`, `9fd5e00e`,
+`4bdb3bf1`). Root cause, found 2026-08-23: **Obsidian does not index dotfolders**, so
+obsidian-git's `git add -A` from the vault root stages `.github/**` as *deletions*. It also
+explains the earlier "8 files deleted by an unidentified client" — no mystery client existed.
+
+All six were restored, and a **pre-commit hook** at `.git/hooks/pre-commit` now refuses any
+commit staging a deletion under `.github/`. Hooks are local and untracked, so obsidian-git
+cannot remove it — but that also means **a fresh clone does not have it**. Reinstall the hook
+on any new machine.
+
+If obsidian-git ever fails to commit, that is the hook working. Read the message before
+reaching for `--no-verify`.
 
 ## DST is a correctness bug
 
@@ -68,6 +100,12 @@ UTC in winter. Two viable approaches:
 
 Either way the in-runner guard is mandatory — it is the thing that is actually correct.
 Verify your reasoning against a date in June *and* a date in December before shipping.
+
+**The guard must ask "has this period's output been written?", not "is it exactly 07:00?"**
+The original exact-hour match failed every one of 11 scheduled runs, because a run that starts
+at 07:04 is normal. `shouldRun` + per-skill `done(ctx)` is DST-safe, delay-safe and
+self-healing; the paired BST/GMT crons become two attempts at the same period rather than two
+separate schedules.
 
 **A guard-skip is success.** Exit 0 with no file written when the guard says "not yet" is
 correct. Never add a retry that defeats a guard.
@@ -103,6 +141,7 @@ push path.
 3. node test/local-test.mjs                    (assertion count, all green)
 4. A DST statement: correct at BST and GMT, with the reasoning shown
 5. A C1 statement: £0 impact, or an explicit flag
+6. Proof a FILE LANDED in the vault — not that a run went green
 ```
 
 Keep the offline suite offline. CI that needs a secret to test is CI that quietly stops
@@ -115,13 +154,19 @@ every future briefing, and you cannot judge it without seeing what the current o
 actually produces. Record what changed and why in the session note.
 
 When picking up prior engine work, first check whether the previous session's workflow
-files were actually committed. That single check would have caught the current gap.
+files were actually committed. That single check would have caught the gap twice.
 
 ## Gotchas
 
 - **A README documenting five workflows proves nothing about `.github/workflows/`.** This
-  exact gap ran undetected: the engine was code with no trigger, and every document
-  described it as live.
+  ran undetected: the engine was code with no trigger while every document described it as
+  live. Fixed 2026-08-23 — but verify against `master`, never against a document.
+- **Obsidian cannot see dotfolders, so obsidian-git deletes `.github/`.** Three occurrences.
+  The pre-commit hook blocks it, but hooks are untracked — reinstall on any fresh clone.
+- **A green run is not a written file.** Three separate causes have produced green runs with
+  no output: an exact-hour guard, a masked skip message, and a retired model. Check the vault.
+- **Models get retired without warning.** 25/25 runs failed for 27 days on a `model_not_found`
+  that no monitoring surfaced. Check the model first when output stops.
 - **GitHub cron is UTC and has no timezone.** One cron per skill is correct for half the
   year and silently wrong for the other half. Two crons plus the in-runner guard is the
   fix, not redundancy.
