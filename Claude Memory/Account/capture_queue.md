@@ -538,3 +538,84 @@ commit landing is not proof the file changed.*
 - [ ] **Standing note for this estate: PowerShell 5.1 is the only PowerShell on the PC** (no `pwsh` 7), and it defaults to the ANSI codepage for both reading and writing. Any future script that edits a JSON/config file containing non-ASCII must force UTF-8 explicitly on **both** sides. `Jelly Bean's Vault — primary` contains an em dash, so this estate hits it by default.
 - [ ] **The PC's open vault is `C:\Users\etblu\Documents\Jelly Bean's Vault — primary` and it is NOT a git repo** — so it is not a working copy of `etblues449/Obsidian-Vault-`. Worth reconciling: the session protocol assumes the GitHub repo is the vault, but the vault actually open on the PC syncs by other means. Decide which is canonical before any automation writes to both.
 
+
+
+---
+
+## New — 2026-09-04 session (database tool hardened; Fold 7 lost)
+
+> Session record: [[../Projects/Smart Home/sessions/2026-09-04]]
+
+### ⚠️ P0 — hardware
+
+- [ ] **The Fold 7 is lost and offline.** Replacement ordered, not in hand. Every "verified on
+      device" proof in this vault was proven on a device that no longer exists; **re-verify P0–P5
+      on the replacement before trusting any completion marker.** Setup: clone
+      `etblues449/jarvis-core` (`main`), then **restore `.env` by hand — it is gitignored and holds
+      every secret, and does NOT come down with the clone.** This is the step most likely to be
+      missed.
+- [x] **The 2026-08-23 `origin/main` push is what saved P0–P5.** Recorded not as an action but as
+      the reason the device loss was survivable — hardline, persona, memory, ledger and capture
+      would all have gone with the phone had the 17-day gap still been open. **Push is what makes
+      the device disposable.**
+
+### Resolved
+
+- [x] **"Retire the `database` stub per the supabase playbook (decide PostgREST-vs-driver first)."**
+      *(Listed twice above — 2026-08-22 and 2026-08-23. **The stub was already retired before this
+      session**; the decision was PostgREST + built-in `fetch`, zero dependencies. Confirmed by
+      reading `tools/database.mjs` on `origin/main`. This session **hardened** it — commit
+      `e51cacf`: exact counts via `Prefer: count=exact` (it had been counting `rows.length` under
+      `limit=1000`, so a 1001-row table would have reported a fabricated "1000"), a write-keyword
+      guard where there was none, an 8s timeout, and a routing fix — `'run'` was tested twice and
+      `'running'` matched it, so "how many agents are running" returned execution history. Plus
+      `test/database-test.mjs`, **30 assertions, fully offline** (fetch stubbed, matching the tier
+      suites' no-key/no-network rule) and `test/database-live.mjs` for live acceptance. Proven: a
+      4th Supabase row was inserted and the tool reported 4 with no code change.)*
+
+### New — the actual stub, previously in no document
+
+- [ ] **`lib/supabase-ai-agent-creator.mjs` is a stub.** Its handler returns
+      *"Query handler will be connected in Step 6."* and never opens a connection. It also
+      hand-parses `.env` with `line.split('=')`, bypassing `lib/env.mjs` and mangling any value
+      containing `=`. **Not `tools/database.mjs`** — the two are easily confused and the confusion
+      has already cost a session. Decide: finish it, or delete it as dead code.
+
+### Doc corrections made this session
+
+- [x] **Project `HANDOFF.md` (2026-07-21) calls `database` "a STUB … the #1 unfinished item".**
+      *(FALSE, and false when written. **Roughly half of 2026-09-04 was spent rebuilding a working
+      tool** because that snapshot was read as current. The vault's `JARVIS/HANDOFF.md` (2026-08-23)
+      was correct throughout. Superseding blocks appended to both canonical vault files.)*
+- [x] **Project `JARVIS_AGENT_SPEC.md` claims tier4 (27 assertions) + tier5 (34) suites.**
+      *(Neither file exists on `origin/main` — `ls test/` shows only tier1, tier2, tier6. The "107
+      offline assertions across all tiers" figure is **unsupported**.)*
+- [x] **`_index.md` Phase 0 block says "13 callable tools, not 14".** *(Stale as of commit
+      `49b0313`; `tools/capture.mjs` shipped in P5 making it **14**. `vault-lib.mjs` is still a
+      helper, so the block's reasoning holds — only the number moved.)*
+- [ ] **Standing: project files cannot be edited from a session and do not sync back.** Treat
+      `HANDOFF.md` and `JARVIS_AGENT_SPEC.md` in the claude.ai project as **historical snapshots,
+      never sources of truth.** The vault copies are canonical. Replace or delete the project ones
+      when convenient.
+
+### Termux rules earned on the S22 (apply to the replacement Fold)
+
+- [ ] **`pkg install nodejs` can report "already the newest version" while node is unrunnable.**
+      Symptom: `CANNOT LINK EXECUTABLE "node": cannot locate symbol
+      OSSL_PROVIDER_add_conf_parameter`. The binary is fine; its OpenSSL linkage is stale.
+      **Fix: `pkg reinstall openssl nodejs`, answer `N` at the `openssl.cnf` prompt.**
+- [ ] **Termux ships no pager** — `git log` dies with `unable to execute pager 'pager'` and prints
+      nothing at all. `git config --global core.pager cat`.
+- [ ] **A fresh clone has no git identity, and the failure looks like a silent no-op.**
+      `git commit` errors with *"Author identity unknown"*, but if anything is chained after it the
+      error scrolls away. **Two commits were believed made that were not.** Run `git commit` alone
+      and read its output. *(Identity now set globally — the replacement Fold inherits it.)*
+
+### Near-miss worth not repeating
+
+- [ ] **A scratch `~/jarvis-core` was built on the S22 on branch `master` with no shared history
+      with the real repo.** Had it been pushed, the rejection would have invited `--force`, which
+      would have **destroyed P0–P5 on the remote in the same week the device was lost.** Nothing
+      was pushed; the real repo was cloned to `~/jarvis-real` and the work redone against true
+      history. **Always `git ls-remote` before assuming a remote is empty.**
+
