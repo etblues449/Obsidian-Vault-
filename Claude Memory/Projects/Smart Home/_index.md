@@ -566,3 +566,95 @@ Read-only audit of the whole system against live HA Green + local PC, then targe
 - **Redundant:** a 2nd HA + idle Docker stack on the PC (192.168.0.190) duplicating the Green box.
 - **Retire:** the "14"/"28"/April config snapshots in the project (stale).
 
+
+
+---
+
+## 2026-09-04 — `database` tool hardened + FOUR stale doc claims corrected
+
+> Read this block before trusting any earlier statement about the `database` tool
+> or the test suites. Evidence for every correction is cited; nothing here is
+> inferred from documentation.
+
+### The correction that matters most
+
+**`HANDOFF.md` (claude.ai project copy) is wrong.** Its §0.2 calls the `database`
+tool *"a STUB — it does not touch Supabase … the #1 unfinished item."* **That has
+not been true for some time.** The version on `origin/main` already performed a
+real PostgREST `fetch` against `dfaveoprjahbnydljich.supabase.co` before this
+session began. Verified by reading `tools/database.mjs` in a fresh clone.
+
+Cost of the stale claim: the first half of this session was spent building a
+replacement for a solved problem. That work was discarded. **This is the exact
+"documented ≠ running" failure the project keeps paying for, inverted — a doc
+claiming something is broken when it is fixed wastes as much time as the reverse.**
+
+### The real stub, previously undocumented
+
+**`lib/supabase-ai-agent-creator.mjs`** is the genuine dangling thread. Its
+`handler` returns:
+
+    { status: 'ready', message: 'Tool registered. Query handler will be
+      connected in Step 6.', query: input.query }
+
+It never opens a connection. It also hand-parses `.env` with `line.split('=')`,
+bypassing `lib/env.mjs` and mangling any value containing `=`. **It appears in no
+vault or project doc.** Not fixed this session — flagged, not touched.
+
+### Other corrections
+
+- **`JARVIS_AGENT_SPEC.md` claims tier4 (27 assertions) and tier5 (34) test
+  suites.** Neither file exists. `ls test/` on `origin/main` shows only
+  `tier1-test.mjs`, `tier2-test.mjs`, `tier6-test.mjs`. Either never committed or
+  lost. The "107 offline assertions across all tiers" total is therefore unproven.
+- **The Phase 0 block above states "13 callable tools, not 14."** Stale as of
+  commit `49b0313` ("report the true registry total (14)") — `tools/capture.mjs`
+  shipped in P5 and made it 14. `tools/vault-lib.mjs` remains a helper, so the
+  reasoning in that block is still sound; only the number moved.
+
+### What shipped — commit `e51cacf`, pushed to `origin/main`
+
+Correctness fixes on a tool that already worked, not a rewrite.
+
+| Defect | Fix |
+|---|---|
+| Counted `rows.length` under `limit=1000` — a 1001-row table would report 1000, a **fabricated number** | Exact count from PostgREST `Prefer: count=exact` via the `Content-Range` header; when the server declines to count it says so rather than guessing |
+| **No write guard at all** | insert/update/delete/drop/truncate/grant/revoke refused **before** any network call |
+| No timeout — could hang indefinitely | 8s `AbortController`; a hang is reported as a timeout |
+| URL + anon key hardcoded | Readable from env, existing values as defaults |
+| `'run'` tested twice in the routing condition; `'running'` matched it, so **"how many agents are running" returned execution history** | Execution words whole-word matched (`\b(runs?\|executions?\|executed\|history)\b`); pinned by a regression test |
+
+**`test/database-test.mjs` — 30 assertions, all offline.** `fetch` is stubbed;
+matches the tier suites' stated "no API key, no network, no phone needed"
+discipline. Includes the routing regression, and a test asserting that **offline,
+the tool never emits a number**.
+
+**`test/database-live.mjs` — live acceptance, deliberately outside the offline
+suite** so the suite cannot fail on connectivity.
+
+**Acceptance proven, not asserted:** a 4th row was inserted in Supabase; the tool
+reported 4 with no code change, through the exact-count path. Before/after
+witnessed in the same session.
+
+### Working-environment note
+
+The Fold 7 is **lost and offline**; a replacement is on order. This session ran on
+the **S22** (Termux). Node was broken there (`OSSL_PROVIDER_add_conf_parameter`
+link error) — fixed with `pkg reinstall openssl nodejs`, answering **N** at the
+`openssl.cnf` prompt.
+
+Two Termux gotchas worth keeping:
+- **No pager installed** — `git log` dies with `unable to execute pager 'pager'`.
+  Fix: `git config --global core.pager cat`.
+- **A fresh clone has no git identity.** `git commit` fails with *"Author identity
+  unknown"*; the failure output scrolls away if anything is chained after it, so
+  it reads as a silent no-op. Now set globally, so the replacement Fold inherits it.
+
+### Not done — stated plainly
+
+- `lib/supabase-ai-agent-creator.mjs` is still a stub.
+- The two stale **project** docs (`HANDOFF.md`, `JARVIS_AGENT_SPEC.md`) are
+  read-only copies in the claude.ai project. They **cannot be edited from a
+  session** and do not sync back. They remain wrong until updated by hand.
+- No session record was written for 2026-09-04 at time of this append.
+
