@@ -147,3 +147,112 @@ Base64 decode (Android): tr -d '\r' < f.b64 | base64 -di > f.tar.gz
 ```
 
 **First thing to tell a fresh session:** everything above is current as of 2026-08-23. Read `Claude Memory/Projects/Smart Home/_index.md` and the 2026-08-23 session file for full narrative detail on any item.
+
+
+
+---
+
+## 11. SUPERSEDING — 2026-09-04
+
+> Sections 1–10 above remain accurate as written. This section adds a hardware
+> change that affects how §1 and §10 should be read, and records one code change.
+
+### ⚠️ The Fold 7 is lost and offline
+
+§1 says JARVIS runs *"entirely on a Samsung Galaxy Z Fold 7."* **That device is
+gone** — lost, not reachable, not on the network. A replacement has been ordered
+and is not yet in hand.
+
+Consequences for a fresh session:
+
+- **Nothing in §10's Quick Reference is reachable right now.** `localhost:8737`,
+  the HA hub, the ledger CLI, `self-knowledge --check` — all assume the Fold.
+- **The "on-device proof" standard cannot be met** until the replacement arrives.
+  Anything claimed as verified between now and then was verified *somewhere else*,
+  and must say where.
+- **This is exactly why the `origin/main` push mattered.** The 2026-08-23 push
+  (`bb97f5d..2834aad`) means P0–P5 survived the device. Had the 17-day gap still
+  been open, the loss would have taken hardline, persona, memory, ledger and
+  capture with it. Treat pushing as the thing that makes the phone disposable.
+
+**Setting up the replacement:** clone `etblues449/jarvis-core` (branch `main`),
+restore `.env` by hand (it is gitignored and holds every secret — it does **not**
+come down with the clone), then re-verify each phase on device before trusting any
+"complete" marker in §2.
+
+### Working from the S22 — Termux gotchas found 2026-09-04
+
+This session ran on the S22 as a stand-in. Three failures worth keeping, all of
+which cost time:
+
+1. **Node was broken:** `CANNOT LINK EXECUTABLE "node": cannot locate symbol
+   OSSL_PROVIDER_add_conf_parameter`. `pkg install nodejs` reports "already the
+   newest version" and changes nothing — the package is present but its OpenSSL
+   linkage is stale. Fix: **`pkg reinstall openssl nodejs`**, answering **N** at
+   the `openssl.cnf` config prompt to keep the existing config.
+2. **No pager installed.** `git log` dies with `unable to execute pager 'pager'`
+   and returns nothing. Fix: `git config --global core.pager cat`.
+3. **A fresh clone has no git identity.** `git commit` fails with *"Author
+   identity unknown"* — but if anything is chained after it, the error scrolls
+   away and it reads as a silent no-op. Two commits were "made" before the real
+   error was seen. **Run `git commit` alone and read its output.** Now set
+   globally (`Elliot Horton` / `etblues449@users.noreply.github.com`), so the
+   replacement Fold inherits it.
+
+### Code shipped — `tools/database.mjs` hardened (`e51cacf`, on `origin/main`)
+
+Correctness fixes to a tool that already worked. Four defects, one of which broke
+the honesty rule:
+
+- **Counted `rows.length` under `limit=1000`.** A 1001-row table would have been
+  reported as "1000" — a fabricated number stated with confidence. Now uses
+  PostgREST `Prefer: count=exact` and reads the total from `Content-Range`; when
+  the server declines to count it says so rather than guessing.
+- **No write guard existed.** insert/update/delete/drop/truncate/grant/revoke are
+  now refused before any network call.
+- **No timeout.** Now an 8s `AbortController`; a hang is reported as a timeout.
+- **Routing bug:** `'run'` was tested twice in the same condition and `'running'`
+  matched it, so *"how many agents are running"* returned execution history.
+  Execution words are now whole-word matched. Pinned by a regression test.
+
+**`test/database-test.mjs` — 30 assertions, fully offline** (`fetch` stubbed),
+matching the tier suites' stated "no API key, no network, no phone needed"
+discipline. **`test/database-live.mjs`** holds the live acceptance and is
+deliberately *outside* the offline suite, so the suite cannot fail on connectivity.
+
+**Acceptance proven rather than asserted:** a 4th row was inserted in Supabase and
+the tool reported 4 with no code change, through the exact-count path.
+
+### `lib/supabase-ai-agent-creator.mjs` is a stub — previously undocumented
+
+Its handler returns `"Query handler will be connected in Step 6."` and never opens
+a connection. It also hand-parses `.env` with `line.split('=')`, bypassing
+`lib/env.mjs` and mangling any value containing `=`. **Not fixed** — flagged only.
+It is not `tools/database.mjs`; the two are easily confused.
+
+### Doc status — which handoff is real
+
+**This vault file is canonical.** The `HANDOFF.md` in the claude.ai project is a
+**2026-07-21 snapshot**, superseded by this document on 2026-08-23. Read as
+current it is actively misleading: it calls the `database` tool *"a STUB … the #1
+unfinished item"*, which was already untrue when it was written down here and is
+doubly untrue now. Roughly half of one session on 2026-09-04 was spent rebuilding
+a tool that already worked, because that snapshot was read as current.
+
+Also stale: **`JARVIS_AGENT_SPEC.md`** (project copy) claims tier4 (27 assertions)
+and tier5 (34) test suites. Neither file exists on `origin/main` — `ls test/` shows
+only `tier1`, `tier2`, `tier6` (plus the two database suites added above). The
+"107 offline assertions across all tiers" figure is therefore unsupported.
+
+**Project files cannot be edited from a session and do not sync back.** They should
+be treated as historical snapshots, not sources of truth.
+
+### One §9 item now answered
+
+§9's first open item — *"watch the first scheduled briefing land"* — was resolved
+by the 2026-09-01 live audit, and the answer was no. Groq decommissioned
+`llama-3.3-70b-versatile` on 2026-08-16; all four scheduled skills share
+`runner.mjs`, so all four failed every run. See the 2026-09-01 superseding block in
+`Claude Memory/Projects/Smart Home/_index.md` for the model swap and the standing
+warning that **a green Actions run is not proof a file was written**.
+
