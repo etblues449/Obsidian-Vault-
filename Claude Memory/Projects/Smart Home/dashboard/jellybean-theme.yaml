@@ -1,0 +1,128 @@
+# /config/themes/jellybean.yaml
+# Jelly Bean — design system for Jelly Bean's House
+# Defines every --jb-* token consumed by the dashboard templates.
+
+Jelly Bean:
+  # ── Brand tokens (mode-independent) ──────────────────────────
+  jb-accent: "#2F6BFF"
+  jb-accent-2: "#00C2CB"
+  jb-present: "#12B76A"
+  jb-clear: "#98A2B3"
+  jb-on: "#F5A524"
+  jb-off: "#98A2B3"
+  jb-warning: "#F79009"
+  jb-danger: "#F04438"
+  jb-radius: "18px"
+
+  # ── Global shape / motion ────────────────────────────────────
+  ha-card-border-radius: "18px"
+  ha-card-border-width: "0"
+  ha-card-box-shadow: "0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06)"
+  mush-border-radius: "18px"
+  mush-spacing: "12px"
+  mush-icon-size: "40px"
+  mush-control-height: "42px"
+  bubble-border-radius: "18px"
+  card-mod-theme: Jelly Bean
+
+  # ── Typography ───────────────────────────────────────────────
+  primary-font-family: "Inter, Roboto, system-ui, sans-serif"
+  paper-font-common-base_-_font-family: "Inter, Roboto, system-ui, sans-serif"
+  paper-font-body1_-_font-family: "Inter, Roboto, system-ui, sans-serif"
+  ha-card-header-font-size: "17px"
+
+  modes:
+    # ══════════════════════ LIGHT ══════════════════════════════
+    light:
+      jb-surface: "#FFFFFF"
+      jb-surface-2: "#F1F5FB"
+      jb-text: "#0B1B33"
+      jb-text-muted: "#667085"
+      jb-divider: "#E4E9F2"
+
+      primary-color: "#2F6BFF"
+      accent-color: "#00C2CB"
+      dark-primary-color: "#1E4FD8"
+      light-primary-color: "#D9E4FF"
+
+      primary-background-color: "#EEF3FA"
+      secondary-background-color: "#EEF3FA"
+      card-background-color: "#FFFFFF"
+      ha-card-background: "#FFFFFF"
+      divider-color: "#E4E9F2"
+
+      primary-text-color: "#0B1B33"
+      secondary-text-color: "#667085"
+      text-primary-color: "#FFFFFF"
+      disabled-text-color: "#98A2B3"
+
+      app-header-background-color: "#EEF3FA"
+      app-header-text-color: "#0B1B33"
+      sidebar-background-color: "#FFFFFF"
+      sidebar-icon-color: "#667085"
+      sidebar-selected-icon-color: "#2F6BFF"
+      sidebar-selected-text-color: "#2F6BFF"
+
+      state-icon-color: "#667085"
+      state-icon-active-color: "#F5A524"
+      paper-item-icon-color: "#667085"
+      paper-item-icon-active-color: "#F5A524"
+
+      switch-checked-color: "#2F6BFF"
+      switch-unchecked-button-color: "#98A2B3"
+      slider-color: "#2F6BFF"
+      slider-track-color: "#E4E9F2"
+
+      success-color: "#12B76A"
+      warning-color: "#F79009"
+      error-color: "#F04438"
+      info-color: "#2F6BFF"
+
+    # ══════════════════════ DARK ═══════════════════════════════
+    dark:
+      jb-surface: "#161B24"
+      jb-surface-2: "#0E121A"
+      jb-text: "#EAF0FA"
+      jb-text-muted: "#8B96A8"
+      jb-divider: "#242C3A"
+      jb-clear: "#6B7686"
+      jb-off: "#6B7686"
+
+      primary-color: "#5B8BFF"
+      accent-color: "#22D3DB"
+      dark-primary-color: "#2F6BFF"
+      light-primary-color: "#1D2740"
+
+      primary-background-color: "#0E121A"
+      secondary-background-color: "#0E121A"
+      card-background-color: "#161B24"
+      ha-card-background: "#161B24"
+      divider-color: "#242C3A"
+      ha-card-box-shadow: "none"
+
+      primary-text-color: "#EAF0FA"
+      secondary-text-color: "#8B96A8"
+      text-primary-color: "#0E121A"
+      disabled-text-color: "#5A6474"
+
+      app-header-background-color: "#0E121A"
+      app-header-text-color: "#EAF0FA"
+      sidebar-background-color: "#161B24"
+      sidebar-icon-color: "#8B96A8"
+      sidebar-selected-icon-color: "#5B8BFF"
+      sidebar-selected-text-color: "#5B8BFF"
+
+      state-icon-color: "#8B96A8"
+      state-icon-active-color: "#F5A524"
+      paper-item-icon-color: "#8B96A8"
+      paper-item-icon-active-color: "#F5A524"
+
+      switch-checked-color: "#5B8BFF"
+      switch-unchecked-button-color: "#5A6474"
+      slider-color: "#5B8BFF"
+      slider-track-color: "#242C3A"
+
+      success-color: "#32D583"
+      warning-color: "#FDB022"
+      error-color: "#F97066"
+      info-color: "#5B8BFF"

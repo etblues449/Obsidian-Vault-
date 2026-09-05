@@ -84,10 +84,21 @@ console.log('Skill 1 — Morning Brief (daily 07:00 London):');
   body.includes('# Morning Brief — 2026-07-08') ? ok('has correct title') : bad('missing title', body.slice(0, 120));
 }
 {
-  const r = run('morning-brief', { fakeNow: '2026-07-08T10:00:00Z' }); // 11:00 BST — wrong hour
-  (r.code === 0 && /time-guard|Not the scheduled/.test(r.out))
-    ? ok('skips at 11:00 London (guard holds)')
-    : bad('should skip at wrong hour', r.out);
+  // Idempotency: today's brief now exists (written above), so a second attempt
+  // — the paired BST/GMT cron — must no-op instead of regenerating.
+  const r = run('morning-brief', { fakeNow: '2026-07-08T10:00:00Z' });
+  (r.code === 0 && /already exists|already-done/.test(r.out))
+    ? ok("second attempt the same day no-ops (today's brief already exists)")
+    : bad('should no-op when the period output exists', r.out);
+}
+{
+  // THE 2026-08-02 REGRESSION TEST. Under the old exact-hour guard this run —
+  // a cron delayed by ~3h, exactly what GitHub does on free runners — skipped
+  // silently and reported success. It must now produce the brief.
+  const r = run('morning-brief', { fakeNow: '2026-07-10T09:11:00Z' }); // 10:11 BST, brief missing
+  (r.code === 0 && exists('Claude Memory/briefings/2026-07-10.md'))
+    ? ok('DELAYED cron still writes the brief (was the silent-failure bug)')
+    : bad('a delayed run must still produce the period output', r.out);
 }
 
 // 3. Connection Finder — Sunday 14:00 London
@@ -99,10 +110,10 @@ console.log('Skill 3 — Connection Finder (Sunday 14:00 London):');
     : bad('should fire Sunday 14:00', r.out);
 }
 {
-  const r = run('connection-finder', { fakeNow: '2026-07-06T13:00:00Z' }); // Mon — wrong day
-  (r.code === 0 && /time-guard|Not the scheduled/.test(r.out))
-    ? ok('skips on Monday (wrong weekday)')
-    : bad('should skip on wrong weekday', r.out);
+  const r = run('connection-finder', { fakeNow: '2026-07-05T16:00:00Z' }); // same Sunday, later
+  (r.code === 0 && /already exists|already-done/.test(r.out))
+    ? ok("second attempt the same Sunday no-ops")
+    : bad('should no-op when the period output exists', r.out);
 }
 
 // 4. Weekly Synthesis — Friday 18:00 London, ISO week
@@ -112,6 +123,15 @@ console.log('Skill 4 — Weekly Synthesis (Friday 18:00 London):');
   (r.code === 0 && exists('Claude Memory/synthesis/2026-W27.md'))
     ? ok('fires Friday 18:00 London, writes 2026-W27.md (ISO week matches vault)')
     : bad('should fire Friday and compute W27', r.out + '\n dir: ' + (exists('Claude Memory/synthesis') ? fs.readdirSync(path.join(FIX,'Claude Memory/synthesis')).join(',') : 'none'));
+}
+{
+  // Week-keyed, not date-keyed: a run that slips past midnight into Saturday is
+  // still the same ISO week, so it must no-op rather than write a second file.
+  const r = run('weekly-synthesis', { fakeNow: '2026-07-04T01:00:00Z' }); // Sat, still W27
+  const files = exists('Claude Memory/synthesis') ? fs.readdirSync(path.join(FIX, 'Claude Memory/synthesis')) : [];
+  (r.code === 0 && /already exists|already-done/.test(r.out) && files.length === 1)
+    ? ok('slipping into Saturday no-ops (keyed on ISO week, not date)')
+    : bad('week-keying should prevent a duplicate file', r.out + ' files=' + files.join(','));
 }
 
 // 6. Pattern Detector — Monday 08:00 London, prepend behaviour
@@ -128,6 +148,108 @@ console.log('Skill 6 — Pattern Detector (Monday 08:00 London, rolling file):')
   body.indexOf('Week ending 2026-07-06') < body.indexOf('OLD-MARKER-XYZ')
     ? ok('new section is ABOVE old history')
     : bad('ordering wrong', body.slice(0, 200));
+  body.includes('<!-- week:2026-W28 -->')
+    ? ok('stamps an ISO-week marker for the idempotency check')
+    : bad('missing week marker', body.slice(0, 260));
+  // A rolling file has no per-period path, so the marker is the only guard.
+  const r2 = run('pattern-detector', { fakeNow: '2026-07-07T07:00:00Z' }); // Tue, same week
+  const sections = (fs.readFileSync(pf, 'utf8').match(/<!-- week:2026-W28 -->/g) || []).length;
+  (r2.code === 0 && /already exists|already-done/.test(r2.out) && sections === 1)
+    ? ok('same-week re-run no-ops (rolling file gets exactly one section)')
+    : bad('week marker should prevent a duplicate section', r2.out + ' sections=' + sections);
+}
+
+// 2. Capture Router — event-driven, deterministic, idempotent
+// These fail on the pre-2026-08-02 behaviour: there was no router at all, root
+// Inbox/ captures were invisible to the engine, and placeholder captures reached
+// the corpus.
+console.log('Skill 2 — Capture Router (event-driven, deterministic):');
+{
+  const R = fs.mkdtempSync(path.join(os.tmpdir(), 'jarvis-router-'));
+  const w = (rel, s) => {
+    const f = path.join(R, rel);
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.writeFileSync(f, s, 'utf8');
+  };
+  const rd = (rel) => { try { return fs.readFileSync(path.join(R, rel), 'utf8'); } catch { return ''; } };
+  const has = (rel) => fs.existsSync(path.join(R, rel));
+
+  w('JARVIS/Inbox/real.md', '---\ntype: note\n---\n\n# Boiler\n\nThe boiler needs servicing before winter.\n');
+  w('JARVIS/Inbox/junk.md', '---\ntype: note\n---\n\n# Placeholder\n\nyour note here\n');
+  w('JARVIS/Inbox/empty.md', '---\ntype: note\n---\n\n# Nothing\n\n   \n');
+  w('JARVIS/Inbox/bel.md', '---\ntype: note\n---\n\n# Belief\n\n#belief Groq free tier is genuinely free.\n');
+  w('JARVIS/Inbox/dec.md', '---\ntype: note\n---\n\n# Decision\n\n#decision Idempotency beats hour-equality.\n');
+  w('Inbox/legacy.md', '---\ntype: task\n---\n\n# Legacy\n\nSet an alarm for 8am tomorrow.\n');
+  w('Inbox/quick-capture.md', '---\ntype: inbox\n---\n\n# Quick Capture\n\nwidget target, not a capture\n');
+  w('Claude Memory/beliefs.md', '# Beliefs\n');
+  w('Claude Memory/decisions.md', '# Decisions\n');
+
+  const runR = () => {
+    const env = { ...process.env, VAULT_ROOT: R, GROQ_API_KEY: '', JARVIS_FAKE_NOW: '2026-08-02T09:00:00Z' };
+    try { return { code: 0, out: execFileSync('node', [RUNNER, '--skill=capture-router'], { env, encoding: 'utf8' }) }; }
+    catch (e) { return { code: e.status ?? 1, out: (e.stdout || '') + (e.stderr || '') }; }
+  };
+
+  const r1 = runR();
+  r1.code === 0 ? ok('router runs clean') : bad('router should exit 0', r1.out);
+
+  // Rule 5 — never drop an unclassifiable capture
+  has('JARVIS/Inbox/real.md')
+    ? ok('rule 5: ordinary capture is KEPT in the inbox (never dropped)')
+    : bad('ordinary capture must never be dropped', r1.out);
+
+  // Rules 1-2 — junk quarantined, NOT deleted
+  (!has('JARVIS/Inbox/junk.md') && has('JARVIS/Inbox/_rejected/junk.md'))
+    ? ok('rule 2: "your note here" quarantined to _rejected/ (moved, not deleted)')
+    : bad('placeholder capture should be quarantined, not deleted', r1.out);
+  (!has('JARVIS/Inbox/empty.md') && has('JARVIS/Inbox/_rejected/empty.md'))
+    ? ok('rule 1: empty capture quarantined to _rejected/')
+    : bad('empty capture should be quarantined', r1.out);
+  /REJECTED 2 placeholder/.test(r1.out)
+    ? ok('rejection is LOUD in the log (not a silent drop)')
+    : bad('rejection must be reported loudly', r1.out);
+
+  // Rules 3-4 — tag routing
+  /Groq free tier is genuinely free/.test(rd('Claude Memory/beliefs.md'))
+    ? ok('rule 3: #belief appended to beliefs.md')
+    : bad('#belief should append to beliefs.md', rd('Claude Memory/beliefs.md'));
+  /Idempotency beats hour-equality/.test(rd('Claude Memory/decisions.md'))
+    ? ok('rule 4: #decision appended to decisions.md')
+    : bad('#decision should append to decisions.md', rd('Claude Memory/decisions.md'));
+
+  // The split fix — legacy root Inbox/ swept into the engine's view, original kept
+  (has('JARVIS/Inbox/legacy.md') && has('Inbox/legacy.md'))
+    ? ok('legacy root Inbox/ capture swept into JARVIS/Inbox/ (copy, original kept)')
+    : bad('legacy capture should be swept, non-destructively', r1.out);
+  !has('JARVIS/Inbox/quick-capture.md')
+    ? ok('widget target quick-capture.md is not swept as a capture')
+    : bad('quick-capture.md is a template, not a capture', r1.out);
+
+  // Idempotence — the whole point. on:push fires on every commit.
+  const r2 = runR();
+  const r3 = runR();
+  const beliefCount = (rd('Claude Memory/beliefs.md').match(/<!-- capture:/g) || []).length;
+  const decisionCount = (rd('Claude Memory/decisions.md').match(/<!-- capture:/g) || []).length;
+  (beliefCount === 1 && decisionCount === 1)
+    ? ok('idempotent: 3 runs produce exactly 1 belief + 1 decision entry')
+    : bad('re-running must not duplicate entries', `beliefs=${beliefCount} decisions=${decisionCount}`);
+  (/nothing new to route/.test(r2.out) && /nothing new to route/.test(r3.out))
+    ? ok('re-runs report nothing-to-do (wrote=false, no empty commit)')
+    : bad('re-run should be a no-op', r2.out + r3.out);
+
+  // A genuinely new capture still routes after the no-ops
+  w('JARVIS/Inbox/later.md', '---\ntype: note\n---\n\n# Later\n\n#belief Silent failures outrank loud ones.\n');
+  const r4 = runR();
+  ((rd('Claude Memory/beliefs.md').match(/<!-- capture:/g) || []).length === 2 && r4.code === 0)
+    ? ok('a new capture arriving later still routes (log is not a freeze)')
+    : bad('new captures must still route after a no-op run', r4.out);
+
+  // The router never calls Groq — no key present anywhere in these runs
+  !/GROQ_API_KEY is not set/.test(r1.out + r4.out)
+    ? ok('router makes no Groq call (deterministic rules, £0, no quota)')
+    : bad('router should not need Groq', r1.out);
+
+  fs.rmSync(R, { recursive: true, force: true });
 }
 
 // force bypasses the guard entirely

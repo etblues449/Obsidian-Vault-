@@ -1,0 +1,108 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+  extra_module_url:
+    - /hacsfiles/lovelace-card-mod/card-mod.js?hacstag=1909275244
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+climate:
+  - platform: ephember
+    username: ehorton@selectlifestyles.co.uk
+    password: Nicholas1
+
+template:
+  - sensor:
+      - name: "Motion Sensor TV Samsung Temperature Corrected"
+        unit_of_measurement: "°C"
+        state: "{{ (states('sensor.motion_sensor_tv_samsung_temperature') | float / 100) | round(1) }}"
+      - name: "Multipurpose Sensor TV Samsung Temperature Corrected"
+        unit_of_measurement: "°C"
+        state: "{{ (states('sensor.multipurpose_sensor_tv_samsung_temperature') | float / 100) | round(1) }}"
+  - binary_sensor:
+      - name: "TV Presence Fixed"
+        state: >
+          {{ is_state('binary_sensor.motion_sensor_tv_samsung_motion', 'on')
+             or is_state('binary_sensor.living_room_occupancy_status', 'on') }}
+
+recorder:
+  purge_keep_days: 7
+  auto_purge: true
+  auto_repack: true
+  commit_interval: 30
+  exclude:
+    domains:
+      - automation
+      - update
+      - updater
+      - camera
+    entity_globs:
+      - sensor.*_uptime
+      - sensor.*_rssi
+      - sensor.*_signal_strength
+      - sensor.*_wifi_signal
+      - sensor.*_linkquality
+      - sensor.*_free_memory
+      - binary_sensor.*_update_available
+    entities:
+      - sensor.lounge_camera_motion
+      - sensor.notebooklm_response
+      - sensor.date
+      - sensor.time
+      - sun.sun
+      - sensor.ruview_breathing_rate
+      - sensor.ruview_heart_rate
+      - sensor.ruview_anomaly_score
+
+shell_command:
+  pad_power: "sshpass -p 'Nicholas1' ssh -o StrictHostKeyChecking=no -p 8022 u0_a569@192.168.0.215 'adb connect 192.168.0.191:5555 && adb shell input keyevent 26'"
+  pad_youtube: "sshpass -p 'Nicholas1' ssh -o StrictHostKeyChecking=no -p 8022 u0_a569@192.168.0.215 'adb connect 192.168.0.191:5555 && adb shell am start -n com.google.android.youtube/com.google.android.apps.youtube.app.WatchPlatformActivity'"
+  pad_home: "sshpass -p 'Nicholas1' ssh -o StrictHostKeyChecking=no -p 8022 u0_a569@192.168.0.215 'adb connect 192.168.0.191:5555 && adb shell input keyevent 3'"
+  pad_netflix: "sshpass -p 'Nicholas1' ssh -o StrictHostKeyChecking=no -p 8022 u0_a569@192.168.0.215 'adb connect 192.168.0.191:5555 && adb shell am start -n com.netflix.mediaclient/com.netflix.mediaclient.MainActivity'"
+  pad_volume_up: "sshpass -p 'Nicholas1' ssh -o StrictHostKeyChecking=no -p 8022 u0_a569@192.168.0.215 'adb connect 192.168.0.191:5555 && adb shell input keyevent 24'"
+  pad_volume_down: "sshpass -p 'Nicholas1' ssh -o StrictHostKeyChecking=no -p 8022 u0_a569@192.168.0.215 'adb connect 192.168.0.191:5555 && adb shell input keyevent 25'"
+
+command_line:
+  - sensor:
+      name: "NotebookLM Response"
+      unique_id: notebooklm_response
+      command: "cat /config/.notebooklm/last_response.txt 2>/dev/null || echo 'No response yet'"
+      scan_interval: 10
+      command_timeout: 5
+      value_template: "{{ value[:255] }}"
+
+intent_script:
+  AskNotebookLM:
+    speech:
+      text: "Asking NotebookLM, give me about 90 seconds..."
+    action:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.notebooklm_question
+        data:
+          value: "{{ question }}"
+      - action: shell_command.query_notebooklm_dynamic
+      - delay: 00:01:30
+      - action: notify.mobile_app_jelly_bean_s_phone
+        data:
+          title: "🧠 NotebookLM"
+          message: "{{ states('sensor.notebooklm_response') }}"
+      - action: tts.speak
+        target:
+          entity_id: tts.home_assistant_cloud
+        data:
+          media_player_entity_id: media_player.jelly_bean_s_phone
+          message: "{{ states('sensor.notebooklm_response') }}"
+
+spotcast:
+  sp_dc: !secret sp_dc
+  sp_key: !secret sp_key
+  country: SE
+
+assist_pipeline:
+  debug_recording_dir: /share/assist_pipeline

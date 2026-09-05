@@ -1,4 +1,31 @@
 {
+  "permissions": {
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f *)",
+      "Bash(git push --force-with-lease*)",
+      "Bash(git rebase --skip*)",
+      "Bash(rm -rf /*)"
+    ],
+    "ask": [
+      "Bash(git push*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -fd*)",
+      "Bash(git filter-branch*)",
+      "Bash(rm -rf *)"
+    ],
+    "allow": [
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git pull --rebase*)",
+      "Bash(bash .claude/skills/vault-integrity-audit/scripts/drift-check.sh*)",
+      "Bash(python3 .claude/skills/qa-boundary-check/scripts/verify-refs.py*)",
+      "Bash(python3 .claude/hooks/skill-usage.py --report)",
+      "Bash(node test/local-test.mjs)",
+      "Bash(node runner.mjs --skill=* --dry-run)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
@@ -6,6 +33,19 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PROJECT_DIR/.claude/hooks/skill-usage.py",
+            "timeout": 3000,
+            "async": true,
+            "statusMessage": "logging skill usage"
           }
         ]
       }

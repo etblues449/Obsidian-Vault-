@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { requireAuth } from '../_auth'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -7,6 +8,8 @@ const client = new Anthropic({
 export const maxDuration = 60
 
 export async function POST(request: Request) {
+  const denied = requireAuth(request)
+  if (denied) return denied
   try {
     if (!process.env.ANTHROPIC_API_KEY) {
       // Clear, actionable error instead of a generic 500 the UI swallows.
