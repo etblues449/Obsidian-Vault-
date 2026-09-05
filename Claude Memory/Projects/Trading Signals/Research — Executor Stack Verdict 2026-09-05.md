@@ -57,7 +57,51 @@ FCA copy-trading rules; ESMA/FCA product-intervention texts (only the 20:1 gold 
 
 Loss percentages are rolling 12-month figures recalculated quarterly (IBKR showed 62.5 % in May 2026). IBC's retirement is four days old — a final 4.0 or a fork could still appear. Pake ships roughly fortnightly. IG's streaming schema is not frozen (May 2026 breaking change).
 
-## Key sources (primary unless marked)
+## Second pass — more brokers (2026-09-05, six verification agents)
+
+Elliot asked for more options and chose a **Raspberry Pi / home box** as the executor host, which rules out anything needing a Windows terminal or an x86 desktop gateway. Each agent verified against the broker's own docs and T&Cs; `register.fca.org.uk` renders client-side only, so FRNs come from firm footers, FCA warning pages, Companies House and an FCA FOI annex.
+
+| Broker (UK entity, FRN) | API path for an individual | Unattended auth? | Automation stance | Gold to UK retail | Loss % | Pi-viability |
+|---|---|---|---|---|---|---|
+| **Saxo** (Saxo Capital Markets UK Ltd, 551422) | OpenAPI: REST + WebSocket, OAuth 2.0 code/PKCE; live app self-service once funded; 120 req/min, 1 order/s; SIM = same API | **No** — certificate auth is institutional-only; access token 20 min, refresh token 40 min and rotates → one interactive login then refresh forever; an outage > 40 min needs a human | Docs contemplate "automatic trading"; GBT cl. 27(vii) bans only manipulation | XAUUSD FX spot 0.10 pt; Gold CFD 0.60 pt, 5 %; **no spread betting** | 60 % | VIABLE-WITH-CAVEATS |
+| **Pepperstone via cTrader Open API** (Pepperstone Ltd, 684312) | Protobuf/JSON over TLS TCP or WS (`live.ctraderapi.com:5035/5036`); OAuth 2.0 — access token ~30 days, **refresh token never expires**; 10-s heartbeat; 50 req/s | **Yes** (after one OAuth consent) | "Ideal for … automated trading systems"; Spotware: "available for anyone registered with a cTrader-affiliated broker" (app reviewed by Spotware; Playground token for own account) | Spot Gold **spread bet on cTrader** 0.1 pt, 5 %; Razor 0.08 + commission | 72.9 % | VIABLE-WITH-CAVEATS — official Python SDK abandoned (last commit Aug 2024, CVE'd pins); speak protobuf yourself |
+| **XTB** (XTB Ltd, 522157) | **xAPI discontinued 14 Mar 2025** — XTB help centre (Apr 2026): "API access is no longer available… no replacement" | — | ToB cl. 38.2(f) bans automated entry | GOLD CFD 0.9 pt, 0.001-lot min; no spread betting | 74 % | **NOT VIABLE** |
+| **Darwinex** (Tradeslide Trading Tech Ltd, 586466) | FIX 4.4 (quickfix; Python reference client last commit 2022); FIX cannot query balance/positions; DARWIN REST API trades DARWINs only | Yes (credentials) — if granted | **Client Agreement cl. 9.6: automated tools "prohibited without our prior written consent… at our absolute discretion"** | XAUUSD CFD, 20:1 retail; spread behind login; no spread bet | 53.8 % | VIABLE-WITH-CAVEATS (weak) — consent + unpublished FIX terms first |
+| **FOREX.com UK / City Index** (StoneX Financial Ltd, 446717) | "StoneX API" (ex-GCAPI): REST `ciapi.cityindex.com` + Lightstreamer; v1 LogOn obsolete → v2; pre-prod env with separate accounts | Yes (username/password/AppKey session) | Permitted with limits (GT 20.1.8 bans manipulation; MT annex blocks "excessive" automation) — but **AppKey only via a Partnerships application**; retail eligibility, rate limits, session life unpublished | FOREX.com: XAU/USD CFD from 0.10 pt, 5 %, min 10 oz; City Index: spread bet from 0.3 pt, 5 % | 74 % / 68 % | VIABLE-WITH-CAVEATS — get the AppKey before coding; City Index → "StoneX Trading" rebrand reported |
+| **eToro (UK) Ltd** (583263) | New trading REST API (press release 29 Oct 2025: execution, cancels, SL/TP) — "available to select users in early access" | Unverified | Unverified | Commodities listed; leveraged gold via API unverified | **51 %** | POSSIBLE — confirm UK eligibility with eToro first |
+| **FXCM UK** (Stratos Markets Ltd, 217689) | FIX 4.4 only (**≥ £5,000 balance**); ForexConnect is x86-only; REST/fxcmpy gone | Yes | Allowed | XAU listed; margin not on site | 65 % | POSSIBLE (heavy) |
+| **ActivTrades plc** (434413) | .NET 8 WebSocket SDK (`ActivTrader.Client.API` 4.20.1, Feb 2026) "for accounts with specific permissions only" | — | Institutional/partner framing | — | 69 % (.co.uk) | Conditional — not Python/REST, permission needed |
+| **CMC Markets UK plc** (173730) | None for retail (CMC Connect is institutional); MT4 EAs only | — | — | 0.2 pt, 5 % | 68 % | MT-ONLY → not on a Pi |
+| **Admiral Markets UK Ltd** (595450) | MT4/MT5 only | — | — | unverified (site serves CySEC entity) | — | MT-ONLY |
+| **Spreadex Ltd** (190941) | None | — | — | Gold from 0.3 pt | 61 % | NOT VIABLE |
+| **Plus500UK Ltd** (509909) | None; **User Agreement: "Use of any automated data entry system … is expressly prohibited"** | — | Banned | — | unverified | NOT VIABLE |
+
+**MetaTrader 5 Python** (`MetaTrader5` on PyPI, 5.0.6180, 2026-09-05): every wheel is `win_amd64`, `initialize()` takes a path to `metatrader64.exe`, MetaQuotes' Linux route is Wine on x86 — **not a Raspberry Pi route**. That rules out every MT-only broker (CMC, Admirals, Tickmill, …).
+
+### Consolidated ranking for a Python worker on a Raspberry Pi (both passes)
+
+Criteria: unattended auth that survives a reboot without a human; explicit permission to automate; practice/demo on the same API; gold cost on 6–8 dollar targets; Python simplicity; UK spread-bet (CGT-free) option; minimum trade size vs a small account; 3-year API risk.
+
+1. **OANDA Europe (542574)** — long-lived personal token (no interactive login, ever), the only broker with an *explicit* personal-automation licence clause (Apr 2026), plain JSON REST + HTTP pricing stream, practice environment identical to live, UK spread bets. Open: gold spread and minimum gold unit on practice (a 5-minute check); highest loss disclosure (76.6 %).
+2. **Capital.com UK (793714)** — API key + password, JSON REST + WebSocket, demo base URL (same code); the 10-minute keepalive is trivial on a Pi. Open: gold spread/min size; API docs frozen since Nov 2023; spread bets unverified.
+3. **Pepperstone via cTrader Open API (684312)** — cheapest gold (0.1-pt spread bet on cTrader) and a never-expiring refresh token, but protobuf-over-TLS must be hand-rolled (SDK abandoned) and Spotware reviews the app.
+4. **IG (195355)** — cheapest *verified* spread-bet gold (0.3 pt) and mature docs, but Lightstreamer needs a live thread, hard rate limits, weekend token death, and a **£5/pt minimum stake** — a 7-point stop risks ≥ £35, too large for a £500 account at 1 %.
+5. **Saxo (551422)** — excellent API, but the 40-minute refresh cliff on a Pi that may reboot is an operational hazard; no spread betting.
+6. **FOREX.com UK / City Index** — workable REST, but a discretionary AppKey and brand churn.
+7. eToro (watch — early access), Darwinex, FXCM, ActivTrades — not for this build.
+
+Not viable on a Pi or at all: XTB (API discontinued), CMC / Admirals / Tickmill (MetaTrader only), Spreadex (no API), Plus500 (automation banned), Trading 212 (API bars CFD and bans algorithmic trading).
+
+### Second-pass sources (primary unless marked)
+
+- Saxo: home.saxo/en-gb (footer, gold campaign, margin page); openapi.help.saxo articles 4416505486481 / 4416637088017; developer.saxo learn pages; SaxoBank/openapi-foundational-samples-python; general-business-terms-uk.pdf cl. 36.2
+- cTrader: help.ctrader.com/open-api (connection, account-authentication, proxies-endpoints, api-application, symbol-data); openapi.ctrader.com; spotware/openapi-proto-messages `OpenApiMessages.proto`; PyPI ctrader-open-api; spotware/OpenApiPy issues #38 #43; MetaTrader5 on PyPI; mql5.com docs `mt5initialize_py`; mql5.com/en/articles/625; handbook.fca.org.uk COBS 22.5.11R; pepperstone.com/en-gb commodity-fees + ctrader pages; FCA warnings (IC Markets, FP Markets, FxPro clone)
+- XTB: xtb.com/int/help-center "does-xtb-offer-investment-automation-tools-4"; XTB_UK_Terms_of_Business.pdf (ver. 05012026) cl. 18.4, 38.2(f); xtb.com/en/table-uk.pdf; FCA warning "xtb-limited-clone"; pawelkn/xapi-python (archived)
+- Darwinex: darwinex.com (footer, algorithmic-trading/fix-api, deposit-insurance); help.darwinex.com (assets-available, margin-call, execution-costs, api-walkthrough); FCA client-agreement.pdf cl. 9.3, 9.6, 13.1, 14.4; darwinex/dwx-fix-connector; darwinex.com/api/accounting/profitsResume/looserUsersPercentage
+- StoneX: docs.labs.gaincapital.com (updated 07 Nov 2025); forex.com/en-uk gold + terms pages; cityindex.com/en-uk (footer, strength-and-security, mt4-platform-support); Forex-com-UK-Terms.pdf / city-index-uk.pdf; fxuk-priips-cfd-commodity-kid-dec2025.pdf; FCA FOI 5126 annex; Companies House 05616586, 01761813; Finance Magnates 2026-01-05 (secondary)
+- Elimination: cmcmarkets.com/en-gb (institutional, mt4, commodities); fxcm.com/uk api-trading; fxcm/ForexConnectAPI; spreadex.com; Plus500 UserAgreement.pdf (Jun 2026); etoro.com press release 2025-10-29, go.etoro.com developers, api-portal.etoro.com, builders.etoro.com (secondary); admiralmarkets.com MIFIDPRU 8; activtrades.com/en/trading-api; nuget ActivTrader.Client.API
+
+## Key sources — first pass (primary unless marked)
 
 - IBKR: interactivebrokers.co.uk `margin-cfd.php`, `commissions-cfd-metals.php`, `products-cfds.php`; interactivebrokers.com `docs/web-api/authentication/{sessions,multiple-sessions,faq,oauth-2/register,oauth-1a}`; `campus/ibkr-api-page/webapi-doc`
 - IBC: github.com/IbcAlpha/IBC (README retirement notice; release 3.24.2)
