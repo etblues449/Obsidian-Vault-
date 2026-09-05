@@ -34,5 +34,6 @@ Independently verify (or bury) the "GOLD VIP" / "THE WAR ZONE" Telegram XAUUSD s
 
 ## Reference
 - [[Due Diligence — GOLD VIP + T4Trade]] — full cited findings (FCA/AMF/FSMA/FSA primary sources)
+- [[Research — Executor Stack Verdict 2026-09-05]] — deep-research verdict on the autonomous-executor stack (IBKR/Vercel/Pake rejected; OANDA-or-Capital.com + persistent worker + PWA recommended; 21 confirmed / 4 refuted claims)
 - `tools/README.md` — the verification loop + Termux setup
 - Sessions: [[sessions/2026-07-10]] · [[sessions/2026-07-13]] · [[sessions/2026-09-05]]
