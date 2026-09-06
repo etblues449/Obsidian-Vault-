@@ -358,3 +358,110 @@ Silencing the noisy service is the actual repair. Vacuuming the journal treats
 the symptom and it will refill within hours. A `SystemMaxUse` cap is still worth
 setting afterwards as a guard, not as the fix.
 
+
+---
+
+# UPDATE 04:52 — the storm is NGINX, ~9.5 error lines per second
+
+**Source:** field extraction from `system@84ea6794…1.journal` (25,165,824 bytes,
+mtime Sep 5 22:10 — one complete ~11-minute storm interval), run in the SSH
+add-on.
+
+## The counts
+
+```
+MESSAGE hits:    20,465
+CONTAINER hits:       11
+```
+
+Eleven containers, each appearing exactly once. That is not eleven log lines —
+it is systemd de-duplicating field values and storing each distinct one once.
+**Container and identifier counts cannot rank volume.** The MESSAGE values can,
+because they carry connection ids and timestamps and so are each stored
+separately.
+
+## What is filling the file
+
+| Distinct variants | Shape (normalised: digits→N) |
+|---:|---|
+| **3,156** | `N-N-N N:N:N.N  N/N/N N:N:N [error] N#N: *N auth request unexpected status: N` |
+| **3,155** | `N-N-N N:N:N.N  N/N/N N:N:N [error] N#N: *N connect() failed (N: Connection …` |
+| 468 | `INFO:… hass_configurator.configurator:N.N.N.N - "GET / HTTP/N.N"` |
+| 371 | `AVC apparmor="DENIED" operation="capable" profile="hassio-supervisor///usr/bin/git"` |
+| 234 | `… - - [N/Sep/…] "" N "-" "-" "-" request_time="` |
+| 215 | `… - - [N/Sep/…] "GET /ws HTTP/N.N" N N "-" "Mo…` |
+| 141 | `AVC apparmor="DENIED" … profile="hassio-supervisor" comm="bash"` |
+
+**6,311 nginx error lines in one 11-minute file — about 9.5 per second.** Just
+under a third of all distinct messages, and the largest share of bytes, since
+they are the longest lines.
+
+## The two top shapes are ONE fault
+
+They arrive within one of each other (3,156 vs 3,155). That is not two problems:
+
+- `connect() failed (111: Connection refused) … while connecting to upstream` —
+  nginx cannot reach the service behind it.
+- `auth request unexpected status: 502` — nginx's `auth_request` subrequest hits
+  that same dead upstream, gets a 502, and logs a second line.
+
+One refusing upstream, two log lines per request, on a client that retries
+continuously. That is the write storm in one sentence.
+
+The `hass_configurator` rows corroborate it from the client side: 468 `GET /`
+plus `HTTP Error N: Bad Gateway` and `Exception getting bootstrap` — something is
+serving 502 to whoever asks.
+
+## Which nginx — strong candidate, NOT yet confirmed
+
+The message begins with **two** timestamps: `N-N-N N:N:N.N` then `N/N/N N:N:N`.
+The second is nginx's own `error_log` format; the first is an add-on's s6 log
+prefix wrapping it. So this is nginx running *inside an add-on*, not the host.
+
+Of the eleven containers present, the one that ships an internal nginx using
+`auth_request` in front of a Python backend is **Frigate**
+(`app_ccab4aaf_frigate-fa`) — which is also the highest-CPU container on the box
+at 25.9%.
+
+> This is a strong candidate on shape and elimination. It is **not confirmed**.
+> Confirmation is one line away: the untruncated error line ends with
+> `upstream: "http://127.0.0.1:PORT/…"`, which names the port and settles it.
+> Do not act on the guess.
+
+## Third finding, unrelated: AppArmor is denying the Supervisor
+
+512 `apparmor="DENIED"` records in 11 minutes — 371 against
+`profile="hassio-supervisor///usr/bin/git"` and 141 against
+`profile="hassio-supervisor"` with `comm="bash"`. The Supervisor's git
+operations are being refused by its own AppArmor profile. That is its own
+defect, it is noisy, and it is **not** the storm. Track separately.
+
+The kernel audit subsystem is also logging into the journal (`SYSCALL`,
+`PROCTITLE`, `BPF prog-id=N op=LOAD/UNLOAD`) — small volume, worth noting only
+because auditd on a home hub is usually pure overhead.
+
+## Tooling built from this
+
+`Assistant Core/ha-diagnostics/journal-storm.sh` — the whole probe as a
+committed, tested script. Read-only. Sections: inventory, rotation cadence and
+derived write rate, live sample, field-readability sanity check, presence lists,
+ranking by bytes, and untruncated samples of the top shapes.
+
+Four bugs were caught by its tests before it shipped, all of which would have
+produced a confident wrong answer rather than an error:
+
+| Bug | What it would have reported |
+|---|---|
+| `grep -c` on a binary journal | "nothing is readable" on a file holding 20,465 fields |
+| divide-before-multiply on the rate | "0 MB/hour" during a live storm |
+| `sh` has no locals; helper clobbered `$b` | "shrank from 3 MB to 3 MB" |
+| search literal built from the *normalised* shape | empty sample sections under correct headers |
+
+The first of those actually fired during this investigation and was overridden
+by hand. It is now pinned by a test.
+
+## Next step
+
+Run `journal-storm.sh` (or grep the untruncated line) and read the `upstream:`
+field. Then silence that service. Do not vacuum: it refills in hours and
+destroys the evidence.

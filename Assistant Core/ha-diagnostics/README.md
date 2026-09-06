@@ -216,3 +216,77 @@ even the automations that would have been fine. **There is deliberately no `--fo
 and the refusal paths are tested first and hardest: no light, absent light, unavailable
 light, bad presence sensor, no token.
 
+
+---
+
+# Journal Storm — what is flooding the systemd journal?
+
+`journal-storm.sh` — POSIX sh + BusyBox. **Read-only.**
+
+## Why
+
+On 2026-09-06 the Green's `systemd-journal-gatewayd` stopped answering: every
+Supervisor endpoint that reads journal *content* timed out at 20 s, and a full
+host reboot did not fix it. Three unifying theories were raised and all three
+were killed by measurement — disk was 79% free, `MemAvailable` was 1.5 GB of
+4 GB, and there were zero `*.journal~` files.
+
+What was actually there: a fresh **24 MB journal file every ~11 minutes**,
+~3 GB/day, with **six hours** of retention on a box that should hold weeks.
+gatewayd was never broken. It was being out-run.
+
+Extraction then named the source: **6,311 nginx error lines in one 11-minute
+file, ~9.5 per second** — `connect() failed` to a dead upstream plus the
+`auth_request` subrequest that hits the same upstream and logs a second line.
+
+## Run it
+
+```sh
+# The SSH & Web Terminal add-on is enough — /var/log/journal is mounted in.
+# No host shell, no port 22222, no journalctl.
+sh "Assistant Core/ha-diagnostics/journal-storm.sh"
+```
+
+`JOURNAL_DIR` override the directory · `SAMPLE_SECS` live sample window
+(default 60, `0` skips) · `TOP` rows per ranking · `FILE` analyse one file.
+
+Sections: inventory · rotation cadence and derived write rate · live sample ·
+field-readability sanity check · presence lists · ranking by bytes · untruncated
+samples of the top shapes · what to do.
+
+## Read the numbers correctly
+
+systemd stores each **distinct** field value once and has entries reference it
+by hash. `CONTAINER_NAME=addon_foo` appearing once does not mean one log line —
+it means one distinct value. Low-cardinality fields cannot rank volume. MESSAGE
+values are near-unique, so **the bytes column is the honest one.**
+
+## Safety
+
+No writes, deletes, rotates, vacuums or restarts. One scratch file under
+`$TMPDIR`, removed on exit; nothing in the journal directory is touched. Every
+repair it implies is printed as text for a human to decide on.
+
+**It will not vacuum, and it tells you not to.** `journalctl --vacuum-size`
+frees space, refills within hours, and destroys the evidence that identifies the
+source. Silencing the noisy service is the fix; a `SystemMaxUse=` cap is a guard
+to add afterwards.
+
+## Tests
+
+```sh
+node "Assistant Core/ha-diagnostics/test/journal-storm-test.mjs"    # 31 assertions
+```
+
+Synthetic journal files — binary, newline-free, `NAME=value\0` framed — because
+every failure mode that matters here looks like a clean run:
+
+| Bug | What it would have reported |
+|---|---|
+| `grep -c` on a binary journal | "nothing is readable" on a file holding 20,465 fields |
+| divide-before-multiply on the rate | "0 MB/hour" during a live storm |
+| `sh` has no locals; a helper clobbered `$b` | "shrank from 3 MB to 3 MB" |
+| search literal built from the *normalised* shape | empty samples under correct headers |
+
+All four shipped during development. All four are pinned. The first one actually
+fired against the real hub and had to be overridden by hand.
