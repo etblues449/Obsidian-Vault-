@@ -125,6 +125,23 @@ broker-side SL/TP:
 | Sizing | `RISK_PCT` of balance (converted to USD) ÷ stop distance, floored to the instrument's precision; below `minimumTradeSize` → refused |
 | Execution | FOK market order with `stopLossOnFill` + `takeProfitOnFill`; a cancel/reject is logged, never retried blindly |
 
+## Dashboard — `/trade` in jarvis-carousel
+
+The phone view lives in the existing JARVIS web app (`JARVIS-Carousel/app/trade`),
+installable as a PWA (Add to Home Screen; it also appears as an app shortcut).
+
+- **Vercel env (names only):** `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` (service-role,
+  server-side only — the browser never sees it), and the existing `JARVIS_API_TOKEN`.
+- **First open:** `https://<your-app>/trade#token=YOUR_JARVIS_API_TOKEN` once; the token is
+  stored on the device and scrubbed from the address bar.
+- **Shows:** worker heartbeat age, env badge (PRACTICE / LIVE / DRY RUN), NAV, balance,
+  gold price, scorecard and the six gates as the worker last reported them, open and
+  closed trades, the event log.
+- **Does:** **KILL / RESUME** (sets `settings.kill_switch`; the worker checks it before
+  every order) and the two manual gate checks. Every dashboard action is also written
+  to `events`, so the worker's log and the dashboard's log are one log.
+- Polls every 5 s while visible; no Supabase key in the browser (RLS on, no anon policies).
+
 ## Files in `~/.config/tradeguard/`
 
 `executor.env` (secrets) · `executor_tg.session` (Telegram login) · `KILL` (optional) ·

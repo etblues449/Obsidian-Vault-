@@ -10,6 +10,12 @@ coverage
 .next
 out
 
+# next-pwa build artifacts (regenerated on every build)
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
+
 # Production
 build
 
