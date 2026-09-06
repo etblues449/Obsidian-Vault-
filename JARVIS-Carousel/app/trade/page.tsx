@@ -11,7 +11,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiFetch, captureTokenFromUrl } from '../lib/apiToken'
+import { currentSubscription, pushSupported, subscribePush, unsubscribePush, type PushState } from '../lib/pushClient'
 import type { Event, Settings, Trade, WorkerStatus } from '../api/trade/route'
+
+// Inlined at build time by Next; the same key the server signs with.
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ''
 
 type Snapshot = {
   ok: true
@@ -56,11 +60,50 @@ export default function TradeGuard() {
   const [httpStatus, setHttpStatus] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [tick, setTick] = useState(0)
+  const [push, setPush] = useState<PushState>('off')
+  const [pushMsg, setPushMsg] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     captureTokenFromUrl()
   }, [])
+
+  // Web Push state on mount
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      if (!pushSupported()) return setPush('unsupported')
+      if (!VAPID_PUBLIC_KEY) return setPush('nokey')
+      if (Notification.permission === 'denied') return setPush('denied')
+      const sub = await currentSubscription().catch(() => null)
+      if (!cancelled) setPush(sub ? 'on' : 'off')
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const togglePush = useCallback(async () => {
+    setPushMsg(null)
+    try {
+      if (push === 'on') {
+        const endpoint = await unsubscribePush()
+        if (endpoint) await apiFetch('/api/push', { method: 'DELETE', body: JSON.stringify({ endpoint }) })
+        setPush('off')
+      } else {
+        const sub = await subscribePush(VAPID_PUBLIC_KEY)
+        const r = await apiFetch('/api/push', { method: 'POST', body: JSON.stringify({ subscription: sub.toJSON() }) })
+        const data = await r.json()
+        if (!data.ok) throw new Error(data.error || `HTTP ${r.status}`)
+        setPush('on')
+        setPushMsg('This device will get fills, closes, refusals and kill-switch alerts.')
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      setPushMsg(msg)
+      if (/not permitted/i.test(msg)) setPush('denied')
+    }
+  }, [push])
 
   const load = useCallback(async () => {
     try {
@@ -245,6 +288,18 @@ export default function TradeGuard() {
         <input type="checkbox" checked={Boolean(s?.broker_check)} disabled={busy || !s} onChange={(e) => act('broker_check', e.target.checked)} />
         Execution broker is FCA-authorised (OANDA Europe, FRN 542574)
       </label>
+
+      {/* notifications */}
+      <div className="sec">Notifications</div>
+      {push === 'unsupported' && <div className="muted">This browser cannot receive Web Push. Telegram alerts from the worker still work.</div>}
+      {push === 'nokey' && <div className="muted">Push is not configured on the server yet (<code>NEXT_PUBLIC_VAPID_PUBLIC_KEY</code>). Telegram alerts still work.</div>}
+      {push === 'denied' && <div className="muted">Notifications are blocked for this site — allow them in the browser's site settings, then reload.</div>}
+      {(push === 'on' || push === 'off') && (
+        <button className="btn" style={{ marginTop: 6 }} onClick={togglePush} disabled={busy}>
+          {push === 'on' ? '🔔 PUSH ON — TAP TO DISABLE' : '🔕 ENABLE PUSH ON THIS DEVICE'}
+        </button>
+      )}
+      {pushMsg && <div className="muted">{pushMsg}</div>}
 
       {/* open trades */}
       <div className="sec">Open · {snap?.open.length ?? '—'}</div>

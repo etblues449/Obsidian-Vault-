@@ -79,3 +79,19 @@ export function update<T = Record<string, unknown>>(
 export function insert(table: string, row: Record<string, unknown>): Promise<null> {
   return request<null>('POST', table, { body: row, prefer: 'return=minimal' })
 }
+
+/** INSERT … ON CONFLICT (onConflict) DO UPDATE — needs a unique constraint on that column. */
+export function upsert(table: string, row: Record<string, unknown>, onConflict = 'id'): Promise<null> {
+  return request<null>('POST', table, {
+    params: { on_conflict: onConflict },
+    body: row,
+    prefer: 'resolution=merge-duplicates,return=minimal',
+  })
+}
+
+/** DELETE rows matching { col: value }. */
+export function remove(table: string, match: Record<string, string | number>): Promise<null> {
+  const params: Record<string, string> = {}
+  for (const [k, v] of Object.entries(match)) params[k] = `eq.${v}`
+  return request<null>('DELETE', table, { params, prefer: 'return=minimal' })
+}

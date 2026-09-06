@@ -17,6 +17,8 @@ Optional:
     TG_SESSION             path to the Telethon session file (default: <state dir>/executor_tg)
     SUPABASE_URL / SUPABASE_KEY   PostgREST base + service-role key (worker only)
     TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID   outbound alerts
+    DASHBOARD_URL / DASHBOARD_TOKEN         Web Push via the dashboard's /api/push/send
+                                            (the jarvis-carousel URL + its JARVIS_API_TOKEN)
     RISK_PCT=1  DAILY_LOSS_PCT=5  MAX_TRADES_PER_DAY=3  MAX_DD_PCT=20
     MAX_OPEN_TRADES=1      refuse a new signal while this many trades are open
     MAX_ENTRY_DRIFT=0.5    refuse if price has already moved this fraction of the stop distance
@@ -118,6 +120,8 @@ class Settings:
 
     telegram_bot_token: Optional[str]
     telegram_chat_id: Optional[str]
+    dashboard_url: Optional[str]
+    dashboard_token: Optional[str]
 
     risk_pct: float
     daily_loss_pct: float
@@ -155,6 +159,10 @@ class Settings:
     def has_telegram_alerts(self) -> bool:
         return bool(self.telegram_bot_token and self.telegram_chat_id)
 
+    @property
+    def has_webpush(self) -> bool:
+        return bool(self.dashboard_url and self.dashboard_token)
+
     def redacted(self) -> dict:
         """A printable view with every secret masked — safe for logs."""
         def mask(v: Optional[str]) -> str:
@@ -174,6 +182,8 @@ class Settings:
             "supabase_key": mask(self.supabase_key),
             "telegram_bot_token": mask(self.telegram_bot_token),
             "telegram_chat_id": self.telegram_chat_id or "(unset)",
+            "dashboard_url": self.dashboard_url or "(unset)",
+            "dashboard_token": mask(self.dashboard_token),
             "risk_pct": self.risk_pct,
             "daily_loss_pct": self.daily_loss_pct,
             "max_trades_per_day": self.max_trades_per_day,
@@ -257,6 +267,8 @@ def load(env_file: Optional[Path] = None, require_broker: bool = True) -> Settin
         supabase_key=(os.environ.get("SUPABASE_KEY") or "").strip() or None,
         telegram_bot_token=(os.environ.get("TELEGRAM_BOT_TOKEN") or "").strip() or None,
         telegram_chat_id=(os.environ.get("TELEGRAM_CHAT_ID") or "").strip() or None,
+        dashboard_url=(os.environ.get("DASHBOARD_URL") or "").strip().rstrip("/") or None,
+        dashboard_token=(os.environ.get("DASHBOARD_TOKEN") or "").strip() or None,
         risk_pct=risk_pct,
         daily_loss_pct=daily,
         max_trades_per_day=_int("MAX_TRADES_PER_DAY", 3),

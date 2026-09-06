@@ -142,6 +142,18 @@ installable as a PWA (Add to Home Screen; it also appears as an app shortcut).
   to `events`, so the worker's log and the dashboard's log are one log.
 - Polls every 5 s while visible; no Supabase key in the browser (RLS on, no anon policies).
 
+### Push notifications (optional — Telegram alerts work without this)
+
+1. Generate VAPID keys once: `npx web-push generate-vapid-keys`.
+2. Vercel env: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT=mailto:you@example.com`,
+   and `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (the same public key, for the browser). Redeploy.
+3. On the phone, open `/trade` (installed as a PWA) → **ENABLE PUSH ON THIS DEVICE**.
+4. On the Pi, add to `executor.env`: `DASHBOARD_URL=https://<your-app>` and
+   `DASHBOARD_TOKEN=<JARVIS_API_TOKEN>`. Restart the service. Every alert the worker sends
+   to Telegram is now also pushed to each enabled device (fills, closes, refusals, kill).
+
+Expired device subscriptions are pruned automatically when the push service rejects them.
+
 ## Files in `~/.config/tradeguard/`
 
 `executor.env` (secrets) · `executor_tg.session` (Telegram login) · `KILL` (optional) ·
