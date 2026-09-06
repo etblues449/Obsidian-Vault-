@@ -290,3 +290,71 @@ every failure mode that matters here looks like a clean run:
 
 All four shipped during development. All four are pinned. The first one actually
 fired against the real hub and had to be overridden by hand.
+
+---
+
+# IO Pressure — is the disk actually the bottleneck?
+
+`io-pressure.sh` — POSIX sh. **Read-only.**
+
+## Why
+
+Every fault on this hub on 2026-09-06 looked like slowness, and nothing was
+measuring the disk. `disk_life_time` is null. Supervisor's per-container
+`blk_read`/`blk_write` are all 0 (cgroup v2 without IO accounting). "Slow disk"
+stayed **unmeasured**, which is not the same as disproven — and a whole evening
+of reasoning got built on the gap.
+
+It also produced a wrong answer worth keeping. A journal write storm was found
+(24 MB every ~11 min) and called "the disk I/O that cgroup accounting could not
+show". Then the arithmetic: 528 MB over 6 h is **24 KB/s**, or 0.06% of a slow
+eMMC. It cannot saturate anything. The storm is real and worth fixing; it was
+never the cause. The biggest number found is not automatically the cause.
+
+## Run it
+
+```sh
+sh "Assistant Core/ha-diagnostics/io-pressure.sh"
+```
+
+`SAMPLE_SECS` diskstats window (default 10) · `PROC` override, testing only.
+
+Works from the SSH add-on: `/proc/pressure` and `/proc/diskstats` are not
+namespaced per container, so the figures are host-wide without a host shell.
+
+## Reading it
+
+| `io some avg60` | Means |
+|---|---|
+| < 5% | The disk is **not** the bottleneck. Slowness here is a different fault. |
+| 5–20% | Elevated. Check whether it tracks a specific job or is constant. |
+| > 20% | Tasks stall on I/O a fifth of the time. It **is** the bottleneck; %util names the device. |
+
+`some` = at least one task stalled. `full` = every task stalled. PSI is the
+kernel's own accounting, not an inference from throughput.
+
+**%util is time with a request in flight, not bandwidth.** A device at 100%
+util and 200 KB/s is not busy — it is *slow*, and that is a different fault
+from one saturated with traffic.
+
+## Limits
+
+It cannot attribute I/O to a process: `/proc/<pid>/io` only covers this
+container's PIDs. Per-process attribution needs the host shell on port 22222 —
+the script prints the cgroup and `iotop` commands for that.
+
+## Tests
+
+```sh
+node "Assistant Core/ha-diagnostics/test/io-pressure-test.mjs"    # 19 assertions
+```
+
+Synthetic `/proc`, built around the ways a bottleneck check answers wrongly
+while looking fine:
+
+| Bug | What it would have reported |
+|---|---|
+| reading `full` instead of `some`, or avg10 instead of avg60 | a 42%-stalled box as healthy (the fixture plants both decoys) |
+| treating sectors as bytes | 4 KB/s instead of 2048 KB/s — a hammered disk as idle |
+| missing PSI treated as low PSI | an all-clear the kernel never gave |
+| idle loop devices listed | the one real device buried |

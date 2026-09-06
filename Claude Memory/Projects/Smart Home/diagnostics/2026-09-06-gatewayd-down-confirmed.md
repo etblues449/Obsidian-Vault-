@@ -465,3 +465,122 @@ by hand. It is now pinned by a test.
 Run `journal-storm.sh` (or grep the untruncated line) and read the `upstream:`
 field. Then silence that service. Do not vacuum: it refills in hours and
 destroys the evidence.
+
+---
+
+# UPDATE 05:20 — I had the causation backwards AGAIN. The storm is a symptom.
+
+Source: supervisor log 02:21 → 05:17.
+
+## The correction first
+
+At 04:35 I wrote that the journal write storm "**is** the disk I/O that cgroup
+accounting could not show." That is wrong, and the arithmetic that kills it is
+arithmetic I already had:
+
+| | |
+|---|---|
+| written | 21 × 25,165,824 B = **528 MB** |
+| over | ~6 hours |
+| rate | **24 KB/s** |
+| share of a *slow* eMMC (40 MB/s) | **0.06%** |
+| share of a *failing* SD card (8 MB/s) | **0.3%** |
+
+24 KB/s cannot saturate anything. The storm is real, it is why there are 26
+journal files and only six hours of retention, and it is worth fixing — but it
+was never the cause of the slowness. I reached for it because it was the biggest
+number I had found, not because it was big enough to matter.
+
+That is the **second** time in one night I have run the causation the wrong way
+round on this fault. First: treating short boot retention as evidence *against* a
+churning journal, when it was a consequence of it. Now: treating a symptom of
+disk contention as its cause. Both times the error was the same shape — a number
+that *correlates* with the fault, adopted as the fault, without asking whether it
+is big enough or early enough to be causal.
+
+## What the new log actually shows
+
+**A backup failed on a database lock — this is the strongest evidence yet, and
+it comes from a subsystem with no connection to journald:**
+
+```
+04:56:38 ERROR Preparing backup of Home Assistant Core failed …
+         'pre_backup_actions_failed': 'Could not lock database within 30 seconds.'
+```
+
+HA Core could not acquire a lock on its own recorder database inside **thirty
+seconds**. Nothing about journald or gatewayd is involved in that path.
+
+Corroborating, all from this log:
+
+| Time | Observation | Reads as |
+|---|---|---|
+| 04:06:48, 05:00:40 | Music Assistant websocket: `No PONG received after 15.0 seconds` | the box cannot answer a ping in 15 s |
+| 04:57:17 → 05:11:34 | Matter Server image pull took **14 minutes** | disk or network, unresolved |
+| 02:21:05, 02:36:34, 04:08:24 | `Watchdog/Application found a problem with observer plugin!` ×3 | health checks timing out |
+| 04:03:52, 04:04:59, 04:16:23, 04:21:13, 04:31:13 | five `took more than 120 seconds` add-on start timeouts | everything is slow to start |
+| 04:07:27 → 04:07:51 | gatewayd still failing after the 03:55 reboot | unchanged |
+
+**Revised reading.** Something is making disk I/O slow. That one fault explains
+gatewayd (a 10-line tail must open 26 journal files ≈ 540 MB — the *file count*
+is what makes reads expensive, not the write rate), the 30 s DB lock, the PONG
+timeouts, the watchdogs and the start timeouts. The nginx error loop may itself
+be downstream of it: a backend that cannot respond because it is stalled on I/O
+produces exactly `connect() failed` + `auth request … 502`, 9.5 times a second.
+
+So the causal chain is probably:
+
+    something saturates or slows the disk
+      -> Frigate's backend stalls
+        -> its nginx logs 2 errors per request, ~9.5/sec
+          -> journal churns 24 MB/11 min, 6 h retention, 26 files
+            -> gatewayd times out reading them
+
+not the reverse. **I am not asserting this** — it is the hypothesis that now fits
+best, and the last two confident assertions were both backwards.
+
+## Other findings in this log
+
+- **Matter Server was uninstalled and reinstalled** between 04:56:40 and
+  05:17:43 — image removed, data folder deleted, image re-pulled, installed
+  05:11:47, started 05:17:40, discovery sent 05:17:43 with no start timeout
+  after. The restart loop recorded at 04:35 appears **resolved**. Nothing in
+  this session did that; I do not know who or what did.
+- **`Frigate (Full Access) running with disabled protected mode!`** (04:02:29).
+  Relevant because Frigate is the nginx candidate and, unprotected, it has the
+  access to be the I/O source too.
+- **A one-hour clock step at boot**: `02:54:43.668` → `03:54:43.743`, across
+  75 ms of expected work. Exactly 3600.075 s is a clock correction, not a hang
+  — NTP stepping a clock that came up wrong. It perturbs ~11 s of journal
+  timestamps around the boot and does not affect the retention arithmetic.
+- AppArmor profiles loaded include `hassio-supervisor` (03:54:45), consistent
+  with the 512 `DENIED` records.
+- The corrupt backup tarfile and `no_current_backup` both recur. The 04:55
+  backup was HA trying to clear `no_current_backup` — and it is what hit the
+  DB lock.
+
+## The measurement that settles it
+
+Built `Assistant Core/ha-diagnostics/io-pressure.sh` (read-only, 19 assertions).
+It reads the kernel's own Pressure Stall Information — `/proc/pressure/io`,
+`some avg60` — which answers "what fraction of time were tasks stalled waiting
+on I/O" as a measurement rather than an inference, and samples
+`/proc/diskstats` twice for per-device throughput and %util.
+
+Neither file is namespaced per container, so **the SSH add-on sees host-wide
+figures** — no host shell needed.
+
+```sh
+sh "Assistant Core/ha-diagnostics/io-pressure.sh"
+```
+
+- `io some avg60` **< 5%** → the disk is *not* the bottleneck, and this entire
+  line of reasoning — mine included — is wrong. Look at CPU, memory, network.
+- **> 20%** → it is, and the %util column names the device.
+
+This is the number that has been missing since `disk_life_time` came back null
+at the start of the investigation. Everything since has been inference around
+the gap.
+
+**Do not vacuum the journal, and do not restart gatewayd, before this runs.**
+Both destroy state, and on the current reading neither addresses the cause.
