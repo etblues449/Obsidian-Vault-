@@ -313,7 +313,7 @@ _(empty)_
 
 Change the HA URL to just:
 ```
-https://uuxgyehjmsoit9uo770ko6cltmrrzmtb.ui.nabu.casa
+<<REDACTED-NABU-CASA-URL — remote access endpoint; recover from the Nabu Casa account>>
 ```
 
 Nothing after that — no `/jelly-bean-s-house/` or anything else. Then paste your token and hit Connect.
@@ -546,12 +546,12 @@ Update the `http:` block to:
 http:
   cors_allowed_origins:
     - https://claude.ai
-    - https://uuxgyehjmsoit9uo770ko6cltmrrzmtb.ui.nabu.casa
+    - <<REDACTED-NABU-CASA-URL — remote access endpoint; recover from the Nabu Casa account>>
 ```
 
 Restart HA, then in the app use your Nabu Casa URL:
 ```
-https://uuxgyehjmsoit9uo770ko6cltmrrzmtb.ui.nabu.casa
+<<REDACTED-NABU-CASA-URL — remote access endpoint; recover from the Nabu Casa account>>
 ```
 
 That's HTTPS end-to-end so the browser won't block it. Try that after restarting.
@@ -581,7 +581,7 @@ No good
  Let's test if HA is actually reachable. Open a new browser tab on your phone and go to:
 
 ```
-https://uuxgyehjmsoit9uo770ko6cltmrrzmtb.ui.nabu.casa/api/states/media_player.tv_jelly_beans_tv_2
+<<REDACTED-NABU-CASA-URL — remote access endpoint; recover from the Nabu Casa account>>/api/states/media_player.tv_jelly_beans_tv_2
 ```
 
 It will ask you to log in or show JSON. Screenshot what you see — that tells us if the API is reachable at all before we debug the app.
@@ -613,12 +613,12 @@ The token is very long — make sure you copy the entire thing. Does it copy cor
 
 ## human — 2026-04-15 06:37:15
 
-https://uuxgyehjmsoit9uo770ko6cltmrrzmtb.ui.nabu.casa
+<<REDACTED-NABU-CASA-URL — remote access endpoint; recover from the Nabu Casa account>>
 
 http://192.168.0.50:8123
 
 
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkMmVhNWQ1MWZlMzA0MmE4OTVlN2FmNjQwYTEwNTUyMiIsImlhdCI6MTc3NjIzMjI5OCwiZXhwIjoyMDkxNTkyMjk4fQ.5TVKc1uVfHVoW23wySD_Qs67qIBqINcFyTy5ceQI3Dg
+<<REDACTED-HA-LONG-LIVED-TOKEN — committed to a PUBLIC repo 2026-03/04; REVOKE in HA >> Profile >> Security>>
 
 ## assistant — 2026-04-15 06:37:21
 
@@ -626,9 +626,9 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkMmVhNWQ1MWZlMzA0MmE4OTVlN2FmNjQ
 
 In the app enter exactly:
 
-**URL:** `https://uuxgyehjmsoit9uo770ko6cltmrrzmtb.ui.nabu.casa`
+**URL:** `<<REDACTED-NABU-CASA-URL — remote access endpoint; recover from the Nabu Casa account>>`
 
-**Token:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkMmVhNWQ1MWZlMzA0MmE4OTVlN2FmNjQwYTEwNTUyMiIsImlhdCI6MTc3NjIzMjI5OCwiZXhwIjoyMDkxNTkyMjk4fQ.5TVKc1uVfHVoW23wySD_Qs67qIBqINcFyTy5ceQI3Dg`
+**Token:** `<<REDACTED-HA-LONG-LIVED-TOKEN — committed to a PUBLIC repo 2026-03/04; REVOKE in HA >> Profile >> Security>>`
 
 One thing to be aware of — you've just shared that token publicly in this chat. Once you've tested and confirmed it works, go back to HA and **delete this token and create a new one**. Anyone with that token has full access to your HA.
 

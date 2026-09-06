@@ -4362,7 +4362,7 @@ I want you to be able to access ha
  To give me direct access to your HA I need the MCP connection configured. You already have the Home Assistant MCP server listed in your connectors:
 
 ```
-https://uuxgyehjmsoit9uo770ko6cltmrrzmtb.ui.nabu.casa
+<<REDACTED-NABU-CASA-URL>>
 ```
 
 The error you showed earlier was "Failed to generate authorization URL" — that means the MCP connection to HA isn't authenticated yet.

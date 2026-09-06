@@ -2227,7 +2227,7 @@ Not possible — Claude.ai doesn't support OpenRouter or custom API keys.
       "args": ["hass-mcp"],
       "env": {
         "HA_URL": "http://192.168.0.200:8123",
-        "HA_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI0NGNmZjIwMjVjYjQ0OTdjYjRiMjI0YTVmZWNjYTc1MyIsImlhdCI6MTc3NzMzMzI0MiwiZXhwIjoyMDkyNjkzMjQyfQ.UQDbQxghKtrbXQHk-6GrZN_Of2JfS3AM5QHQwByk8Es",
+        "HA_TOKEN": "<<REDACTED-HA-LONG-LIVED-TOKEN — committed to a PUBLIC repo 2026-03/04; REVOKE in HA >> Profile >> Security>>",
         "ANTHROPIC_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai/",
         "ANTHROPIC_MODEL": "gemini-2.5-flash",
         "ANTHROPIC_API_KEY": "[REDACTED-GOOGLE-KEY]"
@@ -2268,7 +2268,7 @@ Not possible — Claude.ai doesn't support OpenRouter or custom API keys.
       "args": ["hass-mcp"],
       "env": {
         "HA_URL": "http://192.168.0.200:8123",
-        "HA_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI0NGNmZjIwMjVjYjQ0OTdjYjRiMjI0YTVmZWNjYTc1MyIsImlhdCI6MTc3NzMzMzI0MiwiZXhwIjoyMDkyNjkzMjQyfQ.UQDbQxghKtrbXQHk-6GrZN_Of2JfS3AM5QHQwByk8Es",
+        "HA_TOKEN": "<<REDACTED-HA-LONG-LIVED-TOKEN — committed to a PUBLIC repo 2026-03/04; REVOKE in HA >> Profile >> Security>>",
         "ANTHROPIC_BASE_URL": "https://openrouter.ai/api/v1",
         "ANTHROPIC_API_KEY": "[REDACTED-OPENROUTER-KEY]",
         "ANTHROPIC_AUTH_TOKEN": "[REDACTED-OPENROUTER-KEY]",

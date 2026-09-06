@@ -100,7 +100,7 @@ Y
  You've got a few ways to access it:
 
 1. **Browser** — go to `http://192.168.0.50` on your local network
-2. **Nabu Casa** — your remote URL is `https://uuxgyehjmsoit9uo770ko6cltmrrzmtb.ui.nabu.casa` (works anywhere)
+2. **Nabu Casa** — your remote URL is `<<REDACTED-NABU-CASA-URL>>` (works anywhere)
 3. **HA app** — iOS/Android app, connects via local or Nabu Casa automatically
 
 What are you trying to do in HA?

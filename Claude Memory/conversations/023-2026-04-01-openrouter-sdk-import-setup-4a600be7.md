@@ -1239,8 +1239,8 @@ This sets it system-wide. Then restart VS Code completely and try again.
       "command": "uvx",
       "args": ["--refresh", "ha-mcp@latest"],
       "env": {
-        "HOMEASSISTANT_URL": "https://uuxgyehjmsoit9uo770ko6cltmrrzmtb.ui.nabu.casa",
-        "HOMEASSISTANT_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJmNGJiY2I3NmNlZWQ0YjEyOGY4ZDQzOTdlMmY2ZjVhYyIsImlhdCI6MTc3NTYxODcyOSwiZXhwIjoyMDkwOTc4NzI5fQ.cdpA57gZgUPM6e8r8vl95DLoxTIeEMkduVaQ5beVhSw"
+        "HOMEASSISTANT_URL": "<<REDACTED-NABU-CASA-URL — remote access endpoint; recover from the Nabu Casa account>>",
+        "HOMEASSISTANT_TOKEN": "<<REDACTED-HA-LONG-LIVED-TOKEN — committed to a PUBLIC repo 2026-03/04; REVOKE in HA >> Profile >> Security>>"
       }
     }
   }

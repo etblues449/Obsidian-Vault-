@@ -1,0 +1,108 @@
+# Bedroom lights + AI CAM 2 — PROPOSED, NOT APPLIED
+#
+# Revised 2026-08-31 against LIVE REGISTRY data (see
+# diagnostics/2026-08-31-bedroom-entity-audit.md). Every AI CAM 2 entity below was read
+# off `curl /api/states`, not inferred from a config file. The first draft of this file
+# guessed the `ai_cam_outside_` prefix from ai-cam-outside.yaml — that guess was WRONG,
+# which is why it was never pasted.
+#
+# ── THE BLOCKER ───────────────────────────────────────────────────────────────
+#
+# `light.bedroom_light` DOES NOT EXIST, and neither does any other bedroom light.
+# `binary_sensor.bedroom_bedroom_presence` DOES NOT EXIST either.
+#
+# The two automations currently live on the hub (`bedroom_enter`, `bedroom_empty`) are
+# both enabled and both point at those two absent entities. They have never been able to
+# fire. This file does not "update" them — there is nothing working to update. It
+# rebuilds them, and one input is still missing.
+#
+# Fill in BEDROOM_LIGHT_ENTITY below once the bedroom light exists in HA. Until then
+# only §3 is applyable, and only after substituting that entity.
+#
+# ── VERIFIED ENTITY IDs (live, 2026-08-31) ────────────────────────────────────
+#
+#   binary_sensor.ai_cam_2_user_button ................. off      (responsive)
+#   button.ai_cam_2_play_chime ......................... unknown  (normal for a button)
+#   assist_satellite.landing_ai_cam_2_assist_satellite . idle
+#   switch.ai_cam_2_wake_word_enabled .................. on
+#
+# Note the split prefix — it is not a typo. The board was provisioned on the Landing and
+# renamed to AI CAM 2; only some entities re-slugged, so `ai_cam_2_*` and
+# `landing_ai_cam_2_*` are both live on the same device. Copy them exactly.
+#
+# ── HOW TO APPLY ──────────────────────────────────────────────────────────────
+#
+# `ha-config/automations.yaml` in this vault is an EXPORT, not a source. Editing it
+# changes nothing. These are UI-managed: Settings -> Automations -> (⋮) -> Edit in YAML.
+#
+# ──────────────────────────────────────────────────────────────────────────────
+
+# §1 — BLOCKED. Rebuild of `bedroom_enter`.
+# Needs BOTH a bedroom light AND a working bedroom presence sensor. The mmWave node is
+# offline (binary_sensor.bedroom_espectre_status = off; all ~30 of its entities
+# unavailable), so there is no presence source in that room at all right now.
+#
+# - id: bedroom_enter
+#   alias: Bedroom - Enter
+#   triggers:
+#   - trigger: state
+#     entity_id: <A REAL BEDROOM PRESENCE SENSOR>     # bedroom_espectre_* once revived
+#     to: 'on'
+#   actions:
+#   - action: light.turn_on
+#     target:
+#       entity_id: BEDROOM_LIGHT_ENTITY
+#     data:
+#       brightness_pct: 70
+#       color_temp_kelvin: 4000
+#   mode: single
+
+# §2 — BLOCKED, same two reasons. Rebuild of `bedroom_empty`.
+# The Assist condition is the one part that IS verified and ready: it stops the lights
+# being put out mid-sentence while you are talking to the satellite, because mmWave reads
+# a still, talking person as an empty room. It fails safe — if the satellite is
+# unavailable its state is not in the list, the condition passes, and plain
+# presence-off behaviour is preserved.
+#
+# - id: bedroom_empty
+#   alias: Bedroom - Empty
+#   triggers:
+#   - trigger: state
+#     entity_id: <A REAL BEDROOM PRESENCE SENSOR>
+#     to: 'off'
+#     for:
+#       minutes: 2
+#   conditions:
+#   - condition: not
+#     conditions:
+#     - condition: state
+#       entity_id: assist_satellite.landing_ai_cam_2_assist_satellite   # VERIFIED
+#       state:
+#       - listening
+#       - processing
+#       - responding
+#   actions:
+#   - action: light.turn_off
+#     target:
+#       entity_id: BEDROOM_LIGHT_ENTITY
+#   mode: single
+
+# §3 — APPLYABLE once BEDROOM_LIGHT_ENTITY is substituted.
+# Both AI CAM 2 entities below are verified live and responsive, so this one needs no
+# hardware work — only a light to point at. It also gives the bedroom a working manual
+# control while the presence radar is down, which is worth having on its own.
+- id: bedroom_ai_cam_2_button
+  alias: Bedroom - AI Cam 2 button toggles light
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.ai_cam_2_user_button      # VERIFIED live, currently 'off'
+    to: 'on'
+  actions:
+  - action: light.toggle
+    target:
+      entity_id: BEDROOM_LIGHT_ENTITY                  # <-- SUBSTITUTE BEFORE PASTING
+  # Audible confirmation: the button gives no tactile feedback in the dark.
+  - action: button.press
+    target:
+      entity_id: button.ai_cam_2_play_chime            # VERIFIED live
+  mode: single
