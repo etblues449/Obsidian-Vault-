@@ -106,3 +106,87 @@ The script did **not** run against the hub — no Node in the SSH add-on. These
 probes are a hand-rolled equivalent of its two timed calls, using the same
 endpoints and the same classification rule. That distinction is deliberate: the
 script's 46 offline assertions still have not met a real hub.
+
+---
+
+# UPDATE 03:55–04:16 — a host reboot did NOT fix it
+
+**Source:** supervisor log tail supplied by the user, covering a host boot at
+~03:55:43 (Rauc marked slot A / kernel.0 good — that only happens on a real host
+boot) through 04:16:23.
+
+## The remedy above is insufficient
+
+At **04:07:27**, twelve minutes after the host booted, Supervisor logged the
+identical failure:
+
+```
+ERROR ... Could not get a list of boot IDs from systemd-journal-gatewayd
+INFO  ... Could not get /boots from systemd-journal-gatewayd, using fallback.
+ERROR ... Unexpected error during API call ... _get_boot_ids_legacy
+          ... timeout=ClientTimeout(total=20) ... HostLogError
+```
+
+A reboot restarts gatewayd. Gatewayd came back and **still cannot serve the
+journal**. So this is not a transient wedge that a restart clears — the
+`systemctl restart` remedy prescribed by `ha-supervisor-fix.mjs` would very
+likely not have fixed it either. Something persistent is wrong.
+
+**One thing this does confirm:** the cold-cache explanation was right. Post-boot
+the boot-ID cache is empty, so Supervisor tries to populate it, hits gatewayd,
+and times out — reproducing the *original* error exactly. Earlier tonight the
+same endpoint answered in 1.07 s purely because the cache was warm.
+
+## The bigger signal: the box is starved
+
+Across this one startup:
+
+| Time | Event |
+|---|---|
+| 03:55:43 → 04:05:14 | Supervisor took **9.5 minutes** to reach "up and running" |
+| 04:03:52 | Speech-to-Phrase — **start timeout >120 s** |
+| 04:04:59 | Frigate (Full Access) — **start timeout >120 s** |
+| 04:16:23 | Matter Server — **start timeout >120 s** |
+| 04:08:24 | Watchdog found a problem with the observer plugin |
+| 04:08:53 | Speech-to-Phrase SIGKILLed (**137**) after ~78 s failing to stop |
+| 04:09:43 | Matter Server SIGKILLed (**137**) after ~108 s failing to stop |
+
+Exit 137 is 128+9 — SIGKILL. Here it follows an explicit Supervisor *stop*, so
+it is a **graceful-shutdown timeout**, not proof of the OOM killer. Be precise
+about that. What the whole set does establish is that processes on this box are
+extremely slow both to start and to respond to SIGTERM.
+
+That is resource contention. **Which** resource is not yet measured — and the
+2026-09-06 disk reading (79% free) rules out capacity, not speed. Memory is the
+leading candidate given the workload: this 4 GB ARM board is running Mosquitto,
+go2rtc, ssh_tunnel, ESPHome, Tailscale, SSH, Matter, Samba, Configurator, Music
+Assistant, Speech-to-Phrase, openWakeWord, Frigate in full-access mode, **and**
+the Claude Desktop add-on — which carries an X server, Electron and a WebRTC
+streaming stack.
+
+> This is a hypothesis with converging evidence, not a finding. It has not been
+> measured. Do not record it as a cause until `/supervisor/stats`, per-add-on
+> stats and `/proc/meminfo` have been read.
+
+**If it holds, it subsumes the separate open item.** The 40-minute Claude Desktop
+update check, the 33 s `mkdir` and the 53 s asar patch all fall out of a starved
+box — and so, plausibly, does gatewayd being unable to answer within 20 s. That
+would make the gatewayd fault a *symptom*, not the disease, and restarting it
+would be treating the wrong thing. That is exactly what the reboot result above
+suggests.
+
+## Two unrelated defects in the same log
+
+- **Corrupt backup.** `Can't read backup tarfile
+  /data/backup/Automatic_backup_2026.7.4_2026-07-31_05.34_30005300.tar:
+  "filename './backup.json' not found"`. One of 13 backup files is unreadable.
+- **No current backup.** Supervisor raised `no_current_backup` and suggested
+  `create_full_backup` (04:05:14). Combined with the above, backup coverage on
+  this system should be treated as unproven.
+
+## Revised next step
+
+Do **not** restart gatewayd first. Measure the resource pressure first — a
+restart would destroy the state that identifies the real cause, and the reboot
+already showed a restart does not hold.
+
