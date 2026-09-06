@@ -19,3 +19,9 @@ Claude Memory/Projects/Trading Signals/tools/signals*.jsonl
 # Claude Code harness telemetry (skill-usage PreToolUse hook)
 .claude/logs/
 
+# Executor runtime files — credentials and caches, never commit
+Claude Memory/Projects/Trading Signals/tools/executor/.env
+Claude Memory/Projects/Trading Signals/tools/executor/*.env
+__pycache__/
+*.pyc
+

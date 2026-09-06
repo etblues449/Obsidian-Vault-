@@ -3,6 +3,11 @@
 ## Goal
 Independently verify (or bury) the "GOLD VIP" / "THE WAR ZONE" Telegram XAUUSD signals **on paper, at Elliot's own risk sizing, before any real money moves** — and keep a hard funding gate between the channel's marketing and the bank account.
 
+## Status (2026-09-06)
+- **Executor built (Phase 1) — practice-first, tests green, not yet run on hardware.** `tools/executor/` is a Python worker for a Raspberry Pi: Telethon ingest → parse/validate → kill switch → live gate → daily loss cap (**now enforced** — the console only displayed it) / max-drawdown breaker / open-trade cap / duplicate check / stale-drift check → sizing from the broker's live instrument spec (refuses below the minimum, never rounds up) → OANDA v20 FOK market order with broker-side SL/TP → local JSONL (source of truth) + Supabase mirror → Telegram alerts. Closes come from OANDA's transaction stream, not the bot's guess. **73 unit tests** (stdlib, no network) including 19 end-to-end loop tests against a fake broker. Runbook `tools/executor/README.md`; systemd unit included. Design: [[Executor — Architecture]].
+- **Decisions closed (Elliot, 2026-09-05/06):** broker **OANDA Europe** (FCA 542574) after a 12-broker second pass; host **Raspberry Pi / home box**; dashboard `/trade` inside jarvis-carousel as an installable PWA (Pake is desktop-only); live only via a passed funding gate **or** the explicit `GATE_OVERRIDE` phrase — either is logged to `events`.
+- **Not yet built:** `supabase/schema.sql`, the `/trade` dashboard, Web Push (Phase 2). **Not yet done by Elliot:** OANDA practice account + token, Pi setup, `--login` / `--check` / `--dry-run` (Phase 3).
+
 ## Status (2026-09-05)
 - **SECURITY INCIDENT — RESOLVED (CORRECTION).** `tools/jarvis_tg.session` — a live Telethon login to Elliot's personal Telegram account — was swept into this **public** repo by an obsidian-git auto-commit on 2026-08-23 (`c0ce5eb`) and sat on `master` until found 2026-09-05. Verified live (256-byte auth key, DC4, 40 cached entities). Elliot terminated it in Telegram → Settings → Devices (leaked key now invalid); the file was `git rm`'d; `.gitignore` now blocks `*.session`, `*.session-journal`, `tools/signals*.jsonl`. History **not** rewritten — force-push is denied by policy and revocation makes the bytes worthless. **The logger must be logged in again** (`python signal_logger.py --login`).
 - **Signal logger: went live this session** on the Fold 7 (`~/Obsidian-Vault-` clone, Termux). First login failed on an `api_id` too large for int32 (wrong value); second succeeded; listening to **GOLD VIP** (`-1002073063994`), writing `signals.jsonl`. No signals captured before the session was revoked (see above). Termux gotchas now in `tools/README.md`. *Note: Fold 7 screenshot timestamps read 2026-07-16 — device-clock discrepancy vs the vault's 2026-09-05; unresolved, recorded rather than hidden.*
@@ -20,20 +25,25 @@ Independently verify (or bury) the "GOLD VIP" / "THE WAR ZONE" Telegram XAUUSD s
 - Risk caps: 1% per trade, 5% daily, ≥30 closed trades + ≥28 days forward test, PF ≥ 1.3, max DD ≤ 20%.
 - Telethon user-session (not Bot API — bots can't read channels without owner-granted admin; confirmed still true 2026). Read-only, aged account = documented low-risk case.
 - Commercial Telegram→MT4 copiers rejected (blind execution + would wire to a warned broker).
-- **Pending supersession (2026-09-05):** Elliot has asked for real autonomous execution via Interactive Brokers ahead of the paper gate. Not actioned — awaiting the deep-research verdict and plan approval. If approved, the gate override must be an explicit, logged setting, with the 1%/5%/max-DD caps and a kill-switch enforced in code, never wired to a warned broker (T4Trade / Xlence / Tradeco), and never via ToS-breaking automation of a broker without an API.
+- **SUPERSEDES (2026-09-06) — the first decision above is superseded under these conditions only:** autonomous execution is built (`tools/executor/`) for **OANDA Europe** (FCA-authorised, explicit personal-automation licence), **practice by default**; live requires all six funding gates or the exact `GATE_OVERRIDE` phrase, and either path is written to the event log; the 1 %/trade, 5 %/day, 20 % max-DD caps, one-open-trade cap and kill switch are enforced in code before any order; SL/TP are always broker-side; never a warned broker (T4Trade / Xlence / Tradeco); never ToS-breaking automation of a broker without an API (Trading 212, Plus500). Interactive Brokers was rejected by the research (password-only individual API, one session per username, IBC archived 2026-09-01).
 
 ## Next Actions
 - [ ] **Elliot: withdraw the residual $4.72 from T4Trade** — live test of their withdrawal process; deposit nothing further.
 - [ ] **Elliot: block/report @Signalstevebot; never join the Zoom calls.**
 - [x] Elliot: get api_id/api_hash from my.telegram.org → run `signal_logger.py --login` then `--list` in Termux — done 2026-09-05.
 - [ ] **Elliot: re-login the logger after this PR merges** — `cd ~/Obsidian-Vault-/"Claude Memory/Projects/Trading Signals/tools" && git pull && python signal_logger.py --login`, then `python signal_logger.py`.
-- [ ] Deep-research verdict → approve/adjust the plan (`/root/.claude/plans/…` this session) → build.
+- [x] Deep-research verdict → plan → Phase 1 built (2026-09-06).
+- [ ] **Elliot: OANDA Europe practice account** → *Manage API Access* token + account id; **Raspberry Pi** (64-bit OS); then follow `tools/executor/README.md`: install → `--login` → `--list` → `--check` → `--dry-run` → systemd. Report what `--check` prints for sample sizing.
+- [ ] Claude: Phase 2 — `supabase/schema.sql`, `/trade` page + `/api/trade` in jarvis-carousel, Web Push.
+- [ ] Elliot: merge PR #86 (security + research + executor) or ask for it to be split.
 - [ ] Run the paper loop for 4+ weeks; import `signals.jsonl` into Trade Guard weekly.
 - [ ] Review scorecard at 30 closed trades — expected outcome per base rates: channel fails the gate (independent audit of a comparable channel: 26% actual win rate vs "100%" claimed).
 - [ ] Optional: report the channel (FCA form / Action Fraud / Telegram report).
 
 ## Reference
 - [[Due Diligence — GOLD VIP + T4Trade]] — full cited findings (FCA/AMF/FSMA/FSA primary sources)
-- [[Research — Executor Stack Verdict 2026-09-05]] — deep-research verdict on the autonomous-executor stack (IBKR/Vercel/Pake rejected; OANDA-or-Capital.com + persistent worker + PWA recommended; 21 confirmed / 4 refuted claims)
+- [[Research — Executor Stack Verdict 2026-09-05]] — deep-research verdict on the autonomous-executor stack (IBKR/Vercel/Pake rejected; OANDA-or-Capital.com + persistent worker + PWA recommended; 21 confirmed / 4 refuted claims) + second pass over 12 more brokers
+- [[Executor — Architecture]] — decisions, data flow, risk controls, code map, verification ladder
+- `tools/executor/README.md` — the executor runbook (Pi install, first run, systemd, kill switch, going live)
 - `tools/README.md` — the verification loop + Termux setup
 - Sessions: [[sessions/2026-07-10]] · [[sessions/2026-07-13]] · [[sessions/2026-09-05]]
