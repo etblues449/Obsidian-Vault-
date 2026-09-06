@@ -272,3 +272,89 @@ own API calls appearing in the log at 04:23:49–04:23:55. It is Alpine: no
 from the host's. If its protection mode is disabled it may have a route to the
 host; that has not been checked yet.
 
+---
+
+# UPDATE 04:35 — ROOT CAUSE FOUND: a journal write storm
+
+`/var/log/journal` turned out to be **mounted into the SSH add-on**, so the
+journal could be inspected directly with `ls` — no host shell, no `journalctl`.
+
+## Corruption: disproven
+
+`ls /var/log/journal/*/*.journal~` → **no matches. Zero.**
+
+systemd renames corrupt or uncleanly-closed journal files with a trailing tilde
+and leaves them in place. There are none. That is the third hypothesis falsified
+by measurement, after `journal-too-large` (as originally framed) and memory.
+
+## What the directory actually shows
+
+26 files, ~540 MB total, in
+`/var/log/journal/51f5e2d181c64d64b33e13b3a0c93847/`.
+
+Twenty-one are exactly 25,165,824 bytes (24 MB). Their mtimes:
+
+```
+Sep 5  22:10 22:28 22:39 22:50 23:08 23:31 23:43 23:54
+Sep 6  00:05 00:15 00:26 00:36 01:08 01:19 01:31 01:42
+       01:53 02:03 02:15 02:26 02:37
+```
+
+**A fresh 24 MB journal file every ~11 minutes.**
+
+| Measure | Value |
+|---|---|
+| Write rate | ~2.2 MB/min ≈ **130 MB/hour ≈ 3 GB/day** |
+| Total on disk | ~540 MB across 26 files |
+| Retention span | Sep 5 22:10 → Sep 6 04:29 — **~6 hours** |
+
+Six hours of retention on a home-automation hub. A healthy one keeps weeks.
+systemd's size cap is discarding history nearly as fast as it is written.
+
+## This unifies every symptom
+
+| Symptom | Explained |
+|---|---|
+| gatewayd 20 s timeout | reading a 540 MB journal under continuous 2 MB/min append |
+| Survived a full reboot | the storm resumed immediately (03:53, then 04:29) |
+| Even a 10-line tail hangs | gatewayd contends with journald on the same files |
+| `blk_read`/`blk_write` unmeasurable | **this is the disk I/O we could not see** |
+| Add-ons >120 s to start | sustained eMMC write pressure during a 14-add-on boot |
+| 40-min update check, 33 s `mkdir`, 53 s asar patch | same |
+
+## Correction: my earlier reasoning was inverted
+
+On 2026-09-06 I disproved `journal-too-large` using two facts. One was fine — the
+79%-free disk was accurate and genuinely irrelevant, because this was never about
+capacity.
+
+**The other was backwards.** I wrote that "only three boots are tracked" was
+evidence *against* a large or churning journal. It is the opposite: three boots
+is simply all that fits inside six hours of retention. The short boot list was a
+**symptom of the churn**, and I cited it as proof against the churn.
+
+The script's `journal-too-large` verdict was closer to right than my
+`gatewayd-down` call. Both describe downstream effects; the write storm is
+upstream of both.
+
+> Standing lesson for this vault: a number that looks like evidence *against* a
+> hypothesis may be a *consequence* of it. Ask which direction the causation runs
+> before spending the number.
+
+## Still unknown: what is doing the writing
+
+Not yet identified. Matter Server is the obvious suspect given its visible
+restart loop from 04:09 onward, but that is a **guess, not a finding**.
+
+The journal files are binary with plaintext field values, so the culprit can be
+ranked without `journalctl` by extracting `CONTAINER_NAME=`, `SYSLOG_IDENTIFIER=`
+and `MESSAGE=` from one rotated file and counting. A first attempt using
+`tr -c '[:print:]'` returned nothing — BusyBox `tr` does not split those fields
+as expected. Use `grep -ao` with a bounded character class instead.
+
+## Fix, once the source is known
+
+Silencing the noisy service is the actual repair. Vacuuming the journal treats
+the symptom and it will refill within hours. A `SystemMaxUse` cap is still worth
+setting afterwards as a guard, not as the fix.
+
