@@ -9,3 +9,19 @@ Claude Memory/Projects/Smart Home/ha-config/hub/secrets.yaml
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
 
+# Credentials and regenerable data — never commit.
+# 2026-09-05: a live Telethon session (a full Telegram login) was swept into this
+# PUBLIC repo by an obsidian-git auto-commit on 2026-08-23. Revoked and removed.
+*.session
+*.session-journal
+Claude Memory/Projects/Trading Signals/tools/signals*.jsonl
+
+# Claude Code harness telemetry (skill-usage PreToolUse hook)
+.claude/logs/
+
+# Executor runtime files — credentials and caches, never commit
+Claude Memory/Projects/Trading Signals/tools/executor/.env
+Claude Memory/Projects/Trading Signals/tools/executor/*.env
+__pycache__/
+*.pyc
+

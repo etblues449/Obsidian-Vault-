@@ -1,0 +1,3 @@
+# The executor is stdlib-only except for the Telegram client.
+# Install on the Pi with:  python3 -m venv ~/tradeguard-venv && ~/tradeguard-venv/bin/python -m pip install -r requirements.txt
+telethon>=1.36,<2

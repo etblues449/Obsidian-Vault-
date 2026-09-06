@@ -38,17 +38,26 @@ is exposed.
 
 ```bash
 pkg install python
-pip install telethon
-cd ~/jarvis/vault/"Claude Memory/Projects/Trading Signals/tools"
+python -m pip install telethon     # not bare `pip` — its shebang goes stale after a Termux Python upgrade
+cd ~/Obsidian-Vault-/"Claude Memory/Projects/Trading Signals/tools"   # git clone the vault first if it isn't there
 python signal_logger.py --login    # one-time; api_id/api_hash from my.telegram.org
 python signal_logger.py --list     # find the exact channel names/IDs
 python signal_logger.py            # listen + log
 ```
 
+`api_id` is a 6–8 digit number (fits in a 32-bit int). If Telethon fails with
+`struct.error: 'i' format requires …`, the value you typed is wrong — delete
+`jarvis_tg.session` and log in again.
+
 Credentials: export `TG_API_ID` / `TG_API_HASH` in the shell or type them at
 the prompt. Never write them into a vault note (CLAUDE.md rule). The
-`jarvis_tg.session` file that Telethon creates is a credential too — keep it
-out of git (`.gitignore` it if the tools folder ever syncs it).
+`jarvis_tg.session` file that Telethon creates **is a full login to your
+Telegram account** — no password or 2FA needed to use it. It is git-ignored
+(`*.session` in the vault `.gitignore`), as is `signals*.jsonl`. Never
+`git add -f` it. If a session file ever does land in git: Telegram →
+Settings → Devices → terminate the `aarch64` session *first*, then `git rm`
+it. (This happened on 2026-08-23 via obsidian-git auto-commit into the public
+repo; found, revoked and removed 2026-09-05.)
 
 ## Why paper first (the short version)
 
