@@ -145,6 +145,64 @@ check "user content still present once"         "$(grep -Fxc 'Keep this line.' "
 install_to "$DEST"
 check_true "user content survives a refresh" grep -Fxq 'Keep this line.' "$DEST/CLAUDE.md"
 
+# A hand-edited CLAUDE.md that lost its END marker must be refused, not rewritten: the awk
+# refresh keys on the two markers independently, so a stray BEGIN would swallow every line
+# below it — including the user's own text.
+# Uses its own dest: $DEST is group 6's fixture and must survive this section.
+GDEST="$(newdest)"
+mkdir -p -- "$GDEST"
+unterminated() {
+  printf '# Mine\n\n<!-- BEGIN jarvis-global -->\nstale block body\n\nIrreplaceable user note.\n' \
+    > "$GDEST/CLAUDE.md"
+}
+
+unterminated
+if install_to "$GDEST"; then bad "install refuses an unterminated jarvis-global block"
+else ok "install refuses an unterminated jarvis-global block"; fi
+check_true  "text below the stray marker survived" grep -Fxq 'Irreplaceable user note.' "$GDEST/CLAUDE.md"
+check_true  "text above the stray marker survived" grep -Fxq '# Mine' "$GDEST/CLAUDE.md"
+check_false "refused install wrote no manifest"    test -f "$GDEST/.jarvis-global-manifest"
+
+# Uninstall runs the same awk, and must refuse before it starts deleting.
+unterminated
+if install_to "$GDEST" --uninstall; then bad "uninstall refuses an unterminated block"
+else ok "uninstall refuses an unterminated block"; fi
+check_true "uninstall left the file intact" grep -Fxq 'Irreplaceable user note.' "$GDEST/CLAUDE.md"
+
+# Two blocks are ambiguous rather than destructive, and are refused for that reason.
+printf '<!-- BEGIN jarvis-global -->\na\n<!-- END jarvis-global -->\nmid\n<!-- BEGIN jarvis-global -->\nb\n<!-- END jarvis-global -->\n' \
+  > "$GDEST/CLAUDE.md"
+if install_to "$GDEST"; then bad "install refuses a duplicated jarvis-global block"
+else ok "install refuses a duplicated jarvis-global block"; fi
+check_true "duplicated-block file left intact" grep -Fxq 'mid' "$GDEST/CLAUDE.md"
+
+# A well-formed block is of course still accepted — the guard must not reject the normal case.
+GDEST="$(newdest)"
+install_to "$GDEST"
+check_true "a well-formed block still installs" grep -Fxq '<!-- END jarvis-global -->' "$GDEST/CLAUDE.md"
+
+# ---------------------------------------------------------------------------------------------
+group '5b. the dry-run plan stays correct on a large manifest'
+# was_ours() reads the previous manifest. Built as a pipe, `grep -q` exited at the first match
+# while `cut` was still writing, cut took SIGPIPE, and pipefail surfaced that 141 as the
+# pipeline status — so on a manifest bigger than the pipe buffer, our own files read back as
+# foreign and --dry-run reported a conflict that does not exist.
+
+BDEST="$(newdest)"
+install_to "$BDEST"
+for ((i = 1; i <= 8000; i++)); do printf 'link\tskills/pad-%06d\n' "$i"; done \
+  >> "$BDEST/.jarvis-global-manifest"
+check_true "manifest now exceeds the 64KiB pipe buffer" \
+  test "$(wc -c < "$BDEST/.jarvis-global-manifest")" -gt 65536
+
+if install_to "$BDEST" --dry-run; then ok "dry-run over a large manifest reports no false conflict"
+else bad "dry-run over a large manifest reports no false conflict" "install.sh exited non-zero"; fi
+
+# And the plan must still name our files as replacements rather than fresh installs.
+plan="$(bash "$INSTALL" --dest="$BDEST" --dry-run 2>&1)"
+check_true "large-manifest plan still recognises our own files" \
+  grep -q 'replace skills/jarvis-vault-access' <<<"$plan"
+
 # ---------------------------------------------------------------------------------------------
 group '6. uninstall removes exactly what was installed'
 

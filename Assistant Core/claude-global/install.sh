@@ -112,10 +112,15 @@ manifest_add() {   # manifest_add <type> <relative-path>
 }
 
 # True when the previous run installed this relative path — i.e. it is ours to replace.
+#
+# Reads from a process substitution, not a pipe, on purpose. As a pipe, `grep -Fxq` exits at
+# the first match while `cut` is still writing, cut dies on SIGPIPE, and `pipefail` reports
+# that 141 as the status of the whole pipeline — so a match on a manifest large enough to
+# overrun the pipe buffer read as "not ours". Here the status is grep's alone.
 was_ours() {   # was_ours <relative-path>
   [ -n "$OLD_MANIFEST" ] || return 1
   [ -f "$OLD_MANIFEST" ] || return 1
-  cut -f2- < "$OLD_MANIFEST" | grep -Fxq -- "$1"
+  grep -Fxq -- "$1" < <(cut -f2- < "$OLD_MANIFEST")
 }
 
 # --------------------------------------------------------------------------- install one item
@@ -160,6 +165,24 @@ install_item() {   # install_item <absolute-source> <relative-dest>
 }
 
 # ------------------------------------------------------------------- CLAUDE.md managed block
+
+# The awk passes below key on the BEGIN and END markers independently: a BEGIN with no
+# matching END leaves them in "inside the block" state to end of file, so every line after
+# the stray marker is dropped. On a hand-edited ~/.claude/CLAUDE.md that is the user's own
+# text. Refuse the run instead — "anything outside the markers is untouched" has to hold
+# even when the markers themselves are broken.
+assert_block_well_formed() {
+  [ -f "$CLAUDE_MD" ] || return 0
+  local begins ends
+  begins="$(grep -Fxc -- "$BEGIN_MARK" "$CLAUDE_MD" || true)"
+  ends="$(grep -Fxc -- "$END_MARK" "$CLAUDE_MD" || true)"
+  [ "$begins" = "$ends" ] || die "$CLAUDE_MD has $begins '$BEGIN_MARK' marker(s) and $ends '$END_MARK' marker(s).
+       Editing it would discard content outside the block, so nothing was changed.
+       Balance the markers by hand, or delete both and re-run."
+  [ "${begins:-0}" -le 1 ] || die "$CLAUDE_MD contains $begins jarvis-global blocks; expected at most one.
+       Which one to refresh is ambiguous, so nothing was changed.
+       Leave a single block and re-run."
+}
 
 render_block() {   # render_block <output-file>
   local out="$1" line
@@ -241,6 +264,8 @@ prune_manifest() {   # prune_manifest <manifest-file>
 
 do_uninstall() {
   info "Uninstalling the JARVIS global layer from $DEST"
+  # Before removing anything, so a malformed CLAUDE.md does not leave a half-done uninstall.
+  assert_block_well_formed
   if [ -f "$MANIFEST" ]; then
     local type rel target
     while IFS=$'\t' read -r type rel; do
@@ -271,6 +296,9 @@ do_install() {
   info "  profile: $PROFILE"
   info "  mode:    $MODE"
   info ""
+
+  # Before pruning or writing anything, so a malformed CLAUDE.md costs nothing.
+  assert_block_well_formed
 
   # Snapshot the previous run, then clear its files. This keeps reinstalls idempotent and
   # makes a profile downgrade (full -> standard) actually remove what it no longer installs.
