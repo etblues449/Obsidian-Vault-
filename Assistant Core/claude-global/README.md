@@ -86,11 +86,24 @@ symlink installs you are editing the vault through a link and will get an uncomm
 bash "Assistant Core/claude-global/test/install-test.sh"
 ```
 
-63 assertions, fully offline, against throwaway `--dest` directories. Never reads or writes the
+75 assertions, fully offline, against throwaway `--dest` directories. Never reads or writes the
 real `~/.claude`. Covers dry-run, the installed tree, symlink resolution, idempotency,
 CLAUDE.md block insert/refresh/remove with user content preserved, foreign-file refusal and
 `--force` backup, `--copy`, all three profiles, profile downgrade cleanup, and argument
 validation.
+
+Two of the groups guard specific regressions, and both were written against a reproduction
+first — they fail on the code that preceded them:
+
+- **A malformed marker pair is refused.** The managed-block rewrite matches the `BEGIN` and
+  `END` markers independently, so a hand-edited `~/.claude/CLAUDE.md` that lost its `END`
+  marker used to have every line below the stray `BEGIN` deleted. Install and uninstall now
+  both validate the markers before touching anything.
+- **The `--dry-run` plan survives a large manifest.** `was_ours()` reads the previous
+  manifest. As a pipe, `grep -q` exited at the first match while `cut` was still writing, cut
+  took `SIGPIPE`, and `pipefail` surfaced that 141 as the pipeline status — so past a 64 KiB
+  manifest our own files read back as foreign and the plan claimed a conflict that did not
+  exist.
 
 It also validates every shipped skill and command for loadable YAML frontmatter, with a
 **negative control** that asserts the validator rejects the fenced, frontmatter-less shape PR
