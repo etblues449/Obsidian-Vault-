@@ -256,3 +256,20 @@ by the 2026-09-01 live audit, and the answer was no. Groq decommissioned
 `Claude Memory/Projects/Smart Home/_index.md` for the model swap and the standing
 warning that **a green Actions run is not proof a file was written**.
 
+
+
+
+---
+
+## 12. SUPERSEDING — 2026-10-01: replacement device is a Galaxy Z Fold 8 Ultra
+
+> §11 said the Fold 7 is lost and a replacement is ordered. **The replacement is in hand: a
+> Samsung Galaxy Z Fold 8 Ultra.** It is now the primary device and the JARVIS host. Read every
+> "Fold 7" in §1, §2 and §10 as "Fold 8 Ultra".
+
+- **The design is unchanged.** The six-tab `jarvis-app.mjs` on :8737 is THE daily app. 14 tools; P0–P5 are on `origin/main`. Constraints as in §1.
+- **Verification status: NOT yet re-verified on the Fold 8 Ultra.** The §2 proofs were made on the Fold 7. Until bring-up passes, the honest status of P0–P5 is "proven on the previous device, code safe on `origin/main`".
+- **Bring-up checklist:** `Claude Memory/Projects/Smart Home/sessions/2026-10-01.md`, which has 10 ordered steps. The two easiest to miss are **restoring `.env` by hand** and **re-installing the vault `.git/hooks/pre-commit` `.github/` guard**. Neither travels with a clone, and without the hook obsidian-git will eventually delete the Actions workflows again (the 4th occurrence).
+- **HA side:** the companion app must be re-paired as the new device. Check for automations or notify targets that still reference the Fold 7's `mobile_app_*` entity.
+- The §11 S22 Termux gotchas (OpenSSL relink, pager, git identity) apply to the new phone too.
+
