@@ -720,3 +720,12 @@ list is maintained by hand — a known limit, written down rather than left to b
 constant that also exists in the thing it verifies, the two will drift — and the checker will
 report the stale value with full confidence, which is worse than not checking at all.
 
+
+
+## New — 2026-10-01 (Fold 8 Ultra replacement)
+
+- [x] ~~Replacement for the lost Fold 7~~ — **Galaxy Z Fold 8 Ultra in hand** (2026-10-01).
+- [ ] **S1 — Fold 8 Ultra JARVIS bring-up:** 10-step checklist in `Projects/Smart Home/sessions/2026-10-01.md` (Termux stack, clone `jarvis-core`, restore `.env` by hand, vault clone + pre-commit `.github/` guard, Claude Code pin, start :8737).
+- [ ] **S1 — Re-verify P0–P5 on the Fold 8 Ultra** (self-knowledge `--check`, hardline, memory round-trip, ledger trail, capture → router).
+- [ ] **S2 — Re-pair the HA companion app** on the Fold 8 Ultra; repoint Fold 7 `mobile_app_*` notify/presence references.
+
