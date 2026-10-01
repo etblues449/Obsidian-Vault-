@@ -426,3 +426,306 @@ commit landing is not proof the file changed.*
 - [ ] **Delete `~/_archive_jarvis_*` once you're satisfied nothing broke** — 547M reclaimed. Leave
   it a week; `/data` is at 90% so it's worth doing eventually, but there's no rush.
 
+
+
+---
+
+## New — 2026-09-01 full live diagnosis (report: [[../Projects/Smart Home/sessions/2026-09-01]])
+
+> Run from the browser against the hub API, the Actions logs and the vault directly. Nothing here
+> is taken from documentation.
+
+### P0 — do these first
+- [ ] **Swap the Groq model — one line.** `Assistant Core/jarvis-skills/runner.mjs:42`,
+      `'llama-3.3-70b-versatile'` → `'openai/gpt-oss-120b'`. **Groq decommissioned the old model on
+      2026-08-16** (free + developer tiers); all four scheduled skills share `runner.mjs` and have
+      failed **25/25 runs** since the workflows were restored on 08-23. Evidence: Morning Brief #38,
+      2026-09-01 13:29 BST — `Groq HTTP 404: model_not_found`, exit 1, "No write — reason: error".
+      Also fix the doc comments at ~L8 and ~L19. Voice agent's `llama-3.1-8b-instant` retired the
+      same day → `openai/gpt-oss-20b`.
+- [ ] **Then prove it wrote something.** Run each of the 4 skills once and confirm a file lands
+      (`briefings/` is stuck at `2026-08-05`, `connections/` at `2026-08-02`, `synthesis/` at
+      `2026-W31`). Green ≠ written — this system has proved that three times.
+- [ ] **Rebuild or delete 6 dead presence automations.** Every Govee bulb they target is gone from
+      the account: `left_smart_bulb`, `right_smart_bulb`, `rgbic_tv_backlight`, `stairs_smart_bulb`,
+      `bedroom_light`. Triggers `binary_sensor.bedroom_bedroom_presence` and
+      `binary_sensor.landing_landing_presence` don't exist either. Start with the AI Cam pair —
+      the trigger genuinely works, only the targets are dead.
+- [ ] **Bedroom radar — physical fix.** ESPectre (.205) is healthy (−38 dBm, 43.5 °C) but every
+      LD2410 value is `unknown`: dead UART to the module. Reseat TX/RX + power, verify the ESPHome
+      pin map. Also check the ~21-minute uptime for a reboot loop. **Note the IP clash in the docs:
+      .205 is the bedroom node, not Landing.**
+
+### P1
+- [ ] **Music Assistant is down** — add-on `error`, entry `setup_retry`,
+      `Failed to connect to music assistant server http://d5369777-music-assistant:8094`.
+      Owns 17 devices / ~27 unavailable entities. Fixing or removing it clears a sixth of the
+      dead-entity count in one action.
+- [ ] **Claude Desktop add-on** (`db21ed7f_claude_desktop`) in `error`.
+- [ ] **`input_boolean.away_mode` was ON** at audit time — it guards most automations. Check before
+      debugging any rebuilt automation.
+- [ ] **Govee runs over the cloud.** `connection_mode = cloud_api`, lan/mqtt/bluetooth all `off`;
+      `living_room_light` + `upstairs_led_bulb` unavailable. Govee2MQTT is referenced in project
+      memory but **is not installed**. Decide: local path, or stop documenting it as local-first.
+- [ ] **AI CAM 2 firmware was rebuilt 2026-08-29 and still doesn't connect** (31 dead entities).
+      Confirm the board joins the network **before** the planned camera-module swap — the swap
+      assumes the board is otherwise fine.
+- [ ] **Two duplicate dashboards** ("Smart Home", "Jelly Bean's Dash"), both storage-mode, 29 refs
+      each, 10 missing + 5 unavailable. Collapse to one. `ui-lovelace-minimal-v2.yaml` is **not in
+      use** — edits to it do nothing.
+- [ ] **Hub is on Core 2026.9.0b4 — the beta channel.** Not recorded as a decision anywhere.
+
+### P2 — registry cleanup (all verified as 0-device or duplicate)
+- [ ] Delete 7 ghost config entries: esphome "Bedroom (bedroom)", esphome "Porch Camera (porch-cam)",
+      `cast`, samsungtv "Jelly Bean's tv (UE50NU7470)", samsungtv "Sambed", dlna_dmr "Bose LS Ultra
+      Speaker", apple_tv "EShare-5726".
+- [ ] Collapse duplicate integrations: TV integrated 3× (dlna_dmr + samsungtv_smart + samsungtv),
+      soundbar 2× (dlna_dmr + bose), LS Ultra 2×, EShare 2×. Source of the `_2/_3/_4` suffixes and
+      the 7 dead `eshare_5726*` players.
+- [ ] Retire **RuView** in HA and in the docs — node unavailable, no bridge add-on installed.
+- [ ] Delete the **"Landing Wifi"** ESPHome entry — loaded, **zero entities** (the June ghost).
+- [ ] **GitHub integration** — 26 unavailable entities across 7 repos. Re-auth or drop.
+- [ ] Remove the stopped **Get HACS** add-on (one-shot installer; HACS loads independently).
+- [ ] Dismiss the stale supervisor `no_current_backup` flag — a backup completed 2026-09-01 05:21.
+
+### Claude workspace
+- [ ] **Strip the unrelated CLAUDE.md block from the Smart Home project instructions** — it lists
+      App / Faceless-Finance / Fincast / Select-lifestyles-Website- / Studying- and an
+      Expo/FastAPI/MongoDB stack, none of it this project, prepended to every message.
+- [ ] **Correct project memory** — 8 wrong claims (HA version, Voice PE live, TV entity ID, Studio
+      Code Server, node IP map, storage, Frigate, lounge automations). **Keep the *Key learnings*
+      section verbatim** — it is the best artefact in the estate.
+- [ ] **Retire 19 dated YAML snapshots** from project knowledge ("… 28" ×9, "… 14" ×5, "Automation
+      11 April 26", "Lounge Yaml 06 April 26"). Point the project at `ha-config/` instead (exported
+      2026-08-23, 11/11 automations + 5/5 scenes, verified restorable).
+- [ ] **Fold ~14 stray smart-home/JARVIS chats into the project** (ESP32-S3-CAM smart home setup ·
+      2026 hardware order page · Log review · Reading the vault before responding · Path to the vault ·
+      Vault setup and workflow instructions · JARVIS core phases shipped… · Jarvis project handoff… ·
+      chat 1 / chat 2 app interface and automation redesign · 2× duplicate "Jarvis-style app interface" ·
+      2× duplicate "Creating an Obsidian plugin" · Customizing obsidian plugin).
+- [ ] **Close the 5 Tasks still flagged "Needs attention."**
+- [ ] **Vercel scope mismatch** — the connected account lists **0 projects** under "Jelly Bean's
+      projects" (hobby) while `jarvis-carousel.vercel.app` serves and `jarvis-voice-lovat.vercel.app`
+      404s. Resolve before trusting any Vercel automation. (The Carousel `JARVIS_API_TOKEN` rotation
+      you decided on 2026-08-23 to leave is still outstanding by your own record — not re-raised as
+      an action, noted for completeness.)
+
+### Corrections this audit makes to items already in this file
+- [x] **"Watch the first scheduled runs land"** *(2026-08-23)* — **ANSWERED, and the answer is no.**
+      They ran and every one failed on `model_not_found`. Closed by evidence, not by success.
+- [x] **"Capture is still idle / Tasker capture leg"** — the capture *path* is fine; Capture Router
+      is 3/3 green and the phone-side tool works. Nothing has been captured since 2026-08-23 because
+      nothing has been sent, not because anything is broken.
+- [ ] **`_index.md` "Lounge: complete (~19 automations)"** — still wrong in the body of that file;
+      a superseding block was appended 2026-09-01 rather than rewriting it. A full rewrite is still
+      owed (this repeats the standing "Tidy `Projects/Smart Home/_index.md`" item).
+
+
+## New — 2026-09-03 Obsidian CLI setup
+
+- [x] **Set up the `obsidian:obsidian-cli` skill.** *(2026-09-03: Obsidian 1.13.7 installed in the cloud container on Xvfb, vault cloned and indexed (355 files), CLI registered at `~/.local/bin/obsidian`, **20/20 verification checks green** including `dev:screenshot`. Re-establish per session with `Scripts/obsidian-cli/bootstrap-obsidian-cli.sh` — idempotent, cold-start tested.)*
+- [x] **Confirm the headless instance is not a second git writer.** *(2026-09-03: `app.plugins.plugins` empty — Obsidian opens an untrusted vault in Restricted Mode, so `obsidian-git` (autoPushInterval 10, autoPullOnBoot true) never started; clone stayed 0 commits ahead of origin. The bootstrap now asserts this each run rather than relying on it. Feeds the open "identify the client that deleted 8 files from master" item — the cloud container is **ruled out** as a candidate writer, and was not one before today.)*
+- [x] **Gitignore per-machine Obsidian UI state.** *(2026-09-03: `.obsidian/workspace.json` + `workspace-mobile.json` added — never tracked, no history, so nothing is lost.)*
+- [x] **Android/Termux Obsidian CLI — closed as not possible.** *(2026-09-03: the CLI ships inside the desktop Electron app; the Android build has no CLI and Termux cannot run the desktop app. Advanced URI, claude-code-bridge and plain `git` remain the route on the Fold. Recorded so it is not re-investigated.)*
+- [ ] **Run `Scripts/obsidian-cli/Setup-ObsidianCli.ps1` on the Windows PC.** Obsidian was installed there today. The script reports by default and changes nothing; `-Fix` sets `"cli": true` and the user PATH. Parse-checked and logic unit-tested under PowerShell 7.5.3, but **never executed against a real install** — this is the one untested deliverable. Close Obsidian before `-Fix`.
+- [ ] **Add `etblues449/Obsidian-Vault-` to the session's authorised repository set** if direct `git push` from a Claude cloud session is wanted. Today the git proxy refused to inject a credential (403) and everything was committed through the Vault connector instead — which works, but produces one commit per file rather than one session commit.
+
+
+### Corrections this session makes to items added earlier today
+
+- [x] **"Run `Scripts/obsidian-cli/Setup-ObsidianCli.ps1` on the Windows PC" — DONE, not handed over.** *(2026-09-03: the session became linked to the PC mid-conversation. Obsidian 1.13.7 found at `%LOCALAPPDATA%\Programs\Obsidian`, `cli` enabled, install dir added to the user PATH, and `obsidian version` / `vaults` / `eval` / `tags` / `search` / `help` all verified live — `obsidian eval` reports **3001** markdown files in `Jelly Bean's Vault — primary`. `Setup-ObsidianCli.ps1` now reports **all checks passed**; `Test-SetupObsidianCli.ps1` is **33/33 on Windows PowerShell 5.1**.)*
+- [x] **"The one untested deliverable" — retired, and it was hiding three real bugs.** *(2026-09-03: running it found (1) the wrong install root — Obsidian's per-user NSIS installer uses `%LOCALAPPDATA%\Programs\Obsidian`, not `%LOCALAPPDATA%\Obsidian`; (2) a `Join-Path` null-root crash where `ProgramFiles(x86)` is absent, because Join-Path evaluates before any filter after it; (3) **PowerShell 5.1 reading `obsidian.json` as ANSI, which corrupted the em dash in `Jelly Bean's Vault — primary` and left Obsidian unable to find the vault**. All three fixed on master with regression tests, including an em-dash round-trip. Bug 3 was repaired from the backup the script takes before editing — vault path verified byte-identical to the backup, vault reopened by name.)*
+- [ ] **Standing note for this estate: PowerShell 5.1 is the only PowerShell on the PC** (no `pwsh` 7), and it defaults to the ANSI codepage for both reading and writing. Any future script that edits a JSON/config file containing non-ASCII must force UTF-8 explicitly on **both** sides. `Jelly Bean's Vault — primary` contains an em dash, so this estate hits it by default.
+- [ ] **The PC's open vault is `C:\Users\etblu\Documents\Jelly Bean's Vault — primary` and it is NOT a git repo** — so it is not a working copy of `etblues449/Obsidian-Vault-`. Worth reconciling: the session protocol assumes the GitHub repo is the vault, but the vault actually open on the PC syncs by other means. Decide which is canonical before any automation writes to both.
+
+
+
+---
+
+## New — 2026-09-04 session (database tool hardened; Fold 7 lost)
+
+> Session record: [[../Projects/Smart Home/sessions/2026-09-04]]
+
+### ⚠️ P0 — hardware
+
+- [ ] **The Fold 7 is lost and offline.** Replacement ordered, not in hand. Every "verified on
+      device" proof in this vault was proven on a device that no longer exists; **re-verify P0–P5
+      on the replacement before trusting any completion marker.** Setup: clone
+      `etblues449/jarvis-core` (`main`), then **restore `.env` by hand — it is gitignored and holds
+      every secret, and does NOT come down with the clone.** This is the step most likely to be
+      missed.
+- [x] **The 2026-08-23 `origin/main` push is what saved P0–P5.** Recorded not as an action but as
+      the reason the device loss was survivable — hardline, persona, memory, ledger and capture
+      would all have gone with the phone had the 17-day gap still been open. **Push is what makes
+      the device disposable.**
+
+### Resolved
+
+- [x] **"Retire the `database` stub per the supabase playbook (decide PostgREST-vs-driver first)."**
+      *(Listed twice above — 2026-08-22 and 2026-08-23. **The stub was already retired before this
+      session**; the decision was PostgREST + built-in `fetch`, zero dependencies. Confirmed by
+      reading `tools/database.mjs` on `origin/main`. This session **hardened** it — commit
+      `e51cacf`: exact counts via `Prefer: count=exact` (it had been counting `rows.length` under
+      `limit=1000`, so a 1001-row table would have reported a fabricated "1000"), a write-keyword
+      guard where there was none, an 8s timeout, and a routing fix — `'run'` was tested twice and
+      `'running'` matched it, so "how many agents are running" returned execution history. Plus
+      `test/database-test.mjs`, **30 assertions, fully offline** (fetch stubbed, matching the tier
+      suites' no-key/no-network rule) and `test/database-live.mjs` for live acceptance. Proven: a
+      4th Supabase row was inserted and the tool reported 4 with no code change.)*
+
+### New — the actual stub, previously in no document
+
+- [ ] **`lib/supabase-ai-agent-creator.mjs` is a stub.** Its handler returns
+      *"Query handler will be connected in Step 6."* and never opens a connection. It also
+      hand-parses `.env` with `line.split('=')`, bypassing `lib/env.mjs` and mangling any value
+      containing `=`. **Not `tools/database.mjs`** — the two are easily confused and the confusion
+      has already cost a session. Decide: finish it, or delete it as dead code.
+
+### Doc corrections made this session
+
+- [x] **Project `HANDOFF.md` (2026-07-21) calls `database` "a STUB … the #1 unfinished item".**
+      *(FALSE, and false when written. **Roughly half of 2026-09-04 was spent rebuilding a working
+      tool** because that snapshot was read as current. The vault's `JARVIS/HANDOFF.md` (2026-08-23)
+      was correct throughout. Superseding blocks appended to both canonical vault files.)*
+- [x] **Project `JARVIS_AGENT_SPEC.md` claims tier4 (27 assertions) + tier5 (34) suites.**
+      *(Neither file exists on `origin/main` — `ls test/` shows only tier1, tier2, tier6. The "107
+      offline assertions across all tiers" figure is **unsupported**.)*
+- [x] **`_index.md` Phase 0 block says "13 callable tools, not 14".** *(Stale as of commit
+      `49b0313`; `tools/capture.mjs` shipped in P5 making it **14**. `vault-lib.mjs` is still a
+      helper, so the block's reasoning holds — only the number moved.)*
+- [ ] **Standing: project files cannot be edited from a session and do not sync back.** Treat
+      `HANDOFF.md` and `JARVIS_AGENT_SPEC.md` in the claude.ai project as **historical snapshots,
+      never sources of truth.** The vault copies are canonical. Replace or delete the project ones
+      when convenient.
+
+### Termux rules earned on the S22 (apply to the replacement Fold)
+
+- [ ] **`pkg install nodejs` can report "already the newest version" while node is unrunnable.**
+      Symptom: `CANNOT LINK EXECUTABLE "node": cannot locate symbol
+      OSSL_PROVIDER_add_conf_parameter`. The binary is fine; its OpenSSL linkage is stale.
+      **Fix: `pkg reinstall openssl nodejs`, answer `N` at the `openssl.cnf` prompt.**
+- [ ] **Termux ships no pager** — `git log` dies with `unable to execute pager 'pager'` and prints
+      nothing at all. `git config --global core.pager cat`.
+- [ ] **A fresh clone has no git identity, and the failure looks like a silent no-op.**
+      `git commit` errors with *"Author identity unknown"*, but if anything is chained after it the
+      error scrolls away. **Two commits were believed made that were not.** Run `git commit` alone
+      and read its output. *(Identity now set globally — the replacement Fold inherits it.)*
+
+### Near-miss worth not repeating
+
+- [ ] **A scratch `~/jarvis-core` was built on the S22 on branch `master` with no shared history
+      with the real repo.** Had it been pushed, the rejection would have invited `--force`, which
+      would have **destroyed P0–P5 on the remote in the same week the device was lost.** Nothing
+      was pushed; the real repo was cloned to `~/jarvis-real` and the work redone against true
+      history. **Always `git ls-remote` before assuming a remote is empty.**
+
+
+
+### 2026-09-04 later — new-device bootstrap shipped (`3ee6839`)
+
+The Fold-7 restore is now a checked procedure rather than a remembered one.
+Three files on `origin/main`:
+
+**`jarvis-doctor.mjs`** — pre-flight check answering one question honestly: *will
+JARVIS actually run on this machine?* It derives requirements from the code that
+reads them (`lib/brain.mjs` provider `keyName`, `vault-lib.mjs`'s bare
+`VAULT_PATH`), so it cannot drift from what the app genuinely needs. Blocks on 4
+things, warns on the optional ones, and **loads the real tool registry** — which
+independently confirmed **14 tools**, the figure `_index.md` had as 13.
+
+**`.env.example`** — generated from `grep`ping every `process.env.*` in the
+codebase, not from memory. Pre-fills the two values that are safe to pre-fill,
+leaving only the API key and vault path for a human.
+
+**`SETUP.md`** — the four commands, the required four variables, the Termux
+failures, and an explicit instruction to re-verify P0–P5 rather than trust proofs
+obtained on a device that no longer exists.
+
+#### Two real defects found while building it
+
+- [x] **`.gitignore:3` was `.env.*`, which swallowed `.env.example`.** The
+      template could never have been committed — so on arrival day the clone
+      would have had no template, and the doctor's own advice
+      (*"cp .env.example .env"*) would have pointed at a missing file. **Fixed**
+      with a `!.env.example` negation, verified in both directions: template
+      visible, `.env` still ignored by line 2.
+- [ ] **`lib/brain.mjs:91` still defaults Groq to `llama-3.3-70b-versatile`** —
+      the model decommissioned 2026-08-16 that caused the 25/25 skill failures.
+      A fresh clone with `JARVIS_MODEL` unset fails **every turn** with
+      `model_not_found`, and it looks like a botched install. The doctor blocks on
+      it and `.env.example` pre-fills `openai/gpt-oss-120b`, so the trap is
+      *defused* — but **the bad default is still in the code.** One-line fix,
+      not made this session: change the `defaultModel` on line 91.
+
+#### Verified both directions, not just one
+
+Fresh clone with no `.env` → 4 blocking, exit 1. Valid throwaway `.env` → all
+clear, exit 0. Then three targeted traps, each producing exactly one FAIL:
+the retired model named explicitly; `JARVIS_PROVIDER=anthropic` with only a Groq
+key present (proving it checks *the selected provider's* key, the failure that
+would otherwise look like a working install); and a `VAULT_PATH` pointing at
+nothing. Finally the guide's own path was walked — `cp .env.example .env` then
+the doctor — leaving exactly the two things only Jelly Bean can supply.
+
+Throwaway `.env` used throughout and deleted; no real secrets involved.
+
+#### Delivery rule earned (add to the standing list)
+
+**Do not put triple-backtick fences inside a `cat` heredoc.** `SETUP.md` was
+written once and came out **truncated at ~1/8th** — bash reported
+`here-document delimited by end-of-file`, and the `git add` chained after it
+never ran either. Use indented code blocks instead, and **verify with `wc -l` and
+`tail -1`**, never by the absence of an error. This is delivery rule #6
+(`node -e` mangling) recurring in a new disguise.
+
+
+
+### 2026-09-04 later still — dead Groq default fixed at source (`470dce8`)
+
+- [x] **`lib/brain.mjs:91` defaulted Groq to `llama-3.3-70b-versatile`.** *(FIXED — now
+      `openai/gpt-oss-120b`, with a comment recording why. Also corrected the stale header
+      comment at line 15 and the Brain row in `AGENT.md:72`, which still listed the retired
+      model "(assumed — see note)". A fresh clone now works with `JARVIS_MODEL` unset.
+      `node --check` clean.)*
+
+#### The doctor was wrong within ten minutes of being written
+
+Fixing the default exposed a defect in `jarvis-doctor.mjs` itself: it **hardcoded**
+`'llama-3.3-70b-versatile'` as brain.mjs's default in both its logic and its message. So the
+moment the code was fixed, the doctor kept reporting the old value and failing a now-correct
+install.
+
+**This is the project's signature failure — "documented ≠ running" — reappearing inside the
+tool built to prevent it.** A checker that restates what the code defines goes stale exactly
+as fast as a document does. Caught only because the fix was verified rather than assumed.
+
+**Fixed properly:** `PROVIDERS` is now exported from `lib/brain.mjs` (additive; nothing else
+changed) and the doctor imports the live table. It derives the key name *and* the default
+model from the running code, and reports the effective model **with its provenance** —
+`(from .env)` or `(brain.mjs default)`. It can no longer disagree with the code it checks.
+
+Verified three ways after the change: no `JARVIS_MODEL` → passes, naming
+`openai/gpt-oss-120b (brain.mjs default)`; a retired model in `.env` → still fails, so an old
+`.env` pasted onto a new device is caught; `JARVIS_PROVIDER=anthropic` with only a Groq key →
+still fails on the derived key name.
+
+`SETUP.md`'s "trap that will bite you" section was rewritten as history rather than left
+warning about a fixed bug, and now says what to do the **next** time a provider retires a
+model: add it to `DEAD_MODELS`, change `defaultModel`. No API reports retirement, so that
+list is maintained by hand — a known limit, written down rather than left to be rediscovered.
+
+#### Standing rule earned
+
+**A checker must derive from the code, never restate it.** If a verification tool contains a
+constant that also exists in the thing it verifies, the two will drift — and the checker will
+report the stale value with full confidence, which is worse than not checking at all.
+
+
+
+## New — 2026-10-01 (Fold 8 Ultra replacement)
+
+- [x] ~~Replacement for the lost Fold 7~~ — **Galaxy Z Fold 8 Ultra in hand** (2026-10-01).
+- [ ] **S1 — Fold 8 Ultra JARVIS bring-up:** 10-step checklist in `Projects/Smart Home/sessions/2026-10-01.md` (Termux stack, clone `jarvis-core`, restore `.env` by hand, vault clone + pre-commit `.github/` guard, Claude Code pin, start :8737).
+- [ ] **S1 — Re-verify P0–P5 on the Fold 8 Ultra** (self-knowledge `--check`, hardline, memory round-trip, ledger trail, capture → router).
+- [ ] **S2 — Re-pair the HA companion app** on the Fold 8 Ultra; repoint Fold 7 `mobile_app_*` notify/presence references.
+

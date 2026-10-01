@@ -33,6 +33,14 @@
       "purpose": "maskable"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "Trade Guard",
+      "short_name": "Trade",
+      "description": "Executor dashboard: heartbeat, positions, gates, kill switch",
+      "url": "/trade"
+    }
+  ],
   "categories": ["productivity"],
   "screenshots": [
     {

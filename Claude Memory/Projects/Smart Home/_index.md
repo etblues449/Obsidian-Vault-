@@ -560,3 +560,195 @@ internet.
 
 Runbook updated with the result, the call script and a Route A/B comparison:
 [[fixes/HKC alarm — HA install runbook]].
+
+---
+
+## ⚠️ SUPERSEDING BLOCK — 2026-09-01 live diagnosis
+
+> Everything above this line predates a full live audit run on **2026-09-01** against the hub API,
+> GitHub Actions logs and the vault. Where the two disagree, **this block is the fact**.
+> Full detail: [[sessions/2026-09-01]].
+
+### Corrections to the Status section above
+- **"Lounge: complete (~19 automations)" is wrong twice over.** The hub has **11** automations
+  (already corrected on 2026-08-23; this file was never updated) and **there is no lounge automation
+  at all** — the radar node is now "Kitchen Presence" and the only automations that fired today were
+  `kitchen_enter_daytime` and `kitchen_room_empty_light_off`.
+- **8 of the 11 automations are no-ops.** Every Govee bulb they target (`left_smart_bulb`,
+  `right_smart_bulb`, `rgbic_tv_backlight`, `stairs_smart_bulb`, `bedroom_light`) has been removed
+  from the Govee account, and `binary_sensor.bedroom_bedroom_presence` /
+  `binary_sensor.landing_landing_presence` do not exist.
+- **"RuView WiFi-CSI sensing: live & phone-free" is wrong.** It is dead:
+  `binary_sensor.ruview_csi_node_3_presence` is unavailable and **no RuView CSI Bridge add-on is
+  installed**. The MQTT device is a retained-discovery ghost.
+- **"£0 migration — PR pending" is stale.** It merged. The four workflows run on schedule.
+- **"Phase-2 capture router — not yet built" is stale.** It is built and has 3/3 successful runs.
+- **"Voice agent LIVE & £0 — `jarvis-voice-lovat.vercel.app`" is wrong.** That host **404s**.
+  `jarvis-carousel.vercel.app` does still serve.
+- **`media_player.tv_jelly_beans_tv_2` does not exist.** Canonical TV is
+  **`media_player.jelly_beans_tv_3`** (decided 2026-08-02; confirmed live 2026-09-01).
+- **"Frigate ruled out (too heavy for HA Green)" is superseded.** Frigate is running and is the only
+  working person detector in the house.
+- **"Landing .205" is wrong** — .205 is **ESPectre, the bedroom node**. The "Landing Wifi" ESPHome
+  entry is loaded but exposes **zero entities**; it is the ghost flagged back in June.
+
+### The one thing to fix first
+**Groq decommissioned `llama-3.3-70b-versatile` on 2026-08-16.** All four scheduled skills share
+`runner.mjs`, so all four have failed every run since the workflows came back on 2026-08-23 —
+**25/25 failed**, zero output for 27 days (last briefing `2026-08-05`).
+
+    Assistant Core/jarvis-skills/runner.mjs:42
+    - const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+    + const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+
+`llama-3.1-8b-instant` (voice agent) was retired the same day → `openai/gpt-oss-20b`.
+After the swap: run each skill once **and confirm a file lands in the vault** — green ≠ written.
+
+### Current live baseline (2026-09-01)
+Core **2026.9.0b4 (beta channel)** · OS 18.2 · 674 entities, **159 unavailable** · 11 automations,
+5 scenes · 51 config entries (8 not loaded, Music Assistant in `setup_retry`) · 14 add-ons
+(Music Assistant + Claude Desktop in `error`) · 7 ESPHome devices, 3 offline · disk 91.2/461.4 GB ·
+backup completed 2026-09-01 05:21 to local + Google Drive · `input_boolean.away_mode` = **on**.
+
+### Next Actions (supersedes the list above)
+- [ ] **Swap the Groq model** (runner.mjs:42) then verify a real write, not a green run
+- [ ] Turn `away_mode` off if home — it guards most automations
+- [ ] Rebuild or delete the 6 dead presence automations (start with the AI Cam pair: trigger works,
+      only its targets are dead)
+- [ ] Reseat the LD2410 on ESPectre (.205) — ESP is healthy, radar is silent on UART; check the
+      ~21-minute uptime for a reboot loop
+- [ ] Restart or remove Music Assistant — clears ~27 unavailable entities
+- [ ] Delete 7 ghost config entries (esphome Bedroom, esphome Porch Camera, cast, samsungtv ×2,
+      dlna_dmr Bose LS Ultra, apple_tv EShare) and the duplicate integrations (TV ×3, soundbar ×2,
+      LS Ultra ×2, EShare ×2)
+- [ ] Collapse "Smart Home" + "Jelly Bean's Dash" into one dashboard, rebuilt against live entities
+- [ ] Decide the Govee question — LAN/Govee2MQTT or accept cloud; today it is cloud-dependent while
+      being documented as local-first
+- [ ] Confirm AI CAM 2 joins the network (fw rebuilt 2026-08-29, still offline) **before** the
+      camera-module swap
+- [ ] Retire the 19 dated YAML snapshots in the Claude project; point it at `ha-config/` instead
+- [ ] Resolve the Vercel scope mismatch (connected account lists 0 projects; Carousel serves)
+- [ ] Decide whether the house hub should stay on the HA beta channel
+
+
+
+## 2026-09-02: Full audit + live fixes (Claude Code)
+Read-only audit of the whole system against live HA Green + local PC, then targeted fixes. Full note: [[diagnostics/2026-09-02-verified-state]].
+- **Key drift resolved:** the `.205` ESPectre board *is* the `bedroom_espectre` node ("Landing" and "Bedroom" = same physical node). It recovered on 2026-09-02.
+- **Fixed:** Bedroom Enter/Empty automations repointed to `binary_sensor.bedroom_espectre_radar_presence` + `light.bedroom` (dead since May).
+- **Built:** `AI Cam person -> lounge TV + Fire Stick (evening)` + off-when-clear; Fire Stick confirmed `media_player.fire_tv_192_168_0_183`, launches Alph IPTV.
+- **Broken/down:** Music Assistant (add-on error); offline nodes — HA Voice/Jessa (.204), ESP Speaker, AI Cam Outside (.201), CSI Node 3 (.209); ~231/760 entities stale.
+- **Redundant:** a 2nd HA + idle Docker stack on the PC (192.168.0.190) duplicating the Green box.
+- **Retire:** the "14"/"28"/April config snapshots in the project (stale).
+
+
+
+---
+
+## 2026-09-04 — `database` tool hardened + FOUR stale doc claims corrected
+
+> Read this block before trusting any earlier statement about the `database` tool
+> or the test suites. Evidence for every correction is cited; nothing here is
+> inferred from documentation.
+
+### The correction that matters most
+
+**`HANDOFF.md` (claude.ai project copy) is wrong.** Its §0.2 calls the `database`
+tool *"a STUB — it does not touch Supabase … the #1 unfinished item."* **That has
+not been true for some time.** The version on `origin/main` already performed a
+real PostgREST `fetch` against `dfaveoprjahbnydljich.supabase.co` before this
+session began. Verified by reading `tools/database.mjs` in a fresh clone.
+
+Cost of the stale claim: the first half of this session was spent building a
+replacement for a solved problem. That work was discarded. **This is the exact
+"documented ≠ running" failure the project keeps paying for, inverted — a doc
+claiming something is broken when it is fixed wastes as much time as the reverse.**
+
+### The real stub, previously undocumented
+
+**`lib/supabase-ai-agent-creator.mjs`** is the genuine dangling thread. Its
+`handler` returns:
+
+    { status: 'ready', message: 'Tool registered. Query handler will be
+      connected in Step 6.', query: input.query }
+
+It never opens a connection. It also hand-parses `.env` with `line.split('=')`,
+bypassing `lib/env.mjs` and mangling any value containing `=`. **It appears in no
+vault or project doc.** Not fixed this session — flagged, not touched.
+
+### Other corrections
+
+- **`JARVIS_AGENT_SPEC.md` claims tier4 (27 assertions) and tier5 (34) test
+  suites.** Neither file exists. `ls test/` on `origin/main` shows only
+  `tier1-test.mjs`, `tier2-test.mjs`, `tier6-test.mjs`. Either never committed or
+  lost. The "107 offline assertions across all tiers" total is therefore unproven.
+- **The Phase 0 block above states "13 callable tools, not 14."** Stale as of
+  commit `49b0313` ("report the true registry total (14)") — `tools/capture.mjs`
+  shipped in P5 and made it 14. `tools/vault-lib.mjs` remains a helper, so the
+  reasoning in that block is still sound; only the number moved.
+
+### What shipped — commit `e51cacf`, pushed to `origin/main`
+
+Correctness fixes on a tool that already worked, not a rewrite.
+
+| Defect | Fix |
+|---|---|
+| Counted `rows.length` under `limit=1000` — a 1001-row table would report 1000, a **fabricated number** | Exact count from PostgREST `Prefer: count=exact` via the `Content-Range` header; when the server declines to count it says so rather than guessing |
+| **No write guard at all** | insert/update/delete/drop/truncate/grant/revoke refused **before** any network call |
+| No timeout — could hang indefinitely | 8s `AbortController`; a hang is reported as a timeout |
+| URL + anon key hardcoded | Readable from env, existing values as defaults |
+| `'run'` tested twice in the routing condition; `'running'` matched it, so **"how many agents are running" returned execution history** | Execution words whole-word matched (`\b(runs?\|executions?\|executed\|history)\b`); pinned by a regression test |
+
+**`test/database-test.mjs` — 30 assertions, all offline.** `fetch` is stubbed;
+matches the tier suites' stated "no API key, no network, no phone needed"
+discipline. Includes the routing regression, and a test asserting that **offline,
+the tool never emits a number**.
+
+**`test/database-live.mjs` — live acceptance, deliberately outside the offline
+suite** so the suite cannot fail on connectivity.
+
+**Acceptance proven, not asserted:** a 4th row was inserted in Supabase; the tool
+reported 4 with no code change, through the exact-count path. Before/after
+witnessed in the same session.
+
+### Working-environment note
+
+The Fold 7 is **lost and offline**; a replacement is on order. This session ran on
+the **S22** (Termux). Node was broken there (`OSSL_PROVIDER_add_conf_parameter`
+link error) — fixed with `pkg reinstall openssl nodejs`, answering **N** at the
+`openssl.cnf` prompt.
+
+Two Termux gotchas worth keeping:
+- **No pager installed** — `git log` dies with `unable to execute pager 'pager'`.
+  Fix: `git config --global core.pager cat`.
+- **A fresh clone has no git identity.** `git commit` fails with *"Author identity
+  unknown"*; the failure output scrolls away if anything is chained after it, so
+  it reads as a silent no-op. Now set globally, so the replacement Fold inherits it.
+
+### Not done — stated plainly
+
+- `lib/supabase-ai-agent-creator.mjs` is still a stub.
+- The two stale **project** docs (`HANDOFF.md`, `JARVIS_AGENT_SPEC.md`) are
+  read-only copies in the claude.ai project. They **cannot be edited from a
+  session** and do not sync back. They remain wrong until updated by hand.
+- No session record was written for 2026-09-04 at time of this append.
+
+
+
+
+---
+
+## 2026-10-01 — Replacement device: Galaxy Z Fold 8 Ultra
+
+> Supersedes the 2026-09-04 "Fold 7 lost, replacement ordered" state.
+
+- **Primary device / JARVIS host is now the Samsung Galaxy Z Fold 8 Ultra.** The Goal line ("driving it from the Fold 7") and all live-device references now mean the Fold 8 Ultra.
+- **Design unchanged:** the six-tab `jarvis-app.mjs` on :8737 is the daily app; 14 tools; North-Star P0–P5 on `origin/main`.
+- **Status: bring-up pending.** P0–P5 are not yet re-verified on the new device. Treat the "verified on device" markers as historical (Fold 7) until re-proven.
+- **Next actions (prioritised):**
+  - [ ] Fold 8 Ultra bring-up: the 10-step checklist in [[sessions/2026-10-01]]. Restore `.env` by hand and re-install the vault pre-commit hook.
+  - [ ] Re-verify P0–P5 on the Fold 8 Ultra and record the proofs.
+  - [ ] Re-pair the HA companion app; repoint any `mobile_app_*` notify or presence references from the Fold 7.
+  - [ ] Still open from 2026-09-01: swap the Groq model in `runner.mjs:42` and confirm a file actually lands.
+- Session record: [[sessions/2026-10-01]]
+

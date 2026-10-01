@@ -1,6 +1,6 @@
 # Claude Session Context — JARVIS / Obsidian Vault
 
-**Last Updated:** 2026-08-22
+**Last Updated:** 2026-09-04
 
 This vault is the persistent memory and working directory for all Claude sessions across devices (PC, Fold 7 / Termux, Claudian-in-Obsidian). All code, notes, decisions and artifacts live here.
 
@@ -50,6 +50,13 @@ when the real fix is reachable, and never make a check pass by weakening the che
 
 The marginal cost of completeness is near zero. Do the whole thing — with tests and docs. Ship the finished solution, not a plan. Rewrite full files for easy copy/paste. Never present a workaround when the real fix exists. One step at a time, each finished before the next.
 
+<important if="a project document says a component is broken, missing, or unfinished">
+Verify against the code or the live system before acting on it. A stale doc claiming
+something is BROKEN costs exactly as much as one claiming it works — on 2026-09-04 a
+July handoff described a working tool as a stub and half a session went into rebuilding
+it. Read the repo before writing code for it.
+</important>
+
 ## SENSITIVE DATA
 
 <important if="generating a briefing, digest, summary, export, or any output that aggregates vault content">
@@ -62,6 +69,8 @@ is not. Never write a secret or token into a note — reference it by name only.
 
 ## Device Sync
 Reliable remote is the GitHub repo via the Obsidian Git plugin (`https://github.com/etblues449/Obsidian-Vault-.git`). SSH remote: `git@github.com:etblues449/Obsidian-Vault-.git` — use SSH from Termux (key at `~/.ssh/id_ed25519`). HTTPS PAT cannot push `.github/workflows/` without workflow scope; SSH sidesteps this entirely.
+
+The phone app is a **separate repo**: `etblues449/jarvis-core`, branch **`main`** (the vault is `master`). Mixing the two branches up is how a push lands in the wrong place.
 
 <important if="adding any automated process that writes to the vault or pushes to master">
 There is exactly ONE write path: `master`, one serialized writer. Running a second
@@ -76,12 +85,14 @@ vault once and recovery cost a full session. Never add another writer. Never for
 ## Harness: JARVIS
 
 **Goal:** Keep JARVIS truthful and working end-to-end — vault state, capture path,
-scheduled skill engine, and the voice/Home-Assistant layer.
+scheduled skill engine, the phone codebase, and the voice/Home-Assistant layer.
 
 **Trigger:** For work spanning two or more of those layers — building or fixing a
 subsystem end-to-end, a full health check, a session start/end, a release, or a
 cross-layer follow-up — use the `jarvis-orchestrator` skill. Work confined to one layer
-goes to that layer's own skill. Simple lookups need no skill.
+goes to that layer's own skill: `capture-pipeline`, `skill-engine-ops`, `jarvis-core-dev`
+(the phone app at `~/jarvis-core`), `vault-integrity-audit`, `voice-satellite-ops`.
+Simple lookups need no skill.
 
 **Health check (read-only, safe any time):**
 
@@ -110,3 +121,7 @@ python3 .claude/skills/qa-boundary-check/scripts/verify-refs.py .
 | 2026-08-06 | 3 agents updated | `jarvis-voice-ha`, `jarvis-skill-engine`, `jarvis-capture-engineer` | Ground truth 10 days stale: AI Cam complete, mWW regressed, TV entity changed, DST guard was a bug, capture router built |
 | 2026-08-06 | SSH auth on vault + jarvis-core | `~/.ssh/id_ed25519` on Fold | HTTPS PAT blocked pushing `.github/workflows/`; SSH sidesteps workflow scope entirely |
 | 2026-08-22 | JARVIS v2 UI + auto-start built | `jarvis2/` package (for `~/jarvis-core` on the Fold), `~/.termux/boot/jarvis-boot` | Two product failures: app required typing into Termux to start; six-tab UI was "busy". Rebuilt to the 2026 voice-UI convergence (single screen, live transcript, reactor control, one sheet); zero-dep launcher on :1875 proxies + auto-spawns jarvis-app.mjs; Termux:Boot + PWA install. 32/32 offline assertions; on-device smoke test is the open gate. Harness Phase-0 audit this session: agents/skills/orchestrator consistent; `webapp-reviewer` decision still pending. |
+| 2026-09-04 | `jarvis-core-dev` skill added | `.claude/skills/jarvis-core-dev/` | The phone codebase (`~/jarvis-core` — `lib/`, `tools/`, `jarvis-app.mjs`, `test/`) had **no owner** in the harness. A full session's work on it ran unharnessed. Added as a skill rather than a sixth agent, respecting the orchestrator's own five-agent cap; `jarvis-skill-engine` carries the "who". |
+| 2026-09-04 | Orchestrator: retired entity + routing | `.claude/skills/jarvis-orchestrator/SKILL.md` | Its error-flow worked example cited `media_player.tv_jelly_beans_tv_2`, confirmed non-existent 2026-09-01 — a harness teaching a dead ID propagates it. Now uses canonical `jelly_beans_tv_3` and names the retired one as a trap. Description/`when_to_use` also route phone-app work to `jarvis-core-dev`. |
+| 2026-09-04 | `skill-engine-ops` de-staled | `.claude/skills/skill-engine-ops/SKILL.md` | Two false claims: it named `llama-3.3-70b-versatile` as the live model (Groq retired it 2026-08-16; 25/25 runs failed for 27 days) and stated `.github/workflows/` does not exist on `master` (restored 2026-08-23). Added the obsidian-git dotfolder root cause, the untracked pre-commit hook, and model retirement as a first-class failure mode. |
+| 2026-09-04 | `android-development` — no change | `.claude/skills/android-development/` | Audited as suspected orphan; **finding withdrawn.** Its README documents it as a deliberate placeholder keeping the path tracked, because it was previously a gitlink with no `.gitmodules` and broke the Vercel clone. Removing it would risk reintroducing that. |

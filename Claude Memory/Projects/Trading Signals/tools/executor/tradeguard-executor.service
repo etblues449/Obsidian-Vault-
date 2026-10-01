@@ -1,0 +1,39 @@
+# systemd unit for the Trade Guard executor on a Raspberry Pi.
+#
+#   sudo cp tradeguard-executor.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now tradeguard-executor
+#   journalctl -u tradeguard-executor -f
+#
+# Assumes (see README.md):
+#   ~/tradeguard        -> symlink to ".../Trading Signals/tools"  (avoids spaces in paths)
+#   ~/tradeguard-venv   -> python venv with requirements.txt installed
+#   ~/.config/tradeguard/executor.env  -> KEY=VALUE secrets (chmod 600), never in git
+
+[Unit]
+Description=Trade Guard executor (OANDA v20, XAU_USD)
+After=network-online.target
+Wants=network-online.target
+# a crash loop must not hammer the broker: at most 5 starts per 5 minutes
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/tradeguard
+EnvironmentFile=/home/pi/.config/tradeguard/executor.env
+ExecStart=/home/pi/tradeguard-venv/bin/python -m executor
+Restart=always
+RestartSec=10
+KillSignal=SIGTERM
+TimeoutStopSec=20
+# hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/home/pi/.config/tradeguard
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

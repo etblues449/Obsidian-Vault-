@@ -2,19 +2,20 @@
 name: jarvis-orchestrator
 description: >-
   Coordinate the JARVIS agent team across vault integrity, capture pipeline, skill engine,
-  voice/Home Assistant, and boundary QA. Use ONLY when work spans two or more of those layers —
-  building or fixing a subsystem end-to-end, a full system health check, a session start or
-  end, a release, or a follow-up that reaches across layers ("continue where we left off",
-  "re-run the whole thing", "fix everything you found"). A request confined to ONE layer
-  belongs to that layer's own skill, not here: a capture bug goes to capture-pipeline, a
-  schedule problem to skill-engine-ops, a vault audit to vault-integrity-audit, a node or
-  entity problem to voice-satellite-ops. Simple lookups and single questions need no skill at
-  all.
+  the phone codebase, voice/Home Assistant, and boundary QA. Use ONLY when work spans two or
+  more of those layers — building or fixing a subsystem end-to-end, a full system health check,
+  a session start or end, a release, or a follow-up that reaches across layers ("continue where
+  we left off", "re-run the whole thing", "fix everything you found"). A request confined to ONE
+  layer belongs to that layer's own skill, not here: a capture bug goes to capture-pipeline, a
+  schedule problem to skill-engine-ops, a change to the phone app (lib/, tools/, jarvis-app.mjs,
+  a test) to jarvis-core-dev, a vault audit to vault-integrity-audit, a node or entity problem to
+  voice-satellite-ops. Simple lookups and single questions need no skill at all.
 when_to_use: >-
   Trigger when work spans two or more JARVIS layers, or for a full health check, session
   start/end, or a cross-layer follow-up. Do NOT trigger for single-layer work — a capture bug
-  goes to capture-pipeline, a schedule problem to skill-engine-ops, a vault audit to
-  vault-integrity-audit, a node or entity problem to voice-satellite-ops.
+  goes to capture-pipeline, a schedule problem to skill-engine-ops, a phone-app code change to
+  jarvis-core-dev, a vault audit to vault-integrity-audit, a node or entity problem to
+  voice-satellite-ops.
 ---
 
 # JARVIS orchestrator
@@ -41,13 +42,19 @@ tree are decided *together*, and QA has to interrupt while work is still cheap t
 |---|---|---|
 | `jarvis-vault-keeper` | vault state, session protocol, **sole git write path** | general-purpose |
 | `jarvis-capture-engineer` | phone → transport → vault; skills 2/5/7 | general-purpose |
-| `jarvis-skill-engine` | `runner.mjs`, workflows, DST, C1 (£0) | general-purpose |
+| `jarvis-skill-engine` | `runner.mjs`, workflows, DST, C1 (£0); **and `~/jarvis-core`, the phone app — see `jarvis-core-dev`** | general-purpose |
 | `jarvis-voice-ha` | ESPHome, Assist, HA control, entity truth | general-purpose |
 | `jarvis-integration-qa` | boundary checks, S1 veto | general-purpose |
 
 All `Agent` calls pass `model: "opus"`. Five members with 4–5 tasks each sits in the
 mid-size band; do not add a sixth without removing one — coordination overhead grows
 faster than throughput.
+
+**The phone codebase is a skill, not a sixth agent.** `~/jarvis-core` (repo
+`etblues449/jarvis-core`, branch `main`) had no owner until 2026-09-04, which is why work
+on it ran unharnessed. Rather than breach the five-agent cap, `jarvis-core-dev` carries the
+"how" and `jarvis-skill-engine` carries the "who". Note the two repos use different
+branches — the vault is `master`, jarvis-core is `main`.
 
 `webapp-reviewer` is **not** on this team. It is a narrow read-only reviewer frozen to
 Carousel baseline `d8e5532`. Call it directly for baseline-diff questions.
@@ -94,6 +101,10 @@ Then run the bundled checkers and fold their output in:
 bash .claude/skills/vault-integrity-audit/scripts/drift-check.sh <vault>
 python3 .claude/skills/qa-boundary-check/scripts/verify-refs.py <vault>
 ```
+
+When the phone app is in scope, its own pre-flight belongs here too — `node jarvis-doctor.mjs`
+reports whether jarvis-core will actually run on this device, and `node self-knowledge.mjs
+--check` gates documentation against the live tool registry.
 
 ## Phase 3 — build (agent team, incremental QA)
 
@@ -159,10 +170,12 @@ workflow is on `master`, QA re-verifies both sides. Phase 4: one commit, QA tabl
 attached. Phase 5: index + session note + queue ticked.
 
 **Error flow — HA unreachable during an entity check.**
-`voice-ha` cannot resolve `media_player.tv_jelly_beans_tv_2`. It does **not** guess a
-similar ID. QA marks the check `UNVERIFIED` (not FAIL, not PASS) and names the missing
-access. The orchestrator proceeds with the vault work, and the report states plainly
-that entity verification did not run. Nothing claims to have been checked.
+`voice-ha` cannot resolve `media_player.jelly_beans_tv_3` because the hub is unreachable.
+It does **not** guess a similar ID — and in particular does not fall back to
+`media_player.tv_jelly_beans_tv_2`, a retired ID that still appears in older vault notes
+and no longer exists in the registry. QA marks the check `UNVERIFIED` (not FAIL, not PASS)
+and names the missing access. The orchestrator proceeds with the vault work, and the report
+states plainly that entity verification did not run. Nothing claims to have been checked.
 
 **Follow-up flow — "redo just the capture part".**
 Phase 0 finds `_workspace/` and a partial-change request → partial re-run. Only
@@ -174,12 +187,18 @@ REGRESSED before anything new is accepted.
 
 - **Documented, merged, and running are three states.** This project conflates them
   routinely and it is the most expensive habit in it. Report which one each claim reached.
+- **A doc claiming something is broken costs as much as one claiming it works.** On
+  2026-09-04 a stale handoff described a working tool as a stub; half a session went into
+  rebuilding it. Read the code before writing code for it.
 - **A partial run presented as complete is the worst possible output.** If an agent
   failed and you proceeded, name the omission in the report.
 - **Never merge two agents' conflicting edits to one file silently.** Surface both with
   attribution and escalate. Silent merges destroy the evidence that they disagreed.
 - **Never let QA repair what it finds.** It has no Write or Edit tools by design; a
   checker that fixes things destroys the signal about which agent's process leaked.
+- **A checker must derive from the code, never restate it.** A verification tool holding a
+  constant that also lives in the thing it verifies will drift, then report the stale value
+  confidently — worse than no check at all.
 - **Do not audit through the GitHub API.** A mid-run 403 will be recorded as missing
   files and poison every downstream decision.
 - **`_workspace/` is the audit trail.** Never discard it silently — move it to
