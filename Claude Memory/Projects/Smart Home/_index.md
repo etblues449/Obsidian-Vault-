@@ -658,3 +658,22 @@ Two Termux gotchas worth keeping:
   session** and do not sync back. They remain wrong until updated by hand.
 - No session record was written for 2026-09-04 at time of this append.
 
+
+
+
+---
+
+## 2026-10-01 — Replacement device: Galaxy Z Fold 8 Ultra
+
+> Supersedes the 2026-09-04 "Fold 7 lost, replacement ordered" state.
+
+- **Primary device / JARVIS host is now the Samsung Galaxy Z Fold 8 Ultra.** The Goal line ("driving it from the Fold 7") and all live-device references now mean the Fold 8 Ultra.
+- **Design unchanged:** the six-tab `jarvis-app.mjs` on :8737 is the daily app; 14 tools; North-Star P0–P5 on `origin/main`.
+- **Status: bring-up pending.** P0–P5 are not yet re-verified on the new device. Treat the "verified on device" markers as historical (Fold 7) until re-proven.
+- **Next actions (prioritised):**
+  - [ ] Fold 8 Ultra bring-up: the 10-step checklist in [[sessions/2026-10-01]]. Restore `.env` by hand and re-install the vault pre-commit hook.
+  - [ ] Re-verify P0–P5 on the Fold 8 Ultra and record the proofs.
+  - [ ] Re-pair the HA companion app; repoint any `mobile_app_*` notify or presence references from the Fold 7.
+  - [ ] Still open from 2026-09-01: swap the Groq model in `runner.mjs:42` and confirm a file actually lands.
+- Session record: [[sessions/2026-10-01]]
+
