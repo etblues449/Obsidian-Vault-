@@ -34,7 +34,7 @@
 - [ ] **Decide: fold the useful parts of the uploaded `claude.md` into the existing `CLAUDE.md`** (Layer A–E model, glossary, command reference, escalation list — the vault has no equivalent). Do **not** commit it as a separate file: `claude.md` vs `CLAUDE.md` collides on Windows and Android. Everything else in that file and in `JARVIS_HEALTH_CHECK_20260802.md` is contradicted by observation — see §10c of the state-of-the-system doc.
 
 - [ ] **`AGENT.md` understates `jarvis-core` by four tiers.** Tiers 3–6 all have shipped code (`ears/deepgram/elevenlabs`, `memory`, `heartbeat`, `rails` + 23 green tier-6 tests) plus a web app and Supabase tool that appear nowhere in it — yet it is the file every fresh session reads first. Reconcile with `JARVIS/HANDOFF.md`, or demote it.
-- [ ] **`jarvis-core` ships a red test on `main`** — `tier1-test.mjs` 6/7. The 401 mock (`test/tier1-test.mjs:172`) omits `headers`, which `lib/brain.mjs:226` reads unconditionally. Production unaffected (real `fetch` always sets it); one-line fixture fix.
+- [x] **`jarvis-core` ships a red test on `main`** — `tier1-test.mjs` 6/7. *(FIXED 2026-10-03 at source — `lib/brain.mjs` `res.headers?.get?.()`; 7/7. jarvis-core PR #3.)* The 401 mock (`test/tier1-test.mjs:172`) omits `headers`, which `lib/brain.mjs:226` reads unconditionally. Production unaffected (real `fetch` always sets it); one-line fixture fix.
 - [ ] **Merge PR #73** (open, draft, `mergeable_state: clean`) — until it lands, `master` and every session-start read are a day behind the real house.
 - [ ] **Triage 3 stale open PRs** — #70 (canonical `ai_cam.esphome.yaml`), #68 (minimise HA automations), #67 (NotebookLM client).
 - [ ] **Confirm the n8n.cloud account state and formally retire it** (C1). Verified only that no n8n-format commit exists after 2026-07-08 — not the account itself.
@@ -548,7 +548,7 @@ commit landing is not proof the file changed.*
 
 ### ⚠️ P0 — hardware
 
-- [ ] **The Fold 7 is lost and offline.** Replacement ordered, not in hand. Every "verified on
+- [x] **The Fold 7 is lost and offline.** *(RESOLVED 2026-10-03: Fold 8 Ultra in hand since 2026-10-01; `.env` restored by hand and P0–P5 re-verified on it — `jarvis-verify.mjs` 5/5 PASS.)* Replacement ordered, not in hand. Every "verified on
       device" proof in this vault was proven on a device that no longer exists; **re-verify P0–P5
       on the replacement before trusting any completion marker.** Setup: clone
       `etblues449/jarvis-core` (`main`), then **restore `.env` by hand — it is gitignored and holds
@@ -725,8 +725,8 @@ report the stale value with full confidence, which is worse than not checking at
 ## New — 2026-10-01 (Fold 8 Ultra replacement)
 
 - [x] ~~Replacement for the lost Fold 7~~ — **Galaxy Z Fold 8 Ultra in hand** (2026-10-01).
-- [ ] **S1 — Fold 8 Ultra JARVIS bring-up:** 10-step checklist in `Projects/Smart Home/sessions/2026-10-01.md` (Termux stack, clone `jarvis-core`, restore `.env` by hand, vault clone + pre-commit `.github/` guard, Claude Code pin, start :8737).
-- [ ] **S1 — Re-verify P0–P5 on the Fold 8 Ultra** (self-knowledge `--check`, hardline, memory round-trip, ledger trail, capture → router).
+- [ ] **S1 — Fold 8 Ultra JARVIS bring-up:** *(2026-10-03: steps 1–8 VERIFIED; step 9 installed, reboot test pending; step 10 open.)* 10-step checklist in `Projects/Smart Home/sessions/2026-10-01.md` (Termux stack, clone `jarvis-core`, restore `.env` by hand, vault clone + pre-commit `.github/` guard, Claude Code pin, start :8737).
+- [x] **S1 — Re-verify P0–P5 on the Fold 8 Ultra** *(VERIFIED 2026-10-03: `jarvis-verify.mjs` 5/5 PASS; capture router run #4 success.)* (self-knowledge `--check`, hardline, memory round-trip, ledger trail, capture → router).
 - [ ] **S2 — Re-pair the HA companion app** on the Fold 8 Ultra; repoint Fold 7 `mobile_app_*` notify/presence references.
 
 
@@ -737,13 +737,26 @@ report the stale value with full confidence, which is worse than not checking at
 Full grading: `Projects/Smart Home/diagnostics/2026-10-03-agent-spec-diagnosis.md`.
 
 - [x] **S1 — Skill engine dead since 2026-08-16:** `runner.mjs` defaulted to retired `llama-3.3-70b-versatile`. *(FIXED 2026-10-03 — `openai/gpt-oss-120b`, `DEAD_MODELS` guard, 33/33 incl. 7 stub-server tests.)*
-- [ ] **S1 — Prove it live:** after merge, confirm `Claude Memory/briefings/<date>.md` is actually written. A green run is not proof.
+- [x] **S1 — Prove it live.** *(VERIFIED 2026-10-03 07:39 UTC: `jarvis-skills[bot]` commit `6ed030f` wrote `briefings/2026-10-03.md` with `openai/gpt-oss-120b`. This is the first brief since 2026-08-05.)*
 - [ ] **S1 — Voice agent not deployed as documented.** The `-lovat` alias returns 404. The `jarvis-voice` Vercel project now builds the vault root and serves a page titled "AI" with no Groq call. Repoint it at the agent's source on a live model, or retire it.
 - [ ] **S2 — `jarvis-core` persona: memory has no data-not-instructions rule** (spec Tier 4). Exact patch in diagnosis §2.1. Needs repo access, then a test and a `SHA_PERSONA` bump.
 - [ ] **S2 — Offline suites missing for Tiers 3, 4, 5** in `jarvis-core/test/`.
-- [ ] **S2 — Decide: Tier 3 STT/TTS under C1.** Deepgram + ElevenLabs are trial credits.
-- [ ] **S2 — Decide: quiet-hours window** for the heartbeat (`user_profile.md` still TO FILL).
-- [ ] **S3 — Confirm a running model-cost tally exists** (spec Tier 6). No evidence either way.
+- [x] **S2 — Decide: Tier 3 STT/TTS under C1.** *(DECIDED 2026-10-03 (Jelly Bean: "you choose"): STT was already free, using Android's own recogniser. ElevenLabs stays as the voice while it works; the phone's free `speechSynthesis` is now the guaranteed fallback, so JARVIS never goes mute. Before this, a missing key or credit meant silence. jarvis-core PR #3, 12 new offline tests.)*
+- [x] **S2 — Quiet-hours window.** *(Already set in code: 22:00–07:00 in `heartbeat.json`. The "unset" finding came from a stale vault note, now corrected.)*
+- [x] **S3 — Model-cost tally (spec Tier 6).** *(Exists: `dailyTokenBudget: 100000` in `jarvis.config.json` plus the token tally in `lib/rails.mjs`.)*
 - [ ] **S3 — Delete `Assistant Core/packages/persona.tar.gz.b64`.** It is truncated and nothing uses it (the installer fetches plain source).
-- [ ] **S3 — Allow `add_repo` for `etblues449/jarvis-core`** in Claude Code permissions so cloud sessions can diagnose the phone app from code.
+- [x] **S3 — Allow `add_repo` for `etblues449/jarvis-core`** *(Approved and attached 2026-10-03.)* in Claude Code permissions so cloud sessions can diagnose the phone app from code.
 - [x] **S3 — Harness checkers fully clean.** *(2026-10-03: 2 `hardware/*` wikilinks fixed; verify-refs frontmatter check narrowed to `SKILL.md`.)*
+
+
+## New — 2026-10-03 (Fold 8 Ultra bring-up session)
+
+- [ ] **S1 — Bring-up step 9 reboot test.** After a reboot, `~/jarvis-core/logs/launcher.log` must show `[--boot] started on :8737`.
+- [ ] **S1 — Merge jarvis-core PR #2** (`jarvis-verify.mjs`, `start-jarvis.sh`, audit torn-line fix) **and PR #3** (phone-voice fallback, tier1 fix). Then on the phone: `cd ~/jarvis-core && git checkout main && git pull`, then `pkill -f jarvis-app.mjs; sh start-jarvis.sh`.
+- [ ] **S2 — Vault MCP auth.** `MCP_TOKEN` was removed on 2026-07-22, so the endpoint may accept unauthenticated reads **and writes** to this public vault. Confirm, and re-add a gate if it is open.
+- [ ] **S2 — Track the `.github` pre-commit guard as an installer.** It is hand-typed per device. The Fold 8's version blocks every change under `.github/workflows/` and misses deletions elsewhere under `.github/`.
+- [ ] **S3 — jarvis-core tier2/tier6/database tests write into the real `logs/ledger.jsonl`.** Redirect `JARVIS_LEDGER_FILE` in those suites.
+- [ ] **S3 — `lib/memory.mjs` has no cross-process lock.** Two simultaneous writers can race the `.bak` copy.
+- [ ] **S3 — Re-test the Claude Code glibc builds on the Fold 8** before keeping the `2.1.112` pin.
+- [x] **Decision — lost Fold 7 credentials.** *(Jelly Bean, 2026-10-03: will not be revoked or rotated. Do not raise again.)*
+- [x] **`.gitignore` ignores `JARVIS/Inbox/*.tmp-*`.** *(2026-10-03. An interrupted capture's temp file can never be committed.)*
