@@ -671,8 +671,8 @@ Two Termux gotchas worth keeping:
 - **Design unchanged:** the six-tab `jarvis-app.mjs` on :8737 is the daily app; 14 tools; North-Star P0–P5 on `origin/main`.
 - **Status: bring-up pending.** P0–P5 are not yet re-verified on the new device. Treat the "verified on device" markers as historical (Fold 7) until re-proven.
 - **Next actions (prioritised):**
-  - [ ] Fold 8 Ultra bring-up: the 10-step checklist in [[sessions/2026-10-01]]. Restore `.env` by hand and re-install the vault pre-commit hook.
-  - [ ] Re-verify P0–P5 on the Fold 8 Ultra and record the proofs.
+  - [ ] Fold 8 Ultra bring-up: the 10-step checklist in [[sessions/2026-10-01]]. Restore `.env` by hand and re-install the vault pre-commit hook. *(2026-10-03: steps 1–8 VERIFIED; step 9 installed, reboot test pending; step 10 not started. See the 2026-10-03 bring-up block below.)*
+  - [x] ~~Re-verify P0–P5 on the Fold 8 Ultra and record the proofs.~~ *(VERIFIED 2026-10-03: `jarvis-verify.mjs` 5/5 PASS, capture router run #4.)*
   - [ ] Re-pair the HA companion app; repoint any `mobile_app_*` notify or presence references from the Fold 7.
   - [x] ~~Still open from 2026-09-01: swap the Groq model in `runner.mjs:42`~~ — swapped + **verified Running 2026-10-03**: Morning Brief ran on the fixed code and `briefings/2026-10-03.md` landed (`6ed030f`).
 - Session record: [[sessions/2026-10-01]]
@@ -691,3 +691,27 @@ Two Termux gotchas worth keeping:
   - [ ] Decide: quiet-hours window; Tier 3 provider under C1; voice agent on Vercel (redeploy or retire).
 - **Later 2026-10-03 (jarvis-core attached):** quiet hours were already set (22:00–07:00) and a token budget exists, so the earlier "unset" findings were stale. The real Tier 3 gap was that the app went silent without ElevenLabs. Fixed with a free phone-voice fallback, plus the tier1 401 bug: **jarvis-core PR #3** (88/88 offline). See diagnosis §6.
 - Session record: [[sessions/2026-10-03]]
+
+
+## 2026-10-03 — Fold 8 Ultra bring-up: P0–P5 VERIFIED on the new device
+
+> Supersedes the 2026-10-01 "P0–P5 are not yet re-verified on the new device" status.
+
+- **P0–P5 VERIFIED on the Fold 8 Ultra** with `node jarvis-verify.mjs` (jarvis-core PR #2): **5/5 PASS** 07:21Z, then
+  4/4 `--no-capture` on the hardened checker (Node v26.4.0). Hardline refused `rm -rf /` before the confirm gate;
+  memory round-trip `verified:true`; declined `set_timer` → `proposed > declined`; capture → `JARVIS/Inbox/` →
+  pushed `0a7c821b` → **Capture Router run #4 success**, "kept in inbox".
+- **Bring-up steps 1–8 VERIFIED.** Step 9: `start-jarvis.sh --install` wired Termux:Boot and the home-screen shortcut;
+  **the reboot test is pending.** Step 10 (HA companion re-pair) not started.
+- **`start-jarvis.sh` rebuilt into the repo.** It was Fold-7-only and died with the device. It spawns the app
+  detached (a widget cold-start tap used to kill it), locks against a boot/tap double start, and fails with the
+  real `Error:` line.
+- **Decision (Jelly Bean, 2026-10-03):** the lost Fold 7's credentials will not be revoked or rotated. Do not raise it again.
+- **The device's jarvis-core checkout is on PR #2's branch** until #2 and #3 merge; then `git checkout main && git pull`.
+- Next actions:
+  - [ ] Reboot test: `[--boot] started on :8737` in `~/jarvis-core/logs/launcher.log`.
+  - [ ] Merge jarvis-core PR #2 and PR #3; move the phone back to `main`; hear the phone-voice fallback with ElevenLabs off.
+  - [ ] Bring-up step 10: re-pair the HA companion app; repoint `mobile_app_*` references.
+  - [ ] Turn the hand-typed `.github` pre-commit guard into a tracked installer.
+  - [ ] Vault MCP: confirm whether the endpoint enforces any auth (`MCP_TOKEN` was removed 2026-07-22).
+- Handoff: `JARVIS/HANDOFF.md` (reconciled 2026-10-03 evening). Session record: [[sessions/2026-10-03]]

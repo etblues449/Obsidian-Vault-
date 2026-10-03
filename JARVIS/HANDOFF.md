@@ -26,7 +26,8 @@ Git history keeps the old text.
    `jarvis-core` was read: quiet hours, the cost cap, and free STT all already existed. On 2026-09-04 a working tool was
    rebuilt because a stale handoff called it a stub. A stale "broken" costs as much as a stale "working".
 4. **After ANY code change to jarvis-core, restart the app.** Use the launcher, so the app is detached from the terminal:
-   `pkill -f jarvis-app.mjs; sh ~/jarvis-core/start-jarvis.sh`. A stale process serving old code is the
+   `pkill -f jarvis-app.mjs; sh ~/jarvis-core/start-jarvis.sh` (`start-jarvis.sh` is in PR #2; on a `main` checkout
+   without it, use `nohup node jarvis-app.mjs > logs/app.log 2>&1 &`). A stale process serving old code is the
    longest-running footgun in this project.
 5. **A green GitHub Actions run is not proof a skill worked.** The proof is the output file existing on `master`.
 6. **obsidian-git deletes `.github/`.** Obsidian doesn't index dotfolders, so its `git add -A` stages them as

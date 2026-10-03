@@ -548,7 +548,7 @@ commit landing is not proof the file changed.*
 
 ### ⚠️ P0 — hardware
 
-- [ ] **The Fold 7 is lost and offline.** Replacement ordered, not in hand. Every "verified on
+- [x] **The Fold 7 is lost and offline.** *(RESOLVED 2026-10-03: Fold 8 Ultra in hand since 2026-10-01; `.env` restored by hand and P0–P5 re-verified on it — `jarvis-verify.mjs` 5/5 PASS.)* Replacement ordered, not in hand. Every "verified on
       device" proof in this vault was proven on a device that no longer exists; **re-verify P0–P5
       on the replacement before trusting any completion marker.** Setup: clone
       `etblues449/jarvis-core` (`main`), then **restore `.env` by hand — it is gitignored and holds
@@ -725,8 +725,8 @@ report the stale value with full confidence, which is worse than not checking at
 ## New — 2026-10-01 (Fold 8 Ultra replacement)
 
 - [x] ~~Replacement for the lost Fold 7~~ — **Galaxy Z Fold 8 Ultra in hand** (2026-10-01).
-- [ ] **S1 — Fold 8 Ultra JARVIS bring-up:** 10-step checklist in `Projects/Smart Home/sessions/2026-10-01.md` (Termux stack, clone `jarvis-core`, restore `.env` by hand, vault clone + pre-commit `.github/` guard, Claude Code pin, start :8737).
-- [ ] **S1 — Re-verify P0–P5 on the Fold 8 Ultra** (self-knowledge `--check`, hardline, memory round-trip, ledger trail, capture → router).
+- [ ] **S1 — Fold 8 Ultra JARVIS bring-up:** *(2026-10-03: steps 1–8 VERIFIED; step 9 installed, reboot test pending; step 10 open.)* 10-step checklist in `Projects/Smart Home/sessions/2026-10-01.md` (Termux stack, clone `jarvis-core`, restore `.env` by hand, vault clone + pre-commit `.github/` guard, Claude Code pin, start :8737).
+- [x] **S1 — Re-verify P0–P5 on the Fold 8 Ultra** *(VERIFIED 2026-10-03: `jarvis-verify.mjs` 5/5 PASS; capture router run #4 success.)* (self-knowledge `--check`, hardline, memory round-trip, ledger trail, capture → router).
 - [ ] **S2 — Re-pair the HA companion app** on the Fold 8 Ultra; repoint Fold 7 `mobile_app_*` notify/presence references.
 
 
@@ -747,3 +747,16 @@ Full grading: `Projects/Smart Home/diagnostics/2026-10-03-agent-spec-diagnosis.m
 - [ ] **S3 — Delete `Assistant Core/packages/persona.tar.gz.b64`.** It is truncated and nothing uses it (the installer fetches plain source).
 - [x] **S3 — Allow `add_repo` for `etblues449/jarvis-core`** *(Approved and attached 2026-10-03.)* in Claude Code permissions so cloud sessions can diagnose the phone app from code.
 - [x] **S3 — Harness checkers fully clean.** *(2026-10-03: 2 `hardware/*` wikilinks fixed; verify-refs frontmatter check narrowed to `SKILL.md`.)*
+
+
+## New — 2026-10-03 (Fold 8 Ultra bring-up session)
+
+- [ ] **S1 — Bring-up step 9 reboot test.** After a reboot, `~/jarvis-core/logs/launcher.log` must show `[--boot] started on :8737`.
+- [ ] **S1 — Merge jarvis-core PR #2** (`jarvis-verify.mjs`, `start-jarvis.sh`, audit torn-line fix) **and PR #3** (phone-voice fallback, tier1 fix). Then on the phone: `cd ~/jarvis-core && git checkout main && git pull`, then `pkill -f jarvis-app.mjs; sh start-jarvis.sh`.
+- [ ] **S2 — Vault MCP auth.** `MCP_TOKEN` was removed on 2026-07-22, so the endpoint may accept unauthenticated reads **and writes** to this public vault. Confirm, and re-add a gate if it is open.
+- [ ] **S2 — Track the `.github` pre-commit guard as an installer.** It is hand-typed per device. The Fold 8's version blocks every change under `.github/workflows/` and misses deletions elsewhere under `.github/`.
+- [ ] **S3 — jarvis-core tier2/tier6/database tests write into the real `logs/ledger.jsonl`.** Redirect `JARVIS_LEDGER_FILE` in those suites.
+- [ ] **S3 — `lib/memory.mjs` has no cross-process lock.** Two simultaneous writers can race the `.bak` copy.
+- [ ] **S3 — Re-test the Claude Code glibc builds on the Fold 8** before keeping the `2.1.112` pin.
+- [x] **Decision — lost Fold 7 credentials.** *(Jelly Bean, 2026-10-03: will not be revoked or rotated. Do not raise again.)*
+- [x] **`.gitignore` ignores `JARVIS/Inbox/*.tmp-*`.** *(2026-10-03. An interrupted capture's temp file can never be committed.)*

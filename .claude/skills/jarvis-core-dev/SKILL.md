@@ -34,12 +34,18 @@ to the wrong place.
 **Restart the app after any code change:**
 
 ```
-pkill -f jarvis-app.mjs; nohup node jarvis-app.mjs > logs/app.log 2>&1 &
+pkill -f jarvis-app.mjs; sh start-jarvis.sh
 ```
 
 A stale process quietly serving old code is the longest-standing footgun in this project.
 It costs hours because everything *looks* right — the file is correct, the test passes, and
 the running app disagrees with both.
+
+Prefer `start-jarvis.sh` over `nohup node jarvis-app.mjs > logs/app.log 2>&1 &`. **`nohup` does
+not protect Node**: Node resets an inherited `SIG_IGN`, so an app started from a terminal session
+that later hangs up (a Termux:Widget tap, for one) dies with it. The launcher spawns it detached.
+`start-jarvis.sh` arrived in jarvis-core PR #2 (2026-10-03); on a checkout without it, use the
+`nohup` form.
 
 ## Layout
 
@@ -56,6 +62,7 @@ lib/tools.mjs      registry; drop a file in tools/ and it registers
 
 jarvis-app.mjs     the daily app, :8737          jarvis-voice.mjs   voice terminal
 heartbeat.mjs      scheduled checks              jarvis-doctor.mjs  pre-flight check
+jarvis-verify.mjs  re-proves P0–P5 on THIS device start-jarvis.sh    boot/tap launcher, --install
 tools/*.mjs        14 registered tools + vault-lib.mjs (a HELPER, not a tool)
 ```
 
@@ -142,7 +149,14 @@ node test/tier1-test.mjs   node test/tier2-test.mjs   node test/tier6-test.mjs
 node test/database-test.mjs        30 assertions, offline
 node jarvis-doctor.mjs             pre-flight: will it actually run here?
 node self-knowledge.mjs --check    drift gate: docs vs live registry
+node test/verify-test.mjs          jarvis-verify: 14 mutations that must each make it FAIL
+node test/launcher-test.mjs        start-jarvis.sh: hangup survival, boot/tap overlap, install
 ```
+
+**New device:** `.env` by hand → `node jarvis-verify.mjs` (P0–P5 on the phone in front of you;
+`--no-capture` writes nothing to the vault) → `sh start-jarvis.sh --install` (Termux:Boot and the
+home-screen shortcut; open Termux:Boot once, set battery Unrestricted) → reboot and look for
+`[--boot] started` in `logs/launcher.log`.
 
 Write the regression test **before** claiming a bug is fixed. `'run'` appeared twice in one
 routing condition and `'running'` matched it, so "how many agents are running" returned
