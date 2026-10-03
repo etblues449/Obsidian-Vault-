@@ -42,8 +42,10 @@ against your tiny captures, sits far below every published limit (see
 2. Name: **`GROQ_API_KEY`** · Value: the `gsk_…` key · **Add secret**.
 
 *(Optional)* To pick a different model, add a **variable** (same screen,
-**Variables** tab) named **`GROQ_MODEL`**, e.g. `llama-3.1-8b-instant`.
-If unset, the default `llama-3.3-70b-versatile` is used.
+**Variables** tab) named **`GROQ_MODEL`**, e.g. `openai/gpt-oss-20b`.
+If unset, the default `openai/gpt-oss-120b` is used. *(Updated 2026-10-03: the
+original default `llama-3.3-70b-versatile` and the suggested `llama-3.1-8b-instant`
+were both retired by Groq on 2026-08-16.)*
 
 ### Step 3 · Enable Actions (if this repo has never run one)
 
@@ -176,15 +178,15 @@ moves to `JARVIS/Inbox/_rejected/` and the run prints a `⚠ REJECTED` line.
 
 ## Cost & headroom (why this stays free)
 
-Groq free tier (per the current Groq docs, July 2026) for the default
-`llama-3.3-70b-versatile`: **30 requests/min, 1,000 requests/day, ~12k
-tokens/min, 100k tokens/day**. This engine makes **one** request per skill run —
+Groq free tier (per the Groq docs, July 2026, for the then-default
+`llama-3.3-70b-versatile`, since retired): **30 requests/min, 1,000 requests/day, ~12k
+tokens/min, 100k tokens/day**. Re-check the limits for `openai/gpt-oss-120b` on
+console.groq.com/docs/rate-limits; at ~6 requests/week the margin is wide either way. This engine makes **one** request per skill run —
 about **6 requests per week total**. Your captures are tiny (tens to a few
 hundred bytes each), so a full prompt is a few thousand tokens, an order of
 magnitude under the per-minute ceiling. There is no realistic path to hitting a
 limit at this cadence. If you ever did (e.g. huge backfills), switch
-`GROQ_MODEL` to `llama-3.1-8b-instant` (14,400 requests/day) via the repo
-variable — no code change.
+`GROQ_MODEL` to `openai/gpt-oss-20b` via the repo variable — no code change.
 
 GitHub Actions: each run is a checkout + a Node script + a commit — seconds of
 compute, far inside the free allowance.
@@ -209,7 +211,7 @@ compute, far inside the free allowance.
 |--------|-------------|
 | Action fails at "Run skill" with `GROQ_API_KEY is not set` | Secret missing or misnamed — must be exactly `GROQ_API_KEY` (Step 2). |
 | Groq step errors `HTTP 401` | Bad/rotated key — regenerate in the Groq console, update the secret. |
-| Groq step errors `HTTP 429` | Rate limit (unlikely at this cadence) — the runner retries 3×; if persistent, set `GROQ_MODEL=llama-3.1-8b-instant`. |
+| Groq step errors `HTTP 429` | Rate limit (unlikely at this cadence) — the runner retries 3×; if persistent, set `GROQ_MODEL=openai/gpt-oss-20b`. |
 | Commit step fails `push … after 5 attempts` | Sustained write contention on `master` — re-run; the concurrency group normally prevents this. |
 | Scheduled run didn't fire at the exact minute | GitHub cron can lag under load, and skips the odd run; manual **Run workflow** always works. The London-time guard still ensures no *wrong-hour* run commits. |
 | Report has a wrong-looking date/week | The runner uses `Europe/London`; check the repo isn't overriding `JARVIS_FAKE_NOW` anywhere (it should only be set in tests). |

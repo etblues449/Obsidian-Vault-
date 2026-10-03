@@ -177,8 +177,12 @@ try:
 except ImportError:
     _yaml = None
 
+# Skills: only SKILL.md carries loadable frontmatter. Other .md files under a skill
+# (READMEs, references) are never parsed by the loader, so they cannot fail silently —
+# e.g. android-development/README.md is a deliberate path-keeping placeholder.
 fm_files = sorted(glob_md(os.path.join(root, ".claude", "agents"))) + \
-           sorted(glob_md(os.path.join(root, ".claude", "skills"), recurse=True))
+           sorted(f for f in glob_md(os.path.join(root, ".claude", "skills"), recurse=True)
+                  if os.path.basename(f) == "SKILL.md")
 for fp in fm_files:
     try:
         head = open(fp, encoding="utf-8", errors="replace").read()

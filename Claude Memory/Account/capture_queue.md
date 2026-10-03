@@ -436,7 +436,7 @@ commit landing is not proof the file changed.*
 > is taken from documentation.
 
 ### P0 — do these first
-- [ ] **Swap the Groq model — one line.** `Assistant Core/jarvis-skills/runner.mjs:42`,
+- [x] **Swap the Groq model — one line.** *(DONE 2026-10-03 — default now `openai/gpt-oss-120b`; file landing still to confirm.)* `Assistant Core/jarvis-skills/runner.mjs:42`,
       `'llama-3.3-70b-versatile'` → `'openai/gpt-oss-120b'`. **Groq decommissioned the old model on
       2026-08-16** (free + developer tiers); all four scheduled skills share `runner.mjs` and have
       failed **25/25 runs** since the workflows were restored on 08-23. Evidence: Morning Brief #38,
@@ -649,7 +649,7 @@ obtained on a device that no longer exists.
       (*"cp .env.example .env"*) would have pointed at a missing file. **Fixed**
       with a `!.env.example` negation, verified in both directions: template
       visible, `.env` still ignored by line 2.
-- [ ] **`lib/brain.mjs:91` still defaults Groq to `llama-3.3-70b-versatile`** —
+- [x] **`lib/brain.mjs:91` still defaults Groq to `llama-3.3-70b-versatile`** —
       the model decommissioned 2026-08-16 that caused the 25/25 skill failures.
       A fresh clone with `JARVIS_MODEL` unset fails **every turn** with
       `model_not_found`, and it looks like a botched install. The doctor blocks on
@@ -729,3 +729,21 @@ report the stale value with full confidence, which is worse than not checking at
 - [ ] **S1 — Re-verify P0–P5 on the Fold 8 Ultra** (self-knowledge `--check`, hardline, memory round-trip, ledger trail, capture → router).
 - [ ] **S2 — Re-pair the HA companion app** on the Fold 8 Ultra; repoint Fold 7 `mobile_app_*` notify/presence references.
 
+
+
+
+## New — 2026-10-03 (full diagnosis vs the voice-agent build spec)
+
+Full grading: `Projects/Smart Home/diagnostics/2026-10-03-agent-spec-diagnosis.md`.
+
+- [x] **S1 — Skill engine dead since 2026-08-16:** `runner.mjs` defaulted to retired `llama-3.3-70b-versatile`. *(FIXED 2026-10-03 — `openai/gpt-oss-120b`, `DEAD_MODELS` guard, 33/33 incl. 7 stub-server tests.)*
+- [ ] **S1 — Prove it live:** after merge, confirm `Claude Memory/briefings/<date>.md` is actually written. A green run is not proof.
+- [ ] **S1 — Voice agent `jarvis-voice-lovat.vercel.app` → 404 NOT_FOUND.** Redeploy on a live model or retire the "LIVE" claim.
+- [ ] **S2 — `jarvis-core` persona: memory has no data-not-instructions rule** (spec Tier 4). Exact patch in diagnosis §2.1. Needs repo access, then a test and a `SHA_PERSONA` bump.
+- [ ] **S2 — Offline suites missing for Tiers 3, 4, 5** in `jarvis-core/test/`.
+- [ ] **S2 — Decide: Tier 3 STT/TTS under C1.** Deepgram + ElevenLabs are trial credits.
+- [ ] **S2 — Decide: quiet-hours window** for the heartbeat (`user_profile.md` still TO FILL).
+- [ ] **S3 — Confirm a running model-cost tally exists** (spec Tier 6). No evidence either way.
+- [ ] **S3 — Delete `Assistant Core/packages/persona.tar.gz.b64`.** It is truncated and nothing uses it (the installer fetches plain source).
+- [ ] **S3 — Allow `add_repo` for `etblues449/jarvis-core`** in Claude Code permissions so cloud sessions can diagnose the phone app from code.
+- [x] **S3 — Harness checkers fully clean.** *(2026-10-03: 2 `hardware/*` wikilinks fixed; verify-refs frontmatter check narrowed to `SKILL.md`.)*

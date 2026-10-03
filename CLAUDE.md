@@ -1,6 +1,6 @@
 # Claude Session Context — JARVIS / Obsidian Vault
 
-**Last Updated:** 2026-09-04
+**Last Updated:** 2026-10-03
 
 This vault is the persistent memory and working directory for all Claude sessions across devices (PC, Fold 7 / Termux, Claudian-in-Obsidian). All code, notes, decisions and artifacts live here.
 
@@ -125,3 +125,5 @@ python3 .claude/skills/qa-boundary-check/scripts/verify-refs.py .
 | 2026-09-04 | Orchestrator: retired entity + routing | `.claude/skills/jarvis-orchestrator/SKILL.md` | Its error-flow worked example cited `media_player.tv_jelly_beans_tv_2`, confirmed non-existent 2026-09-01 — a harness teaching a dead ID propagates it. Now uses canonical `jelly_beans_tv_3` and names the retired one as a trap. Description/`when_to_use` also route phone-app work to `jarvis-core-dev`. |
 | 2026-09-04 | `skill-engine-ops` de-staled | `.claude/skills/skill-engine-ops/SKILL.md` | Two false claims: it named `llama-3.3-70b-versatile` as the live model (Groq retired it 2026-08-16; 25/25 runs failed for 27 days) and stated `.github/workflows/` does not exist on `master` (restored 2026-08-23). Added the obsidian-git dotfolder root cause, the untracked pre-commit hook, and model retirement as a first-class failure mode. |
 | 2026-09-04 | `android-development` — no change | `.claude/skills/android-development/` | Audited as suspected orphan; **finding withdrawn.** Its README documents it as a deliberate placeholder keeping the path tracked, because it was previously a gitlink with no `.gitmodules` and broke the Vercel clone. Removing it would risk reintroducing that. |
+| 2026-10-03 | Skill engine model fixed | `runner.mjs`, `test/local-test.mjs`, engine docs, `jarvis-skill-engine` agent, `skill-engine-ops` | `runner.mjs` still defaulted to `llama-3.3-70b-versatile` (retired 2026-08-16); the 09-04 fix only reached the phone app. Now `openai/gpt-oss-120b` + `DEAD_MODELS` guard + no 4xx retries; 7 stub-server tests (fail on old code). 33/33. |
+| 2026-10-03 | Frontmatter check scoped to `SKILL.md` | `.claude/skills/qa-boundary-check/scripts/verify-refs.py` | It raised an S1 commit-blocker on the deliberate `android-development/README.md` placeholder; only `SKILL.md` frontmatter is ever loaded. Probe confirmed a broken `SKILL.md` still FAILs. |

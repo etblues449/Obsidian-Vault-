@@ -88,7 +88,8 @@ async function getActionResponse(userInput, intent) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
+      // llama-3.1-8b-instant was retired by Groq 2026-08-16; gpt-oss-20b is its named replacement.
+      model: 'openai/gpt-oss-20b',
       max_tokens: 500,
       messages: [{
         role: 'user',

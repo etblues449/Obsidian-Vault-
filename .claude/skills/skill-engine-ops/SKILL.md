@@ -57,7 +57,10 @@ went the same day.
 No API announces a retirement. When output stops, check the model **before** the schedule:
 a `model_not_found` 404 looks nothing like a cron problem in the Actions summary, but it is
 the first thing to rule out. The phone app carried the identical dead default until
-2026-09-04 — the same retirement bit two subsystems independently.
+2026-09-04 — the same retirement bit two subsystems independently. **`runner.mjs` kept the
+dead default until 2026-10-03** (a month after the phone app was fixed); it now defaults to
+`openai/gpt-oss-120b`, refuses anything in `DEAD_MODELS` before calling Groq, and does not
+retry a 4xx. `test/local-test.mjs` covers the request path against a local stub server.
 
 ## A schedule with no workflow file is not a schedule
 
