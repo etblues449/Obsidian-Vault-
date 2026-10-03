@@ -1,275 +1,146 @@
 # JARVIS — HANDOFF
 
-**Last updated:** 2026-08-23 (late session)
+**Last updated:** 2026-10-03
 **Purpose:** Start a fresh chat with zero context loss. Read this top-to-bottom first.
-**Supersedes:** every earlier HANDOFF section below this line and the 2026-07-23 content in `JARVIS/HANDOFF.md`.
+**Supersedes:** all prior HANDOFF content and every §11/§12-style superseding block — those are consolidated here. Full narrative history remains in git and in the dated session notes under `Claude Memory/Projects/Smart Home/sessions/`.
 
 ---
 
-## 0. Read this first
+## 0. Read this first (the footguns that cost whole sessions)
 
-1. **Claude can read AND write the vault directly.** Vault MCP connector (`https://vault-mcp-six.vercel.app/mcp`), connected as "Vault". Tools: `vault_list`, `vault_read`, `vault_search`, `vault_append`, `vault_write`. **Start every session by reading the vault yourself.** Writes are real commits to `master`, synced to the phone via obsidian-git.
-2. **`~/jarvis-core` is a git repo** → private GitHub `etblues449/jarvis-core`, branch `main`. `git push` from the phone, `git pull` anywhere.
-3. **After ANY code change to jarvis-core, restart the app:** `pkill -f jarvis-app.mjs; nohup node jarvis-app.mjs > logs/app.log 2>&1 &`. A stale process silently serving old code is the #1 footgun.
-4. **On the phone, write documentation files with `cat` + a quoted heredoc, not `node -e`.** Two attempts to edit `AGENT.md` via Node were mangled by shell quoting and **silently committed nothing** while still pushing a commit. Always verify a doc edit with `grep -c` and `wc -l` afterwards — a commit landing is not proof the file changed.
-5. **Every installer must cache-bust its fetches and assert on file content, not just SHA.** A stale `raw.githubusercontent` edge once served a matching old installer + old payload that passed SHA verification and installed a known-broken patcher. SHA proves integrity, not freshness.
+1. **Host device changed.** JARVIS no longer runs on the Fold 7 — **that device is lost** (2026-09-04). The replacement, now the primary host, is a **Samsung Galaxy Z Fold 8 Ultra** (2026-10-01), **bring-up in progress**. Read every "Fold 7" in old notes as "Fold 8 Ultra".
+2. **Three write paths, do not cross them.** Vault = `etblues449/Obsidian-Vault-` branch **`master`** (trailing hyphen is real), synced by obsidian-git. Phone app = `etblues449/jarvis-core` branch **`main`** (private). A commit to the wrong branch is how work gets lost. **Single serialized writer to master; never add a second automated committer; never force-push** (`permissions.deny` blocks it). Always `git pull --rebase` first.
+3. **obsidian-git silently deletes `.github/` (4× so far).** Obsidian doesn't index dotfolders, so its `git add -A` stages `.github/workflows/*` as deletions and wipes the Actions engine. **Mitigation: a local untracked `.git/hooks/pre-commit` that refuses any commit staging a `.github/` deletion.** It does NOT travel with a clone — **re-install it on every new checkout** (incl. the Fold 8 Ultra). If obsidian-git ever "fails to commit", that's the hook working — read the message before `--no-verify`.
+4. **A green Actions run is NOT proof a file was written.** The engine can exit 0 and write nothing (old DST-guard bug) or fail inside the model call. Always confirm the output *file landed* in the vault. ("Documented ≠ Merged ≠ Running" — state which you verified.)
+5. **On the phone, edit docs with `cat` + a quoted heredoc, never `node -e`** (shell quoting mangles it and commits nothing while still pushing). Verify every doc edit with `grep -c`/`wc -l`. **Installers must cache-bust fetches AND assert on content** — SHA proves integrity, not freshness.
 
 ---
 
 ## 1. What JARVIS is
 
-A fully autonomous, voice-first personal assistant running **entirely on a Samsung Galaxy Z Fold 7** via Termux. Hard constraints, locked, do not relitigate:
-- **£0/month** ongoing cost
+A fully autonomous, voice-first personal assistant running **entirely on the phone** (Fold 8 Ultra, Termux). Hard constraints — locked, do not relitigate:
+- **£0/month** ongoing cost (constraint C1)
 - **Phone-only** — no PC in the loop
-- **Single write path** — obsidian-git on `master`; competing writers corrupted the vault before
-- **Permanent solves, not workarounds** — "holy shit, that's done"
-- **One step at a time** — deliver one step, confirm, then move
-- **Honest** — never claims an action it didn't take
+- **Single write path** — obsidian-git on `master`
+- **Permanent solves, not workarounds**
+- **One step at a time** — deliver one, confirm, then move
+- **Honest** — never claims an action it didn't take; never surfaces `sensitive`/`private`/`confidential`/`legal`/`financial` note *contents* into any generated output
 
-**The six-tab `jarvis-app.mjs` on :8737 is THE daily app.** Locked decision (2026-08-22). A "v2" reactor-orb redesign was built, shown to Jelly Bean, and rejected — its code is dormant at `jarvis-core/jarvis2/`. All improvements happen on the six-tab app.
+**THE daily app is the six-tab `jarvis-app.mjs` on `:8737`.** Locked (2026-08-22). A "v2" reactor-orb redesign was built, shown, and **rejected** — dormant at `jarvis-core/jarvis2/`. All improvements happen on the six-tab app.
 
 ---
 
-## 2. Current state — ALL VERIFIED ON DEVICE, 2026-08-23
+## 2. Device reality — Fold 8 Ultra bring-up (READ BEFORE TRUSTING ANY "COMPLETE" MARKER)
 
-The North-Star roadmap (durable honest memory, non-drifting personality, honest self-knowledge,
-crash-safe propose→approve→commit, all in the six-tab app) is **complete**. Every phase below was
-proven running on the Fold, not merely written.
+- **Fold 7: lost/offline** since 2026-09-04. **Fold 8 Ultra: in hand, now the host**, bring-up not yet fully verified.
+- **The phone app survived the device loss because it was pushed to `origin/main`** (2026-08-23, `bb97f5d..2834aad`). Treat pushing as the thing that makes the phone disposable.
+- **Verification honesty:** the P0–P5 phone-app proofs in §3 were made **on the Fold 7**. Until Fold 8 Ultra bring-up passes, their honest status is **"proven on the previous device; code safe on `origin/main`; NOT re-verified on Fold 8 Ultra."**
+- **Bring-up checklist:** `Claude Memory/Projects/Smart Home/sessions/2026-10-01.md` (10 ordered steps). Two easiest to miss, neither of which travels with a clone:
+  1. **Restore `~/jarvis-core/.env` by hand** (gitignored; holds every secret).
+  2. **Re-install the vault `.git/hooks/pre-commit` `.github/` guard** (see §0.3).
+- **Termux gotchas on a fresh Samsung** (found on the S22 stand-in, apply to the Fold 8 Ultra):
+  - Broken node (`OSSL_PROVIDER_add_conf_parameter`) → `pkg reinstall openssl nodejs` (answer **N** to the `openssl.cnf` prompt).
+  - No pager → `git config --global core.pager cat`.
+  - Fresh clone has no git identity → set it, and **run `git commit` alone** and read its output (a chained error scrolls away as a silent no-op). Now set globally to `Elliot Horton` / `etblues449@users.noreply.github.com`.
+- **HA side:** re-pair the companion app as the new device; check automations/notify targets still pointing at the Fold 7's `mobile_app_*` entity.
 
-| Phase | What | File | Proof |
+---
+
+## 3. Current state by layer (honest Documented / Merged / Running)
+
+### Phone app — `jarvis-core` (North-Star complete, code on `origin/main`)
+14 tools register (`capture, database, forget, ha_control, ha_list, ha_state, pc_control, remember, set_alarm, set_timer, update_memory, vault_list, vault_read, vault_search`). `/api/tools` returns the true total (14); 3 `vault_*` are chat-only, hidden from the grid not the count.
+
+| Phase | What | File | Status |
 |---|---|---|---|
-| 0 | Honest self-knowledge — 14 tools from the live registry, injected into every prompt | `self-knowledge.mjs` | `node self-knowledge.mjs --check` → OK |
-| 1 | Hardline blocklist — refuses catastrophic acts EVEN IF CONFIRMED (20 patterns) | `lib/hardline.mjs` | `rm -rf /` refused with confirm=yes; `Get-Date` still ran |
-| 1 | Widened injection scanner (19 patterns) | `lib/rails.mjs` | 31/31 regression suite |
-| 2 | ONE persona shared by all four entry points (text/app/voice/heartbeat) | `lib/persona.mjs` | 1 distinct honesty block, 1 personality across all 4 |
-| 3 | Durable memory — atomic write + `.bak` + read-back verification | `lib/memory.mjs` | real round-trip proven; crash-kill test 6/6 file valid |
-| 4 | Durable action ledger — proposed→approved→started→ran, all on disk | `lib/ledger.mjs` + `lib/agent.mjs` (7 wiring points) | real declined tool → trail `proposed > declined`; orphaned approvals surfaced, NEVER auto-replayed |
-| 5 | Capture — JARVIS writes notes straight into the vault, no Tasker/n8n | `tools/capture.mjs` | note written → GitHub Actions router success |
+| 0 | Honest self-knowledge (live registry → every prompt) | `self-knowledge.mjs` | Proven on Fold 7; on `main` |
+| 1 | Hardline blocklist (refuses catastrophic acts even if confirmed) + injection scanner | `lib/hardline.mjs`, `lib/rails.mjs` | Proven on Fold 7; on `main` |
+| 2 | One persona across text/app/voice/heartbeat | `lib/persona.mjs` | Proven on Fold 7; on `main` |
+| 3 | Durable memory (atomic write + `.bak` + read-back) | `lib/memory.mjs` | Proven on Fold 7; on `main` |
+| 4 | Durable action ledger (proposed→approved→started→ran) | `lib/ledger.mjs`, `lib/agent.mjs` | Proven on Fold 7; on `main` |
+| 5 | Capture straight to vault (no Tasker/n8n) | `tools/capture.mjs` | Proven on Fold 7; on `main` |
 
-**Tool count: 14**, not 7 (an earlier `AGENT.md` said 7 — fixed, see §6). List:
-`capture, database, forget, ha_control, ha_list, ha_state, pc_control, remember, set_alarm, set_timer, update_memory, vault_list, vault_read, vault_search`
+- **`tools/database.mjs` hardened** (`e51cacf`, `origin/main`): exact-count via PostgREST `Content-Range` (no more fabricated "1000"); write-guard; 8s timeout; `run`/`running` routing bug fixed. 30 offline assertions (`test/database-test.mjs`); live acceptance separate (`test/database-live.mjs`).
+- **`lib/supabase-ai-agent-creator.mjs` is a STUB** (returns "connected in Step 6"; hand-parses `.env` and mangles `=` values). Flagged, **not fixed**. Not the same file as `tools/database.mjs` — easily confused.
 
-**Tools UI badge:** `/api/tools` returns `{tools, total, hidden}` — the badge shows the true total (14); 3 `vault_*` tools stay hidden from the grid (reachable from chat) but are no longer hidden from the count.
+### Scheduled skill engine — ✅ RUNNING (verified 2026-10-03, first output in ~2 months)
+`Assistant Core/jarvis-skills/runner.mjs` → GitHub Actions + Groq, commits to master via rebase-retry.
+- **Was dark 2026-08-16 → 2026-10-03.** Groq decommissioned `llama-3.3-70b-versatile` (2026-08-16); the 09-04 fix only reached the phone app's `brain.mjs`, leaving the *engine* on the dead model → 25/25 runs failed silently.
+- **Fixed (PR #87, merged 2026-10-03):** default is now **`openai/gpt-oss-120b`**, with a **`DEAD_MODELS` guard** (fast-fail instead of silent no-op), no-retry on 4xx, and reasoning-model handling. **33/33 offline tests** (`test/local-test.mjs`), `node --check` clean.
+- **Verified Running:** a manual Morning Brief run on the fixed code **succeeded** and wrote `Claude Memory/briefings/2026-10-03.md` (commit `6ed030f`), grounded in real captures, on gpt-oss-120b.
+- **Caveat:** only **Morning Brief** is proven end-to-end. Connection Finder (Sun 2pm), Weekly Synthesis (Fri 6pm), Pattern Detector (Mon 8am) share the same runner+fix — they'll prove themselves on their next cadence (or trigger them to confirm now).
 
----
+### Capture — n8n retired
+`tools/capture.mjs` writes atomically to `JARVIS/Inbox/` (refuses placeholder junk at source); the `on: push` Actions router files it. **No paid n8n on the capture path** — C1 clean. (n8n.cloud account unused, not yet formally cancelled — housekeeping.)
 
-## 3. THE BIG FINDING — obsidian-git deleted the entire Actions engine (root-caused & fixed)
+### HA / voice layer (per vault records; not re-verified this session)
+- **Hub config backup DONE (2026-08-23):** `Assistant Core/ha-diagnostics/ha-export.mjs` (config-API, re-runnable) + Samba pull into `Claude Memory/Projects/Smart Home/ha-config/` — 11 automations, 5 scenes, 0 scripts, 709 entities; 10 ESPHome node configs incl. the flashed `ai_cam.yaml`. `secrets.yaml` deliberately excluded. **Still open:** off-hub full-instance backup.
+- **AI Cam** (Waveshare ESP32-S3-CAM-OV3660, `192.168.0.199`): camera + speaker + ES7210 mics + Frigate complete; **microWakeWord regressed** (OOMs the HA Green compiler) — Option B off-box compile is the fix, not yet run. **Board #2 (`landing_ai_cam_2`)** config validated, not yet flashed (USB first-flash).
+- Canonical TV entity = `media_player.jelly_beans_tv_3`. Hub = `192.168.0.200:8123`.
 
-Captures had been dead since 2026-07-09; briefings stopped 2026-08-04. Root cause found 2026-08-23:
-
-**`.github/workflows/` did not exist on `origin/master` at all.** Commit `4bdb3bf1` (2026-08-06, "Sync from Obsidian") deleted all six workflow files. Two earlier occurrences: `7f9097d9` (07-04) and `9fd5e00e` (07-14). **Obsidian does not index dotfolders**, so `.github/` is invisible to it; obsidian-git's `git add -A` from the vault root stages invisible files as deletions. This also explains the old "8 files deleted by an unidentified client" mystery (2026-08-02) — same mechanism, no mystery client.
-
-**Fixed:**
-- All six workflows restored from `a38848c9` (last good commit before the deletion).
-- **Pre-commit hook installed** at `~/Obsidian-Vault-/.git/hooks/pre-commit` — refuses any commit that stages a deletion under `.github/`. Hooks are local + untracked, so obsidian-git cannot remove it. **Proven live** — a real deletion was staged and the commit was refused.
-- **If obsidian-git ever fails to commit, that is the hook working.** Read the message before `git commit --no-verify`.
-
-Capture Router fired successfully post-fix: `2026-08-23T03:01:49Z`. **Scheduled skills (morning brief etc.) are restored but NOT yet proven to fire on schedule** — only the push-triggered router is proven. Check the first briefing after this date lands before trusting the cron path again.
-
----
-
-## 4. Capture — n8n retired
-
-`tools/capture.mjs` writes notes directly to `JARVIS/Inbox/` (atomic write + read-back verify, refuses placeholder junk like "your note here" at source). obsidian-git syncs it, the restored Actions router files it. **The paid n8n.cloud webhook is no longer on the capture path.** C1 (£0) has no live exception here. n8n.cloud account itself is unused but not yet formally cancelled (pure housekeeping, low priority).
+### Vault integrity — CLEAN (audited 2026-10-03)
+`drift-check.sh`: **0 S1, 0 S2** (all session-start files, runner inputs, workflows, engine files present). `verify-refs.py`: the lone S1 was the **deliberate `android-development/README.md` placeholder** — the checker was scoped to `SKILL.md` on 2026-10-03 (CLAUDE.md change log), so that false-positive is retired. The two `[[hardware/ai_cam]]`/`[[hardware/landing_ai_cam_2]]` wikilinks (targets exist as `.yaml`) were fixed.
 
 ---
 
-## 5. Hub config backup — DONE (2026-08-23)
+## 4. This session (2026-10-03) — what was done
 
-Was the single biggest resilience risk (P0, ranked since 2026-08-01): automations/scenes/scripts/YAML existed only on the HA Green.
-
-**Two-part backup, both complete:**
-1. **UI-managed via config API** — `Assistant Core/ha-diagnostics/ha-export.mjs`, re-runnable. Exported 11/11 automations + 5/5 scenes (0 scripts exist) to `Claude Memory/Projects/Smart Home/ha-config/` as real YAML + `snapshot.json`. Verified restorable — PyYAML parses them back correctly, including the classic traps (`": "` needing quotes, `to: 'on'` staying a string not boolean, `-00:15:00` staying a string not sexagesimal).
-2. **YAML-managed files via Samba** — HA's Samba add-on (port 445, credentials in HA → Settings → Add-ons → Samba share) pulled into `ha-config/hub/`: `configuration.yaml`, `automations.yaml`, `scenes.yaml`, `scripts.yaml`, `go2rtc.yaml`, `govee_learning.yaml`, `sentences.yaml`, Frigate's `config.yaml`, and **10 ESPHome node configs** in `ha-config/hub/esphome/` — including `ai_cam.yaml` (the flashed config with tuning entities, previously never captured) and `landing.yaml`.
-
-**`secrets.yaml` was deliberately excluded** (both the HA one and the ESPHome one that came down accidentally via `mget *.yaml`) — deleted immediately and gitignored. Never let a wildcard pull sweep up a secrets file again.
-
-**Correction to old vault notes:** `bedroom-2.yaml` does not exist — bedroom config lives in ESPHome (`esphome/bedroom.yaml`). Frigate runs from `addon_configs/ccab4aaf_frigate-fa/`, with a `-fa-beta` variant alongside holding its own 1.8MB `frigate.db`. Automation count corrected to **11** (not 8, not "~19" from older notes); 5 scenes, 0 scripts, 709 entities on the live registry.
-
-**Still open:** a scheduled full-instance HA backup off-hub (Nabu Casa cloud backup or similar) — the exporter covers config, not the whole instance.
+1. **Full vault-integrity audit** at `4cb9411`→ verified clean on critical axes; the one live S1 was the engine model.
+2. **Verified the skill-engine fix end-to-end** (not just merged): confirmed the dead-model root cause from logs, confirmed `GROQ_API_KEY` is set (the 404 was model-not-found, not auth), triggered a run on the fixed code, and **confirmed `briefings/2026-10-03.md` actually landed** → engine flipped Merged → **Running**.
+3. **Phone-UI-control research saved** at `JARVIS/research/2026-07-23-phone-ui-control.md` (survived to master): how to give JARVIS **full UI control of the phone via Shizuku/ADB (no root, no PC)** — `uiautomator dump` + `input` vs a minimal AccessibilityService; `rish` in Termux; Tasker/AutoInput; the confused-deputy/prompt-injection threat model; **plus** a best-in-class survey (DroidRun, AutoDroid, AppAgent v2, MobileGPT, Mobile-Agent-v2) with a "steal-these-first" list (a11y-tree-first perception → semantic selectors → verify-after-action → cached recipes → confirm-gates). **Research only — not built.** Directly applicable to the Fold 8 Ultra agentic layer.
 
 ---
 
-## 6. Docs corrected
+## 5. Hard-won learnings (don't rediscover these)
 
-- **`~/jarvis-core/AGENT.md`** claimed 7 tools and described Tiers 3-6 as future work — both false; all six tiers shipped in July, 14 tools register. Superseding header prepended 2026-08-23 (commit `d05c7a7`), historical build plan kept below it. Nothing reads this file at runtime.
-- **`JARVIS/HANDOFF.md`** (vault) — the pre-2026-08-23 file was a month stale; a superseding section was appended, now folded into this document.
-
----
-
-## 7. Housekeeping done this session
-
-- **547M `~/jarvis` sprawl archived** (not deleted) to `~/_archive_jarvis_20260823-044851/` — v1 phone scripts, `gstack`, `openclaude`, a second vault clone. Four dead home-screen shortcuts that pointed into it (`JARVIS-new`, `digest.sh`, `jarvis.sh`, `sync.sh`) archived alongside. Survivors: `JARVIS` symlink and `JARVIS.sh`, both verified working.
-- **Claude Code on Termux fixed** — a global reinstall pulled 2.1.240 with a blocked postinstall (`MODULE_NOT_FOUND: cli.js`). Reinstalled the known-good pin `2.1.112` with `--allow-scripts`. Re-armed both auto-update locks: `DISABLE_AUTOUPDATER=1` in `.bashrc` and `autoUpdates: false` in `~/.claude/settings.json` — every release ≥2.1.113 pulls a 233MB glibc binary that Android kills mid-download.
-- **Carousel `JARVIS_API_TOKEN` rotation — attempted, not completed.** The gate is live and fail-closed (no token → 401), but the exposed token still returns 200 (the env-var change + redeploy didn't take). **User decision: leave it. Do not re-raise.**
+- **obsidian-git wipes `.github/` dotfolders** → pre-commit hook guard, re-installed per clone (§0.3).
+- **Green Actions run ≠ file written** (§0.4). Confirm the output file.
+- **Groq retires models with little notice** — `llama-3.3-70b-versatile` (2026-08-16), `llama-3.1-8b-instant` same day. Keep a `DEAD_MODELS` guard; current free-tier model is `openai/gpt-oss-120b`. A checker that hardcodes "the current model" goes stale as fast as a doc (the `jarvis-doctor` trap).
+- **On-device doc edits:** `cat` + quoted heredoc, verify with `grep -c`/`wc -l`; never `node -e`.
+- **Installers:** cache-bust + assert on content; change the *filename* when a corrected file must ship past a sticky CDN; test against a throwaway copy, record counts before/after.
+- **Termux on new Samsung:** `pkg reinstall openssl nodejs`; `core.pager cat`; set git identity and run `git commit` alone.
+- **PostgREST anon role can't `count()`** → use `Prefer: count=exact` + `Content-Range`, never `rows.length` under a limit.
+- **Project-file snapshots on claude.ai are NOT sources of truth** — they don't sync back and have caused half-session rebuilds of working tools (`database` "stub", phantom tier4/5 suites). The **vault is canonical**.
 
 ---
 
-## 8. Standing delivery rules (apply to every future installer / doc edit)
+## 6. Open items — priority order
 
-1. Ship source as plain `.mjs`/`.md` in the vault, never hand-transcribed base64 — a corrupted blob was caught by a SHA gate once; plain text round-trips exactly and is diffable.
-2. Cache-bust every fetch AND assert on file content — SHA proves integrity, not freshness.
-3. When a corrected file must ship immediately, change the filename — cache-busting alone did not defeat a sticky CDN edge; a fresh path cannot be stale.
-4. Patcher anchors must be regex and whitespace-insensitive, and the installer must verify every anchor exists exactly once *before* modifying anything.
-5. Test against a throwaway copy, never the user's real vault/memory/hub — record real counts before and after, roll back on mismatch.
-6. On the phone, write documentation with `cat` + quoted heredoc, not `node -e` — verify with `grep -c`/`wc -l` after, because a commit landing is not proof the file changed.
-
----
-
-## 9. Open items, priority order
-
-- [ ] **Watch the first scheduled briefing land** (cron `0 6 * * *` / `0 7 * * *`) — proves the restored skill engine fires on schedule, not just on push. Check Actions if none appears by the morning after this date.
-- [ ] **Enable a scheduled full HA backup off-hub** (Nabu Casa cloud backup, or continue via Samba) — config is backed up; the whole instance is not.
-- [ ] **Re-run `ha-export.mjs`** after any future automation/scene change; commit the diff.
-- [ ] **Delete `~/_archive_jarvis_*`** once satisfied nothing depends on it (547M reclaim; `/data` was at 90%). No rush — it's a `mv` away from restoring either way.
-- [ ] **Re-enable microWakeWord on ai_cam** — OOMs the HA Green's compiler; Option B (off-box compile on the PC) is the documented fix, not yet run. Now that `ai_cam.yaml` is vault-backed, pull the LIVE config first before touching it.
-- [ ] **Flash board #2** (`landing_ai_cam_2`) — config validated, not yet flashed via USB.
-- [ ] Confirm n8n.cloud account state and formally cancel (housekeeping only — nothing depends on it).
-- [ ] `webapp-reviewer` model decision (sonnet vs opus) — old harness-audit item, still open.
-- [ ] Big Pad (24" lounge screen) integration — scoped in a prior session, never built.
+- [ ] **Fold 8 Ultra bring-up** — run `sessions/2026-10-01.md` 10 steps; restore `.env`; re-install the `.github/` pre-commit hook; re-verify P0–P5 on device.
+- [ ] **Prove the other 3 scheduled skills** (Connection Finder / Weekly Synthesis / Pattern Detector) land files — or trigger them once to confirm now that the model is fixed.
+- [ ] **Off-hub full-instance HA backup** (Nabu Casa cloud backup) — config is backed up; the whole instance is not.
+- [ ] **Re-enable microWakeWord on ai_cam** — pull the LIVE `ai_cam.yaml` first, then off-box compile (OOMs the HA Green).
+- [ ] **Flash board #2** (`landing_ai_cam_2`) via USB — config validated, not flashed.
+- [ ] **(Decision) Build the phone-UI-control layer** on the Fold 8 Ultra from the §4 research (Shizuku + `ui_control` tool) — research done, not started.
+- [ ] **Verify Vault MCP auth** (`vault-mcp-six.vercel.app/mcp`) — flagged earlier as possibly unauthenticated (read+write to a vault holding legal/financial notes). Confirm the bearer-token gate is actually enforced; lock down if not.
+- [ ] Fix `lib/supabase-ai-agent-creator.mjs` stub (or delete if unused).
+- [ ] Formally cancel the unused n8n.cloud account (housekeeping).
+- [ ] `webapp-reviewer` model decision (sonnet vs opus) — long-standing harness item.
 
 ---
 
-## 10. Quick reference
+## 7. Quick reference
 
 ```
-Vault repo         : etblues449/Obsidian-Vault-, branch master (trailing hyphen intentional)
-Vault MCP           : https://vault-mcp-six.vercel.app/mcp
-jarvis-core repo     : etblues449/jarvis-core (private), branch main
-Daily app           : http://localhost:8737 (jarvis-app.mjs)
-HA hub              : 192.168.0.200:8123 (REST API + admin token in .env)
-HA Samba            : 192.168.0.200:445, user JellyBean1875, config/backup/share/addon_configs
-Restart app         : pkill -f jarvis-app.mjs; nohup node jarvis-app.mjs > logs/app.log 2>&1 &
-Ledger CLI          : node jarvis-ledger.mjs [open|recent N|expire N|compact]
-Self-knowledge      : node self-knowledge.mjs [--check]
-Safe mode toggle    : node jarvis-rails.mjs safe on|off
-Base64 decode (Android): tr -d '\r' < f.b64 | base64 -di > f.tar.gz
+Vault repo     : etblues449/Obsidian-Vault-  branch master  (trailing hyphen intentional)
+Phone app repo : etblues449/jarvis-core      branch main    (PRIVATE)
+Vault MCP      : https://vault-mcp-six.vercel.app/mcp  (connected in Claude as "Vault")
+Daily app      : http://localhost:8737  (jarvis-app.mjs, six-tab)   [host: Fold 8 Ultra]
+Skill engine   : Assistant Core/jarvis-skills/runner.mjs  — Groq openai/gpt-oss-120b (free tier)
+HA hub         : 192.168.0.200:8123 (REST + admin token in jarvis-core/.env)
+HA Samba       : 192.168.0.200:445  (config/backup/share/addon_configs)
+TV entity      : media_player.jelly_beans_tv_3  (canonical)
+Restart app    : pkill -f jarvis-app.mjs; nohup node jarvis-app.mjs > logs/app.log 2>&1 &
+Health check   : bash .claude/skills/vault-integrity-audit/scripts/drift-check.sh .
+                 python3 .claude/skills/qa-boundary-check/scripts/verify-refs.py .
+Secrets        : jarvis-core/.env — gitignored, restore by hand on a new device. Reference secrets by name, never write them into a note.
 ```
 
-**First thing to tell a fresh session:** everything above is current as of 2026-08-23. Read `Claude Memory/Projects/Smart Home/_index.md` and the 2026-08-23 session file for full narrative detail on any item.
-
-
-
 ---
 
-## 11. SUPERSEDING — 2026-09-04
+## 8. Session protocol
 
-> Sections 1–10 above remain accurate as written. This section adds a hardware
-> change that affects how §1 and §10 should be read, and records one code change.
-
-### ⚠️ The Fold 7 is lost and offline
-
-§1 says JARVIS runs *"entirely on a Samsung Galaxy Z Fold 7."* **That device is
-gone** — lost, not reachable, not on the network. A replacement has been ordered
-and is not yet in hand.
-
-Consequences for a fresh session:
-
-- **Nothing in §10's Quick Reference is reachable right now.** `localhost:8737`,
-  the HA hub, the ledger CLI, `self-knowledge --check` — all assume the Fold.
-- **The "on-device proof" standard cannot be met** until the replacement arrives.
-  Anything claimed as verified between now and then was verified *somewhere else*,
-  and must say where.
-- **This is exactly why the `origin/main` push mattered.** The 2026-08-23 push
-  (`bb97f5d..2834aad`) means P0–P5 survived the device. Had the 17-day gap still
-  been open, the loss would have taken hardline, persona, memory, ledger and
-  capture with it. Treat pushing as the thing that makes the phone disposable.
-
-**Setting up the replacement:** clone `etblues449/jarvis-core` (branch `main`),
-restore `.env` by hand (it is gitignored and holds every secret — it does **not**
-come down with the clone), then re-verify each phase on device before trusting any
-"complete" marker in §2.
-
-### Working from the S22 — Termux gotchas found 2026-09-04
-
-This session ran on the S22 as a stand-in. Three failures worth keeping, all of
-which cost time:
-
-1. **Node was broken:** `CANNOT LINK EXECUTABLE "node": cannot locate symbol
-   OSSL_PROVIDER_add_conf_parameter`. `pkg install nodejs` reports "already the
-   newest version" and changes nothing — the package is present but its OpenSSL
-   linkage is stale. Fix: **`pkg reinstall openssl nodejs`**, answering **N** at
-   the `openssl.cnf` config prompt to keep the existing config.
-2. **No pager installed.** `git log` dies with `unable to execute pager 'pager'`
-   and returns nothing. Fix: `git config --global core.pager cat`.
-3. **A fresh clone has no git identity.** `git commit` fails with *"Author
-   identity unknown"* — but if anything is chained after it, the error scrolls
-   away and it reads as a silent no-op. Two commits were "made" before the real
-   error was seen. **Run `git commit` alone and read its output.** Now set
-   globally (`Elliot Horton` / `etblues449@users.noreply.github.com`), so the
-   replacement Fold inherits it.
-
-### Code shipped — `tools/database.mjs` hardened (`e51cacf`, on `origin/main`)
-
-Correctness fixes to a tool that already worked. Four defects, one of which broke
-the honesty rule:
-
-- **Counted `rows.length` under `limit=1000`.** A 1001-row table would have been
-  reported as "1000" — a fabricated number stated with confidence. Now uses
-  PostgREST `Prefer: count=exact` and reads the total from `Content-Range`; when
-  the server declines to count it says so rather than guessing.
-- **No write guard existed.** insert/update/delete/drop/truncate/grant/revoke are
-  now refused before any network call.
-- **No timeout.** Now an 8s `AbortController`; a hang is reported as a timeout.
-- **Routing bug:** `'run'` was tested twice in the same condition and `'running'`
-  matched it, so *"how many agents are running"* returned execution history.
-  Execution words are now whole-word matched. Pinned by a regression test.
-
-**`test/database-test.mjs` — 30 assertions, fully offline** (`fetch` stubbed),
-matching the tier suites' stated "no API key, no network, no phone needed"
-discipline. **`test/database-live.mjs`** holds the live acceptance and is
-deliberately *outside* the offline suite, so the suite cannot fail on connectivity.
-
-**Acceptance proven rather than asserted:** a 4th row was inserted in Supabase and
-the tool reported 4 with no code change, through the exact-count path.
-
-### `lib/supabase-ai-agent-creator.mjs` is a stub — previously undocumented
-
-Its handler returns `"Query handler will be connected in Step 6."` and never opens
-a connection. It also hand-parses `.env` with `line.split('=')`, bypassing
-`lib/env.mjs` and mangling any value containing `=`. **Not fixed** — flagged only.
-It is not `tools/database.mjs`; the two are easily confused.
-
-### Doc status — which handoff is real
-
-**This vault file is canonical.** The `HANDOFF.md` in the claude.ai project is a
-**2026-07-21 snapshot**, superseded by this document on 2026-08-23. Read as
-current it is actively misleading: it calls the `database` tool *"a STUB … the #1
-unfinished item"*, which was already untrue when it was written down here and is
-doubly untrue now. Roughly half of one session on 2026-09-04 was spent rebuilding
-a tool that already worked, because that snapshot was read as current.
-
-Also stale: **`JARVIS_AGENT_SPEC.md`** (project copy) claims tier4 (27 assertions)
-and tier5 (34) test suites. Neither file exists on `origin/main` — `ls test/` shows
-only `tier1`, `tier2`, `tier6` (plus the two database suites added above). The
-"107 offline assertions across all tiers" figure is therefore unsupported.
-
-**Project files cannot be edited from a session and do not sync back.** They should
-be treated as historical snapshots, not sources of truth.
-
-### One §9 item now answered
-
-§9's first open item — *"watch the first scheduled briefing land"* — was resolved
-by the 2026-09-01 live audit, and the answer was no. Groq decommissioned
-`llama-3.3-70b-versatile` on 2026-08-16; all four scheduled skills share
-`runner.mjs`, so all four failed every run. See the 2026-09-01 superseding block in
-`Claude Memory/Projects/Smart Home/_index.md` for the model swap and the standing
-warning that **a green Actions run is not proof a file was written**.
-
-
-
-
----
-
-## 12. SUPERSEDING — 2026-10-01: replacement device is a Galaxy Z Fold 8 Ultra
-
-> §11 said the Fold 7 is lost and a replacement is ordered. **The replacement is in hand: a
-> Samsung Galaxy Z Fold 8 Ultra.** It is now the primary device and the JARVIS host. Read every
-> "Fold 7" in §1, §2 and §10 as "Fold 8 Ultra".
-
-- **The design is unchanged.** The six-tab `jarvis-app.mjs` on :8737 is THE daily app. 14 tools; P0–P5 are on `origin/main`. Constraints as in §1.
-- **Verification status: NOT yet re-verified on the Fold 8 Ultra.** The §2 proofs were made on the Fold 7. Until bring-up passes, the honest status of P0–P5 is "proven on the previous device, code safe on `origin/main`".
-- **Bring-up checklist:** `Claude Memory/Projects/Smart Home/sessions/2026-10-01.md`, which has 10 ordered steps. The two easiest to miss are **restoring `.env` by hand** and **re-installing the vault `.git/hooks/pre-commit` `.github/` guard**. Neither travels with a clone, and without the hook obsidian-git will eventually delete the Actions workflows again (the 4th occurrence).
-- **HA side:** the companion app must be re-paired as the new device. Check for automations or notify targets that still reference the Fold 7's `mobile_app_*` entity.
-- The §11 S22 Termux gotchas (OpenSSL relink, pager, git identity) apply to the new phone too.
-
+- **Start:** read the mandatory session-start files (`Claude Memory/MEMORY.md`, `Profile/user_profile.md`, the 5 project `_index.md`, `Account/capture_queue.md`) — report any as MISSING, never synthesise. Read the vault yourself; don't ask the user to paste context.
+- **One layer → that layer's skill** (`capture-pipeline`, `skill-engine-ops`, `jarvis-core-dev`, `vault-integrity-audit`, `voice-satellite-ops`). **Two+ layers → `jarvis-orchestrator`.** Verify boundaries with `qa-boundary-check` before any commit.
+- **End (on "done"/"wrap up"):** update the project `_index.md`; write `sessions/YYYY-MM-DD.md`; tick `capture_queue.md`; present all changed files for review/commit.
+- **Style:** terse; one step at a time; screenshots to show state; never claim an action you didn't take; say which of Documented/Merged/Running you actually observed.
