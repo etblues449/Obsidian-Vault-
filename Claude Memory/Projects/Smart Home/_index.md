@@ -689,4 +689,5 @@ Two Termux gotchas worth keeping:
   - [ ] Confirm the first post-merge Morning Brief file lands.
   - [ ] Attach `jarvis-core` and fix diagnosis §2.1 + §2.4; add Tier 3–5 suites.
   - [ ] Decide: quiet-hours window; Tier 3 provider under C1; voice agent on Vercel (redeploy or retire).
+- **Later 2026-10-03 (jarvis-core attached):** quiet hours were already set (22:00–07:00) and a token budget exists, so the earlier "unset" findings were stale. The real Tier 3 gap was that the app went silent without ElevenLabs. Fixed with a free phone-voice fallback, plus the tier1 401 bug: **jarvis-core PR #3** (88/88 offline). See diagnosis §6.
 - Session record: [[sessions/2026-10-03]]

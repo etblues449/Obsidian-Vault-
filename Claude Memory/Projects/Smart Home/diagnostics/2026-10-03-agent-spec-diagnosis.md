@@ -123,3 +123,30 @@ calls the paid Claude API for conversation, so it is a C1 violation if ever revi
    - confirm whether a cost tally exists
 4. Answer: **quiet-hours window** (§2.3) and **Tier 3 provider under C1** (§2.2).
 5. Decide the fate of the `jarvis-voice` Vercel project: repoint it at the voice agent's source on a live model, or retire it and the "LIVE" claim.
+
+---
+
+## 6. SUPERSEDING — later on 2026-10-03, after `jarvis-core` was attached and read
+
+Jelly Bean approved repo access. `etblues449/jarvis-core` `main` @ `a0a1a4b` was cloned and read. Three of the
+RECORDED rows above were **wrong**, because the vault notes they came from were stale. Read the code first, as CLAUDE.md says.
+
+- **Tier 3:** speech-to-text was already **free**. `lib/ears.mjs` uses Termux:API `termux-speech-to-text` (Android's
+  recogniser), and the web app uses the browser's `SpeechRecognition`. Only the *output* voice used ElevenLabs.
+  **Real gap found:** with no ElevenLabs key, credit or network, `/speak` returned 204 and the app played **nothing**.
+  **FIXED (jarvis-core PR #3):** the free phone `speechSynthesis` (en-GB) is now the fallback. Barge-in also cancels it.
+  `test/tier3-tts-test.mjs` has 12 offline assertions; 6 of them fail on the old page. Decision (Jelly Bean: "you choose"):
+  ElevenLabs stays while it works, and £0 is the guaranteed floor.
+- **Tier 5, §2.3 is WRONG:** quiet hours **are** set to **22:00–07:00** in `heartbeat.json` and `jarvis.config.json`.
+  `heartbeat.mjs` holds due checks inside the window (with a `--force` override). Only `user_profile.md` was stale (now fixed).
+- **Tier 6:** a cost cap **exists**. `dailyTokenBudget: 100000` in `jarvis.config.json` is enforced via the token tally in
+  `lib/rails.mjs` ("kill switch, audit log, cost tally, injection scan").
+- **§2.4 FIXED (PR #3):** the red tier1 test was a real robustness bug. `brain.mjs` read `res.headers.get()`
+  unguarded, so a header-less 401 surfaced as a `TypeError`. It is now `res.headers?.get?.()`, and tier1 passes 7/7.
+- **Offline suites now:** tier1 7, tier2 16, tier3-tts 12, tier6 23, database 30. That is 88 assertions, all green, with `jarvis-app.mjs` boot-tested
+  (`GET /` 200; `/speak` with no key 204, which is exactly the case the page now handles).
+- **Still open:**
+  - §2.1 (persona memory-as-data rule)
+  - Tier 4/5 offline suites
+  - on-device re-verification on the Fold 8 Ultra
+  - the `jarvis-voice` Vercel project
