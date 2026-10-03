@@ -67,7 +67,7 @@ file; it supersedes the earlier sections.
 | Brain (Tier 1) | Provider seam, streaming, retries | `jarvis-core/lib/brain.mjs` | CODE. Default Groq model `openai/gpt-oss-120b`. tier1 suite 7/7 on PR #3 |
 | Hands (Tier 2) | **14 tools**, auto-registered from `tools/` | `jarvis-core/tools/` | CODE (counted 2026-10-03): capture, database, forget, ha-control, ha-list, ha-state, pc-control, remember, set-alarm, set-timer, update-memory, vault-list, vault-read, vault-search. `vault-lib.mjs` is a helper, not a tool |
 | Ears (Tier 3 in) | Android speech-to-text, **free** | `lib/ears.mjs` (`termux-speech-to-text`), browser `SpeechRecognition` in `web/index.html` | CODE |
-| Mouth (Tier 3 out) | ElevenLabs, **plus a free phone-voice fallback** | `jarvis-app.mjs` `/speak`, `web/index.html` | Fallback is in **jarvis-core PR #3 (not merged)**. On `main` today, no ElevenLabs = silence |
+| Mouth (Tier 3 out) | ElevenLabs, **plus a free phone-voice fallback** | `jarvis-app.mjs` `/speak`, `web/index.html` | CODE: fallback **merged to `main`** (`a63f99a`). Not yet heard on the Fold 8 Ultra |
 | Memory (Tier 4) | One fact per line, atomic + `.bak` + read-back | `lib/memory.mjs` → `Claude Memory/Account/jarvis_memory.md` | VERIFIED 2026-10-03 on the shipped module (round-trip, restart, hand-edit respected). File exists in vault |
 | Heartbeat (Tier 5) | Scheduled checks, **quiet hours 22:00–07:00** | `heartbeat.mjs`, `heartbeat.json` | CODE. Holds due checks in quiet hours; `--force` override. Checks: Morning Brief 07:30, Evening Wind-down 21:30 |
 | Rails (Tier 6) | Hardline blocklist → safe mode → confirm gate → injection scan → audit | `lib/agent.mjs`, `lib/hardline.mjs`, `lib/rails.mjs` | Hardline VERIFIED 25/25 and persona 44/44 on shipped sources. Cost cap = `dailyTokenBudget: 100000` in `jarvis.config.json` (CODE). Panic button = `~/jarvis-core/.jarvis-safe` |
@@ -75,12 +75,11 @@ file; it supersedes the earlier sections.
 | Capture | Phone writes notes straight into `JARVIS/Inbox/`; Actions router files them | `tools/capture.mjs`, `.github/workflows/jarvis-2-capture-router.yml` | RECORDED (router fired 2026-08-23). n8n is off the path |
 | Skill engine | Morning Brief daily, Connection Finder Sun, Weekly Synthesis Fri, Pattern Detector Mon | `Assistant Core/jarvis-skills/runner.mjs` + `.github/workflows/` | **VERIFIED RUNNING 2026-10-03**: a Morning Brief run on the fixed code (manually triggered by a parallel session) wrote `briefings/2026-10-03.md` (`6ed030f`, 07:39 UTC) with `openai/gpt-oss-120b`. It was grounded in real captures and is the first brief since 2026-08-05. `GROQ_API_KEY` is confirmed set. **Only Morning Brief is proven end-to-end**; the other 3 skills share the same runner and prove themselves on their next run |
 | Home | HA Green @ 192.168.0.200, ESPHome nodes, Frigate | hub + `Claude Memory/Projects/Smart Home/ha-config/` | Config backed up 2026-08-23. See Smart Home `_index.md` 2026-09-01 block for live baseline |
-| Voice agent (web) | Old Groq + browser-speech page | Vercel project `jarvis-voice` | **DOWN as documented.** `-lovat` URL 404. Project now builds the vault root and serves a page titled "AI" with no Groq call. Its model is also retired. **Decision pending (§4)** |
+| Voice agent (web) | Old Groq + browser-speech page | Vercel project `jarvis-voice` | **RETIRED 2026-10-03** (Jelly Bean: `r`). The phone app covers it. The Vercel project itself still exists until deleted from the dashboard (§4); the connector can't see it |
 | Carousel | 7-slide Next.js site + bearer-gated APIs | `JARVIS-Carousel/`, Vercel `jarvis-carousel` | Answers 200 (2026-10-03) |
 
 **Phone app test suites (offline: no key, no network, no phone):**
-tier1 7, tier2 16, **tier3-tts 12 (new)**, tier6 23, database 30. That is **88/88 on PR #3's branch**. `main`
-alone has tier1 at 6/7 until PR #3 merges.
+tier1 7, tier2 16, **tier3-tts 12 (new)**, tier6 23, database 30. That is **88/88 on `main`** since PR #3 merged (`a63f99a`).
 
 **Skill engine suite:** `node "Assistant Core/jarvis-skills/test/local-test.mjs"`, **33/33** on `master`.
 
@@ -126,14 +125,15 @@ alone has tier1 at 6/7 until PR #3 merges.
 
 ## 4. Waiting on Jelly Bean
 
-- [ ] **Merge jarvis-core PR #3**, then on the phone run `cd ~/jarvis-core && git pull`, restart the app, and test with
-      ElevenLabs disabled. **You should hear the phone voice.** That moves Tier 3 from CODE to VERIFIED.
-- [ ] **Merge vault PR #89.** It corrects the diagnosis (§6), the index, capture_queue and user_profile, and carries this file.
-- [ ] **Voice agent on Vercel: reply `r` (retire) or `v` (revive).**
-  - *Retire* (recommended): delete the `jarvis-voice` Vercel project and drop the "LIVE & £0" line from the Smart Home index.
-    The phone app covers everything it did.
-  - *Revive*: name the repo holding its source. It then moves to a live model and the project gets repointed
-    (rootDirectory is currently unset, so it builds the vault).
+- [x] **jarvis-core PR #3 MERGED** (`a63f99a`, 2026-10-03). Still to do on the phone: `cd ~/jarvis-core && git pull`,
+      restart the app, and test with ElevenLabs disabled. **You should hear the phone voice.** That moves Tier 3 from
+      CODE to VERIFIED.
+- [x] **Vault PR #89 MERGED** (`cc3be32`, 2026-10-03).
+- [x] **Voice agent: RETIRED** (Jelly Bean chose `r`, 2026-10-03). The vault records are updated.
+- [ ] **Delete the `jarvis-voice` Vercel project yourself.** The Vercel connector can't see this account's projects
+      (`get_project`/`delete_project` both 404), so it can't be done from a session. Go to
+      https://vercel.com/jelly-bean-s-projects/jarvis-voice/settings, scroll to the bottom, and choose **Delete Project**.
+      Until then it keeps building a preview of the vault on every push (harmless, but noise).
 - [ ] **Quiet hours:** currently 22:00–07:00. Say a different window if you want one. It lives in
       `heartbeat.json` and `jarvis.config.json`.
 
