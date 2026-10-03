@@ -738,7 +738,8 @@ Full grading: `Projects/Smart Home/diagnostics/2026-10-03-agent-spec-diagnosis.m
 
 - [x] **S1 — Skill engine dead since 2026-08-16:** `runner.mjs` defaulted to retired `llama-3.3-70b-versatile`. *(FIXED 2026-10-03 — `openai/gpt-oss-120b`, `DEAD_MODELS` guard, 33/33 incl. 7 stub-server tests.)*
 - [x] **S1 — Prove it live.** *(VERIFIED 2026-10-03 07:39 UTC: `jarvis-skills[bot]` commit `6ed030f` wrote `briefings/2026-10-03.md` with `openai/gpt-oss-120b`. This is the first brief since 2026-08-05.)*
-- [ ] **S1 — Voice agent not deployed as documented.** The `-lovat` alias returns 404. The `jarvis-voice` Vercel project now builds the vault root and serves a page titled "AI" with no Groq call. Repoint it at the agent's source on a live model, or retire it.
+- [x] **S1 — Voice agent not deployed as documented.** *(RETIRED 2026-10-03 — Jelly Bean chose `r`.)* The `-lovat` alias returns 404. The `jarvis-voice` Vercel project now builds the vault root and serves a page titled "AI" with no Groq call. Repoint it at the agent's source on a live model, or retire it.
+- [ ] **Delete the `jarvis-voice` Vercel project** in the dashboard (Settings → Delete Project). The connector can't see it.
 - [ ] **S2 — `jarvis-core` persona: memory has no data-not-instructions rule** (spec Tier 4). Exact patch in diagnosis §2.1. Needs repo access, then a test and a `SHA_PERSONA` bump.
 - [ ] **S2 — Offline suites missing for Tiers 3, 4, 5** in `jarvis-core/test/`.
 - [x] **S2 — Decide: Tier 3 STT/TTS under C1.** *(DECIDED 2026-10-03 (Jelly Bean: "you choose"): STT was already free, using Android's own recogniser. ElevenLabs stays as the voice while it works; the phone's free `speechSynthesis` is now the guaranteed fallback, so JARVIS never goes mute. Before this, a missing key or credit meant silence. jarvis-core PR #3, 12 new offline tests.)*
