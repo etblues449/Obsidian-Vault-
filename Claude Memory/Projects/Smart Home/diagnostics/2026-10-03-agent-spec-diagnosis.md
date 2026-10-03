@@ -99,9 +99,13 @@ calls the paid Claude API for conversation, so it is a C1 violation if ever revi
 
 ## 4. Other findings (not fixable from here)
 
-- **`jarvis-voice-lovat.vercel.app` returns Vercel `404 NOT_FOUND`.** The Smart Home index still calls
-  this Layer-B voice agent "LIVE & £0". It also used `llama-3.1-8b-instant`, so it would have broken on
-  2026-08-16 even if still deployed. Cause: unknown, because the Vercel connector can't see the projects. **Status: DOWN.**
+- **The documented voice agent is not what is served.** `jarvis-voice-lovat.vercel.app` returns Vercel
+  `404 NOT_FOUND`; that alias is gone. The Vercel bot on PR #87 shows the **`jarvis-voice` project still
+  exists**, but it now builds from **this vault repo's root** (rootDirectory unset).
+  `jarvis-voice.vercel.app` answers 200 with a page titled "AI" that contains no Groq call. So the
+  Groq + octokit voice agent that the Smart Home index calls "LIVE & £0" is not deployed. It also used
+  `llama-3.1-8b-instant` (retired 2026-08-16). Its source is not in the vault.
+  **Status: DOWN as documented. The project needs repointing to the agent's source, or retiring.**
 - **`Assistant Core/packages/persona.tar.gz.b64` is truncated** (`gzip: unexpected end of file`).
   Nothing uses it: `install-persona.sh` fetches plain `persona/persona.mjs`, per HANDOFF rule #1.
   It is safe to delete. It was left in place because deletion is your call.
@@ -118,4 +122,4 @@ calls the paid Claude API for conversation, so it is a C1 violation if ever revi
    - add offline suites for Tiers 3/4/5
    - confirm whether a cost tally exists
 4. Answer: **quiet-hours window** (§2.3) and **Tier 3 provider under C1** (§2.2).
-5. Decide the fate of the voice agent on Vercel (redeploy on a live model, or retire the "LIVE" claim).
+5. Decide the fate of the `jarvis-voice` Vercel project: repoint it at the voice agent's source on a live model, or retire it and the "LIVE" claim.

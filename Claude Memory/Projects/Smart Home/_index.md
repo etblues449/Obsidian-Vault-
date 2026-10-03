@@ -683,7 +683,7 @@ Two Termux gotchas worth keeping:
 > Spec: `JARVIS/research/start-here-voice-agent-spec.md`. Full grading: [[diagnostics/2026-10-03-agent-spec-diagnosis]].
 
 - **✅ FIXED (code, offline-verified): the scheduled skill engine was dead 2026-08-16 → 2026-10-03.** `runner.mjs` still defaulted to the retired `llama-3.3-70b-versatile`. It now defaults to `openai/gpt-oss-120b` and has a `DEAD_MODELS` guard. 33/33 tests pass. **Not proven live until a briefing file lands after merge.** Supersedes the 2026-10-01 "swap the Groq model in `runner.mjs:42`" item.
-- **⚠️ Voice agent `jarvis-voice-lovat.vercel.app` returns 404 NOT_FOUND.** The "Voice agent (Layer B): LIVE & £0" line above is **no longer true**. It also ran on `llama-3.1-8b-instant`, which was retired 2026-08-16.
+- **⚠️ Voice agent is not deployed as documented.** `jarvis-voice-lovat.vercel.app` returns 404. The `jarvis-voice` Vercel project still exists but now builds this vault repo's root and serves a page titled "AI" with no Groq call. The "Voice agent (Layer B): LIVE & £0" line above is **no longer true**. It also ran on `llama-3.1-8b-instant`, which was retired 2026-08-16.
 - **Spec gaps in the phone app (need `jarvis-core` access):** persona treats stored memory as "true" with no data-not-instructions carve-out; Tier 3 runs on Deepgram/ElevenLabs trial credits (C1 conflict, your decision); quiet hours unset; no offline test suites for Tiers 3/4/5; `tier1-test.mjs` red since 2026-08-02.
 - Next actions:
   - [ ] Confirm the first post-merge Morning Brief file lands.
