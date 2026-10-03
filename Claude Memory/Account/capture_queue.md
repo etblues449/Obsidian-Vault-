@@ -737,7 +737,7 @@ report the stale value with full confidence, which is worse than not checking at
 Full grading: `Projects/Smart Home/diagnostics/2026-10-03-agent-spec-diagnosis.md`.
 
 - [x] **S1 — Skill engine dead since 2026-08-16:** `runner.mjs` defaulted to retired `llama-3.3-70b-versatile`. *(FIXED 2026-10-03 — `openai/gpt-oss-120b`, `DEAD_MODELS` guard, 33/33 incl. 7 stub-server tests.)*
-- [ ] **S1 — Prove it live:** after merge, confirm `Claude Memory/briefings/<date>.md` is actually written. A green run is not proof.
+- [x] **S1 — Prove it live.** *(VERIFIED 2026-10-03 07:39 UTC: `jarvis-skills[bot]` commit `6ed030f` wrote `briefings/2026-10-03.md` with `openai/gpt-oss-120b`. This is the first brief since 2026-08-05.)*
 - [ ] **S1 — Voice agent not deployed as documented.** The `-lovat` alias returns 404. The `jarvis-voice` Vercel project now builds the vault root and serves a page titled "AI" with no Groq call. Repoint it at the agent's source on a live model, or retire it.
 - [ ] **S2 — `jarvis-core` persona: memory has no data-not-instructions rule** (spec Tier 4). Exact patch in diagnosis §2.1. Needs repo access, then a test and a `SHA_PERSONA` bump.
 - [ ] **S2 — Offline suites missing for Tiers 3, 4, 5** in `jarvis-core/test/`.
