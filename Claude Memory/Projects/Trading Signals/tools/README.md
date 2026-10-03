@@ -40,10 +40,21 @@ is exposed.
 pkg install python
 python -m pip install telethon     # not bare `pip` — its shebang goes stale after a Termux Python upgrade
 cd ~/Obsidian-Vault-/"Claude Memory/Projects/Trading Signals/tools"   # git clone the vault first if it isn't there
-python signal_logger.py --login    # one-time; api_id/api_hash from my.telegram.org
+termux-wake-lock                   # or Android kills the listener when the screen sleeps
+python signal_logger.py --login    # one-time; api_id/api_hash from my.telegram.org, then YOUR PHONE NUMBER
 python signal_logger.py --list     # find the exact channel names/IDs
 python signal_logger.py            # listen + log
 ```
+
+`--login` asks for api_id, api_hash, then your **phone number in international
+format** (`+44…`), then the code Telegram sends to your other devices, then your
+2FA password if you have one. **Never a bot token at the phone prompt** — that
+signs the session in *as the bot*, and bots cannot read channels, so the first
+run dies with `BotMethodInvalidError … GetDialogsRequest` (this happened on the
+Fold 8 Ultra, 2026-10-03). The prompt now refuses anything shaped like a token,
+and `--login` discards a bot session and signs in again. A new phone means a new
+Termux: `python -m pip install telethon` again, and the session has to be
+recreated — it never leaves the device it was made on.
 
 `api_id` is a 6–8 digit number (fits in a 32-bit int). If Telethon fails with
 `struct.error: 'i' format requires …`, the value you typed is wrong — delete
