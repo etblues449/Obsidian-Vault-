@@ -51,4 +51,4 @@ Never write a secret into a note.
 
 <!-- TO FILL — ask, do not infer -->
 - Preferred briefing length / tone?
-- Quiet hours for proactive notifications?
+- ~~Quiet hours for proactive notifications?~~ **Answered from code 2026-10-03:** 22:00–07:00 Europe/London, set in `jarvis-core/heartbeat.json` + `jarvis.config.json`; the heartbeat holds non-urgent checks inside it. Change it there if you want a different window.
