@@ -45,7 +45,7 @@ and `#decision` tags. They belong to `jarvis-capture-engineer`, not you.
 
 Engine: `Assistant Core/jarvis-skills/runner.mjs`. Zero npm deps, Node 18+ (full-ICU
 `Intl`). Caps: `CORPUS_CAP` 30000 chars, `PER_FILE_CAP` 4000, `MEMORY_CAP` 6000.
-Model: Groq `llama-3.3-70b-versatile`. Exit 0 = wrote a file OR period already done.
+Model: Groq `openai/gpt-oss-120b` (default since 2026-10-03; `llama-3.3-70b-versatile` was retired 2026-08-16 and is refused via `DEAD_MODELS`). Exit 0 = wrote a file OR period already done.
 Exit 1 = real error.
 
 ## DST guard — current design (NOT the old exact-hour approach)

@@ -8,7 +8,7 @@ costs **£0/month, forever** (constraint **C1**).
 | Layer | Was (paid) | Now (£0) |
 |-------|-----------|----------|
 | Scheduler / compute | n8n.cloud (trial credits, no perpetual free tier) | **GitHub Actions** (free for this repo) |
-| LLM | Claude API `claude-opus-4-8` (per-token) | **Groq** `llama-3.3-70b-versatile` (free tier, no card) |
+| LLM | Claude API `claude-opus-4-8` (per-token) | **Groq** `openai/gpt-oss-120b` (free tier, no card) |
 | Vault reads | GitHub API per file (shared-IP rate-limit lottery) | local `actions/checkout` (no API, no limits) |
 | Vault writes | n8n GitHub-commit node | one serialized, rebase-retry `git push` to `master` |
 
@@ -121,7 +121,7 @@ JARVIS_FAKE_NOW="2026-07-03T17:00:00Z" GROQ_API_KEY=xxx \
 Flags: `--skill=<id>` (required), `--force` (regenerate even if this
 period's output exists),
 `--dry-run` (skip the Groq call, emit stub text). Env: `GROQ_API_KEY`,
-`GROQ_MODEL` (default `llama-3.3-70b-versatile`), `VAULT_ROOT` (default = repo
+`GROQ_MODEL` (default `openai/gpt-oss-120b`), `VAULT_ROOT` (default = repo
 root), `JARVIS_FAKE_NOW` (ISO string to override "now").
 
 ## Run the tests
@@ -152,6 +152,9 @@ then add a caller workflow in `.github/workflows/` that `uses:`
 ## Change the model
 
 Set a repository **variable** `GROQ_MODEL` (Settings → Secrets and variables →
-Actions → Variables). Options today: `llama-3.3-70b-versatile` (default, best
-quality), `llama-3.1-8b-instant` (fastest, 14.4k requests/day), or
-`openai/gpt-oss-120b`. No code change needed.
+Actions → Variables). Default: `openai/gpt-oss-120b`; `openai/gpt-oss-20b` is the
+faster alternative. No code change needed. **Check
+console.groq.com/docs/deprecations first** — `llama-3.3-70b-versatile` and
+`llama-3.1-8b-instant` were shut down 2026-08-16 and the old default kept every
+scheduled run failing until 2026-10-03. `runner.mjs` refuses any model in its
+`DEAD_MODELS` list before calling Groq; add newly retired models there by hand.

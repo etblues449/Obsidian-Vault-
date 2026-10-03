@@ -259,6 +259,85 @@ console.log('Guard bypass:');
   (r.code === 0 && /generating/.test(r.out)) ? ok('--force runs regardless of time') : bad('--force should run', r.out);
 }
 
+// Groq client — the REAL request path, against a local stub server (no key, no
+// network). Added 2026-10-03 after llama-3.3-70b-versatile was retired by Groq
+// (2026-08-16) and stayed the default: every scheduled run failed for ~7 weeks.
+console.log('Groq client (local stub server):');
+{
+  const http = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  let reqs = [];
+  let reply = () => ({ status: 200, json: { choices: [{ finish_reason: 'stop', message: { content: '## Today\n- stub answer' } }] } });
+  const srv = http.createServer((req, res) => {
+    let b = '';
+    req.on('data', (c) => (b += c));
+    req.on('end', () => {
+      reqs.push(JSON.parse(b || '{}'));
+      const r = reply();
+      res.writeHead(r.status, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(r.json));
+    });
+  });
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  const URL_ = `http://127.0.0.1:${srv.address().port}/chat`;
+  const live = (fakeNow, extraEnv = {}) => new Promise((resolve) => {
+    const env = { ...process.env, VAULT_ROOT: FIX, GROQ_API_KEY: 'stub-key', JARVIS_GROQ_URL: URL_, JARVIS_FAKE_NOW: fakeNow, ...extraEnv };
+    if (!('GROQ_MODEL' in extraEnv)) delete env.GROQ_MODEL;
+    const c = spawn('node', [RUNNER, '--skill=morning-brief', '--force'], { env });
+    let out = '';
+    c.stdout.on('data', (d) => (out += d)); c.stderr.on('data', (d) => (out += d));
+    c.on('close', (code) => resolve({ code, out }));
+  });
+
+  // 1. default model is live, and the reasoning request shape is right
+  reqs = [];
+  let r = await live('2026-07-21T06:00:00Z');
+  const b = reqs[0] || {};
+  (r.code === 0 && b.model === 'openai/gpt-oss-120b')
+    ? ok('default model is openai/gpt-oss-120b (not a retired model)')
+    : bad('default model should be openai/gpt-oss-120b', `code=${r.code} model=${b.model}\n${r.out}`);
+  (b.reasoning_effort === 'low' && b.include_reasoning === false && b.max_tokens === 1500 + 1024)
+    ? ok('gpt-oss request: reasoning_effort=low, include_reasoning=false, +1024 token headroom')
+    : bad('reasoning request shape wrong', JSON.stringify({ ...b, messages: undefined }));
+  (exists('Claude Memory/briefings/2026-07-21.md') && read('Claude Memory/briefings/2026-07-21.md').includes('stub answer'))
+    ? ok('the model answer actually lands in briefings/')
+    : bad('brief should contain the stub answer', r.out);
+
+  // 2. a retired model is refused before any network call
+  reqs = [];
+  r = await live('2026-07-22T06:00:00Z', { GROQ_MODEL: 'llama-3.3-70b-versatile' });
+  (r.code === 1 && /retired/.test(r.out) && reqs.length === 0 && !exists('Claude Memory/briefings/2026-07-22.md'))
+    ? ok('retired model refused loudly: exit 1, zero requests, nothing written')
+    : bad('retired model must fail loudly before calling Groq', `code=${r.code} reqs=${reqs.length}\n${r.out}`);
+
+  // 3. model_not_found (404) is not retried
+  reqs = [];
+  reply = () => ({ status: 404, json: { error: { code: 'model_not_found' } } });
+  r = await live('2026-07-23T06:00:00Z');
+  (r.code === 1 && reqs.length === 1 && /404/.test(r.out))
+    ? ok('404 model_not_found fails after 1 request (no pointless retries)')
+    : bad('a 4xx should not be retried', `code=${r.code} reqs=${reqs.length}\n${r.out}`);
+
+  // 4. reasoning eats the whole budget -> named, loud failure, no file
+  reqs = [];
+  reply = () => ({ status: 200, json: { choices: [{ finish_reason: 'length', message: { content: '' } }] } });
+  r = await live('2026-07-24T06:00:00Z');
+  (r.code === 1 && /token budget/.test(r.out) && !exists('Claude Memory/briefings/2026-07-24.md'))
+    ? ok('empty answer with finish_reason=length fails loudly and writes nothing')
+    : bad('budget exhaustion must be a named error', `code=${r.code}\n${r.out}`);
+
+  // 5. a non-reasoning override gets no reasoning params (they would 400)
+  reqs = [];
+  reply = () => ({ status: 200, json: { choices: [{ finish_reason: 'stop', message: { content: 'ok' } }] } });
+  r = await live('2026-07-25T06:00:00Z', { GROQ_MODEL: 'example/plain-model' });
+  const b5 = reqs[0] || {};
+  (r.code === 0 && b5.model === 'example/plain-model' && !('reasoning_effort' in b5) && b5.max_tokens === 1500)
+    ? ok('non-reasoning GROQ_MODEL override sends a plain request')
+    : bad('override should send plain body', JSON.stringify({ ...b5, messages: undefined }) + r.out);
+
+  srv.close();
+}
+
 // cleanup
 fs.rmSync(FIX, { recursive: true, force: true });
 

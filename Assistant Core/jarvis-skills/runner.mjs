@@ -8,7 +8,7 @@
  *
  *   - Compute .... GitHub Actions (free for public repos, generous free
  *                  minutes for private repos)
- *   - LLM ........ Groq (free tier, no card) — default llama-3.3-70b-versatile
+ *   - LLM ........ Groq (free tier, no card) — default openai/gpt-oss-120b
  *   - Vault I/O .. a local `actions/checkout` of the repo (no GitHub API
  *                  reads, no rate-limit lottery); the workflow commits the
  *                  output back to master with a rebase-retry loop.
@@ -25,7 +25,8 @@
  *
  * Env:
  *   GROQ_API_KEY   required (unless --dry-run)
- *   GROQ_MODEL     optional, default "llama-3.3-70b-versatile"
+ *   GROQ_MODEL     optional, default "openai/gpt-oss-120b"
+ *   JARVIS_GROQ_URL  test seam only — points the client at a local stub server
  *   VAULT_ROOT     optional, default = repo root (two levels up from this file)
  *
  * Exit codes: 0 = wrote a file OR nothing-to-do (guard skip); 1 = real error.
@@ -44,8 +45,33 @@ const VAULT_ROOT = process.env.VAULT_ROOT
   : path.resolve(__dirname, '..', '..'); // Assistant Core/jarvis-skills -> repo root
 
 // ---------- config ----------
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+// llama-3.3-70b-versatile was retired by Groq on 2026-08-16 and was still the
+// default here until 2026-10-03: every scheduled run failed for ~7 weeks and
+// nothing landed in briefings/ after 2026-08-05. gpt-oss-120b is Groq's named
+// replacement (console.groq.com/docs/deprecations, checked 2026-10-03).
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+const GROQ_URL = process.env.JARVIS_GROQ_URL || 'https://api.groq.com/openai/v1/chat/completions';
+
+// Models Groq has shut down. No API reports retirement in advance, so this list
+// is maintained by hand from the deprecations page. A retired model is refused
+// before any call, with a message naming the fix — never a 404 retried 3 times.
+const DEAD_MODELS = new Set([
+  'llama-3.3-70b-versatile',
+  'llama-3.1-8b-instant',
+  'qwen/qwen3-32b',
+  'qwen/qwen3.6-27b',
+  'meta-llama/llama-4-scout-17b-16e-instruct',
+  'meta-llama/llama-4-maverick-17b-128e-instruct',
+  'moonshotai/kimi-k2-instruct-0905',
+  'groq/compound',
+  'groq/compound-mini',
+]);
+
+// gpt-oss models reason before answering. Their reasoning tokens are assumed to
+// count against max_tokens (Groq does not document otherwise), so the budget
+// gets headroom; effort is kept low and reasoning text is not returned.
+const REASONING_HEADROOM = 1024;
+const isReasoningModel = (m) => /^openai\/gpt-oss-/.test(m);
 const CORPUS_CAP = 30000; // chars — safely under Groq free-tier tokens/minute
 const PER_FILE_CAP = 4000; // chars per source note (matches n8n)
 const MEMORY_CAP = 6000;   // chars of MEMORY.md (matches n8n)
@@ -140,7 +166,30 @@ function filesCorpus(relPaths) {
 }
 
 // ---------- Groq client ----------
+function buildGroqBody({ model, system, user, maxTokens }) {
+  const body = {
+    model,
+    max_tokens: maxTokens,
+    temperature: 0.4,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+  };
+  if (isReasoningModel(model)) {
+    body.max_tokens = maxTokens + REASONING_HEADROOM;
+    body.reasoning_effort = 'low';
+    body.include_reasoning = false;
+  }
+  return body;
+}
+
 async function groqChat({ system, user, maxTokens }) {
+  if (DEAD_MODELS.has(GROQ_MODEL)) {
+    throw new Error(
+      `GROQ_MODEL "${GROQ_MODEL}" has been retired by Groq. Set GROQ_MODEL to a live model ` +
+      `(see console.groq.com/docs/deprecations) or unset it to use the default.`);
+  }
   if (DRY_RUN) {
     return `_(dry-run stub — no Groq call was made)_\n\n` +
       `## Section A\n- Example line grounded in vault context.\n\n` +
@@ -149,15 +198,7 @@ async function groqChat({ system, user, maxTokens }) {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error('GROQ_API_KEY is not set (and --dry-run was not passed).');
 
-  const body = {
-    model: GROQ_MODEL,
-    max_tokens: maxTokens,
-    temperature: 0.4,
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: user },
-    ],
-  };
+  const body = buildGroqBody({ model: GROQ_MODEL, system, user, maxTokens });
 
   // up to 3 attempts with backoff for transient 429/5xx
   let lastErr;
@@ -178,14 +219,26 @@ async function groqChat({ system, user, maxTokens }) {
       }
       if (!res.ok) {
         const t = await res.text();
-        throw new Error(`Groq HTTP ${res.status}: ${t.slice(0, 500)}`);
+        const err = new Error(`Groq HTTP ${res.status}: ${t.slice(0, 500)}`);
+        // Other 4xx (bad key, model_not_found, bad request) cannot succeed on retry.
+        if (res.status < 500 && res.status !== 429) err.fatal = true;
+        throw err;
       }
       const json = await res.json();
-      const text = json?.choices?.[0]?.message?.content;
-      if (!text) throw new Error(`Groq returned no content: ${JSON.stringify(json).slice(0, 500)}`);
+      const choice = json?.choices?.[0];
+      const text = choice?.message?.content;
+      if (!text) {
+        const why = choice?.finish_reason === 'length'
+          ? 'the token budget ran out before any answer (reasoning used it all)'
+          : 'no content';
+        const err = new Error(`Groq returned ${why}: ${JSON.stringify(json).slice(0, 500)}`);
+        err.fatal = true;
+        throw err;
+      }
       return text.trim();
     } catch (e) {
       lastErr = e;
+      if (e.fatal) break;
       if (attempt < 3) { await sleep(attempt * 5000); continue; }
     }
   }

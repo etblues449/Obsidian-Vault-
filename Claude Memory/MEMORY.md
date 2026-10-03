@@ -43,7 +43,7 @@ finished before the next. Full-file rewrites for easy copy/paste.
 
 | Project | One line |
 |---|---|
-| Smart Home / JARVIS | HA Green + ESP32 nodes + an on-device agentic layer on the Fold 7 |
+| Smart Home / JARVIS | HA Green + ESP32 nodes + an on-device agentic layer on the Fold 8 Ultra |
 | Faceless Finance | CA-credentialed faceless YouTube channel — Wed/Fri/Sun, Wed 4PM priority |
 | Doc to Learning | Single-file HTML doc→learning app on the Anthropic API |
 | Work Financial Forecasting | Select Lifestyles income forecast (`.xlsm`); Claude acts as financial director |
@@ -55,9 +55,9 @@ finished before the next. Full-file rewrites for easy copy/paste.
 ```
 vault repo      etblues449/Obsidian-Vault-  (branch: master)
 HA Green hub    192.168.0.200
-phone           Samsung Galaxy Z Fold 7, Termux
-skill engine    Assistant Core/jarvis-skills/runner.mjs — Groq llama-3.3-70b-versatile
-capture         Tasker → webhook → JARVIS/Inbox/   (still on paid n8n; C1 migration pending)
+phone           Samsung Galaxy Z Fold 8 Ultra, Termux (replaced lost Fold 7, 2026-10-01)
+skill engine    Assistant Core/jarvis-skills/runner.mjs — Groq openai/gpt-oss-120b (since 2026-10-03)
+capture         jarvis-core tools/capture.mjs → JARVIS/Inbox/ → Actions router (n8n off the path since 2026-08-23)
 ```
 
 ## Hard-won lessons
