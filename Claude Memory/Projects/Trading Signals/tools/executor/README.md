@@ -70,7 +70,7 @@ logs mask every secret.
 
 ```bash
 cd ~/tradeguard
-~/tradeguard-venv/bin/python -m executor --login    # phone + code once → session file in ~/.config/tradeguard
+~/tradeguard-venv/bin/python -m executor --login    # YOUR PHONE NUMBER (+44…) + code once → session file in ~/.config/tradeguard
 ~/tradeguard-venv/bin/python -m executor --list     # confirm the channel names/ids; adjust TG_CHANNELS if needed
 ~/tradeguard-venv/bin/python -m executor --check    # OANDA login, instrument spec, live price, sample sizing, Supabase, gates
 ~/tradeguard-venv/bin/python -m executor --dry-run  # everything except sending orders — watch a real signal flow through
@@ -176,6 +176,7 @@ executor loop against a fake broker.
 ## Troubleshooting
 
 - `struct.error: 'i' format requires…` — the `api_id` is wrong (too big). The executor now refuses it at config time.
+- `BotMethodInvalidError … GetDialogsRequest`, or "the saved session is a BOT login" — a **bot token** was entered at the phone prompt, so the session belongs to the bot, and bots cannot read channels. Run `--login` again: it discards the bot session and asks for your phone number. The bot token belongs only in `TELEGRAM_BOT_TOKEN` (outbound alerts).
 - OANDA `401` — token/environment mismatch (a practice token on `OANDA_ENV=live` or vice versa) or a revoked token.
 - `cancelled: MARKET_HALTED` / `FOK` cancels — market closed (gold is closed Fri 22:00 → Sun 23:00 London) or price moved during the request; nothing is retried, the signal is logged as failed.
 - "below broker minimum" — increase the balance or `RISK_PCT`, or accept that sub-minimum signals are skipped. Do not lower the broker minimum by hand: it is not yours to change.

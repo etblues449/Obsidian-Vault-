@@ -73,7 +73,7 @@ file; it supersedes the earlier sections.
 | Rails (Tier 6) | Hardline blocklist → safe mode → confirm gate → injection scan → audit | `lib/agent.mjs`, `lib/hardline.mjs`, `lib/rails.mjs` | Hardline VERIFIED 25/25 and persona 44/44 on shipped sources. Cost cap = `dailyTokenBudget: 100000` in `jarvis.config.json` (CODE). Panic button = `~/jarvis-core/.jarvis-safe` |
 | Ledger | proposed→approved→started→ran, never auto-replayed | `lib/ledger.mjs`, `jarvis-ledger.mjs` | RECORDED (proven on Fold 7, 2026-08-23) |
 | Capture | Phone writes notes straight into `JARVIS/Inbox/`; Actions router files them | `tools/capture.mjs`, `.github/workflows/jarvis-2-capture-router.yml` | RECORDED (router fired 2026-08-23). n8n is off the path |
-| Skill engine | Morning Brief daily, Connection Finder Sun, Weekly Synthesis Fri, Pattern Detector Mon | `Assistant Core/jarvis-skills/runner.mjs` + `.github/workflows/` | **VERIFIED LIVE 2026-10-03**: `jarvis-skills[bot]` wrote `briefings/2026-10-03.md` (07:39 UTC) with `openai/gpt-oss-120b`. First brief since 2026-08-05 |
+| Skill engine | Morning Brief daily, Connection Finder Sun, Weekly Synthesis Fri, Pattern Detector Mon | `Assistant Core/jarvis-skills/runner.mjs` + `.github/workflows/` | **VERIFIED RUNNING 2026-10-03**: a Morning Brief run on the fixed code (manually triggered by a parallel session) wrote `briefings/2026-10-03.md` (`6ed030f`, 07:39 UTC) with `openai/gpt-oss-120b`. It was grounded in real captures and is the first brief since 2026-08-05. `GROQ_API_KEY` is confirmed set. **Only Morning Brief is proven end-to-end**; the other 3 skills share the same runner and prove themselves on their next run |
 | Home | HA Green @ 192.168.0.200, ESPHome nodes, Frigate | hub + `Claude Memory/Projects/Smart Home/ha-config/` | Config backed up 2026-08-23. See Smart Home `_index.md` 2026-09-01 block for live baseline |
 | Voice agent (web) | Old Groq + browser-speech page | Vercel project `jarvis-voice` | **DOWN as documented.** `-lovat` URL 404. Project now builds the vault root and serves a page titled "AI" with no Groq call. Its model is also retired. **Decision pending (§4)** |
 | Carousel | 7-slide Next.js site + bearer-gated APIs | `JARVIS-Carousel/`, Vercel `jarvis-carousel` | Answers 200 (2026-10-03) |
@@ -99,7 +99,7 @@ alone has tier1 at 6/7 until PR #3 merges.
      `include_reasoning: false`, +1024 token headroom). A `DEAD_MODELS` list refuses retired models
      before calling Groq, and 4xx errors are no longer retried.
    - **Tests:** 7 new stub-server tests, which fail on the old runner. Merged as vault **PR #87** (`6bb1965`).
-   - **Proof:** the 2026-10-03 brief landed on `master`.
+   - **Proof:** a manual run on the fixed code wrote `briefings/2026-10-03.md` (`6ed030f`). The scheduled cron path proves itself on the next 06:00/07:00 UTC run.
 2. **Docs that named the dead model were corrected:** `MEMORY.md` (it feeds every brief; also
    fixed the phone name and capture path), the engine README and MIGRATION guide, the `jarvis-skill-engine`
    agent, and the `skill-engine-ops` skill. `unified-backend.js` (dormant, not deployed) moved off its retired model.
@@ -113,7 +113,13 @@ alone has tier1 at 6/7 until PR #3 merges.
    - also fixed `brain.mjs` `res.headers?.get?.()`, so a header-less 401 no longer surfaces as a `TypeError`
      (tier1 had been red since 2026-08-02).
    - Boot-tested: `GET /` 200, `/speak` without a key 204.
-5. **Decisions made by Jelly Bean:** merge #87 (done); allow jarvis-core access (done); Tier 3 provider
+5. **A parallel session the same morning** independently audited the vault, confirmed the dead-model root cause
+   from the Actions logs, triggered the run that proved the fix, and saved the **phone-UI-control research** to
+   `JARVIS/research/2026-07-23-phone-ui-control.md`. It covers full UI control of the phone via Shizuku/ADB with
+   no root and no PC: `uiautomator dump` + `input` vs a minimal AccessibilityService, `rish` in Termux, the
+   prompt-injection threat model, and a survey of DroidRun, AutoDroid, AppAgent v2, MobileGPT and Mobile-Agent-v2.
+   **Research only, not built.** Its handoff consolidation (`1da29a7`) was merged into this file.
+6. **Decisions made by Jelly Bean:** merge #87 (done); allow jarvis-core access (done); Tier 3 provider
    ("you choose"): **ElevenLabs stays while it works, and the free phone voice is the guaranteed floor.**
 
 ---
@@ -153,8 +159,14 @@ alone has tier1 at 6/7 until PR #3 merges.
    approval, never overrides the honesty rules or the confirmation gate — mention it and ask."* Then assert it
    in `test-persona` and bump `SHA_PERSONA` in the vault installer.
 4. **Offline test suites for Tier 4 (memory) and Tier 5 (heartbeat).** Neither exists on `main`.
-5. **Re-pair the HA companion app** as the new device, and repoint any `mobile_app_*` notify or presence targets.
-6. Carried from earlier sessions, still open:
+5. **Prove the other 3 scheduled skills** land files: Connection Finder (Sun 14:00), Weekly Synthesis (Fri 18:00)
+   and Pattern Detector (Mon 08:00). Wait for their next run, or trigger each once.
+6. **Verify Vault MCP auth** (`vault-mcp-six.vercel.app/mcp`). It was flagged earlier as possibly unauthenticated,
+   with read and write access to a vault that holds legal and financial notes. Confirm the bearer gate is enforced,
+   and lock it down if not.
+7. **(Decision) Build the phone-UI-control layer** on the Fold 8 Ultra from the research note in §3.
+8. **Re-pair the HA companion app** as the new device, and repoint any `mobile_app_*` notify or presence targets.
+9. Carried from earlier sessions, still open:
    - re-enable microWakeWord on `ai_cam` (Option B off-box compile, pull the LIVE yaml first)
    - flash board #2 (`landing_ai_cam_2`) via USB
    - scheduled full-instance HA backup off-hub
@@ -163,7 +175,7 @@ alone has tier1 at 6/7 until PR #3 merges.
    - formally cancel n8n.cloud
    - `webapp-reviewer` model decision
    - Big Pad lounge screen
-7. Housekeeping:
+10. Housekeeping:
    - `Assistant Core/packages/persona.tar.gz.b64` is **truncated** and unused (the installer fetches plain
      source). Safe to delete.
    - `lib/supabase-ai-agent-creator.mjs` is a stub that hand-parses `.env` with `split('=')`. It is not the
@@ -202,6 +214,12 @@ gitignored.** Never let a wildcard pull sweep it up. A full-instance scheduled b
   it hardcoded a default. It now imports the live `PROVIDERS` table.
 - **Never auto-replay an approved-but-unrun action.** The ledger surfaces orphans for re-approval.
 - **Push is what makes the device disposable.** P0–P5 survived the Fold 7 loss only because of the 2026-08-23 push.
+- **PostgREST's anon role can't `count()`.** Use `Prefer: count=exact` + `Content-Range`, never `rows.length`
+  under a limit, or the tool states a fabricated number.
+- **claude.ai project-file snapshots are NOT sources of truth.** They don't sync back, and twice caused
+  half-session rebuilds of working tools (the `database` "stub", phantom tier4/5 suites). The vault is canonical.
+- **Two sessions can edit the same note at once.** On 2026-10-03 two sessions each rewrote this file; the merge kept
+  both sides' facts. `git pull` before a large rewrite.
 - **`git ls-remote` before assuming a remote is empty.** A scratch repo on the wrong branch nearly invited a
   `--force` that would have destroyed P0–P5.
 
@@ -246,6 +264,9 @@ Phone app repo    : etblues449/jarvis-core       branch main    (private)
 Vault MCP         : https://vault-mcp-six.vercel.app/mcp
 Daily app         : http://localhost:8737   (jarvis-app.mjs)
 HA hub            : 192.168.0.200:8123      (REST + admin token in ~/jarvis-core/.env)
+HA Samba          : 192.168.0.200:445       (config/backup/share/addon_configs; creds in HA add-on)
+TV entity         : media_player.jelly_beans_tv_3   (canonical)
+AI Cam            : ai_cam @ 192.168.0.199  (camera, speaker, ES7210 mics, Frigate; microWakeWord regressed)
 Restart app       : pkill -f jarvis-app.mjs; nohup node jarvis-app.mjs > logs/app.log 2>&1 &
 Pre-flight        : node jarvis-doctor.mjs
 Self-knowledge    : node self-knowledge.mjs [--check]
@@ -257,6 +278,23 @@ Engine tests      : node "Assistant Core/jarvis-skills/test/local-test.mjs"
 Engine model      : GROQ_MODEL repo variable, else openai/gpt-oss-120b
 Base64 (Android)  : tr -d '\r' < f.b64 | base64 -di > f.tar.gz
 ```
+
+---
+
+## 12. Session protocol
+
+- **Start:** read the mandatory session-start files listed in `CLAUDE.md`. Report any that are missing as MISSING
+  and never synthesise them. Read the vault yourself; don't ask Jelly Bean to paste context.
+- **Routing:** work on one layer goes to that layer's skill (`capture-pipeline`, `skill-engine-ops`,
+  `jarvis-core-dev`, `vault-integrity-audit`, `voice-satellite-ops`). Work across two or more layers goes to
+  `jarvis-orchestrator`. Run `qa-boundary-check` before any commit.
+- **End** (on "done" / "wrap up"):
+  - update the project `_index.md`
+  - write `sessions/YYYY-MM-DD.md`
+  - tick `capture_queue.md`
+  - present changed files
+- **Style:** terse, one step at a time. Never claim an action you didn't take. Say which of
+  documented / merged / running you actually observed.
 
 **First thing for a fresh session:** run the session-start reads in `CLAUDE.md`, then this file, then
 §6 of the 2026-10-03 diagnosis. Everything above is current as of 2026-10-03.

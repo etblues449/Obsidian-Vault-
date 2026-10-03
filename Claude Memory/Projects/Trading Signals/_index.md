@@ -3,6 +3,12 @@
 ## Goal
 Independently verify (or bury) the "GOLD VIP" / "THE WAR ZONE" Telegram XAUUSD signals **on paper, at Elliot's own risk sizing, before any real money moves** — and keep a hard funding gate between the channel's marketing and the bank account.
 
+## Status (2026-10-03)
+- **PR #86 merged 2026-09-06** — everything below (executor, dashboard, push, research, security remediation) is on `master`. Nothing has run on hardware yet; Phase 3 remains Elliot's.
+- **Logger re-login on the new phone failed on a bot token — guard built.** The Fold 7 was lost (Smart Home, 2026-10-01); on the Fold 8 Ultra's fresh Termux, Elliot entered the Telegram **bot token** at Telethon's "phone (or bot token)" prompt. The session signed in as the bot, which cannot read channels → `BotMethodInvalidError` on the first dialog read, and the next `--login` silently reused the bot session. Both Telethon entry points (`signal_logger.py`, `executor/telegram_source.py`) now own the phone prompt and refuse token-shaped input, check the session is a *user* before touching a dialog, and `--login` throws a bot session away and signs in again. 20 new tests (101 total). Details and the immediate fix: [[sessions/2026-10-03]].
+- **Logger live again (2026-10-03, Fold 8 Ultra).** After the bot session was removed, `--login` with the phone number signed in as Elliot and the listener reports `listening: GOLD VIP (-1002073063994)`, writing `signals.jsonl`. THE WAR ZONE matched no dialog, as in September.
+- **Secret exposure (CORRECTION-class, Elliot to act):** the bot token was pasted in plain text into a chat transcript → **rotate it in @BotFather** (`/revoke`); the `api_id`/`api_hash` were too, but they identify the app, not the account (low risk). Nothing was written to the vault. Also unverified: whether the lost Fold 7's Telegram sessions were terminated.
+
 ## Status (2026-09-06)
 - **Executor built (Phase 1) — practice-first, tests green, not yet run on hardware.** `tools/executor/` is a Python worker for a Raspberry Pi: Telethon ingest → parse/validate → kill switch → live gate → daily loss cap (**now enforced** — the console only displayed it) / max-drawdown breaker / open-trade cap / duplicate check / stale-drift check → sizing from the broker's live instrument spec (refuses below the minimum, never rounds up) → OANDA v20 FOK market order with broker-side SL/TP → local JSONL (source of truth) + Supabase mirror → Telegram alerts. Closes come from OANDA's transaction stream, not the bot's guess. **73 unit tests** (stdlib, no network) including 19 end-to-end loop tests against a fake broker. Runbook `tools/executor/README.md`; systemd unit included. Design: [[Executor — Architecture]].
 - **Decisions closed (Elliot, 2026-09-05/06):** broker **OANDA Europe** (FCA 542574) after a 12-broker second pass; host **Raspberry Pi / home box**; dashboard `/trade` inside jarvis-carousel as an installable PWA (Pake is desktop-only); live only via a passed funding gate **or** the explicit `GATE_OVERRIDE` phrase — either is logged to `events`.
@@ -33,11 +39,13 @@ Independently verify (or bury) the "GOLD VIP" / "THE WAR ZONE" Telegram XAUUSD s
 - [ ] **Elliot: withdraw the residual $4.72 from T4Trade** — live test of their withdrawal process; deposit nothing further.
 - [ ] **Elliot: block/report @Signalstevebot; never join the Zoom calls.**
 - [x] Elliot: get api_id/api_hash from my.telegram.org → run `signal_logger.py --login` then `--list` in Termux — done 2026-09-05.
-- [ ] **Elliot: re-login the logger after this PR merges** — `cd ~/Obsidian-Vault-/"Claude Memory/Projects/Trading Signals/tools" && git pull && python signal_logger.py --login`, then `python signal_logger.py`.
+- [ ] **Elliot: rotate the Telegram bot token** — @BotFather → the bot → `/revoke`; the old one was pasted into a chat transcript on 2026-10-03. Keep the new one only in `~/.config/tradeguard/executor.env`.
+- [ ] **Elliot: Telegram → Settings → Devices** — terminate anything still listed for the lost Fold 7 (the app itself and any Telethon entry).
+- [x] Elliot: re-login the logger on the Fold 8 Ultra with the phone number — done 2026-10-03, `listening: GOLD VIP (-1002073063994)`. If it ever needs redoing: in `tools/`, `python signal_logger.py --login` (phone `+44…`, code, 2FA — never the bot token; after PR #88 a bot session is discarded automatically), then `termux-wake-lock && python signal_logger.py`.
 - [x] Deep-research verdict → plan → Phase 1 built (2026-09-06).
 - [ ] **Elliot: OANDA Europe practice account** → *Manage API Access* token + account id; **Raspberry Pi** (64-bit OS); then follow `tools/executor/README.md`: install → `--login` → `--list` → `--check` → `--dry-run` → systemd. Report what `--check` prints for sample sizing.
-- [ ] Claude: Phase 2 — `supabase/schema.sql`, `/trade` page + `/api/trade` in jarvis-carousel, Web Push.
-- [ ] Elliot: merge PR #86 (security + research + executor) or ask for it to be split.
+- [x] Claude: Phase 2 — `supabase/schema.sql`, `/trade` page + `/api/trade` in jarvis-carousel, Web Push (2026-09-06).
+- [x] Elliot: merge PR #86 — merged 2026-09-06.
 - [ ] Run the paper loop for 4+ weeks; import `signals.jsonl` into Trade Guard weekly.
 - [ ] Review scorecard at 30 closed trades — expected outcome per base rates: channel fails the gate (independent audit of a comparable channel: 26% actual win rate vs "100%" claimed).
 - [ ] Optional: report the channel (FCA form / Action Fraud / Telegram report).
@@ -48,4 +56,4 @@ Independently verify (or bury) the "GOLD VIP" / "THE WAR ZONE" Telegram XAUUSD s
 - [[Executor — Architecture]] — decisions, data flow, risk controls, code map, verification ladder
 - `tools/executor/README.md` — the executor runbook (Pi install, first run, systemd, kill switch, going live)
 - `tools/README.md` — the verification loop + Termux setup
-- Sessions: [[sessions/2026-07-10]] · [[sessions/2026-07-13]] · [[sessions/2026-09-05]]
+- Sessions: [[sessions/2026-07-10]] · [[sessions/2026-07-13]] · [[sessions/2026-09-05]] · [[sessions/2026-10-03]]
