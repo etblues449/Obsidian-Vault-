@@ -31,3 +31,4 @@
 | `dffd2379` | 2026-08-23 | 2026-08-22-2123-probe.md | 5 | kept in inbox |
 | `f1a6b8e9` | 2026-08-23 | note_20260823-024853-capture-pipeline-revived.md | 5 | kept in inbox |
 | `c37d64c4` | 2026-08-23 | note_20260823-030045-capture-tool-is-live-first-note-written-by-ja.md | 5 | kept in inbox |
+| `ae5c8f10` | 2026-10-03 | note_20261003-072154-device-verification-mus2dc94-jarvis-wrote-thi.md | 5 | kept in inbox |
