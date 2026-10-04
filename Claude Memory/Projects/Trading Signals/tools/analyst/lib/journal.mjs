@@ -182,8 +182,8 @@ export function stepSetup(setup, candle, { swings, atr, cfg = {} } = {}) {
   // 3. Excursions, then the stop/target test on this bar.
   const tp = s.targets[0].price;
   const favourable = long ? candle.h : candle.l, adverse = long ? candle.l : candle.h;
-  s.mfeR = Math.max(s.mfeR ?? 0, rOf(s, favourable));
-  s.maeR = Math.max(s.maeR ?? 0, -rOf(s, adverse));
+  s.mfeR = round(Math.max(s.mfeR ?? 0, rOf(s, favourable)));
+  s.maeR = round(Math.max(s.maeR ?? 0, -rOf(s, adverse)));
   const hitStop = long ? candle.l <= s.stop : candle.h >= s.stop;
   const hitTarget = long ? candle.h >= tp : candle.l <= tp;
   if (hitStop && hitTarget) return { ...finish('lost', 'stop', s.stop, { ambiguous: true }), trail };
