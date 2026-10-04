@@ -62,8 +62,8 @@ device on the LAN should see it.
 Top to bottom (phone) / chart + CZT side by side (desktop ≥ 1024 px):
 
 - **Header** — status pill for the active symbol: *Connecting… / Live / Delayed / Simulated /
-  Reconnecting… / Error*. Theme toggle (light default, dark follows the OS or the toggle).
-- **Symbol tabs** and **timeframe pills** (1m 5m 15m 1h 4h). Keys `1–4`, `t`, `d`.
+  Reconnecting… / Error*. Light theme only (by request — no dark mode).
+- **Symbol tabs** and **timeframe pills** (1m 5m 15m 1h 4h). Keys `1–4`, `t`.
 - **Chart** — candles, EMA 9 / 21 / 50, session VWAP, volume pane, delta pane; price lines for
   every liquidity level (previous-day high/low, session highs/lows, Asia range, equal
   highs/lows, consolidation edges, POC / VAH / VAL, naked POCs — swept levels dashed); FVG and
