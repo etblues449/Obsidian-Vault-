@@ -1,5 +1,5 @@
 /* TradeGuard Analyst — Pro panel (SPEC-PRO §P7). LIGHT THEME ONLY: every colour is one of app.css's :root
-   tokens (no dark block, no prefers-color-scheme anywhere in public/). Loaded after app.css, so the one
+   tokens (no dark block, no OS-preference media rule anywhere in public/). Loaded after app.css, so the one
    layout override (the desktop grid gains a "pro" row under the chart) lives here, not in app.css.
 
    Three parts, source 05 vocabulary:
@@ -103,6 +103,10 @@
 .chip small { font-weight: 500; color: var(--muted); }
 
 /* ---------- Pro hits strip ---------- */
+/* Defensive, for BOTH the CZT panel and this strip: an unknown hit key (e.g. a future `trigger.someLongCamelCaseKey`)
+   renders as one unbreakable word; at 390 px a 1/3-width CZT column cannot hold it and the PAGE would gain a
+   horizontal scroll. Let the label break anywhere rather than widen the layout. */
+.hits li > span:not(.mk):not(.w) { min-width: 0; overflow-wrap: anywhere; }
 .pro-hits h3 { margin-bottom: 6px; } .pro-hits h3 small { text-transform: none; letter-spacing: 0; font-weight: 500; }
 .hits-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px 12px; }
 .hits-row li .w { font-size: 10px; }

@@ -36,6 +36,7 @@
       ['killzone', 'Killzone — London / New York'],
       ['outsideValueTrend', 'Outside prior-day value — expansion'],
       ['insideValueRotation', 'Inside value — rotation'],
+      ['bookImbalance', 'Book depth imbalance in favour'],          // SPEC-PRO §P5 (visible top of book)
     ],
     zone: [
       ['pdhPdl', 'Prior day high / low'],
@@ -53,6 +54,11 @@
       ['engulfing', 'Engulfing candle'],
       ['ltfBos', 'LTF break of structure'],
       ['deltaConfirms', 'Delta confirms'],
+      // SPEC-PRO §P5 Pro hits (source 05 §3–§4) — labelled here so the CZT panel never shows a raw camelCase key
+      ['footprintImbalance', 'Stacked footprint imbalance'],
+      ['trappedTraders', 'Trapped traders'],
+      ['bookAbsorption', 'Absorption at a book wall'],
+      ['unfinishedAuction', 'Unfinished auction (confirmation)'],
     ],
   };
   const PILL = {

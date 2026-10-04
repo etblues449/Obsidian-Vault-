@@ -29,14 +29,15 @@
 
    DEVIATION: the show/hide pill persists ONE preference (localStorage 'tradeguard.pro'); with no preference stored
      the default follows §P7 — shown when the active symbol's feed is live, hidden for sim / replay / delayed feeds.
-   DEVIATION: the footprint's shared price scale is capped at MAX_ROWS (90) rows around the latest candle so a
-      5000-level truncated footprint (footprint.mjs DEVIATION) cannot build a 60 000-cell table on a phone.
+   DEVIATION: the footprint's shared price scale is capped at MAX_ROWS (240) rows around the latest candle's close so
+      a 5000-level truncated footprint (footprint.mjs DEVIATION) cannot build a 60 000-cell table on a phone; a column
+      whose POC lies outside that window simply shows no bold cell.
    DEVIATION: the `p` key toggles the Pro panel (the footer lists it) — §P7 names only the pill. */
 (() => {
   'use strict';
 
   const COLS = 12;                 // §P7: "the last 12 analysis-TF candles as columns"
-  const MAX_ROWS = 90;             // shared price scale cap (see DEVIATION)
+  const MAX_ROWS = 240;            // shared price scale cap (see DEVIATION) — 240 × 12 = 2 880 cells, fine on a phone
   const STORE_KEY = 'tradeguard.pro';
   // The five Pro hits (§P5) in czt.weights order, labelled in source-document language, with their layer.
   const PRO_HITS = [
