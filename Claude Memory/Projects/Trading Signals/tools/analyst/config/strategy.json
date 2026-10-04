@@ -11,9 +11,10 @@
   },
 
   "history": {
-    "backfillMinutes": 2880,
-    "maxCandlesPerTf": 3000,
-    "maxTradesInMemory": 20000
+    "backfillMinutes": 4320,
+    "maxCandlesPerTf": 5000,
+    "maxTradesInMemory": 20000,
+    "_note": "72 h of 1m history (5 Binance pages of 1000). The 1h bias needs emaBias+10 = 60 closed hours to warm, so anything under 3600 leaves the bias 'neutral' for hours after a start. maxCandlesPerTf must hold the whole backfill at 1m."
   },
 
   "sessions": {

@@ -109,7 +109,7 @@ Event (SSE + feed) = { t, level: 'info'|'ok'|'warn'|'signal'|'guard'|'error', sy
   inject `{ fetch, WebSocket, now, setTimeout, clearTimeout, setInterval, clearInterval }`.
 - **binance.mjs** — `kind='live'`.
   - Backfill: `GET https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=1000`
-    paginated with `endTime` until `history.backfillMinutes` covered (≤ 3 requests). Row →
+    paginated with `endTime` until `history.backfillMinutes` covered (≤ 5 requests at 72 h). Row →
     `{t:k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5], n:k[8], closed:true}`; also derive
     `buyV = +k[9]` (taker buy base volume), `sellV = v - buyV`.
   - Stream: ONE combined socket per adapter:
@@ -268,4 +268,14 @@ Backtest smoke: `node backtest.mjs --symbol BTCUSD --days 1 --offline fixtures/b
 without network.
 
 ## 9. Deviations log
-(builders append here: module · what · why)
+(module · what · why — the module header carries the same `// DEVIATION:` note)
+
+- `package.json` · `test` script is `node --test` (default discovery) · `node --test test/` errors on Node 22 — a trailing-slash directory is not a valid pattern.
+- `config/strategy.json` · `history.backfillMinutes` 2880 → 4320, `maxCandlesPerTf` 3000 → 5000 · the 1h bias (EMA50 slope over 10 bars) needs 60 closed hours; 48 h of backfill left it honestly `neutral` for 12 h after every start.
+- `lib/config.mjs` · `loadConfig()` returns `{ cfg, symbolsCfg, server:{host,port}, paths, applied, warnings }` and throws `ConfigError` listing every issue; env overrides `ANALYST_HOST/PORT`, `ANALYST_FEED[_<ID>]`, `ANALYST_SYMBOLS`, `ANALYST_SET='dotted.path=value;…'`; `ANALYST_EXECUTOR_SECRET` is checked for presence only, never copied into cfg · SPEC named the module but defined no API.
+- `lib/log.mjs` · `createLogger({ capacity, now, stream, level, json, symbol })` → `Logger` (EventEmitter, `child(symbol)`, `recent(limit, {symbol, level, minLevel, since})`, credential-key redaction) · same reason.
+- `lib/engine/indicators.mjs` · `delta(c)` returns `{ value, source:'trades'|'proxy' }`; `deltaValue(c)` returns the number · the proxy flag has to travel with the value. Additive: `sma`, `trueRange`, `lastAtr`, `rollingStd`, `highLow`.
+- `lib/engine/sessions.mjs` · `Session.start/end` are UTC ms for that day's instance (`startLocal/endLocal` carry the HH:MM strings); a timestamp outside every session resolves to `{ id:'none', killzone:false }` rather than throwing; `previousSessionRange`/`dayRange` return `null` with no candles · JSON-stable, crash-free.
+- `lib/engine/candles.mjs` · additive `aggregate()` (pure), `bucketStart`, `normalizeCandle` (throws on a non-minute-aligned or non-finite candle — a feed bug must surface, not corrupt history), `lastClosed`, `size`, `clear`.
+- `lib/engine/liquidity.mjs` · `computeLevels` takes optional `prev` (carries `swept` across recomputes) and `swingLookback`; `detectSweeps` also reports a delayed reclaim within `liquidity.sweepReclaimCandles` (default 3) as `reclaimedAfter`; equal highs/lows are dropped once a candle other than the last closed one has closed through them (liquidity taken, source 04); the consolidation window is the N candles *before* the last closed candle so that candle can be the sweeper; `Level.swept` is `null` when unset.
+- `lib/engine/structure.mjs` · `isEngulfing` returns `{ side, bodyAtr, full }|null` (`full` = whole prior range engulfed, the source-01 picture); `htfBias` halves `strength` when the 4h structure contradicts the 1h EMA direction and adds an `htf` summary; `findFvgs/findOrderBlocks` take `{ tf }` and drop filled gaps / closed-through blocks; `marketStructure` adds `refHigh/refLow`. Private `ema`/`atr`/session helpers inside liquidity.mjs and structure.mjs were verified identical to the sibling modules (ATR seeds one bar later: 2e-5 after 120 bars) — consolidation onto `indicators.mjs`/`sessions.mjs` is a three-line swap for the integrator.

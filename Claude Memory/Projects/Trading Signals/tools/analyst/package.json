@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node server.mjs",
-    "test": "node --test test/",
+    "test": "node --test",
     "check": "node scripts/check.mjs",
     "backtest": "node backtest.mjs",
     "report": "node scripts/report.mjs"
