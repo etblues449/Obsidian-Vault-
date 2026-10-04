@@ -246,8 +246,9 @@ export function volumeProfile(candles, opts = {}) {
 /**
  * The profile's reference prices as Level objects (source 05 §6 zones: VAH, VAL, POC). VAH is buy-side
  * (above), VAL sell-side (below); the POC's side is relative to `price` (sell-side when below or unknown).
- * With `lvn: true` the profile's low-volume nodes follow as kind 'lvn' (source 05 §5: "rejections at LVNs
- * provide prime reversal boundaries"; §6: HTF LVNs are zones), side relative to `price`, LVNs closer than
+ * With `lvn: true` the profile's low-volume nodes OUTSIDE the value area follow as kind 'lvn' (source 05 §5
+ * diagram: the LVNs at the range extremes are the "rejection" boundaries; a thin bucket inside value is a gap in
+ * the distribution, not a boundary; §6: HTF LVNs are zones), side relative to `price`, LVNs closer than
  * `lvnMergeTol` to each other merged at their mean (meta.count), at most `lvnMax` nearest to `price`.
  */
 export function profileLevels(profile, { t, tf = '1m', price, prefix = '', meta, lvn = false, lvnMergeTol = 0, lvnMax = 6 } = {}) {
@@ -261,7 +262,8 @@ export function profileLevels(profile, { t, tf = '1m', price, prefix = '', meta,
   ];
   if (lvn && Array.isArray(profile.lvn) && profile.lvn.length) {
     const groups = [];
-    for (const p of profile.lvn.filter(fin).slice().sort((a, b) => a - b)) {
+    const outsideValue = (p) => !(fin(profile.val) && fin(profile.vah)) || p < profile.val || p > profile.vah;
+    for (const p of profile.lvn.filter((x) => fin(x) && outsideValue(x)).sort((a, b) => a - b)) {
       const g = groups[groups.length - 1];
       if (g && Math.abs(p - g.sum / g.n) <= lvnMergeTol) { g.sum += p; g.n++; } else groups.push({ sum: p, n: 1 });
     }

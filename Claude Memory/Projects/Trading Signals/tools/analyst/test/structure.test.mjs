@@ -1,7 +1,9 @@
 // test/structure.test.mjs — SPEC §4.5 / §8. Generators are inline (helpers.mjs is a sibling build).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { findSwings, marketStructure, findFvgs, findOrderBlocks, isEngulfing, htfBias } from '../lib/engine/structure.mjs';
+import { swings as indSwings, atr as indAtr, ema as indEma } from '../lib/engine/indicators.mjs';
 
 const M5 = 3e5, H1 = 36e5, H4 = 144e5, T0 = Date.UTC(2026, 0, 13);
 const CFG = { displacementBodyAtr: 1.2, fvgMinSizeAtr: 0.1, orderBlockMaxAgeCandles: 200, engulfingMinBodyAtr: 0.5 };
@@ -34,6 +36,23 @@ test('findSwings: strict exceedance each side, kind/price/index/t, nothing on sh
   // an equal neighbour high is NOT exceeded → not a swing
   const eq = flat(9, { patch: { 4: [100, 103, 99.7, 100], 5: [100, 103, 99.7, 100] } });
   assert.equal(findSwings(eq, 2).filter(s => s.kind === 'high').length, 0);
+});
+
+test('structure.mjs shares indicators.mjs: findSwings IS indicators.swings (default lookback 2, clamped), no private EMA/ATR (review finding structure.mjs:176)', () => {
+  const cs = flat(40, { patch: { 4: [100, 103, 97, 100], 12: [100, 104, 96, 100], 20: [100, 105, 95, 100] } });
+  assert.deepEqual(findSwings(cs), indSwings(cs, 2));
+  assert.deepEqual(findSwings(cs, 3), indSwings(cs, 3));
+  assert.deepEqual(findSwings(cs, 0), indSwings(cs, 1), 'lookback < 1 clamps to 1 (indicators.swings would throw)');
+  assert.deepEqual(findSwings(cs, 2.9), indSwings(cs, 2));
+  const src = readFileSync(new URL('../lib/engine/structure.mjs', import.meta.url), 'utf8');
+  assert.match(src, /import \{ ema, atr, swings \} from '\.\/indicators\.mjs'/);
+  assert.doesNotMatch(src.replace(/\/\/.*$/gm, ''), /function (ema|atr|swings)\s*\(/, 'no private indicator copies');
+  // htfBias strength is |EMA9−EMA21| / ATR with the SAME ATR seed as indicators.atr (the private copy seeded one bar later)
+  const h1 = path(Array.from({ length: 70 }, (_, i) => 100 + i * 0.5 + (i % 3) * 0.7), H1);
+  const b = htfBias({ store: store({ '1h': h1 }), cfg: STRAT });
+  const closes = h1.map(c => c.c), n = h1.length - 1;
+  const want = Math.min(1, Math.abs(indEma(closes, 9)[n] - indEma(closes, 21)[n]) / indAtr(h1, 14)[n]);
+  assert.ok(Math.abs(b.strength - want) < 1e-12, `${b.strength} vs ${want}`);
 });
 
 // ---- marketStructure ----

@@ -111,6 +111,43 @@ test('computeLevels: the 23-hour (2026-03-29) and 25-hour (2026-10-25) local day
   assert.equal(autumn.price, 118); assert.equal(autumn.meta.dayKey, '2026-10-25'); assert.equal(autumn.meta.candles, 25 * 60);
 });
 
+test('computeLevels: the previous CLOSED htf (4h) candle high/low are levels — source 01 "swept below the previous candle\'s low" (review finding liquidity.mjs:137)', () => {
+  // 1m flat at 100 from 13 Jan 00:00 through 09:00 (33 h incl. the 12 Jan start): the 04:00–08:00 4h candle carries the spikes
+  const spikes = [...janSpikes, { t: JAN13 + 29.5 * H, h: 101.7 }, { t: JAN13 + 30.5 * H, l: 98.3 }]; // 14 Jan 05:30 / 06:30 → inside the 04:00 4h bucket
+  const st = storeFrom1m(flat1m(JAN13, 33 * 60, 100, spikes)); // through 14 Jan 09:00; last closed 4h = 04:00–08:00
+  const now = JAN13 + 33 * H;
+  const lv = computeLevels({ store: st, tf: '5m', atr: 1, sessionsCfg: SESS, liqCfg: LIQ, now, htfTf: '4h' });
+  const ph = byKind(lv, 'prevCandleHigh'), pl = byKind(lv, 'prevCandleLow');
+  assert.equal(ph.price, 101.7); assert.equal(pl.price, 98.3);
+  assert.equal(ph.side, 'buy-side'); assert.equal(pl.side, 'sell-side'); assert.equal(levelSide('prevCandleHigh'), 'buy-side');
+  assert.equal(ph.t, JAN13 + 28 * H, 't = the 4h candle open (14 Jan 04:00)'); assert.equal(ph.tf, '4h'); assert.deepEqual(ph.meta, { tf: '4h', startMs: JAN13 + 28 * H, endMs: JAN13 + 32 * H });
+  assert.equal(ph.id, `prevCandleHigh:${JAN13 + 28 * H}:101.7`); assert.equal(ph.swept, null);
+  // default htfTf is 4h; another TF is honoured; an unknown TF or a store without it adds nothing
+  assert.equal(byKind(computeLevels({ store: st, tf: '5m', atr: 1, sessionsCfg: SESS, liqCfg: LIQ, now }), 'prevCandleHigh').price, 101.7);
+  const h1 = byKind(computeLevels({ store: st, tf: '5m', atr: 1, sessionsCfg: SESS, liqCfg: LIQ, now, htfTf: '1h' }), 'prevCandleHigh');
+  assert.equal(h1.price, 100.1, 'the 08:00–09:00 1h candle is flat'); assert.equal(h1.tf, '1h');
+  assert.equal(byKind(computeLevels({ store: st, tf: '5m', atr: 1, sessionsCfg: SESS, liqCfg: LIQ, now, htfTf: '2h' }), 'prevCandleHigh'), undefined);
+  assert.equal(byKind(computeLevels({ store: storeOf({ '5m': st.closed('5m') }), tf: '5m', atr: 1, sessionsCfg: SESS, liqCfg: LIQ, now }), 'prevCandleHigh'), undefined);
+  // a 4h candle that has not closed by `now` is not "the previous candle"
+  const early = computeLevels({ store: st, tf: '5m', atr: 1, sessionsCfg: SESS, liqCfg: LIQ, now: JAN13 + 31 * H, htfTf: '4h' });
+  assert.notEqual(byKind(early, 'prevCandleHigh')?.price, 101.7, 'at 07:00 the 04:00 bucket is still forming → the 00:00 candle is the previous one');
+  // it is a first-class sweep target: a 5m candle wicking below the previous 4h low and closing back is a reclaimed sweep
+  const c5 = [mk(now - 10 * M, 100, 100.1, 99.9, 100), mk(now - 5 * M, 100, 100.1, 97.9, 99.5)];
+  const sw = detectSweeps({ candles: c5, levels: lv, atr: 1, liqCfg: LIQ });
+  assert.ok(sw.some(x => x.level.kind === 'prevCandleLow' && x.reclaimed), sw.map(x => x.level.kind).join(','));
+  // a sweep level pushed after the session levels: on an exact tie the session level is listed first (czt names the pool)
+  const idx = (k) => lv.findIndex(l => l.kind === k);
+  assert.ok(idx('asiaHigh') >= 0 && idx('prevCandleHigh') >= 0);
+});
+
+test('detectSweeps: a low-volume node is a zone, not resting liquidity — never swept (review finding czt.mjs:166)', () => {
+  const lvn = { id: 'lvn:1:100', kind: 'lvn', price: 100, t: 1, tf: '1m', side: 'sell-side', meta: {}, swept: null };
+  const c = mk(T0, 100.5, 100.6, 99.7, 100.3);
+  assert.deepEqual(detectSweeps({ candles: [prevFlat, c], levels: [lvn], atr: 1, liqCfg: LIQ }), []);
+  assert.equal(lvn.swept, null);
+  assert.equal(detectSweeps({ candles: [prevFlat, c], levels: [lvn, PDL()], atr: 1, liqCfg: LIQ }).length, 1, 'the PDL at the same price still is');
+});
+
 test('computeLevels: now is optional (derived from the last closed candle), empty store → []', () => {
   const st = storeFrom1m(flat1m(JAN13, 33 * 60, 100, janSpikes));
   const lv = computeLevels({ store: st, tf: '5m', atr: 1, sessionsCfg: SESS, liqCfg: LIQ });

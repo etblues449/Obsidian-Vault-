@@ -159,6 +159,7 @@ Every number the engine uses, with the source it comes from:
 | `czt.weights.*` | see file | per-hit weights for the three columns |
 | `czt.minScore/gradeA/gradeB/minRr` | 6 / 9 / 7 / 1.5 | |
 | `czt.stopBufferAtr/maxStopAtr` | 0.1 / 3.0 | source 01 |
+| `czt.minStopAtr` | 0.35 | a stop nearer than this to entry is widened AWAY from entry (a few-tick stop under a shallow sweep sits inside the spread) |
 | `czt.targetsFrom[]` | session H/L, PDH/PDL, equal H/L, value area, naked POC | priority order · source 04 |
 | `czt.maxSetupsPerSymbolPerDay/cooldownMinutes/oneOpenPerSymbol` | 3 / 30 / true | |
 | `czt.triggerMaxAgeCandles` | 6 | how old a divergence / break may be and still trigger |

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { loadConfig, validateStrategy, validateSymbols, applyEnv, ConfigError, CONFIG_DIR, KNOWN_FEEDS, WEIGHT_KEYS, envKeyForSymbol } from '../lib/config.mjs';
+import { loadConfig, validateStrategy, validateSymbols, applyEnv, ConfigError, CONFIG_DIR, KNOWN_FEEDS, WEIGHT_KEYS, LEVEL_KINDS, envKeyForSymbol, parseHttpUrl } from '../lib/config.mjs';
 import { createLogger, Logger, RingBuffer, redact, LEVELS } from '../lib/log.mjs';
 import { fakeClock, fakeWebSocket, fakeFetch, loadFixture } from './helpers.mjs';
 
@@ -95,6 +95,20 @@ describe('validateStrategy', () => {
     assert.ok(withStrategy((c) => { c.risk.balance = 0; }).some((s) => s.includes('risk.balance')));
     assert.ok(withStrategy((c) => { c.journal.resolveTimeoutHours = '48'; }).some((s) => s.includes('resolveTimeoutHours')));
     assert.ok(withStrategy((c) => { c.executorBridge.enabled = true; c.executorBridge.url = 'ftp://x'; }).some((s) => s.includes('executorBridge.url')));
+    // review finding executor-bridge.mjs:84: credentials in the URL would be logged on every send
+    assert.ok(withStrategy((c) => { c.executorBridge.enabled = true; c.executorBridge.url = 'http://user:password@127.0.0.1:8787/webhook'; }).some((s) => s.includes('executorBridge.url') && s.includes('credentials')));
+    assert.deepEqual(withStrategy((c) => { c.executorBridge.enabled = true; c.executorBridge.url = 'http://127.0.0.1:8787/webhook'; }), []);
+    assert.deepEqual(withStrategy((c) => { c.executorBridge.enabled = false; c.executorBridge.url = 'http://user:pw@x/'; }), [], 'a disabled bridge is not validated');
+    assert.equal(parseHttpUrl('http://u:p@h/'), null); assert.equal(parseHttpUrl('ftp://h/'), null); assert.equal(parseHttpUrl('http://h a/'), null);
+    assert.equal(parseHttpUrl('https://h:1/w?x=1').href, 'https://h:1/w?x=1');
+    // czt.minStopAtr: optional, ≥ 0, below maxStopAtr; the shipped file carries 0.35 and the zone.prevCandle weight
+    assert.ok(withStrategy((c) => { c.czt.minStopAtr = -0.1; }).some((s) => s.includes('czt.minStopAtr')));
+    assert.ok(withStrategy((c) => { c.czt.minStopAtr = 3; }).some((s) => s.includes('czt.maxStopAtr') && s.includes('minStopAtr')));
+    assert.deepEqual(withStrategy((c) => { delete c.czt.minStopAtr; }), [], 'optional (czt.mjs defaults to 0.35)');
+    assert.equal(base().cfg.czt.minStopAtr, 0.35);
+    assert.ok(WEIGHT_KEYS.includes('zone.prevCandle') && typeof base().cfg.czt.weights['zone.prevCandle'] === 'number');
+    assert.ok(LEVEL_KINDS.includes('prevCandle'));
+    assert.deepEqual(withStrategy((c) => { c.czt.targetsFrom.push('prevCandle'); }), [], 'the previous-candle pool may be targeted');
     assert.ok(withStrategy((c) => { c.executorBridge.minGrade = 'S'; }).some((s) => s.includes('minGrade')));
     assert.ok(withStrategy((c) => { c.czt.oneOpenPerSymbol = 'yes'; }).some((s) => s.includes('oneOpenPerSymbol')));
     assert.ok(withStrategy((c) => { delete c.risk; }).some((s) => s.startsWith('risk:')));
@@ -150,6 +164,26 @@ describe('applyEnv', () => {
     assert.ok(bad.warnings.some((w) => w.includes('secrets never go in config')));
     assert.equal(JSON.stringify(bad.cfg).includes('"secret"'), false);
     assert.deepEqual(bad.applied, []);
+  });
+  test('ANALYST_SET cannot pollute Object.prototype (review finding config.mjs:255)', () => {
+    const { cfg, symbolsCfg } = base();
+    for (const evil of ['__proto__.polluted=true', 'constructor.prototype.polluted=true', 'czt.__proto__.polluted=true', 'czt.constructor.prototype.polluted=true']) {
+      const out = applyEnv({ a: 1 }, { symbols: [] }, { ANALYST_SET: evil });
+      assert.equal(({}).polluted, undefined, `polluted via ${evil}`);
+      assert.equal(Object.prototype.polluted, undefined);
+      assert.deepEqual(out.applied, [], evil);
+      assert.ok(out.warnings.some((w) => w.includes(evil.split('=')[0]) && /ignored/.test(w)), out.warnings.join('|'));
+    }
+    // the tightened path grammar: must start with a letter; dotted segments are [A-Za-z0-9_]
+    const bad = applyEnv(cfg, symbolsCfg, { ANALYST_SET: '1czt.minScore=5;czt..minScore=5;.czt=1;czt.min-score=5' });
+    assert.deepEqual(bad.applied, []); assert.equal(bad.warnings.length, 4);
+    const ok = applyEnv(cfg, symbolsCfg, { ANALYST_SET: 'sessions.list.0.label="Tokyo";czt.minScore=5;risk.balance=2500' });
+    assert.deepEqual(ok.applied, ['sessions.list.0.label', 'czt.minScore', 'risk.balance']);
+    assert.equal(ok.cfg.sessions.list[0].label, 'Tokyo');
+    // an intermediate that is inherited (not own) is replaced, never walked into
+    const walked = applyEnv({ czt: {} }, { symbols: [] }, { ANALYST_SET: 'czt.toString.x=1' });
+    assert.deepEqual(walked.cfg.czt.toString, { x: 1 }); assert.equal(Object.prototype.toString.x, undefined);
+    assert.equal(({}).polluted, undefined);
   });
   test('an env override that breaks validation is rejected by loadConfig and the error names the override', () => {
     assert.throws(() => loadConfig({ env: { ANALYST_SET: 'czt.minRr=0' } }), (e) => e instanceof ConfigError && /after env overrides: czt\.minRr/.test(e.message) && e.issues.some((s) => s.includes('czt.minRr')));

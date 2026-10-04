@@ -201,7 +201,8 @@ export function stepSetup(setup, candle, { swings, atr, cfg = {}, levels, hvn, d
     const buffer = (cfg.czt?.stopBufferAtr ?? 0) * (isNum(atr) ? atr : 0);
     const tol = (cfg.czt?.zoneToleranceAtr ?? 0.5) * (isNum(atr) ? atr : 0);
     const inDir = (p) => (long ? p > s.stop : p < s.stop);
-    const pick = (list) => list.reduce((b, sw) => { const proposed = long ? sw.price - buffer : sw.price + buffer; return inDir(proposed) && (!b || (long ? proposed > b.proposed : proposed < b.proposed)) ? { sw, proposed } : b; }, null);
+    const propose = (sw) => round(long ? sw.price - buffer : sw.price + buffer, 8); // rounded like the stored stop, so an unchanged swing never re-trails
+    const pick = (list) => list.reduce((b, sw) => { const proposed = propose(sw); return inDir(proposed) && (!b || (long ? proposed > b.proposed : proposed < b.proposed)) ? { sw, proposed } : b; }, null);
     // Never past entry before +1R mfe (source 05 §7 step 1: break-even too early gets stopped by normal rotation).
     const cap = (p) => ((s.mfeR ?? 0) >= 1 ? p : long ? Math.min(p, s.entry) : Math.max(p, s.entry));
     const move = (best, extra) => {
@@ -217,7 +218,7 @@ export function stepSetup(setup, candle, { swings, atr, cfg = {}, levels, hvn, d
       // §7 step 4: tighten at a problem area — the last confirmed analysis-TF swing (fallback: structure TF), no auction gate.
       const fine = Array.isArray(analysisSwings) && analysisSwings.length ? confirmedSwings(analysisSwings, long ? 'low' : 'high', -Infinity, confirmAnalysisMs, candle.t) : confirmedSwings(swings, long ? 'low' : 'high', -Infinity, confirmMs, candle.t);
       const last = fine.reduce((b, sw) => (!b || sw.t > b.t ? sw : b), null);
-      if (last) { const proposed = long ? last.price - buffer : last.price + buffer; if (inDir(proposed)) move({ sw: last, proposed }, { reason: 'problemArea', problem }); }
+      if (last) { const proposed = propose(last); if (inDir(proposed)) move({ sw: last, proposed }, { reason: 'problemArea', problem }); }
     }
     if (!trail && proved && Array.isArray(swings) && swings.length) {
       const best = pick(confirmedSwings(swings, long ? 'low' : 'high', entryT, confirmMs, candle.t)); // formed after entry, confirmed before this bar

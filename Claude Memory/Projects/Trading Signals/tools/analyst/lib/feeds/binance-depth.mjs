@@ -7,7 +7,8 @@
 //
 //   The partial-depth payload carries no event time, so `parseDepthMessage(raw, { t })` stamps the snapshot with
 //   the caller's clock (the feed passes its injected `now()`); a snapshot without `t` is stamped by OrderBook's
-//   own injected clock. No Date.now() anywhere in this module.
+//   own injected clock. The only wall clock here is the adapter's default `deps.now` (as in binance.mjs) — the
+//   parser and the engine module never read it.
 //
 //   `BinanceDepthFeed` is a stand-alone adapter (one socket per symbol: `<s>@depth20`) with the same resilience
 //   rules as binance.mjs — exponential backoff with jitter, attempt reset after a clean 60 s, 90 s silence

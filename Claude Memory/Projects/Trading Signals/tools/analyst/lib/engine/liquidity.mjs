@@ -26,6 +26,7 @@ import { localParts, sessionBounds, dayBounds, shiftDayKey, resolveSession } fro
 const TF_MS = { '1m': 60e3, '5m': 3e5, '15m': 9e5, '1h': 36e5, '4h': 144e5 }; // mirror of candles.mjs
 const TF_ORDER = ['1m', '5m', '15m', '1h', '4h'];
 const BUY_SIDE = new Set(['pdh', 'sessionHigh', 'asiaHigh', 'equalHighs', 'consolidationHigh', 'vah', 'prevCandleHigh']);
+const NOT_LIQUIDITY = new Set(['lvn']);   // zones price reacts at (source 05 §5), not pools of resting stops — detectSweeps ignores them
 
 /** Buy-side liquidity sits ABOVE price (highs); sell-side BELOW (lows). */
 export function levelSide(kind) { return BUY_SIDE.has(kind) ? 'buy-side' : 'sell-side'; }
@@ -225,7 +226,7 @@ export function detectSweeps({ candles, levels, atr, liqCfg = {} }) {
   const out = [];
   for (const level of levels) {
     const P = level.price;
-    if (!Number.isFinite(P)) continue;
+    if (!Number.isFinite(P) || NOT_LIQUIDITY.has(level.kind)) continue; // a low-volume node holds no resting orders: nothing to sweep
     const up = (level.side || levelSide(level.kind)) === 'buy-side';
     const beyond = x => (up ? x - P : P - x);           // signed excursion past the level
     const ext = x => (up ? x.h : x.l);                  // the candle's far extreme

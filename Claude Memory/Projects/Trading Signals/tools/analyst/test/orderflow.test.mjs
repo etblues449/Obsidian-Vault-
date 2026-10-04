@@ -304,19 +304,27 @@ test('profileLevels: poc/vah/val as Level objects with sides', () => {
   for (const l of lv) { assert.equal(l.t, T0); assert.equal(l.tf, '5m'); assert.equal(l.swept, null); assert.ok(l.id.startsWith(`${l.kind}:${T0}:`)); }
 });
 
-test('profileLevels: with lvn:true the LVNs become kind "lvn" zones — side relative to price, merged within lvnMergeTol, capped at lvnMax nearest (review finding czt.mjs:166)', () => {
-  // [100)=20 [101)=0 [102)=0 [103)=0 [104)=50 [105)=20 [106)=0 [107)=0 [108)=30: LVN runs at 102.5 (three empty) and 106.5+107.5 → centre 107
-  const cs = [at(T0, 100.5, 20), at(T0 + M1, 104.5, 50), at(T0 + 2 * M1, 105.5, 20), at(T0 + 3 * M1, 108.5, 30)];
+test('profileLevels: with lvn:true the LVNs OUTSIDE the value area become kind "lvn" zones — side relative to price, merged within lvnMergeTol, capped at lvnMax (review finding czt.mjs:166)', () => {
+  // [100)=20 [101)=0 [102)=0 [103)=5 [104)=0 [105)=0 [106)=20 [107)=50 [108)=20: total 115, POC 107.5, VA = [106,109) (90 ≥ 80.5)
+  // LVN runs: idx 1–2 (centre 102) and idx 4–5 (centre 105) — both below VAL 106 → rejection boundaries
+  const cs = [at(T0, 100.5, 20), at(T0 + 3 * M1, 103.5, 5), at(T0 + 6 * M1, 106.5, 20), at(T0 + 7 * M1, 107.5, 50), at(T0 + 8 * M1, 108.5, 20)];
   const p = volumeProfile(cs, { bucket: 1 });
-  assert.deepEqual(p.lvn, [102.5, 107]);
+  assert.equal(p.val, 106); assert.equal(p.vah, 109); assert.deepEqual(p.lvn, [102, 105]);
   assert.deepEqual(profileLevels(p, { t: T0, price: 104 }).map((l) => l.kind), ['poc', 'vah', 'val'], 'off by default');
   const lv = profileLevels(p, { t: T0, tf: '1m', price: 104, lvn: true });
   const lvns = lv.filter((l) => l.kind === 'lvn');
-  assert.deepEqual(lvns.map((l) => [l.price, l.side, l.meta.count]), [[102.5, 'sell-side', 1], [107, 'buy-side', 1]]);
-  assert.equal(lvns[0].id, `lvn:${T0}:102.5`); assert.equal(lvns[0].swept, null);
-  assert.deepEqual(profileLevels(p, { t: T0, price: 104, lvn: true, lvnMergeTol: 5 }).filter((l) => l.kind === 'lvn').map((l) => [l.price, l.meta.count]), [[104.75, 2]], 'merged at the mean');
-  assert.equal(profileLevels(p, { t: T0, price: 104, lvn: true, lvnMax: 1 }).filter((l) => l.kind === 'lvn').length, 1, 'capped to the nearest');
-  assert.equal(profileLevels(p, { t: T0, price: 104, lvn: true, lvnMax: 1 }).find((l) => l.kind === 'lvn').price, 102.5);
+  assert.deepEqual(lvns.map((l) => [l.price, l.side, l.meta.count]), [[102, 'sell-side', 1], [105, 'buy-side', 1]]);
+  assert.equal(lvns[0].id, `lvn:${T0}:102`); assert.equal(lvns[0].swept, null); assert.equal(lvns[0].tf, '1m');
+  assert.deepEqual(profileLevels(p, { t: T0, price: 104, lvn: true, lvnMergeTol: 3 }).filter((l) => l.kind === 'lvn').map((l) => [l.price, l.meta.count]), [[103.5, 2]], 'merged at the mean');
+  const one = profileLevels(p, { t: T0, price: 104.9, lvn: true, lvnMax: 1 }).filter((l) => l.kind === 'lvn');
+  assert.deepEqual(one.map((l) => l.price), [105], 'capped to the nearest');
+  // an LVN INSIDE value is a gap in the distribution, not a boundary (source 05 §5 diagram): [104)=0..[106)=0 sit inside VA [102,109)
+  const inside = volumeProfile([at(T0, 100.5, 20), at(T0 + M1, 102.5, 50), at(T0 + 2 * M1, 103.5, 20), at(T0 + 3 * M1, 107.5, 40), at(T0 + 4 * M1, 108.5, 20)], { bucket: 1 });
+  assert.deepEqual(inside.lvn, [101.5, 105.5]);
+  assert.ok(inside.val <= 101.5 || inside.val > 101.5, 'sanity');
+  const kept = profileLevels(inside, { t: T0, price: 104, lvn: true }).filter((l) => l.kind === 'lvn').map((l) => l.price);
+  for (const x of kept) assert.ok(x < inside.val || x > inside.vah, `LVN ${x} inside value [${inside.val}, ${inside.vah}] must not be a zone`);
+  assert.ok(!kept.includes(105.5), '105.5 lies inside value');
 });
 
 // ---- nakedPocs ----

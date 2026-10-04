@@ -74,6 +74,12 @@ describe('history + read models', () => {
     assert.equal(events.setup.length, 0, 'history never emits setups');
     assert.equal(events.levels.length, 1, 'one levels event after history');
     assert.ok(events.levels[0].levels.some((l) => l.kind === 'pdh') && events.levels[0].levels.some((l) => l.kind === 'pdl'));
+    const lv = events.levels[0].levels;
+    assert.ok(lv.some((l) => l.kind === 'prevCandleLow' && l.tf === '4h') && lv.some((l) => l.kind === 'prevCandleHigh'), 'previous 4h candle levels (source 01)');
+    const sym = analyst.symbols.get('BTCUSD');
+    assert.equal(lv.find((l) => l.kind === 'prevCandleLow').price, sym.store.lastClosed('4h').l);
+    const pdp = sym.prevDayProfile;
+    for (const l of lv.filter((x) => x.kind === 'lvn')) { assert.ok(l.price < pdp.val || l.price > pdp.vah, 'LVN zones sit outside the prior-day value area'); assert.ok(['buy-side', 'sell-side'].includes(l.side)); assert.equal(l.swept, null); }
     assert.ok(events.candle.some((m) => m.tf === '5m'), 'history flush emits a candle per TF');
 
     const d = analyst.chartData('BTCUSD', '5m', 120);
@@ -138,6 +144,11 @@ describe('candle flow', () => {
     assert.equal(calls[0].symbol, 'BTCUSD');
     assert.ok(Array.isArray(calls[0].opts.swings) && calls[0].opts.swings.length > 0, 'structure-TF swings passed');
     assert.ok(calls[0].opts.atr > 0, 'ATR passed for the trail buffer');
+    // source 05 §7 step 4 inputs (review finding journal.mjs:156): levels, profile HVNs, divergence, analysis-TF swings
+    assert.ok(Array.isArray(calls[0].opts.levels) && calls[0].opts.levels.length > 0, 'levels passed');
+    assert.ok(Array.isArray(calls[0].opts.hvn), 'HVNs passed');
+    assert.ok('divergence' in calls[0].opts);
+    assert.ok(Array.isArray(calls[0].opts.analysisSwings) && calls[0].opts.analysisSwings.length > 0, 'analysis-TF swings passed');
     assert.equal(events.levels.length, 1, 'levels recomputed once, on the 5m close');
     assert.equal(events.levels[0].symbol, 'BTCUSD');
     const analysedBefore = analyst.symbols.get('BTCUSD').analysedT;
@@ -189,6 +200,33 @@ describe('candle flow', () => {
       assert.equal(analyst.snapshot().limits.openCount, 0);
       await analyst.stop();
     } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('session anchors (review finding analyst.mjs:468)', () => {
+  test('no LDN marker on the first candle when London opened before it; a 4h anchor sits on the bar CONTAINING the open', async () => {
+    // history starts 07:30 UTC (London opened 07:00): nothing marks candles[0]
+    const late = mkCandles({ n: 200, start: Date.UTC(2026, 0, 13, 7, 30) });
+    const a = build({ startMs: late.at(-1).t + 60e3 });
+    await a.analyst.start(); a.feeds.BTCUSD.history(late);
+    const d1 = a.analyst.chartData('BTCUSD', '1m', 500);
+    assert.ok(!d1.markers.some((m) => m.kind === 'session' && m.t === d1.candles[0].t), 'the first candle is not a session open');
+    assert.ok(!d1.markers.some((m) => m.kind === 'session' && m.text === 'LDN'), 'London opened before the data starts');
+    await a.analyst.stop();
+    // history 00:00 → 11:39: on 1m the LDN marker is at 07:00 exactly; on 4h it is the 04:00 bar (which contains 07:00), not 08:00
+    const day = mkCandles({ n: 700, start: Date.UTC(2026, 0, 13, 0, 0) });
+    const b = build({ startMs: day.at(-1).t + 60e3 });
+    await b.analyst.start(); b.feeds.BTCUSD.history(day);
+    const m1 = b.analyst.chartData('BTCUSD', '1m', 1000).markers.filter((m) => m.kind === 'session');
+    assert.deepEqual(m1.map((m) => [m.text, new Date(m.t).toISOString().slice(11, 16)]), [['LDN', '07:00']]);
+    const m4 = b.analyst.chartData('BTCUSD', '4h', 10).markers.filter((m) => m.kind === 'session');
+    assert.deepEqual(m4.map((m) => [m.text, new Date(m.t).toISOString().slice(11, 16)]), [['LDN', '04:00']]);
+    // VWAP anchors: on 4h the session reset lands on the 04:00 bar (index 1), so the VWAP there equals that bar's own typical price
+    const d4 = b.analyst.chartData('BTCUSD', '4h', 10);
+    const bar04 = d4.candles[1];
+    assert.equal(bar04.t, Date.UTC(2026, 0, 13, 4, 0));
+    assert.ok(Math.abs(d4.vwap[1].v - (bar04.h + bar04.l + bar04.c) / 3) < 1e-9, 'anchored VWAP restarts on the bar containing the London open');
+    await b.analyst.stop();
   });
 });
 

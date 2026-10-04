@@ -307,6 +307,11 @@ export class OrderBook {
   _build() {
     const t = this._t, s = this._snap;
     const base = summarizeSnapshot({ ...s, t }, { orderbook: this.cfg });
+    if (this.tick && base.spread !== null) {            // snap the spread to the tick grid (86572.01 − 86572 is 0.00999999999476 in floats)
+      const dec = Math.min(10, (String(this.tick).split('.')[1] || '').length);
+      base.spread = Number((Math.round(base.spread / this.tick) * this.tick).toFixed(dec));
+      base.spreadBp = base.mid > 0 ? (base.spread / base.mid) * 10_000 : null;
+    }
     const walls = base.walls.map((w) => {
       const rec = this._walls.get(this._wallKey(w.side, w.price));
       return rec ? { ...w, ageMs: t - rec.firstSeen, refills: rec.refills, tradedQty: rec.tradedQty } : { ...w, tradedQty: 0 };

@@ -112,10 +112,11 @@ test('source 01: entry the candle AFTER the sweep — the stop is still the mani
   const before = evaluateSide({ ...ctx, structure: { trend: 'bullish', lastBos: { t: T - 9e5, price: 85250, dir: 'up' }, lastChoch: null } }, 'long');
   assert.ok(!before.trigger.hits.includes('ltfBos'));
   // the sweep must be recent: older than triggerMaxAgeCandles (6) → the plain zone-edge stop applies again
-  const stale = source01Long({ ...ctx, levels: levels.map(l => (l.kind === 'asiaLow' ? { ...l, swept: { t: T - 7 * M5, depth: 80, reclaimed: true, reclaimedT: T - 7 * M5 } } : l)) });
+  // (prevDayProfile off so the Asia low — not the prior-day POC magnet at 85,300 — is the nearest zone level)
+  const stale = source01Long({ ...ctx, prevDayProfile: null, levels: levels.map(l => (l.kind === 'asiaLow' ? { ...l, swept: { t: T - 7 * M5, depth: 80, reclaimed: true, reclaimedT: T - 7 * M5 } } : l)) });
   assert.equal(evaluate(stale).sides.long.stop, 85120 - 10, 'a 7-candle-old sweep no longer anchors');
   // an unreclaimed sweep never anchors
-  const un = source01Long({ ...ctx, levels: levels.map(l => (l.kind === 'asiaLow' ? { ...l, swept: { t: T, depth: 80, reclaimed: false, reclaimedT: null } } : l)) });
+  const un = source01Long({ ...ctx, prevDayProfile: null, levels: levels.map(l => (l.kind === 'asiaLow' ? { ...l, swept: { t: T, depth: 80, reclaimed: false, reclaimedT: null } } : l)) });
   assert.equal(evaluate(un).sides.long.stop, 85120 - 10);
 });
 
