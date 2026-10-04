@@ -3,6 +3,13 @@
 ## Goal
 Independently verify (or bury) the "GOLD VIP" / "THE WAR ZONE" Telegram XAUUSD signals **on paper, at Elliot's own risk sizing, before any real money moves** — and keep a hard funding gate between the channel's marketing and the bank account.
 
+## Status (2026-10-04)
+- **TradingView signal source added** alongside Telegram (`tools/executor/tradingview_source.py`): shared-secret auth (`hmac.compare_digest`, 401 otherwise), unique per-alert ids (fixed a silent duplicate-refusal bug), single `_run()` entry point (Copilot's broken duplicate in `__main__.py` removed), `tzdata` added (Termux had no tz database → London-day caps were resetting on UTC). Elliot set the webhook secret and bound it to `127.0.0.1`.
+- **MetaAPI broker adapter built — T4Trade MT4 reachable from the executor, gated.** `tools/executor/broker/metaapi.py` (stdlib REST, endpoints verified against metaapi.cloud docs 2026-10-04), selected by `BROKER=metaapi`; OANDA remains the default and is unchanged. Lot conversion floors to `volumeStep` (never oversizes); closes detected by polling positions → history deals; region auto-detected; network drop after submit reported `UNCERTAIN` and adopted by reconcile. **Gate #6 (FCA broker) is hard-wired FAIL on MetaAPI** → live needs `GATE_OVERRIDE`; **dry run is now allowed on a live account without the override**. Tests **131/131** (30 new). Verified by fresh clone → byte-identical → green. Details: [[sessions/2026-10-04]].
+- **Sizing reality at the current balance ($149.13):** a typical 6-point gold stop at 1–2 % risk sizes below 0.01 lot → the executor will **refuse** most signals rather than round up. That is the guard working, not a bug.
+- **Not yet done by Elliot:** MetaAPI account (master password, Deployed/Connected) + token + account id into `executor.env`; fresh `TG_API_ID`/`TG_API_HASH`; `--check` → `--dry-run`.
+- **Secrets exposed in chat transcripts this session (rotate):** Signalstevebot token; MTProto `api_id`/`api_hash`. Nothing written to the vault.
+
 ## Status (2026-10-03)
 - **PR #86 merged 2026-09-06** — everything below (executor, dashboard, push, research, security remediation) is on `master`. Nothing has run on hardware yet; Phase 3 remains Elliot's.
 - **Logger re-login on the new phone failed on a bot token — guard built.** The Fold 7 was lost (Smart Home, 2026-10-01); on the Fold 8 Ultra's fresh Termux, Elliot entered the Telegram **bot token** at Telethon's "phone (or bot token)" prompt. The session signed in as the bot, which cannot read channels → `BotMethodInvalidError` on the first dialog read, and the next `--login` silently reused the bot session. Both Telethon entry points (`signal_logger.py`, `executor/telegram_source.py`) now own the phone prompt and refuse token-shaped input, check the session is a *user* before touching a dialog, and `--login` throws a bot session away and signs in again. 20 new tests (101 total). Details and the immediate fix: [[sessions/2026-10-03]].
@@ -34,16 +41,21 @@ Independently verify (or bury) the "GOLD VIP" / "THE WAR ZONE" Telegram XAUUSD s
 - Telethon user-session (not Bot API — bots can't read channels without owner-granted admin; confirmed still true 2026). Read-only, aged account = documented low-risk case.
 - Commercial Telegram→MT4 copiers rejected (blind execution + would wire to a warned broker).
 - **SUPERSEDES (2026-09-06) — the first decision above is superseded under these conditions only:** autonomous execution is built (`tools/executor/`) for **OANDA Europe** (FCA-authorised, explicit personal-automation licence), **practice by default**; live requires all six funding gates or the exact `GATE_OVERRIDE` phrase, and either path is written to the event log; the 1 %/trade, 5 %/day, 20 % max-DD caps, one-open-trade cap and kill switch are enforced in code before any order; SL/TP are always broker-side; never a warned broker (T4Trade / Xlence / Tradeco); never ToS-breaking automation of a broker without an API (Trading 212, Plus500). Interactive Brokers was rejected by the research (password-only individual API, one session per username, IBC archived 2026-09-01).
+- **SUPERSEDES (2026-10-04, Elliot's choice) — "never a warned broker" is relaxed for T4Trade via MetaAPI under these conditions only:** OANDA stays the default broker; `BROKER=metaapi` must be set explicitly; funding gate #6 is hard-wired FAIL for it, so live orders require the exact `GATE_OVERRIDE` phrase (logged); dry run first; every other cap and guard unchanged. The regulatory facts in [[Due Diligence — GOLD VIP + T4Trade]] are unchanged — this is a risk Elliot is choosing, not a re-assessment of the broker.
 
 ## Next Actions
 - [ ] **Elliot: withdraw the residual $4.72 from T4Trade** — live test of their withdrawal process; deposit nothing further.
 - [ ] **Elliot: block/report @Signalstevebot; never join the Zoom calls.**
 - [x] Elliot: get api_id/api_hash from my.telegram.org → run `signal_logger.py --login` then `--list` in Termux — done 2026-09-05.
-- [ ] **Elliot: rotate the Telegram bot token** — @BotFather → the bot → `/revoke`; the old one was pasted into a chat transcript on 2026-10-03. Keep the new one only in `~/.config/tradeguard/executor.env`.
+- [ ] **Elliot: rotate the Telegram bot token** — @BotFather → the bot → `/revoke`; the old one was pasted into a chat transcript on 2026-10-03 and again on 2026-10-04. Keep the new one only in `~/.config/tradeguard/executor.env`.
+- [ ] **Elliot: regenerate `TG_API_ID`/`TG_API_HASH`** at my.telegram.org — the pair was pasted into a chat transcript on 2026-10-04; put the new pair only in `executor.env`.
 - [ ] **Elliot: Telegram → Settings → Devices** — terminate anything still listed for the lost Fold 7 (the app itself and any Telethon entry).
 - [x] Elliot: re-login the logger on the Fold 8 Ultra with the phone number — done 2026-10-03, `listening: GOLD VIP (-1002073063994)`. If it ever needs redoing: in `tools/`, `python signal_logger.py --login` (phone `+44…`, code, 2FA — never the bot token; after PR #88 a bot session is discarded automatically), then `termux-wake-lock && python signal_logger.py`.
 - [x] Deep-research verdict → plan → Phase 1 built (2026-09-06).
-- [ ] **Elliot: OANDA Europe practice account** → *Manage API Access* token + account id; **Raspberry Pi** (64-bit OS); then follow `tools/executor/README.md`: install → `--login` → `--list` → `--check` → `--dry-run` → systemd. Report what `--check` prints for sample sizing.
+- [x] Claude: TradingView webhook source + secret auth (2026-10-04); Elliot set the secret and `127.0.0.1` bind.
+- [x] Claude: MetaAPI broker adapter, 131/131 tests (2026-10-04).
+- [ ] **Elliot: MetaAPI** — app.metaapi.cloud → add the T4Trade MT4 account (master password, exact server name) → Deployed/Connected → put `BROKER=metaapi`, `METAAPI_TOKEN`, `METAAPI_ACCOUNT_ID`, `METAAPI_SYMBOL`, `DRY_RUN=1` in `executor.env` → `git pull` → `python -m executor --check` → report output → `--dry-run`.
+- [ ] **Elliot (alternative path): OANDA Europe practice account** → *Manage API Access* token + account id; **Raspberry Pi** (64-bit OS); then follow `tools/executor/README.md`: install → `--login` → `--list` → `--check` → `--dry-run` → systemd. Report what `--check` prints for sample sizing.
 - [x] Claude: Phase 2 — `supabase/schema.sql`, `/trade` page + `/api/trade` in jarvis-carousel, Web Push (2026-09-06).
 - [x] Elliot: merge PR #86 — merged 2026-09-06.
 - [ ] Run the paper loop for 4+ weeks; import `signals.jsonl` into Trade Guard weekly.
@@ -54,6 +66,6 @@ Independently verify (or bury) the "GOLD VIP" / "THE WAR ZONE" Telegram XAUUSD s
 - [[Due Diligence — GOLD VIP + T4Trade]] — full cited findings (FCA/AMF/FSMA/FSA primary sources)
 - [[Research — Executor Stack Verdict 2026-09-05]] — deep-research verdict on the autonomous-executor stack (IBKR/Vercel/Pake rejected; OANDA-or-Capital.com + persistent worker + PWA recommended; 21 confirmed / 4 refuted claims) + second pass over 12 more brokers
 - [[Executor — Architecture]] — decisions, data flow, risk controls, code map, verification ladder
-- `tools/executor/README.md` — the executor runbook (Pi install, first run, systemd, kill switch, going live)
+- `tools/executor/README.md` — the executor runbook (Pi install, first run, systemd, kill switch, going live, **MetaAPI/T4Trade**)
 - `tools/README.md` — the verification loop + Termux setup
-- Sessions: [[sessions/2026-07-10]] · [[sessions/2026-07-13]] · [[sessions/2026-09-05]] · [[sessions/2026-10-03]]
+- Sessions: [[sessions/2026-07-10]] · [[sessions/2026-07-13]] · [[sessions/2026-09-05]] · [[sessions/2026-10-03]] · [[sessions/2026-10-04]]
