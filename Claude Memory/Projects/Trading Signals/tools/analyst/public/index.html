@@ -7,6 +7,7 @@
   <meta name="description" content="TradeGuard Analyst — live Condition → Zone → Trigger analysis of four charts. Analysis only; nothing here places orders.">
   <meta name="referrer" content="no-referrer">
   <title>TradeGuard Analyst</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Cpath d='M8 22l6-8 4 5 6-9' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="app.css">
   <!-- Apply the persisted theme BEFORE first paint so a dark user never sees a light flash. SPEC §7: dark via
        prefers-color-scheme AND a toggle persisted in localStorage; storage can throw (private mode) → try/catch. -->
@@ -141,8 +142,8 @@
         <table class="tbl score-tbl">
           <thead><tr>
             <th scope="col">Key</th><th scope="col" class="num">n</th><th scope="col" class="num">Win %</th>
-            <th scope="col" class="num">Exp R</th><th scope="col" class="num">PF</th><th scope="col" class="num">Max DD R</th>
-            <th scope="col" class="num">Avg R:R</th><th scope="col" class="num">95% CI</th>
+            <th scope="col" class="num" title="Expectancy per trade, in R">Exp R</th><th scope="col" class="num" title="Profit factor">PF</th><th scope="col" class="num" title="Max drawdown, in R">DD R</th>
+            <th scope="col" class="num" title="Average R:R to first target">R:R</th><th scope="col" class="num" title="95% confidence interval of the win rate">CI</th>
           </tr></thead>
           <tbody id="scoreBody"><tr><td colspan="8" class="muted">No resolved setups yet — the scorecard fills as setups resolve walk-forward.</td></tr></tbody>
         </table>

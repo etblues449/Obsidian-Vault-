@@ -1,0 +1,4 @@
+# runtime journal + reports (SPEC §1: data/ is git-ignored)
+data/
+node_modules/
+*.log

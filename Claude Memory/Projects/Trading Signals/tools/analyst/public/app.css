@@ -106,9 +106,11 @@ kbd { font: 11px/1 var(--mono); padding: 2px 5px; border: 1px solid var(--border
   min-height: 52px; padding: 6px var(--gutter); padding-top: calc(6px + env(safe-area-inset-top));
   background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
 }
-.brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 auto; }
 .brand-mark { width: 14px; height: 14px; border-radius: 4px; background: linear-gradient(135deg, var(--ema9), var(--ema50)); flex: none; }
-.brand-name { font-weight: 700; font-size: 16px; white-space: nowrap; }
+.brand-name { font-weight: 700; font-size: 16px; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.hdr-right { flex: none; }
+@media (max-width: 420px) { .brand-sub { display: none; } } /* "Connecting…" + toggle need the room at 390 px */
 .brand-sub { font-weight: 500; color: var(--ink-2); }
 .hdr-right { display: flex; align-items: center; gap: 8px; }
 .icon-btn {
@@ -178,12 +180,15 @@ kbd { font: 11px/1 var(--mono); padding: 2px 5px; border: 1px solid var(--border
 .change { font-size: 13px; font-weight: 600; color: var(--ink-2); }
 .change.up { color: var(--good-text); } .change.down { color: var(--critical); }
 .chart-wrap { position: relative; height: var(--chart-h); border-radius: 6px; overflow: hidden; }
-.chart { position: absolute; inset: 0; }
-.zone-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.chart { position: absolute; inset: 0; transition: opacity .15s; }
+.chart-wrap.is-loading .chart, .chart-wrap.is-loading .zone-layer { opacity: 0.45; } /* refetch keeps the frame, dimmed */
+/* lightweight-charts gives its canvases a z-index, so the overlays need an explicit higher one */
+.zone-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 3; }
 .zone-box { position: absolute; border-top: 1px solid var(--zone-bull-line); border-bottom: 1px solid var(--zone-bull-line); background: var(--zone-bull); font: 10px/1 var(--mono); color: var(--ink-2); padding: 2px 4px; }
 .zone-box.bear { background: var(--zone-bear); border-color: var(--zone-bear-line); }
 .zone-box.mitigated { opacity: 0.35; border-style: dashed; }
-.chart-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); background: var(--surface); font-size: 14px; }
+.chart-empty { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; color: var(--muted); background: var(--surface); font-size: 14px; text-align: center; padding: 0 16px; }
+.chart-empty[hidden] { display: none; } /* the class rule would otherwise beat the UA [hidden] rule */
 .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 11px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .lg { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .lg b { color: var(--ink); font-weight: 600; }
@@ -252,9 +257,17 @@ kbd { font: 11px/1 var(--mono); padding: 2px 5px; border: 1px solid var(--border
 .bias .bar i { display: block; height: 100%; background: var(--muted); }
 .bias.bullish .bar i { background: var(--good); } .bias.bearish .bar i { background: var(--critical); }
 .score-tbl td { font-variant-numeric: tabular-nums; }
+.watch-tbl td.last b { display: block; font-weight: 600; }
+.watch-tbl td.last small { color: var(--muted); font-size: 11px; }
 @media (max-width: 599px) {
-  .watch-tbl .col-session, .watch-tbl td.sym small { display: none; }
+  /* 390 px: six columns must fit — drop the session column and the name subline, tighten padding */
+  .watch-tbl { font-size: 12px; }
+  .watch-tbl th, .watch-tbl td { padding-left: 3px; padding-right: 3px; }
+  .watch-tbl .col-session, .watch-tbl th:nth-child(4), .watch-tbl td.last, .watch-tbl th:nth-child(7), .watch-tbl td.sym small.name, .bias .bar { display: none; }
+  .watch-tbl td.sym small.last-inline { display: block; color: var(--ink-2); font-size: 11px; }
 }
+@media (min-width: 600px) { .watch-tbl td.sym small.last-inline { display: none; } }
+.score-tbl { font-size: 12px; }
 
 /* ---------- execution feed ---------- */
 .sel-wrap select { min-height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); padding: 0 8px; }
