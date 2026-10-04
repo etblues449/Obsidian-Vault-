@@ -748,3 +748,14 @@ Full grading: `Projects/Smart Home/diagnostics/2026-10-03-agent-spec-diagnosis.m
 - [ ] **S3 — Delete `Assistant Core/packages/persona.tar.gz.b64`.** It is truncated and nothing uses it (the installer fetches plain source).
 - [x] **S3 — Allow `add_repo` for `etblues449/jarvis-core`** *(Approved and attached 2026-10-03.)* in Claude Code permissions so cloud sessions can diagnose the phone app from code.
 - [x] **S3 — Harness checkers fully clean.** *(2026-10-03: 2 `hardware/*` wikilinks fixed; verify-refs frontmatter check narrowed to `SKILL.md`.)*
+
+
+## Trading Signals — 2026-10-04
+- ✓ Executor: TradingView webhook source with shared-secret auth; tzdata fix; single `_run()` entry point
+- ✓ Executor: MetaAPI broker adapter (`BROKER=metaapi`, T4Trade MT4), gate #6 hard-fail, dry-run on live allowed — 131/131 tests, head `bd1fa36`
+- [ ] Elliot: MetaAPI account (master password, Deployed/Connected) → token + account id into `executor.env` → `--check` → `--dry-run`
+- [ ] Elliot: rotate Signalstevebot token (@BotFather `/revoke`) and regenerate MTProto `api_id`/`api_hash` — both exposed in chat transcripts
+- [ ] Elliot: test a small T4Trade withdrawal before relying on the account
+- [ ] Elliot: recreate the TradingView SSM alert before it expires (~4 Nov 2026; reminder ~28 Oct)
+- Decision (open): the index still lists "block/report @Signalstevebot" (2026-07-10) while Signalstevebot is now Elliot's own alert bot — confirm which bot that action meant
+
