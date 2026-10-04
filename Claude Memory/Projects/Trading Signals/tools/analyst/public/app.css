@@ -151,7 +151,7 @@ kbd { font: 11px/1 var(--mono); padding: 2px 5px; border: 1px solid var(--border
 .tfbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px var(--gutter); flex-wrap: wrap; }
 .pills { display: flex; gap: 6px; flex-wrap: wrap; }
 .pill-btn {
-  min-height: 36px; min-width: 44px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-weight: 600; font-size: 13px;
+  min-height: var(--tap); min-width: 44px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-weight: 600; font-size: 13px;
 }
 .pills:not(.pills-sm) .pill-btn { min-height: var(--tap); }
 .pill-btn.is-active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
@@ -270,7 +270,7 @@ kbd { font: 11px/1 var(--mono); padding: 2px 5px; border: 1px solid var(--border
 .score-tbl { font-size: 12px; }
 
 /* ---------- execution feed ---------- */
-.sel-wrap select { min-height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); padding: 0 8px; }
+.sel-wrap select { min-height: var(--tap); border-radius: 8px; border: 1px solid var(--border); background: var(--surface); padding: 0 8px; }
 .feed-list { list-style: none; margin: 0; padding: 0; max-height: 420px; overflow-y: auto; font-family: var(--mono); font-size: 12px; }
 .feed-list li { display: grid; grid-template-columns: 62px 56px 64px 1fr; gap: 6px; padding: 6px 2px; border-bottom: 1px solid var(--line); align-items: baseline; }
 .feed-list li:last-child { border-bottom: 0; }
