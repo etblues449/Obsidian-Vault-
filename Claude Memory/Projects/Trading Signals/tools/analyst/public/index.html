@@ -3,22 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="light">
   <meta name="description" content="TradeGuard Analyst — live Condition → Zone → Trigger analysis of four charts. Analysis only; nothing here places orders.">
   <meta name="referrer" content="no-referrer">
   <title>TradeGuard Analyst</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Cpath d='M8 22l6-8 4 5 6-9' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="app.css">
-  <!-- Apply the persisted theme BEFORE first paint so a dark user never sees a light flash. SPEC §7: dark via
-       prefers-color-scheme AND a toggle persisted in localStorage; storage can throw (private mode) → try/catch. -->
-  <script>
-    try { var t = localStorage.getItem('tradeguard.theme'); if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
-  </script>
+  <link rel="stylesheet" href="pro.css">
+  <!-- LIGHT THEME ONLY (SPEC-PRO §P7, user instruction 2026-10-04): no dark tokens, no OS-preference rule, no toggle. -->
 </head>
 <body>
   <a class="skip" href="#chart">Skip to chart</a>
 
-  <!-- 1. Header: brand, feed status pill for the ACTIVE symbol, SSE link dot, theme toggle -->
+  <!-- 1. Header: brand, feed status pill for the ACTIVE symbol, SSE link dot -->
   <header class="hdr" role="banner">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true"></span>
@@ -29,9 +26,6 @@
         <span class="sr-only">Event stream connecting</span>
       </span>
       <span id="statusPill" class="pill pill-connecting" role="status" aria-live="polite">Connecting…</span>
-      <button id="themeBtn" class="icon-btn" type="button" aria-label="Toggle dark theme" aria-pressed="false" title="Toggle theme (d)">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20V2z"/><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-      </button>
     </div>
   </header>
 
@@ -78,6 +72,50 @@
         <span class="lg"><i class="lg-key lg-dash" style="--k: var(--lvl-equal)"></i>Equal H/L</span>
         <span class="lg"><i class="lg-key lg-dash" style="--k: var(--lvl-value)"></i>POC/VAH/VAL</span>
         <span class="lg"><i class="lg-key lg-box" style="--k: var(--zone-bull)"></i>FVG/OB</span>
+      </div>
+    </section>
+
+    <!-- 4b. Pro: footprint (bid × ask), visible top of book, Pro CZT hits (SPEC-PRO §P7; source 05 §2–§4).
+         Rendered by pro.js from GET /api/pro/:symbol + SSE 'footprint' / 'book'. Desktop: under the chart; phone: stacked.
+         Scrolls INSIDE itself (footprint sideways, ladder vertically) — never the page. -->
+    <section class="card pro" id="pro" aria-labelledby="proTitle">
+      <div class="card-head">
+        <h2 id="proTitle">Pro · order flow</h2>
+        <div class="pro-head-right">
+          <span id="proPartial" class="badge badge-delayed" title="Footprints built from a truncated trade backfill — older columns may be incomplete" hidden>PARTIAL HISTORY</span>
+          <button id="proToggle" class="pill-btn is-active" type="button" aria-pressed="true" aria-controls="proBody" title="Show / hide the Pro panel (p)">Pro</button>
+        </div>
+      </div>
+      <div id="proBody" class="pro-body">
+        <p id="proMsg" class="pro-msg muted" role="status" aria-live="polite" hidden></p>
+        <div class="pro-grid">
+          <div class="pro-fp" aria-labelledby="fpTitle">
+            <div class="pro-sub-head">
+              <h3 id="fpTitle">Footprint <small id="fpMeta" class="muted"></small></h3>
+              <span class="pro-key" aria-hidden="true"><i class="k k-buy"></i>buy imb <i class="k k-sell"></i>sell imb <i class="k k-stk"></i>stacked <b>POC</b> ▲▼ unfinished</span>
+            </div>
+            <p id="fpTrapped" class="fp-trapped" hidden></p>
+            <div id="fpScroll" class="fp-scroll" tabindex="0" aria-label="Footprint: last 12 analysis candles, bid × ask per price level, scroll sideways">
+              <table id="fpTable" class="fp-tbl"><tbody><tr><td class="muted fp-empty">Waiting for footprints…</td></tr></tbody></table>
+            </div>
+          </div>
+          <div class="pro-dom" aria-labelledby="domTitle">
+            <div class="pro-sub-head">
+              <h3 id="domTitle">DOM <small class="muted" title="Visible top of book (20 levels per side) — NOT level 3. Resting orders can be pulled at any moment; only what the tape does to a wall counts (source 05 §2).">top of book ⓘ</small></h3>
+              <span id="domSpread" class="dom-spread-txt muted"></span>
+            </div>
+            <div id="domMeter" class="dom-meter" title="Depth imbalance = (bid depth − ask depth) / (bid depth + ask depth) over the visible 20 levels per side" aria-label="Depth imbalance">
+              <div class="dom-meter-track"><div id="domMeterFill" class="dom-meter-fill" style="width:50%"></div></div>
+              <div id="domMeterText" class="dom-meter-text muted">—</div>
+            </div>
+            <div id="domLadder" class="dom-ladder" tabindex="0" aria-label="Order book ladder: asks above, bids below, scroll vertically"><div class="muted dom-empty">Waiting for the order book…</div></div>
+            <div id="domChips" class="dom-chips" aria-label="Wall events"></div>
+          </div>
+        </div>
+        <div class="pro-hits">
+          <h3>Pro hits <small class="muted">source 05 §3–§4 · book §2</small></h3>
+          <ul id="proHits" class="hits hits-row" aria-label="Pro CZT hits"></ul>
+        </div>
       </div>
     </section>
 
@@ -152,11 +190,12 @@
   </main>
 
   <footer class="foot muted small">
-    <span>Keys: <kbd>1</kbd>–<kbd>4</kbd> symbol · <kbd>t</kbd> timeframe · <kbd>d</kbd> theme</span>
+    <span>Keys: <kbd>1</kbd>–<kbd>4</kbd> symbol · <kbd>t</kbd> timeframe · <kbd>p</kbd> Pro panel</span>
     <span>Analysis only — nothing here places orders.</span>
   </footer>
 
   <script src="vendor/lightweight-charts.standalone.production.js"></script>
   <script src="app.js"></script>
+  <script src="pro.js"></script>
 </body>
 </html>

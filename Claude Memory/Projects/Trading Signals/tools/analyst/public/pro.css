@@ -1,0 +1,109 @@
+/* TradeGuard Analyst — Pro panel (SPEC-PRO §P7). LIGHT THEME ONLY: every colour is one of app.css's :root
+   tokens (no dark block, no prefers-color-scheme anywhere in public/). Loaded after app.css, so the one
+   layout override (the desktop grid gains a "pro" row under the chart) lives here, not in app.css.
+
+   Three parts, source 05 vocabulary:
+     .pro-fp   footprint (bid × ask) — §3 "Footprint (Bid × Ask) Charts": imbalance cells outlined, stacked
+               runs filled, POC bold, unfinished extremes ▲/▼. Scrolls SIDEWAYS inside .fp-scroll, never the page.
+     .pro-dom  visible top of book — §2 "Resting flow … can be modified, moved, or canceled (spoofing)":
+               asks above, bids below, qty bars, walls, depth-imbalance meter, pulled/absorbed/eaten chips.
+               Scrolls VERTICALLY inside .dom-ladder.
+     .pro-hits the five Pro CZT hits (§P5) with ✓/– like the CZT panel.
+   Phone (390 px): everything stacked, min-width: 0 on every grid child so nothing can widen the page.
+   Touch targets ≥ 44 px (the toggle pill reuses .pill-btn). */
+
+/* ---------- layout ---------- */
+.pro { min-width: 0; }
+.pro .card-head { margin-bottom: 6px; }
+.pro-head-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.pro-body { display: grid; gap: 12px; min-width: 0; }
+.pro-body[hidden] { display: none; }
+.pro-msg { margin: 0; font-size: 12px; }
+.pro-grid { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+@media (min-width: 720px) { .pro-grid { grid-template-columns: minmax(0, 1.7fr) minmax(240px, 1fr); } }
+.pro-fp, .pro-dom, .pro-hits { min-width: 0; }
+.pro-sub-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.pro-sub-head h3 small { text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 11px; }
+.pro-key { font-size: 10px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.pro-key .k { display: inline-block; width: 10px; height: 10px; border-radius: 2px; border: 1.5px solid transparent; margin-left: 4px; }
+.pro-key .k-buy { border-color: var(--up); } .pro-key .k-sell { border-color: var(--down); }
+.pro-key .k-stk { background: color-mix(in srgb, var(--up) 28%, transparent); border-color: var(--up); }
+.pro-key b { color: var(--ink); margin-left: 4px; }
+
+/* desktop: a Pro row under the chart, CZT keeps the right column and does not stretch to fill both rows */
+@media (min-width: 1024px) {
+  .grid { grid-template-areas: "chart czt" "pro czt" "watch watch" "feed score"; }
+  .pro { grid-area: pro; }
+  .czt { align-self: start; }
+}
+
+/* ---------- footprint ---------- */
+.fp-trapped { margin: 0 0 6px; font-size: 12px; padding: 4px 8px; border-radius: 6px; background: var(--surface-2); color: var(--ink); }
+.fp-trapped.bearish { box-shadow: inset 3px 0 0 var(--down); } .fp-trapped.bullish { box-shadow: inset 3px 0 0 var(--up); }
+.fp-scroll {
+  overflow: auto; -webkit-overflow-scrolling: touch; max-height: 440px; min-width: 0;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+}
+.fp-tbl { border-collapse: separate; border-spacing: 0; font: 11px/1.25 var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fp-tbl th, .fp-tbl td { padding: 1px 5px; text-align: right; vertical-align: middle; }
+.fp-tbl td.fp-empty { text-align: left; padding: 10px 12px; font-family: var(--font); font-size: 12px; white-space: normal; }
+/* sticky price column (left) + sticky time header (top) so the shared price scale never scrolls away */
+.fp-tbl .px { position: sticky; left: 0; z-index: 1; background: var(--surface); color: var(--ink-2); border-right: 1px solid var(--line); font-weight: 500; }
+.fp-tbl thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); }
+.fp-tbl thead th.px { z-index: 3; }
+.fp-tbl thead th.cur { color: var(--ink); }
+.fp-tbl tfoot td { border-top: 1px solid var(--line); color: var(--ink-2); font-size: 10px; background: var(--surface); position: sticky; bottom: 0; z-index: 2; }
+.fp-tbl tfoot td.px { z-index: 3; }
+.fp-tbl tfoot td.pos { color: var(--good-text); } .fp-tbl tfoot td.neg { color: var(--critical); }
+.fp-tbl tfoot tr:last-child td { border-top: 0; }
+/* cells: "bid × ask" — bid (sellers hit the bid) in the down colour, ask (buyers lifted the ask) in the up colour */
+.fp-tbl td.c { border: 1px solid transparent; border-radius: 3px; min-width: 76px; color: var(--ink-2); }
+.fp-tbl td.c.z { color: var(--line); }
+.fp-tbl td.c .b { color: var(--critical); } .fp-tbl td.c .a { color: var(--good-text); } .fp-tbl td.c .x { color: var(--muted); padding: 0 1px; }
+.fp-tbl td.c.imb-buy { border-color: var(--up); } .fp-tbl td.c.imb-sell { border-color: var(--down); }
+.fp-tbl td.c.imb-buy.imb-sell { border-color: var(--ink-2); }
+.fp-tbl td.c.stk-buy { background: color-mix(in srgb, var(--up) 22%, transparent); }
+.fp-tbl td.c.stk-sell { background: color-mix(in srgb, var(--down) 20%, transparent); }
+.fp-tbl td.c.poc { font-weight: 700; color: var(--ink); box-shadow: inset 0 0 0 1px var(--border); }
+.fp-tbl td.c.poc .b, .fp-tbl td.c.poc .a { font-weight: 700; }
+.fp-tbl td.c .uf { display: inline-block; width: 9px; margin-right: 2px; color: var(--ink); font-size: 9px; text-align: center; }
+.fp-tbl tr.cur-hi td.c { border-top-color: var(--border); }
+.fp-tbl th.partial::after { content: " ◌"; color: var(--warning); }
+
+/* ---------- DOM ladder ---------- */
+.dom-spread-txt { font-size: 11px; font-variant-numeric: tabular-nums; }
+.dom-meter { margin-bottom: 6px; }
+.dom-meter-track { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--down) 35%, var(--surface-2)); overflow: hidden; }
+.dom-meter-fill { height: 100%; background: var(--up); width: 50%; transition: width .3s ease; border-radius: 999px 0 0 999px; }
+.dom-meter-text { font-size: 11px; margin-top: 3px; display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+.dom-meter-text b { color: var(--ink); }
+.dom-ladder {
+  max-height: 360px; overflow-y: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: 8px;
+  font: 11px/1.25 var(--mono); font-variant-numeric: tabular-nums; background: var(--surface); min-width: 0;
+}
+.dom-empty { padding: 10px 12px; font-family: var(--font); font-size: 12px; }
+.dom-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 2px 8px; min-height: 19px; }
+.dom-row .bar { position: absolute; top: 2px; bottom: 2px; right: 0; opacity: 0.22; pointer-events: none; }
+.dom-row.ask .bar { background: var(--down); } .dom-row.bid .bar { background: var(--up); }
+.dom-row .p { position: relative; color: var(--ink-2); } .dom-row.ask .p { color: var(--critical); } .dom-row.bid .p { color: var(--good-text); }
+.dom-row .q { position: relative; color: var(--ink); min-width: 56px; text-align: right; }
+.dom-row .w { position: relative; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; color: var(--ink-2); min-width: 34px; text-align: right; }
+.dom-row.wall { font-weight: 700; } .dom-row.wall .bar { opacity: 0.42; }
+.dom-row.wall.absorbed .w { color: var(--good-text); }
+.dom-row.best .p::after { content: " ◂"; color: var(--muted); }
+.dom-spread { text-align: center; color: var(--muted); font-size: 10px; padding: 3px 8px; border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); background: var(--surface-2); }
+.dom-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 0; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  background: var(--surface-2); color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; max-width: 100%;
+}
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex: none; }
+.chip-pulled::before { background: var(--warning); } .chip-absorbed::before { background: var(--good); } .chip-eaten::before { background: var(--critical); }
+.chip-absorbed { color: var(--good-text); }
+.chip small { font-weight: 500; color: var(--muted); }
+
+/* ---------- Pro hits strip ---------- */
+.pro-hits h3 { margin-bottom: 6px; } .pro-hits h3 small { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.hits-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px 12px; }
+.hits-row li .w { font-size: 10px; }
+.hits-row li .lay { font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-left: 4px; }

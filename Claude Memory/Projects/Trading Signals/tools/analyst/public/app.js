@@ -1,6 +1,10 @@
 /* TradeGuard Analyst dashboard — SPEC §7. Framework-free, no build step, no network except same-origin
    `/api/*` and `/events`. Renders meaningfully with an empty snapshot (every feed 'connecting') and never
    throws on a missing field: every read of server data goes through `num()/str()/arr()` guards.
+   LIGHT THEME ONLY (SPEC-PRO §P7, user instruction 2026-10-04): chart colours read the single set of
+   :root tokens; there is no theme toggle, no `d` key and no theme localStorage key.
+   Hooks for pro.js (SPEC-PRO §P7 "minimal hooks"): `tradeguard:state` (document CustomEvent after every
+   renderAll — detail {active}) and `tradeguard:sse` (once the EventSource exists — detail {source}).
 
    Data flow:  GET /api/state  → watchlist, CZT panel, header pill          (polled every 10 s + on SSE events)
                GET /api/chart  → candles + indicators + levels + markers    (on symbol / TF change, on closed candle)
@@ -24,7 +28,7 @@
   const STATE_POLL_MS = 10_000;
   const FEED_MAX = 500;
   const MAX_PRICE_LINES = 36;
-  const STORE = { theme: 'tradeguard.theme', symbol: 'tradeguard.symbol', tf: 'tradeguard.tf' };
+  const STORE = { symbol: 'tradeguard.symbol', tf: 'tradeguard.tf' };
   // CZT hit keys in cfg.czt.weights order (config/strategy.json), labelled in source-document language.
   const HITS = {
     condition: [
@@ -115,15 +119,6 @@
   // Local UI notes land in the feed as dimmed 'warn' lines so a failing route is visible, not silent.
   function note(level, msg, symbol = 'UI') { pushFeed({ t: Date.now(), level, symbol, msg, local: true }); }
 
-  // ---------- theme ----------
-  const Theme = {
-    media: window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null,
-    current() { const s = document.documentElement.getAttribute('data-theme'); return s === 'dark' || s === 'light' ? s : (this.media && this.media.matches ? 'dark' : 'light'); },
-    set(t) { document.documentElement.setAttribute('data-theme', t); store.set(STORE.theme, t); this.sync(); },
-    toggle() { this.set(this.current() === 'dark' ? 'light' : 'dark'); },
-    sync() { const dark = this.current() === 'dark'; $('themeBtn').setAttribute('aria-pressed', String(dark)); Chart.applyTheme(); },
-  };
-
   // ---------- chart ----------
   const Chart = {
     chart: null, candles: null, ema9: null, ema21: null, ema50: null, vwap: null, vol: null, delta: null, markers: null,
@@ -181,15 +176,6 @@
     priceFormat() { const dp = clamp(this.dp, 0, 8); return { type: 'price', precision: dp, minMove: +(10 ** -dp).toFixed(dp) }; },
     // TickMarkType: 0 Year, 1 Month, 2 DayOfMonth, 3 Time, 4 TimeWithSeconds — render in London time.
     tick(time, type) { const d = new Date(time * 1000); if (type >= 3) return LDN.hm.format(d); if (type === 2) return LDN.dm.format(d); return type === 1 ? LDN.dm.format(d).slice(3) : String(d.getUTCFullYear()); },
-    applyTheme() {
-      if (!this.chart) return;
-      const LW = this.LW(), t = this.tokens();
-      this.chart.applyOptions({ layout: { background: { type: 'solid', color: t.surface }, textColor: t.ink2 }, grid: { vertLines: { color: t.line }, horzLines: { color: t.line } }, rightPriceScale: { borderColor: t.line }, timeScale: { borderColor: t.line } });
-      this.candles.applyOptions({ upColor: t.up, downColor: t.down, wickUpColor: t.up, wickDownColor: t.down });
-      this.ema9.applyOptions({ color: t.ema9 }); this.ema21.applyOptions({ color: t.ema21 }); this.ema50.applyOptions({ color: t.ema50 }); this.vwap.applyOptions({ color: t.vwap });
-      if (S.data) this.setData(S.data, { keepRange: true }); // bar colours live in the data points
-      void LW;
-    },
     // Map a server ms timestamp onto a bar time of the current TF (seconds). Snaps to the nearest bar within
     // one TF so markers/zones from another TF (e.g. a 15m order block on a 5m chart) still land on a bar.
     snap(ms) {
@@ -481,7 +467,11 @@
       body.appendChild(tr);
     }
   }
-  function renderAll() { renderTabs(); renderHeader(); renderCzt(); renderWatch(); }
+  function renderAll() {
+    renderTabs(); renderHeader(); renderCzt(); renderWatch();
+    // Hook for pro.js (SPEC-PRO §P7): the active symbol / snapshot may have changed.
+    try { document.dispatchEvent(new CustomEvent('tradeguard:state', { detail: { active: S.active } })); } catch { /* no CustomEvent */ }
+  }
 
   // ---------- loaders ----------
   async function loadState() {
@@ -535,6 +525,8 @@
     if (!window.EventSource) { note('warn', 'EventSource unsupported — polling only'); return; }
     const es = new EventSource('/events'); S.sse = es; const dot = $('sseDot');
     const parse = (e) => { try { return JSON.parse(e.data); } catch { return null; } };
+    // Hook for pro.js (SPEC-PRO §P7): one shared EventSource — pro.js adds its 'footprint' / 'book' listeners to it.
+    try { document.dispatchEvent(new CustomEvent('tradeguard:sse', { detail: { source: es } })); } catch { /* no CustomEvent */ }
     es.onopen = () => { dot.className = 'sse-dot is-open'; dot.title = 'Event stream: connected'; if (S.sseOpened) refreshAll(); S.sseOpened = true; };
     es.onerror = () => { dot.className = 'sse-dot is-down'; dot.title = 'Event stream: reconnecting…'; }; // EventSource reconnects by itself (retry: 3000)
     es.addEventListener('event', (e) => { const ev = parse(e); if (ev) pushFeed(ev); });
@@ -566,8 +558,6 @@
 
   // ---------- wiring ----------
   function wire() {
-    $('themeBtn').addEventListener('click', () => Theme.toggle());
-    if (Theme.media && Theme.media.addEventListener) Theme.media.addEventListener('change', () => Theme.sync());
     $('feedFilter').addEventListener('change', (e) => { S.feedFilter = e.target.value; renderFeed(); });
     $('scoreBy').addEventListener('click', (e) => {
       const b = e.target.closest('button[data-by]'); if (!b) return; S.scoreBy = b.dataset.by;
@@ -579,7 +569,6 @@
       if (/INPUT|SELECT|TEXTAREA/.test(tag) || (e.target && e.target.isContentEditable)) return;
       if (/^[1-9]$/.test(e.key)) { const s = S.symbols[+e.key - 1]; if (s) selectSymbol(s.id); }
       else if (e.key === 't' || e.key === 'T') selectTf(TFS[(TFS.indexOf(S.tf) + 1) % TFS.length]);
-      else if (e.key === 'd' || e.key === 'D') Theme.toggle();
     });
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshAll(); });
     S.pollTimer = setInterval(() => { if (document.visibilityState !== 'hidden') loadState(); }, STATE_POLL_MS);
@@ -587,7 +576,7 @@
   }
 
   async function boot() {
-    renderTfPills(); Theme.sync();
+    renderTfPills();
     if (!Chart.LW()) note('error', 'vendor/lightweight-charts.standalone.production.js did not load — chart disabled');
     Chart.init(); wire();
     await loadState();

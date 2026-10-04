@@ -1,7 +1,8 @@
-/* TradeGuard Analyst dashboard — SPEC §7. Light default on :root tokens; dark via prefers-color-scheme
-   (guarded so an explicit light toggle wins) AND via [data-theme="dark"]. Phone first at 390 px: no
-   horizontal page scroll, touch targets ≥ 44 px. Desktop ≥ 1024 px: chart + CZT side by side, the
-   watchlist / feed / scorecard below. Chart series colours are read from these tokens by app.js. */
+/* TradeGuard Analyst dashboard — SPEC §7 + SPEC-PRO §P7. LIGHT THEME ONLY (user instruction 2026-10-04):
+   one set of :root tokens, `color-scheme: light`, no OS-preference rule, no toggle. Phone first at 390 px:
+   no horizontal page scroll, touch targets ≥ 44 px. Desktop ≥ 1024 px: chart + CZT side by side, the
+   watchlist / feed / scorecard below (pro.css adds the Pro row). Chart series colours are read from these
+   tokens by app.js. */
 
 :root {
   color-scheme: light;
@@ -52,33 +53,6 @@
   --chart-h: 340px;
 }
 
-/* dark: OS preference, unless the viewer explicitly stamped light */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #0d0d0d; --surface: #1a1a19; --surface-2: #262624; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
-    --line: #2c2c2a; --border: rgba(255, 255, 255, 0.10); --focus: #3987e5;
-    --good-text: #0ca30c; --info: #3987e5;
-    --ema9: #3987e5; --ema21: #d95926; --ema50: #9085e9; --vwap: #d55181;
-    --vol-up: rgba(12, 163, 12, 0.45); --vol-down: rgba(230, 103, 103, 0.45);
-    --lvl-pd: #9085e9; --lvl-session: #3987e5; --lvl-equal: #d95926; --lvl-consol: #c98500; --lvl-value: #d55181;
-    --zone-bull: rgba(12, 163, 12, 0.18); --zone-bear: rgba(230, 103, 103, 0.18);
-    --zone-bull-line: rgba(12, 163, 12, 0.55); --zone-bear-line: rgba(230, 103, 103, 0.55);
-  }
-}
-/* dark: explicit toggle (wins over the OS setting both ways) */
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #0d0d0d; --surface: #1a1a19; --surface-2: #262624; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
-  --line: #2c2c2a; --border: rgba(255, 255, 255, 0.10); --focus: #3987e5;
-  --good-text: #0ca30c; --info: #3987e5;
-  --ema9: #3987e5; --ema21: #d95926; --ema50: #9085e9; --vwap: #d55181;
-  --vol-up: rgba(12, 163, 12, 0.45); --vol-down: rgba(230, 103, 103, 0.45);
-  --lvl-pd: #9085e9; --lvl-session: #3987e5; --lvl-equal: #d95926; --lvl-consol: #c98500; --lvl-value: #d55181;
-  --zone-bull: rgba(12, 163, 12, 0.18); --zone-bear: rgba(230, 103, 103, 0.18);
-  --zone-bull-line: rgba(12, 163, 12, 0.55); --zone-bear-line: rgba(230, 103, 103, 0.55);
-}
-
 /* ---------- base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -110,14 +84,9 @@ kbd { font: 11px/1 var(--mono); padding: 2px 5px; border: 1px solid var(--border
 .brand-mark { width: 14px; height: 14px; border-radius: 4px; background: linear-gradient(135deg, var(--ema9), var(--ema50)); flex: none; }
 .brand-name { font-weight: 700; font-size: 16px; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .hdr-right { flex: none; }
-@media (max-width: 420px) { .brand-sub { display: none; } } /* "Connecting…" + toggle need the room at 390 px */
+@media (max-width: 420px) { .brand-sub { display: none; } } /* "Reconnecting…" needs the room at 390 px */
 .brand-sub { font-weight: 500; color: var(--ink-2); }
 .hdr-right { display: flex; align-items: center; gap: 8px; }
-.icon-btn {
-  width: var(--tap); height: var(--tap); border: 1px solid var(--border); background: var(--surface); border-radius: 50%;
-  display: inline-flex; align-items: center; justify-content: center; color: var(--ink-2);
-}
-.icon-btn[aria-pressed="true"] { color: var(--ink); background: var(--surface-2); }
 .sse-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--warning); flex: none; box-shadow: 0 0 0 2px var(--surface); }
 .sse-dot.is-open { background: var(--good); }
 .sse-dot.is-down { background: var(--critical); animation: blink 1.2s steps(2) infinite; }
