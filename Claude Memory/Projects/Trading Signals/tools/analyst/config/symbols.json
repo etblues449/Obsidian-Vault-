@@ -1,0 +1,48 @@
+{
+  "_comment": "One entry per chart tab. `feed` names an adapter in lib/feeds/registry.mjs. `feedParams` is passed verbatim to that adapter. `dp` = display decimals. `tick` = minimum price increment used for level tolerance and volume-profile bucketing. `contract` describes how P&L and sizing are expressed for this instrument (unitsPerLot × priceMove = USD per lot).",
+  "symbols": [
+    {
+      "id": "BTCUSD",
+      "name": "Bitcoin / US Dollar",
+      "feed": "binance",
+      "feedParams": { "stream": "btcusdt" },
+      "dp": 2,
+      "tick": 0.01,
+      "contract": { "unitsPerLot": 1, "label": "BTC" },
+      "sourceNote": "Binance spot BTCUSDT — real-time klines + aggressor-tagged trades (true delta/CVD). No key required."
+    },
+    {
+      "id": "NQ1!",
+      "name": "Nasdaq 100 E-mini (continuous)",
+      "feed": "simulated",
+      "feedParams": { "seed": 21000, "volatility": 0.0005, "tickSize": 0.25 },
+      "dp": 2,
+      "tick": 0.25,
+      "contract": { "unitsPerLot": 20, "label": "contract" },
+      "sourceNote": "SIMULATED — there is no free, keyless real-time feed for CME futures. Switch `feed` to `yahoo` (15-min delayed, best-effort) or write a broker adapter in lib/feeds/. The seed price is a placeholder, not a quote."
+    },
+    {
+      "id": "XAUUSD",
+      "name": "Gold / US Dollar",
+      "feed": "binance",
+      "feedParams": { "stream": "paxgusdt" },
+      "dp": 2,
+      "tick": 0.01,
+      "contract": { "unitsPerLot": 100, "label": "oz" },
+      "sourceNote": "Binance spot PAXGUSDT — PAX Gold, a token redeemable for physical gold, tracks spot XAU within a few dollars. Real-time klines + aggressor-tagged trades. Setups for this symbol are the only ones the executor bridge may forward (the executor is gold-only)."
+    },
+    {
+      "id": "OIL",
+      "name": "WTI Crude Oil",
+      "feed": "simulated",
+      "feedParams": { "seed": 70, "volatility": 0.0008, "tickSize": 0.01 },
+      "dp": 2,
+      "tick": 0.01,
+      "contract": { "unitsPerLot": 1000, "label": "bbl" },
+      "sourceNote": "SIMULATED — no free, keyless real-time feed for crude futures. Switch `feed` to `yahoo` (CL=F, delayed) or write a broker adapter. The seed price is a placeholder, not a quote."
+    }
+  ],
+  "feedDefaults": {
+    "yahoo": { "pollSeconds": 60, "symbols": { "NQ1!": "NQ=F", "OIL": "CL=F", "XAUUSD": "GC=F", "BTCUSD": "BTC-USD" } }
+  }
+}

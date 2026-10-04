@@ -1,0 +1,120 @@
+{
+  "_comment": "Every number the engine uses lives here. Sources: docs/sources/01..05. Times are wall-clock in `sessions.timezone` (DST-aware via Intl). Tolerances expressed in ATR multiples scale across instruments.",
+
+  "timeframes": {
+    "base": "1m",
+    "analysis": "5m",
+    "structure": "15m",
+    "bias": "1h",
+    "htf": "4h",
+    "available": ["1m", "5m", "15m", "1h", "4h"]
+  },
+
+  "history": {
+    "backfillMinutes": 2880,
+    "maxCandlesPerTf": 3000,
+    "maxTradesInMemory": 20000
+  },
+
+  "sessions": {
+    "timezone": "Europe/London",
+    "list": [
+      { "id": "asia",   "label": "Asian",    "start": "00:00", "end": "07:00", "role": "consolidation" },
+      { "id": "london", "label": "London",   "start": "07:00", "end": "12:00", "role": "manipulation", "killzone": { "start": "07:00", "end": "10:00" } },
+      { "id": "ny",     "label": "New York", "start": "12:00", "end": "17:00", "role": "distribution", "killzone": { "start": "13:30", "end": "16:00" } },
+      { "id": "late",   "label": "Late NY",  "start": "17:00", "end": "24:00", "role": "retracement" }
+    ],
+    "tradeOnlyInKillzones": true
+  },
+
+  "indicators": {
+    "emaFast": 9,
+    "emaSlow": 21,
+    "emaBias": 50,
+    "atrPeriod": 14,
+    "swingLookback": 2,
+    "vwapSessionReset": true
+  },
+
+  "liquidity": {
+    "equalLevelToleranceAtr": 0.15,
+    "sweepMinDepthAtr": 0.05,
+    "sweepMaxDepthAtr": 2.0,
+    "consolidationCandles": 12,
+    "consolidationMaxRangeAtr": 2.5,
+    "levelExpiryHours": 72
+  },
+
+  "structure": {
+    "displacementBodyAtr": 1.2,
+    "fvgMinSizeAtr": 0.1,
+    "orderBlockMaxAgeCandles": 200,
+    "engulfingMinBodyAtr": 0.5
+  },
+
+  "orderflow": {
+    "absorptionVolumeMult": 2.0,
+    "absorptionMaxRangeAtr": 0.6,
+    "absorptionMinWickRatio": 0.5,
+    "cvdDivergenceSwings": 2,
+    "volumeProfileWindowCandles": 288,
+    "volumeProfileBucketsAtr": 0.1,
+    "valueAreaPct": 0.70,
+    "nakedPocLookbackDays": 5
+  },
+
+  "czt": {
+    "zoneToleranceAtr": 0.5,
+    "weights": {
+      "condition.biasAligned": 2.0,
+      "condition.killzone": 1.5,
+      "condition.outsideValueTrend": 1.0,
+      "condition.insideValueRotation": 0.5,
+      "zone.pdhPdl": 1.5,
+      "zone.sessionHighLow": 1.5,
+      "zone.equalHighsLows": 1.0,
+      "zone.valueArea": 1.0,
+      "zone.nakedPoc": 1.0,
+      "zone.fvg": 1.0,
+      "zone.orderBlock": 1.5,
+      "trigger.sweepReclaim": 3.0,
+      "trigger.absorption": 2.0,
+      "trigger.cvdDivergence": 1.5,
+      "trigger.engulfing": 1.0,
+      "trigger.ltfBos": 1.5,
+      "trigger.deltaConfirms": 1.0
+    },
+    "minScore": 6.0,
+    "gradeA": 9.0,
+    "gradeB": 7.0,
+    "minRr": 1.5,
+    "stopBufferAtr": 0.1,
+    "maxStopAtr": 3.0,
+    "targetsFrom": ["sessionHighLow", "pdhPdl", "equalHighsLows", "valueArea", "nakedPoc"],
+    "maxSetupsPerSymbolPerDay": 3,
+    "cooldownMinutes": 30,
+    "oneOpenPerSymbol": true
+  },
+
+  "risk": {
+    "balance": 1000,
+    "riskPct": 1.0,
+    "dailyLossPct": 5.0,
+    "maxOpenAcrossSymbols": 2,
+    "_note": "Mirrors the executor caps (1 %/trade, 5 %/day). balance is a display assumption for sizing — the executor reads the real one."
+  },
+
+  "journal": {
+    "dir": "data",
+    "resolveTimeoutHours": 48,
+    "trailByProvedAuctions": true
+  },
+
+  "executorBridge": {
+    "enabled": false,
+    "url": "http://127.0.0.1:8787/webhook",
+    "symbols": ["XAUUSD"],
+    "minGrade": "A",
+    "_note": "OFF by default. When enabled, grade-A XAUUSD setups are POSTed to the executor's TradingView webhook (shape: {secret, alert_id, side, entry, sl, tp}). The secret comes from the ANALYST_EXECUTOR_SECRET env var, never from a file in the vault. Every existing executor gate still applies."
+  }
+}
