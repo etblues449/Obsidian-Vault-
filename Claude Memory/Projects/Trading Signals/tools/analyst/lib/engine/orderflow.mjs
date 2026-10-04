@@ -11,8 +11,20 @@
 // DEVIATION (SPEC §4.6, delta ≤ 0 / ≥ 0 in detectAbsorption): when a candle carries no aggressor
 //   volume the delta is the body/range proxy (indicators.delta, source:'proxy'). A proxy delta's sign IS
 //   the body direction, so "heavy sells but closes back up" (source 05 §4) can never satisfy delta ≤ 0.
-//   For proxy candles the sign test is skipped — the volume/range/wick signature carries the detection —
-//   and the result says `deltaSource:'proxy'` so the dashboard/journal can label it honestly.
+//   For proxy candles the sign test is skipped — the volume/range/wick/close signature carries the
+//   detection — and the result says `deltaSource:'proxy'` so the dashboard/journal can label it honestly.
+// Review finding orderflow.mjs:115: source 05 §4 — bullish absorption "forms a lower wick and CLOSES BACK
+//   UP", bearish "closes back down". detectAbsorption now requires c ≥ o (bullish) / c ≤ o (bearish); a
+//   doji satisfies both and the wick ratio breaks the tie. A red bar with a long lower wick is a sell-off, not absorption.
+// Review finding orderflow.mjs:193: the value area is the SPEC §4.6 literal — the smallest contiguous bucket
+//   window containing the POC whose volume ≥ valueAreaPct × total (prefix sums, two pointers); ties →
+//   centre nearest the POC → larger volume → lower window. The old greedy single-bucket growth put VAL
+//   1.3 ATR off on the fixture.
+// Review finding czt.mjs:128: cvdDivergence reports `source` ('proxy' when any candle between the two
+//   compared legs lacks aggressor volume) so czt can label the reason and not count it as a trigger.
+// Review finding czt.mjs:166: profileLevels(profile, { lvn: true }) also emits the profile's LVNs as Level
+//   kind 'lvn' (side relative to `price`), merged when closer than `lvnMergeTol` — source 05 §5/§6: rejections
+//   at (HTF) LVNs are prime reversal boundaries, so they are Zones. They are never targets (price moves through them).
 // DEVIATION (additive): volumeProfile returns null (not a Profile) when there is nothing to profile
 //   (no candles or zero total volume); Profile carries bucket/totalVol/low/high/n/pocVol/vaVol extras.
 // DEVIATION (additive export): profileLevels(profile, opts) → Level[] (poc/vah/val) so the analyst and
@@ -63,7 +75,7 @@ function cvdLegExtreme(series, swingsSorted, s, candles) {
  * new low ⇒ bullish. Compares the last `cvdDivergenceSwings` (≥ 2) confirmed swings of a kind: price must
  * exceed every earlier one in the window, CVD's leg extreme must not. When both kinds diverge the more
  * recent swing wins. `swings` must index into `candles`.
- * @returns {{kind:'bearish'|'bullish', t, priceSwing, prevPriceSwing, cvdSwing:{index,t,value}, prevCvdSwing:{index,t,value}, age:number}|null}
+ * @returns {{kind:'bearish'|'bullish', t, priceSwing, prevPriceSwing, cvdSwing:{index,t,value}, prevCvdSwing:{index,t,value}, age:number, source:'trades'|'proxy'}|null}
  */
 export function cvdDivergence(candles, swings, cfg = {}, { cvd: precomputed } = {}) {
   const n = Math.max(2, Math.floor(ofCfg(cfg).cvdDivergenceSwings ?? 2));
@@ -80,7 +92,10 @@ export function cvdDivergence(candles, swings, cfg = {}, { cvd: precomputed } = 
     let prevBest = null, prevBestSwing = null;
     for (const p of prevs) { const e = cvdLegExtreme(series, sw, p, candles); if (!prevBest || beyond(e.value, prevBest.value)) { prevBest = e; prevBestSwing = p; } }
     if (beyond(latestCvd.value, prevBest.value)) return null;                   // CVD confirmed the move: healthy, no divergence
-    return { kind: kind === 'high' ? 'bearish' : 'bullish', t: latest.t, priceSwing: latest, prevPriceSwing: prevBestSwing, cvdSwing: latestCvd, prevCvdSwing: prevBest, age: candles.length - 1 - latest.index };
+    // Honest labelling: a CVD built from body/range proxies is price-vs-price, not executed flow (source 05 §3).
+    let source = 'trades';
+    for (let j = Math.min(prevBest.index, prevBestSwing.index); j <= latest.index; j++) if (delta(candles[j]).source === 'proxy') { source = 'proxy'; break; }
+    return { kind: kind === 'high' ? 'bearish' : 'bullish', t: latest.t, priceSwing: latest, prevPriceSwing: prevBestSwing, cvdSwing: latestCvd, prevCvdSwing: prevBest, age: candles.length - 1 - latest.index, source };
   };
   const bear = check('high'), bull = check('low');
   if (bear && bull) return bear.priceSwing.index >= bull.priceSwing.index ? bear : bull;
@@ -91,9 +106,11 @@ export function cvdDivergence(candles, swings, cfg = {}, { cvd: precomputed } = 
  * Absorption on the LAST CLOSED candle (source 05 §4, "effort versus result"): heavy aggressive volume
  * (≥ absorptionVolumeMult × mean of the prior `absorptionMeanCandles`, default 20) that fails to displace
  * price (range ≤ absorptionMaxRangeAtr × ATR), with the wick/delta signature —
- *   bullish at support: lower wick ≥ absorptionMinWickRatio of range and delta ≤ 0 (sells hit the bid, passive buyers soak it up, bar closes back up);
- *   bearish at resistance: upper wick ≥ ratio and delta ≥ 0 (buys lift the ask into a ceiling, bar closes back down).
- * The baseline excludes the candle itself so a spike cannot inflate its own mean. See header DEVIATION for proxy delta.
+ *   bullish at support: lower wick ≥ absorptionMinWickRatio of range, delta ≤ 0 AND the bar closes back up (c ≥ o) —
+ *     sells hit the bid, passive buyers soak it up ("the bar forms a lower wick and closes back up");
+ *   bearish at resistance: upper wick ≥ ratio, delta ≥ 0 AND c ≤ o (buys lift the ask into a ceiling, bar closes back down).
+ * A doji (c === o) satisfies both close tests; the longer wick decides. The baseline excludes the candle itself so a
+ * spike cannot inflate its own mean. See header DEVIATION for proxy delta.
  * @returns {{side:'bullish'|'bearish', t, vol, range, delta, deltaSource, meanVol, volMult, rangeAtr, wick:{upper,lower}}|null}
  */
 export function detectAbsorption(candles, atr, cfg = {}) {
@@ -112,7 +129,7 @@ export function detectAbsorption(candles, atr, cfg = {}) {
   if (!(meanVol > 0) || vol < volMult * meanVol || !(range >= 0) || range > maxRangeAtr * atr) return null;
   const w = wickRatios(c), d = delta(c);
   const deltaOk = (sign) => d.source === 'proxy' || (sign < 0 ? d.value <= 0 : d.value >= 0);
-  const bull = w.lower >= minWick && deltaOk(-1), bear = w.upper >= minWick && deltaOk(+1);
+  const bull = w.lower >= minWick && deltaOk(-1) && c.c >= c.o, bear = w.upper >= minWick && deltaOk(+1) && c.c <= c.o;
   let side = null;
   if (bull && bear) side = w.lower > w.upper ? 'bullish' : w.upper > w.lower ? 'bearish' : d.value < 0 ? 'bullish' : d.value > 0 ? 'bearish' : null; // only a bodiless 50/50 bar gets here
   else side = bull ? 'bullish' : bear ? 'bearish' : null;
@@ -149,10 +166,35 @@ function extremaRuns(vols, max) {
 }
 
 /**
+ * Smallest contiguous window [lo, hi] of `vols` containing `poc` with Σ ≥ target (SPEC §4.6: "smallest
+ * contiguous set around POC holding ≥ 70 %"). Prefix sums + two pointers: as the left edge `a` moves down
+ * from the POC, the first right edge `b ≥ poc` that satisfies the target can only move down too, so the
+ * scan is O(n). Ties: narrowest → centre nearest the POC → larger volume → lower window. Exported for tests.
+ */
+export function valueArea(vols, poc, target) {
+  const len = vols.length;
+  const pre = new Float64Array(len + 1);
+  for (let k = 0; k < len; k++) pre[k + 1] = pre[k] + vols[k];
+  const sum = (a, b) => pre[b + 1] - pre[a];
+  const eps = 1e-12;
+  let best = null, b = len - 1;
+  if (sum(0, len - 1) < target - eps) return { lo: 0, hi: len - 1, vol: sum(0, len - 1) }; // cannot be reached: the whole range
+  for (let a = poc; a >= 0; a--) {
+    if (sum(a, len - 1) < target - eps) continue;                    // no right edge satisfies from this left edge; a lower one adds volume
+    while (b > poc && sum(a, b - 1) >= target - eps) b--;            // shrink the right edge as far as the target allows
+    const cand = { lo: a, hi: b, vol: sum(a, b), width: b - a, off: Math.abs((a + b) / 2 - poc) };
+    // `a` descends, so on a full tie the later (lower) window replaces the earlier one.
+    if (!best || cand.width < best.width || (cand.width === best.width && (cand.off < best.off - eps || (Math.abs(cand.off - best.off) <= eps && cand.vol >= best.vol - eps)))) best = cand;
+  }
+  return { lo: best.lo, hi: best.hi, vol: best.vol };
+}
+
+/**
  * Volume profile (source 05 §5). Each candle's volume is spread evenly over the price buckets its range
  * touches (a zero-range candle lands in one bucket). POC = heaviest bucket (tie → nearest the middle of
- * the range). Value area = `valueAreaPct` (70 %) of volume built outward from the POC, adding the larger
- * adjacent bucket each step (both on an exact tie). HVN = local maxima of bucket volume at/above the mean
+ * the range). Value area = the SMALLEST contiguous bucket window containing the POC whose volume is
+ * ≥ `valueAreaPct` (70 %) of the total (SPEC §4.6 literal; ties → centre nearest the POC, then the heavier
+ * window, then the lower one). HVN = local maxima of bucket volume at/above the mean
  * bucket volume ("agreed fair value"); LVN = local minima below `lvnFraction` (25 %) of the mean
  * ("rapid transactions without agreement — price moves through like a vacuum"). Plateaus collapse to one
  * price. Shape: 'thin' when the POC holds < `thinPocMult` (3×) the mean (elongated trend profile);
@@ -187,15 +229,7 @@ export function volumeProfile(candles, opts = {}) {
   const mid = (len - 1) / 2;
   let poc = 0;
   for (let k = 1; k < len; k++) if (vols[k] > vols[poc] || (vols[k] === vols[poc] && Math.abs(k - mid) < Math.abs(poc - mid))) poc = k;
-  // Value area: grow from the POC toward the heavier neighbour until ≥ valueAreaPct of total.
-  const target = valueAreaPct * total;
-  let vaLo = poc, vaHi = poc, vaVol = vols[poc];
-  while (vaVol < target - 1e-12 && (vaLo > 0 || vaHi < len - 1)) {
-    const up = vaHi < len - 1 ? vols[vaHi + 1] : -1, dn = vaLo > 0 ? vols[vaLo - 1] : -1;
-    if (up > dn) { vaHi++; vaVol += up; }
-    else if (dn > up) { vaLo--; vaVol += dn; }
-    else { vaHi++; vaLo--; vaVol += up + dn; }
-  }
+  const { lo: vaLo, hi: vaHi, vol: vaVol } = valueArea(vols, poc, valueAreaPct * total);
   const centre = (k) => r8((i0 + k + 0.5) * bucket);
   const mean = total / len;
   const hvn = extremaRuns(vols, true).filter((r) => r.vol >= hvnMinFraction * mean).map((r) => centre((r.start + r.end) / 2));
@@ -212,15 +246,30 @@ export function volumeProfile(candles, opts = {}) {
 /**
  * The profile's reference prices as Level objects (source 05 §6 zones: VAH, VAL, POC). VAH is buy-side
  * (above), VAL sell-side (below); the POC's side is relative to `price` (sell-side when below or unknown).
+ * With `lvn: true` the profile's low-volume nodes follow as kind 'lvn' (source 05 §5: "rejections at LVNs
+ * provide prime reversal boundaries"; §6: HTF LVNs are zones), side relative to `price`, LVNs closer than
+ * `lvnMergeTol` to each other merged at their mean (meta.count), at most `lvnMax` nearest to `price`.
  */
-export function profileLevels(profile, { t, tf = '1m', price, prefix = '', meta } = {}) {
+export function profileLevels(profile, { t, tf = '1m', price, prefix = '', meta, lvn = false, lvnMergeTol = 0, lvnMax = 6 } = {}) {
   if (!profile) return [];
-  const mk = (kind, p, side) => ({ id: `${prefix}${kind}:${t}:${r8(p)}`, kind, price: p, t, tf, side, meta: { shape: profile.shape, ...meta }, swept: null });
-  return [
-    mk('poc', profile.poc, fin(price) && profile.poc > price ? 'buy-side' : 'sell-side'),
+  const sideOf = (p) => (fin(price) && p > price ? 'buy-side' : 'sell-side');
+  const mk = (kind, p, side, extra) => ({ id: `${prefix}${kind}:${t}:${r8(p)}`, kind, price: p, t, tf, side, meta: { shape: profile.shape, ...meta, ...extra }, swept: null });
+  const out = [
+    mk('poc', profile.poc, sideOf(profile.poc)),
     mk('vah', profile.vah, 'buy-side'),
     mk('val', profile.val, 'sell-side'),
   ];
+  if (lvn && Array.isArray(profile.lvn) && profile.lvn.length) {
+    const groups = [];
+    for (const p of profile.lvn.filter(fin).slice().sort((a, b) => a - b)) {
+      const g = groups[groups.length - 1];
+      if (g && Math.abs(p - g.sum / g.n) <= lvnMergeTol) { g.sum += p; g.n++; } else groups.push({ sum: p, n: 1 });
+    }
+    const nodes = groups.map((g) => ({ p: r8(g.sum / g.n), n: g.n }));
+    const kept = fin(price) ? nodes.sort((a, b) => Math.abs(a.p - price) - Math.abs(b.p - price)).slice(0, lvnMax) : nodes.slice(0, lvnMax);
+    for (const { p, n } of kept) out.push(mk('lvn', p, sideOf(p), { count: n }));
+  }
+  return out;
 }
 
 /** Index of the first candle with t ≥ ms in a t-sorted array. */

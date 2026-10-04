@@ -57,6 +57,10 @@ describe('aggregate (pure)', () => {
     // every full bucket is closed; the trailing partial one (its last child 03:29 next day is not 03:59) is not
     assert.ok(h4.slice(0, -1).every((c) => c.closed));
     assert.equal(h4[h4.length - 1].closed, false);
+    // the LEADING bucket began at 03:30, not 00:00: flagged partial (truncated o/h/l/v); every later bucket is not
+    assert.equal(h4[0].partial, true);
+    assert.ok(h4.slice(1).every((c) => c.partial === undefined));
+    assert.equal(aggregate(mkCandles({ n: 300, start: Date.UTC(2026, 0, 5, 4, 0) }), '4h')[0].partial, undefined, 'a bucket-aligned start is whole');
   });
   test('1m passthrough copies; unknown tf throws', () => {
     const c1 = mkCandles({ n: 3 });
@@ -114,7 +118,12 @@ describe('CandleStore', () => {
     assert.deepEqual(r, { updated: ['1m', '5m', '15m', '1h', '4h'], closed: [] });
     assert.equal(store.last('4h').t, Date.UTC(2026, 0, 5, 4, 0));
     assert.equal(store.size('4h'), 2);
-    assert.equal(store.lastClosed('4h').t, Date.UTC(2026, 0, 5, 0, 0));
+    // The 00:00 bucket holds 5 of 240 children (history began 03:55): it is flagged partial and is NOT a closed bar (review finding candles.mjs:251).
+    assert.equal(store.get('4h')[0].partial, true);
+    assert.equal(store.get('4h')[0].closed, true, 'it did close — the next bucket started');
+    assert.equal(store.lastClosed('4h'), undefined, 'a leading partial bucket is never served as the last closed bar');
+    assert.deepEqual(store.closed('4h'), []);
+    assert.equal(store.get('4h')[1].partial, undefined, 'the 04:00 bucket started on its own first minute');
   });
 
   test('a dropped final print: the forming candle is closed when the next minute arrives', () => {
@@ -189,6 +198,9 @@ describe('CandleStore', () => {
     }
     const h4 = store.get('4h');
     assert.ok(h4.every((c) => c.t % H4 === 0));
+    assert.equal(h4[0].partial, true, 'the fixture starts mid-bucket: 103 of 240 children');
+    assert.equal(store.closed('4h')[0].t, h4[1].t, 'closed() starts at the first whole 4h bar');
+    assert.equal(store.closed('4h', 1)[0].t, store.lastClosed('4h').t);
     near(sum(h4, 'v'), sum(fx, 'v'), 1e-6);
     near(sum(h4, 'buyV') + sum(h4, 'sellV'), sum(fx, 'v'), 1e-6);
     assert.equal(sum(h4, 'n'), sum(fx, 'n'));

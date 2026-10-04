@@ -6,45 +6,68 @@
 // Non-negotiables, where they live:
 //   source 01 — "your stop-loss has got to be at the manipulation low": when a sweep triggered the
 //               setup the stop is the manipulation extreme ∓ stopBufferAtr × ATR. If that puts it
-//               further than maxStopAtr the trade is SKIPPED; the stop is never moved closer.
+//               further than maxStopAtr the trade is SKIPPED; the stop is never moved closer. The
+//               source explicitly allows entering LATER than the manipulation candle, so a reclaimed
+//               sweep on the primary zone level within triggerMaxAgeCandles still anchors the stop.
 //   source 02 — liquidity rests at previous highs/lows and around consolidation; "wait for London /
 //               New York to sweep it, then target the next portion of liquidity". Outside a
 //               killzone the Condition layer caps the score below minScore (tradeOnlyInKillzones).
+//               The NEXT pool is the target: when it does not pay minRr the trade is rejected — the
+//               engine never measures R past an intervening pool to a farther one.
 //   source 03 — "time dictates the move": the session role rides along with every Condition.
 //   source 04 — "buy-side taken → target sell-side and vice-versa": targets are only ever OPPOSING
 //               liquidity; the entry zone is the swept level / the order block.
 //   source 05 — "You never take an order flow trigger in the middle of nowhere": ≥ 1 Zone hit AND
-//               ≥ 1 Trigger hit; "enter on the close of the rejection bar"; invalidation stop.
+//               ≥ 1 REAL Trigger hit; "enter on the close of the rejection bar"; invalidation stop.
+//               §3: delta is arithmetic, not a forecast — `deltaConfirms` (and the Pro `unfinishedAuction`)
+//               are CONFIRMATIONS: they add weight but never satisfy the trigger gate on their own, and a
+//               proxy (body/range) delta is not awarded at all — "the candle closed my way" is not flow.
 //
 // DEVIATION (one): condition.valueRelation is 'unknown' (not one of inside|above|below) when ctx has
 //   no prevDayProfile — guessing 'inside' would silently fake a Condition.
 // Additive (not in §4.7): the result also carries `side`, `rawScore` (before the killzone cap),
 //   `rejections` (why no Setup), `blocked` + `candidate` (a qualifying Setup held back by
 //   ctx.limits), and `sides` (both evaluations, for the CZT panel); condition carries `role` and
-//   `capped`; targets carry `kind`. ctx may carry `engulfing` (precomputed) — otherwise it is derived
-//   from the last two closed analysis-TF candles in ctx.store via structure.isEngulfing.
-//   cfg.czt.triggerMaxAgeCandles (default 6) bounds how old a CVD divergence / structure break may
-//   be to still count as this candle's trigger. A structure-TF CHoCH in the side direction counts
+//   `capped`; targets carry `kind`; trigger carries `real` (the hits that satisfy the gate). ctx may
+//   carry `engulfing` (precomputed) — otherwise it is derived from the last two closed analysis-TF
+//   candles in ctx.store via structure.isEngulfing.
+//   cfg.czt.triggerMaxAgeCandles (default 6) bounds how old a CVD divergence / structure break / reclaimed
+//   sweep may be to still count as this candle's trigger. A structure-TF CHoCH in the side direction counts
 //   as the `ltfBos` hit (after a sweep the first break is a change of character by definition).
-//   Levels already `swept` are never targets — that liquidity has been taken (source 04).
+//   Levels already `swept` are never targets — that liquidity has been taken (source 04). LVNs (kind 'lvn',
+//   weight group valueArea) are zones but never targets — price moves through them "like a vacuum".
+//   cfg.czt.minStopAtr (default 0.35): a stop closer than this to entry is widened AWAY from entry (never
+//   toward it) before rr / targets / maxStopAtr are computed — a few-tick stop under a shallow sweep sits
+//   inside the spread and the R it promises is fiction (review: $0.24 gold stops, 74 R targets). The reason
+//   line says so. Pro hits (SPEC-PRO §P5) footprintImbalance / trappedTraders / bookAbsorption are real
+//   triggers, unfinishedAuction a confirmation; the integrator adds the hits, the gate is ready for them.
 
 import { isEngulfing } from './structure.mjs';
 import { size as riskSize, rr as riskRr, dailyCaps } from './risk.mjs';
 
 const TF_MS = { '1m': 60e3, '5m': 3e5, '15m': 9e5, '1h': 36e5, '4h': 144e5 }; // mirror of candles.mjs
-const BUY_SIDE = new Set(['pdh', 'sessionHigh', 'asiaHigh', 'equalHighs', 'consolidationHigh', 'vah']);
+const BUY_SIDE = new Set(['pdh', 'sessionHigh', 'asiaHigh', 'equalHighs', 'consolidationHigh', 'vah', 'prevCandleHigh']);
 const MAGNETS = new Set(['poc', 'nakedPoc']);     // side-agnostic: a zone when at price, a target when beyond it
+const NEVER_TARGET = new Set(['lvn']);            // a vacuum, not a destination (source 05 §5)
 /** Level.kind → weight / targetsFrom group. Consolidation edges are "liquidity building up on both sides" (source 04) → equalHighsLows. */
 const GROUP = {
   pdh: 'pdhPdl', pdl: 'pdhPdl',
   sessionHigh: 'sessionHighLow', sessionLow: 'sessionHighLow', asiaHigh: 'sessionHighLow', asiaLow: 'sessionHighLow',
   equalHighs: 'equalHighsLows', equalLows: 'equalHighsLows', consolidationHigh: 'equalHighsLows', consolidationLow: 'equalHighsLows',
-  poc: 'valueArea', vah: 'valueArea', val: 'valueArea', nakedPoc: 'nakedPoc',
+  poc: 'valueArea', vah: 'valueArea', val: 'valueArea', lvn: 'valueArea', nakedPoc: 'nakedPoc',
+  prevCandleHigh: 'prevCandle', prevCandleLow: 'prevCandle',
 };
-const TRIGGER_PRIORITY = ['sweepReclaim', 'absorption', 'cvdDivergence', 'ltfBos', 'engulfing', 'deltaConfirms']; // Setup.trigger.kind
+/** Groups that are RESTING LIQUIDITY (stops sit there, sources 02/04): the nearest one beyond entry is "the next pool". */
+const POOL_GROUPS = new Set(['sessionHighLow', 'pdhPdl', 'equalHighsLows', 'prevCandle']);
+/** Trigger hits that are an observable execution signature at the zone (source 05 §6) — these satisfy the gate. */
+export const REAL_TRIGGERS = new Set(['sweepReclaim', 'absorption', 'cvdDivergence', 'engulfing', 'ltfBos', 'footprintImbalance', 'trappedTraders', 'bookAbsorption']);
+/** Weighted confirmations only (source 05 §3 / SPEC-PRO §P5): never the only trigger. */
+export const CONFIRM_ONLY = new Set(['deltaConfirms', 'unfinishedAuction']);
+const TRIGGER_PRIORITY = ['sweepReclaim', 'trappedTraders', 'footprintImbalance', 'absorption', 'bookAbsorption', 'cvdDivergence', 'ltfBos', 'engulfing']; // Setup.trigger.kind
 const CAP_MARGIN = 0.5;          // outside a killzone the score is capped at minScore − 0.5 (visibly "just under")
 const TARGET_DEDUPE_ATR = 0.1;   // two target levels this close are one pool
 const DEFAULT_TRIGGER_AGE = 6;   // analysis candles
+const DEFAULT_MIN_STOP_ATR = 0.35;
 
 const levelSide = (l) => l.side || (BUY_SIDE.has(l.kind) ? 'buy-side' : 'sell-side');
 const fmtFor = (dp) => { const f = new Intl.NumberFormat('en-GB', { minimumFractionDigits: dp, maximumFractionDigits: dp }); return (x) => f.format(x); };
@@ -69,7 +92,10 @@ export function levelLabel(l) {
     case 'poc': return 'prior-day POC';
     case 'vah': return 'prior-day VAH';
     case 'val': return 'prior-day VAL';
+    case 'lvn': return 'prior-day LVN';
     case 'nakedPoc': return 'naked POC';
+    case 'prevCandleHigh': return `previous ${m.tf || l.tf || '4h'} candle high`;
+    case 'prevCandleLow': return `previous ${m.tf || l.tf || '4h'} candle low`;
     default: return l.kind;
   }
 }
@@ -101,19 +127,39 @@ export function evaluateSide(ctx, side) {
   const maxAgeMs = (czt.triggerMaxAgeCandles ?? DEFAULT_TRIGGER_AGE) * tfMs;
   const entry = c.c;
   const hits = { condition: [], zone: [], trigger: [] }, reasons = { condition: [], zone: [], trigger: [] };
-  const hit = (layer, key, line) => { if (!hits[layer].includes(key)) { hits[layer].push(key); reasons[layer].push(line); } };
+  const real = [];                                           // trigger hits that satisfy the gate (REAL_TRIGGERS, not proxy)
+  const hit = (layer, key, line, { confirmOnly = false } = {}) => {
+    if (hits[layer].includes(key)) return;
+    hits[layer].push(key); reasons[layer].push(line);
+    if (layer === 'trigger' && !confirmOnly && REAL_TRIGGERS.has(key) && !real.includes(key)) real.push(key);
+  };
 
-  // ---- Trigger (last closed analysis-TF candle) ----
+  // ---- Zone levels first: the recently swept one may anchor the stop even when the sweep candle has closed ----
   const wantLevelSide = bull ? 'sell-side' : 'buy-side';     // longs are born at swept lows, shorts at swept highs
   const sweeps = (ctx.sweeps || []).filter(s => s?.reclaimed && s.t === c.t && s.level && levelSide(s.level) === wantLevelSide);
   const sweep = sweeps.length ? sweeps.reduce((a, b) => (b.depth > a.depth ? b : a)) : null;
+  const levels = (ctx.levels || []).filter(l => l && Number.isFinite(l.price));
+  if (sweep && !levels.some(l => l.id === sweep.level.id)) levels.push(sweep.level); // a sweep proves price reached that level
+  const all = [...levels, ...profileLevels(ctx.prevDayProfile, levels, tf)];
+  const zoneLevels = all
+    .filter(l => GROUP[l.kind] && (MAGNETS.has(l.kind) || levelSide(l) === wantLevelSide) && near(c, l.price, tol))
+    .sort((a, b) => Math.abs(a.price - entry) - Math.abs(b.price - entry));
+  // Source 01: the entry may come AFTER the manipulation candle. A zone level whose sweep was reclaimed within
+  // triggerMaxAgeCandles (and before this candle) still carries the manipulation extreme for the stop.
+  const recentSwept = sweep ? null : zoneLevels.find(l => l.swept?.reclaimed && Number.isFinite(l.swept.t) && Number.isFinite(l.swept.depth)
+    && l.swept.t < c.t && c.t - l.swept.t <= maxAgeMs && levelSide(l) === wantLevelSide) ?? null;
+
+  // ---- Trigger (last closed analysis-TF candle) ----
   let manipExtreme = null;
   if (sweep) {
     // The manipulation extreme is the deepest excursion past the level (= the sweep candle's wick, or
     // the deepest wick since an unreclaimed sweep when the reclaim came a candle or two later).
     manipExtreme = bull ? Math.min(sweep.level.price - sweep.depth, c.l) : Math.max(sweep.level.price + sweep.depth, c.h);
     hit('trigger', 'sweepReclaim', `Swept ${wantLevelSide} liquidity at ${levelLabel(sweep.level)} ${fmt(sweep.level.price)} and reclaimed (manipulation ${bull ? 'low' : 'high'} ${fmt(manipExtreme)})`);
+  } else if (recentSwept) {
+    manipExtreme = bull ? Math.min(recentSwept.price - recentSwept.swept.depth, c.l) : Math.max(recentSwept.price + recentSwept.swept.depth, c.h);
   }
+  const sweepT = sweep ? (sweep.level.swept?.t ?? sweep.t) : recentSwept ? recentSwept.swept.t : null;
   const abs = ctx.absorption;
   if (abs && abs.side === (bull ? 'bullish' : 'bearish') && (abs.t == null || abs.t === c.t)) {
     const d = Number.isFinite(abs.delta) ? ` (delta ${fmtDelta(abs.delta)})` : '';
@@ -125,9 +171,11 @@ export function evaluateSide(ctx, side) {
   if (div && div.kind === (bull ? 'bullish' : 'bearish') && (div.t == null || c.t - div.t <= maxAgeMs)) {
     const ps = Number.isFinite(div.priceSwing?.price) ? div.priceSwing.price : div.priceSwing;
     const at = Number.isFinite(ps) ? ` at ${fmt(ps)}` : '';
+    const proxy = div.source === 'proxy';
+    const tail = proxy ? ' (proxy — no trade tape)' : '';
     hit('trigger', 'cvdDivergence', bull
-      ? `Price made a lower low${at} while CVD made a higher low — effort without result, sellers absorbed`
-      : `Price made a higher high${at} while CVD made a lower high — effort without result, buyers exhausting`);
+      ? `Price made a lower low${at} while CVD made a higher low — effort without result, sellers absorbed${tail}`
+      : `Price made a higher high${at} while CVD made a lower high — effort without result, buyers exhausting${tail}`, { confirmOnly: proxy });
   }
   let eng = ctx.engulfing, prev = null;
   if (eng === undefined && typeof store?.closed === 'function' && atr > 0) {
@@ -144,30 +192,25 @@ export function evaluateSide(ctx, side) {
   const s = ctx.structure, wantDir = bull ? 'up' : 'down';
   const brk = [s?.lastBos, s?.lastChoch].filter(b => b && b.dir === wantDir).sort((a, b) => b.t - a.t)[0];
   if (brk && Number.isFinite(brk.t)) {
-    const sweepT = sweep ? (sweep.level.swept?.t ?? sweep.t) : null;
     const recent = c.t - brk.t <= Math.max(structTfMs, maxAgeMs);
     const afterSweep = sweepT == null || brk.t + structTfMs > sweepT;  // the breaking candle closed after the sweep began
     if (recent && afterSweep) {
       const what = brk === s.lastChoch ? 'change of character' : 'break of structure';
-      hit('trigger', 'ltfBos', `${tfs.structure ?? '15m'} ${what} ${wantDir} through ${fmt(brk.price)}${sweep ? ' after the sweep' : ''}`);
+      hit('trigger', 'ltfBos', `${tfs.structure ?? '15m'} ${what} ${wantDir} through ${fmt(brk.price)}${sweepT != null ? ' after the sweep' : ''}`);
     }
   }
   const dv = typeof ctx.deltaInfo === 'number' ? ctx.deltaInfo : ctx.deltaInfo?.value;
-  if (Number.isFinite(dv) && Math.sign(dv) === dir) {
-    const proxy = ctx.deltaInfo?.source === 'proxy' ? ' (proxy — no trade tape)' : '';
-    hit('trigger', 'deltaConfirms', `Closing delta ${fmtDelta(dv)} — aggressive ${bull ? 'buyers lifting the ask' : 'sellers hitting the bid'}${proxy}`);
+  // Source 05 §3: executed delta is a confirmation; a body/range PROXY delta is the candle's colour, not flow — never awarded.
+  if (Number.isFinite(dv) && Math.sign(dv) === dir && ctx.deltaInfo?.source !== 'proxy') {
+    hit('trigger', 'deltaConfirms', `Closing delta ${fmtDelta(dv)} — aggressive ${bull ? 'buyers lifting the ask' : 'sellers hitting the bid'} (confirmation)`, { confirmOnly: true });
   }
 
   // ---- Zone: the candle traded into a reference level / zone appropriate to the side ----
-  const levels = (ctx.levels || []).filter(l => l && Number.isFinite(l.price));
-  if (sweep && !levels.some(l => l.id === sweep.level.id)) levels.push(sweep.level); // a sweep proves price reached that level
-  const all = [...levels, ...profileLevels(ctx.prevDayProfile, levels, tf)];
-  const zoneLevels = all
-    .filter(l => GROUP[l.kind] && (MAGNETS.has(l.kind) || levelSide(l) === wantLevelSide) && near(c, l.price, tol))
-    .sort((a, b) => Math.abs(a.price - entry) - Math.abs(b.price - entry));
   for (const l of zoneLevels) {
-    const what = MAGNETS.has(l.kind) || l.kind === 'vah' || l.kind === 'val' ? (l.kind === 'nakedPoc' ? 'untested' : 'value') : `${wantLevelSide} liquidity`;
-    hit('zone', GROUP[l.kind], `At ${levelLabel(l)} ${fmt(l.price)} (${what})`);
+    const what = MAGNETS.has(l.kind) || l.kind === 'vah' || l.kind === 'val' ? (l.kind === 'nakedPoc' ? 'untested' : 'value')
+      : l.kind === 'lvn' ? 'low-volume node — rejection boundary' : `${wantLevelSide} liquidity`;
+    const swept = l === recentSwept ? ` — swept and reclaimed ${Math.round((c.t - l.swept.t) / tfMs)} candle(s) ago, manipulation ${bull ? 'low' : 'high'} ${fmt(manipExtreme)}` : '';
+    hit('zone', GROUP[l.kind], `At ${levelLabel(l)} ${fmt(l.price)} (${what})${swept}`);
   }
   const zoneZones = (ctx.zones || [])
     .filter(z => z && z.side === (bull ? 'bullish' : 'bearish') && (z.kind === 'fvg' || z.kind === 'orderBlock') && overlaps(c, z, tol))
@@ -177,7 +220,7 @@ export function evaluateSide(ctx, side) {
       ? `Inside ${z.side} imbalance (FVG) ${fmt(z.bottom)}–${fmt(z.top)}`
       : `Inside ${z.side} order block ${fmt(z.bottom)}–${fmt(z.top)}`);
   }
-  const primaryLevel = sweep ? sweep.level : zoneLevels[0] ?? null;
+  const primaryLevel = sweep ? sweep.level : recentSwept ?? zoneLevels[0] ?? null;
   const primaryZone = zoneZones[0] ?? null;
 
   // ---- Condition: context (source 05 §6 step 1; sources 02/03 for time) ----
@@ -207,17 +250,21 @@ export function evaluateSide(ctx, side) {
   if (capped) reasons.condition.push(`Outside the London / New York killzones (${session?.label ?? 'no session'}) — wait for the session to sweep; score capped`);
 
   const rejections = [];
-  if (!hits.trigger.length) rejections.push('No trigger on the last closed candle — wait for price to show its hand at the zone');
+  if (!real.length) {
+    rejections.push(hits.trigger.length
+      ? `Only confirmations (${hits.trigger.join(', ')}) — delta is arithmetic, not a trigger (source 05 §3); wait for an execution signature at the zone`
+      : 'No trigger on the last closed candle — wait for price to show its hand at the zone');
+  }
   if (!hits.zone.length) rejections.push('No zone — never take a trigger in the middle of nowhere (source 05)');
   if (capped) rejections.push('Outside killzone: tradeOnlyInKillzones caps the score (source 02 — wait for London / New York)');
   if (score < minScore) rejections.push(`Score ${score.toFixed(1)} < minScore ${minScore}`);
 
   // ---- Stop (source 01 / 05 §7) and targets (source 02 / 04) — computed once the layers agree ----
-  let stop = null, stopNote = null, targets = [];
-  if (hits.trigger.length && hits.zone.length) {
+  let stop = null, stopNote = null, targets = [], widened = null;
+  if (real.length && hits.zone.length) {
     const buffer = (czt.stopBufferAtr ?? 0.1) * atr;
     let anchor;
-    if (sweep) { anchor = manipExtreme; stopNote = `manipulation ${bull ? 'low' : 'high'} ${fmt(manipExtreme)}`; }
+    if (manipExtreme != null) { anchor = manipExtreme; stopNote = `manipulation ${bull ? 'low' : 'high'} ${fmt(manipExtreme)}`; }
     else if (primaryZone) {
       anchor = bull ? Math.min(primaryZone.bottom, c.l) : Math.max(primaryZone.top, c.h);
       stopNote = `${primaryZone.kind === 'fvg' ? 'imbalance' : 'order block'} far edge ${fmt(anchor)}`;
@@ -226,6 +273,14 @@ export function evaluateSide(ctx, side) {
       stopNote = `${levelLabel(primaryLevel)} ${fmt(anchor)}`;
     }
     stop = anchor - dir * buffer;
+    // Minimum stop: widen AWAY from entry only (at or beyond the manipulation low still satisfies source 01).
+    const minStopAtr = czt.minStopAtr ?? DEFAULT_MIN_STOP_ATR;
+    const minDist = minStopAtr * atr;
+    if (minDist > 0 && dir * (entry - stop) < minDist) {
+      widened = { from: stop, to: entry - dir * minDist, minStopAtr };
+      stop = widened.to;
+      reasons.trigger.push(`Stop widened from ${fmt(widened.from)} to ${fmt(stop)} — the ${stopNote} sits ${(dir * (entry - widened.from) / atr).toFixed(2)} ATR from entry, under czt.minStopAtr ${minStopAtr} (a stop inside the spread is fiction; widened away from entry, never toward it)`);
+    }
     const distAtr = (dir * (entry - stop)) / atr;
     if (!(distAtr > 0)) rejections.push(`Entry ${fmt(entry)} is not beyond the stop ${fmt(stop)}`);
     else if (distAtr > (czt.maxStopAtr ?? 3)) rejections.push(`Stop ${distAtr.toFixed(2)} ATR from entry > maxStopAtr ${czt.maxStopAtr ?? 3} — source 01: the stop stays at the ${stopNote}, non-negotiable, so the trade is skipped rather than the stop tightened`);
@@ -234,53 +289,63 @@ export function evaluateSide(ctx, side) {
     const minRr = czt.minRr ?? 1.5;
     const oppSide = bull ? 'buy-side' : 'sell-side';
     const cands = all
-      .filter(l => GROUP[l.kind] && from.includes(GROUP[l.kind]) && !l.swept && dir * (l.price - entry) > 0 && (MAGNETS.has(l.kind) || levelSide(l) === oppSide))
-      .map(l => ({ price: l.price, label: `${levelLabel(l)} ${fmt(l.price)}`, rr: riskRr(entry, stop, l.price), kind: l.kind, prio: from.indexOf(GROUP[l.kind]) }))
+      .filter(l => GROUP[l.kind] && !NEVER_TARGET.has(l.kind) && from.includes(GROUP[l.kind]) && !l.swept && dir * (l.price - entry) > 0 && (MAGNETS.has(l.kind) || levelSide(l) === oppSide))
+      .map(l => ({ price: l.price, label: `${levelLabel(l)} ${fmt(l.price)}`, rr: riskRr(entry, stop, l.price), kind: l.kind, pool: POOL_GROUPS.has(GROUP[l.kind]), prio: from.indexOf(GROUP[l.kind]) }))
       .sort((a, b) => Math.abs(a.price - entry) - Math.abs(b.price - entry) || a.prio - b.prio);
     const nearest = cands[0];
-    for (const t of cands) {
-      if (t.rr < minRr) continue;                                   // too close to pay for the stop
-      if (targets.some(x => Math.abs(x.price - t.price) <= TARGET_DEDUPE_ATR * atr)) continue;
-      targets.push({ price: t.price, label: t.label, rr: t.rr, kind: t.kind });
-      if (targets.length === 3) break;
+    // Sources 02/04: the target is the NEXT pool of resting liquidity. If it does not pay minRr the trade is rejected —
+    // R is never measured past an intervening pool to a farther one. Value/magnet levels (POC/VAH/VAL/naked POC) are
+    // destinations, not resting stops: too close, they are simply not targets.
+    const nextPool = cands.find(t => t.pool);
+    if (nextPool && nextPool.rr < minRr) {
+      rejections.push(`Next ${oppSide} pool ${nextPool.label} pays only ${nextPool.rr.toFixed(2)} R < minRr ${minRr} — too close to pay for the stop; never target past it (sources 02/04)`);
+    } else {
+      for (const t of cands) {
+        if (t.rr < minRr) continue;                                   // a value level too close to pay — not a destination
+        if (targets.some(x => Math.abs(x.price - t.price) <= TARGET_DEDUPE_ATR * atr)) continue;
+        targets.push({ price: t.price, label: t.label, rr: t.rr, kind: t.kind });
+        if (targets.length === 3) break;
+      }
+      if (!targets.length) rejections.push(nearest
+        ? `No opposing (${oppSide}) liquidity giving ≥ ${minRr} R — nearest ${nearest.label} is ${nearest.rr.toFixed(2)} R`
+        : `No opposing (${oppSide}) liquidity ${bull ? 'above' : 'below'} entry to target (source 04)`);
     }
-    if (!targets.length) rejections.push(nearest
-      ? `No opposing (${oppSide}) liquidity giving ≥ ${minRr} R — nearest ${nearest.label} is ${nearest.rr.toFixed(2)} R`
-      : `No opposing (${oppSide}) liquidity ${bull ? 'above' : 'below'} entry to target (source 04)`);
   }
 
   const condition = { bias: bias ?? null, session: session ?? null, valueRelation, role: session?.role ?? null, capped: capped ? 'outsideKillzone' : null, hits: hits.condition };
   const zone = { level: primaryLevel, zone: primaryZone, hits: hits.zone };
-  const trigger = { kind: TRIGGER_PRIORITY.find(k => hits.trigger.includes(k)) ?? null, sweep, hits: hits.trigger };
+  const trigger = { kind: TRIGGER_PRIORITY.find(k => real.includes(k)) ?? null, sweep, hits: hits.trigger, real };
   const allReasons = [...reasons.condition, ...reasons.zone, ...reasons.trigger];
   let setup = null;
   if (!rejections.length) {
     const symbol = ctx.symbol ?? symbolCfg.id ?? 'UNKNOWN';
     const sizeRes = riskSize({ balance: cfg.risk?.balance, riskPct: cfg.risk?.riskPct, entry, stop, contract: symbolCfg.contract });
+    const bufferNote = widened ? `${stopNote}, widened to ${widened.minStopAtr} ATR minimum` : `${stopNote} ${bull ? '−' : '+'} ${czt.stopBufferAtr ?? 0.1} ATR buffer`;
     setup = {
       id: `${symbol}-${c.t}-${side}`, symbol, t: c.t, tf, side,
       entry, stop, targets, rr: targets[0].rr,
       score, grade: gradeFor(score, czt),
       condition, zone, trigger,
       reasons: allReasons,
-      invalidation: `close ${bull ? 'below' : 'above'} ${fmt(stop)} (${stopNote} ${bull ? '−' : '+'} ${czt.stopBufferAtr ?? 0.1} ATR buffer)`,
+      invalidation: `close ${bull ? 'below' : 'above'} ${fmt(stop)} (${bufferNote})`,
       size: sizeRes,
       status: 'open',
     };
+    if (widened) setup.stopWidened = widened;
   }
   return { side, condition, zone, trigger, score, rawScore, reasons: allReasons, rejections, stop, targets, setup };
 }
 
 /**
  * The gate. Both sides are scored; the stronger one is reported (a Setup wins over a score, a higher
- * score over a lower, more trigger hits break ties, then long). ctx.limits = { setupsToday,
+ * score over a lower, more REAL trigger hits break ties, then long). ctx.limits = { setupsToday,
  * lastSetupT, openSetup, openAcrossSymbols?, dailyLossPct? } with ctx.now feed risk.dailyCaps; a
  * qualifying Setup held back by them is returned as `candidate` with `blocked` saying why.
  */
 export function evaluate(ctx) {
   const empty = (why) => ({
     side: null, condition: { bias: ctx?.bias ?? null, session: ctx?.session ?? null, valueRelation: 'unknown', role: ctx?.session?.role ?? null, capped: null, hits: [] },
-    zone: { level: null, zone: null, hits: [] }, trigger: { kind: null, sweep: null, hits: [] },
+    zone: { level: null, zone: null, hits: [] }, trigger: { kind: null, sweep: null, hits: [], real: [] },
     score: 0, rawScore: 0, reasons: [], rejections: [why], blocked: null, candidate: null, setup: null, sides: null,
   });
   if (!ctx || !ctx.cfg) return empty('No config');
@@ -288,7 +353,7 @@ export function evaluate(ctx) {
   if (!Number.isFinite(ctx.atr) || ctx.atr <= 0) return empty('ATR not warm');
 
   const sides = { long: evaluateSide(ctx, 'long'), short: evaluateSide(ctx, 'short') };
-  const rank = (r) => [r.setup ? 1 : 0, r.score, r.trigger.hits.length, r.side === 'long' ? 1 : 0];
+  const rank = (r) => [r.setup ? 1 : 0, r.score, r.trigger.real.length, r.trigger.hits.length, r.side === 'long' ? 1 : 0];
   const best = [sides.long, sides.short].sort((a, b) => { const x = rank(a), y = rank(b); for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return y[i] - x[i]; return 0; })[0];
 
   let setup = best.setup, blocked = null, candidate = null;

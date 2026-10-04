@@ -4,7 +4,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { candleDelta, cvdSeries, cvdDivergence, detectAbsorption, effortVsResult, volumeProfile, profileLevels, nakedPocs } from '../lib/engine/orderflow.mjs';
+import { candleDelta, cvdSeries, cvdDivergence, detectAbsorption, effortVsResult, volumeProfile, valueArea, profileLevels, nakedPocs } from '../lib/engine/orderflow.mjs';
+import { loadFixture } from './helpers.mjs';
 import { swings } from '../lib/engine/indicators.mjs';
 
 const M1 = 60e3, M5 = 3e5, T0 = Date.UTC(2026, 0, 13);
@@ -159,6 +160,31 @@ test('detectAbsorption: evaluates the last CLOSED candle, ignores a forming prin
   assert.equal(detectAbsorption([], 1, OF), null);
 });
 
+test('detectAbsorption: the bar must CLOSE back up (bullish) / down (bearish) — source 05 §4 (review finding orderflow.mjs:115)', () => {
+  const base = absorptionBase();
+  // reviewer's reproduction: red candle o 1002 → c 1000.5, l 997, 3× volume, delta −14: a sell-off with a wick, NOT bullish absorption
+  const red = mk(T0 + 30 * M1, 100.2, 100.25, 99.7, 100.05, 30, 1 / 3); // range 0.55 ≤ 0.6, lower wick 0.64, delta −10, but c < o
+  assert.equal(detectAbsorption([...base, red], 1, OF), null, 'closes down: no bullish absorption');
+  const green = mk(T0 + 30 * M1, 99.8, 100.3, 99.75, 99.95, 30, 2 / 3);  // upper wick 0.64, delta +10, but c > o
+  assert.equal(detectAbsorption([...base, green], 1, OF), null, 'closes up: no bearish absorption');
+  // a doji with the long lower wick still qualifies (close back AT the open; the wick decides)
+  const doji = mk(T0 + 30 * M1, 100.1, 100.15, 99.65, 100.1, 30, 1 / 3);
+  assert.equal(detectAbsorption([...base, doji], 1, OF)?.side, 'bullish');
+  // proxy-delta red candle: the close test is what carries the rule when there is no tape
+  const { buyV, sellV, ...proxyRed } = red;
+  assert.equal(detectAbsorption([...base.map((c) => { const { buyV: b, sellV: s2, ...r } = c; return r; }), proxyRed], 1, OF), null);
+});
+
+test('cvdDivergence: reports source — proxy when any candle between the compared legs lacks aggressor volume', () => {
+  const cs = divergencePath(+1, 0.4);
+  assert.equal(cvdDivergence(cs, swings(cs, 2), OF).source, 'trades');
+  const strip = (c) => { const { buyV, sellV, ...r } = c; return r; };
+  const mixed = cs.map((c, i) => (i === 12 ? strip(c) : c));            // one proxy candle inside leg 2
+  assert.equal(cvdDivergence(mixed, swings(mixed, 2), OF)?.source, 'proxy');
+  const tail = cs.map((c, i) => (i === 19 ? strip(c) : c));             // a proxy candle AFTER the latest swing does not taint it
+  assert.equal(cvdDivergence(tail, swings(tail, 2), OF)?.source, 'trades');
+});
+
 test('detectAbsorption: candles without aggressor volume use the proxy delta and say so', () => {
   const cs = [...flat(30).map((c) => { const { buyV, sellV, ...rest } = c; return rest; }), bullishAbs({ buyV: undefined, sellV: undefined })];
   const a = detectAbsorption(cs, 1, OF);
@@ -222,9 +248,35 @@ test('volumeProfile: value area on a tie grows both ways; LVN at an interior gap
   assert.equal(p.val, 104); assert.equal(p.vah, 105.5);
   assert.deepEqual(p.lvn, [102.5], 'the three empty buckets are one LVN run at its centre');
   assert.deepEqual(p.hvn, [100.5, 104.5], 'both local maxima are ≥ mean (15)');
-  // exact tie: [101)=40 (POC) with 30 either side → both added at once; VA edges clamp to the traded range
+  // exact tie: [101)=40 (POC) with 30 either side → the SMALLEST set holding ≥ 70 is two buckets (70), not all three (100);
+  // both two-bucket windows tie on width, centre and volume → the lower one. VAL clamps to the traded range low.
   const tie = volumeProfile([at(T0, 100.5, 30), at(T0 + M1, 101.5, 40), at(T0 + 2 * M1, 102.5, 30)], { bucket: 1 });
-  assert.equal(tie.val, 100.5); assert.equal(tie.vah, 102.5); assert.equal(tie.vaVol, 100);
+  assert.equal(tie.val, 100.5); assert.equal(tie.vah, 102); assert.equal(tie.vaVol, 70);
+});
+
+test('volumeProfile: value area is the SMALLEST contiguous ≥ 70 % window around the POC, not greedy neighbour growth (review finding orderflow.mjs:193)', () => {
+  // buckets [5, 60, 10, 100, 10, 5, 50] total 240, target 168, POC idx 3.
+  // Greedy from the POC: 100 → +10+10 (tie, both) = 120 → +60 = 180 ⇒ idx 1..4 (four buckets).
+  // Smallest window containing idx 3 with Σ ≥ 168: idx 1..3 = 170 (three buckets).
+  const vols = [5, 60, 10, 100, 10, 5, 50];
+  assert.deepEqual(valueArea(Float64Array.from(vols), 3, 168), { lo: 1, hi: 3, vol: 170 });
+  const p = volumeProfile(vols.map((v, i) => at(T0 + i * M1, 100.5 + i, v)), { bucket: 1 });
+  assert.equal(p.poc, 103.5); assert.equal(p.val, 101); assert.equal(p.vah, 104); assert.equal(p.vaVol, 170);
+  // a window that needs the far side: [50, 5, 100, 60, 5] target 150 → idx 2..3 (160) beats 1..3 (165, wider) and 0..2 (155, wider)
+  assert.deepEqual(valueArea(Float64Array.from([50, 5, 100, 60, 5]), 2, 150), { lo: 2, hi: 3, vol: 160 });
+  // target above everything → the whole range; target ≤ the POC alone → the POC bucket
+  assert.deepEqual(valueArea(Float64Array.from([1, 2, 3]), 2, 100), { lo: 0, hi: 2, vol: 6 });
+  assert.deepEqual(valueArea(Float64Array.from([1, 5, 1]), 1, 4), { lo: 1, hi: 1, vol: 5 });
+  // real data: no narrower window containing the POC reaches the target (brute force over the fixture's first full day)
+  const fx = loadFixture().filter((c) => c.t >= Date.UTC(2026, 9, 3) && c.t < Date.UTC(2026, 9, 4));
+  const prof = volumeProfile(fx, { bucket: 20 });
+  const v = prof.buckets.map((b) => b.vol), total = v.reduce((a, b) => a + b, 0), pocIdx = prof.buckets.findIndex((b) => b.price === prof.poc);
+  const lo = prof.buckets.findIndex((b) => b.price > prof.val), hi = prof.buckets.findIndex((b) => b.price > prof.vah) - 1;
+  const width = (hi < 0 ? v.length - 1 : hi) - lo;
+  assert.ok(prof.vaVol >= 0.7 * total - 1e-6);
+  for (let a = 0; a <= pocIdx; a++) for (let b = pocIdx; b < v.length; b++) {
+    if (b - a < width) assert.ok(v.slice(a, b + 1).reduce((x, y) => x + y, 0) < 0.7 * total, `a narrower window ${a}..${b} reaches 70 %`);
+  }
 });
 
 test('volumeProfile: bucket derivation (atr×bucketsAtr, tick snapping, range/50 default, cap) and null on nothing', () => {
@@ -250,6 +302,21 @@ test('profileLevels: poc/vah/val as Level objects with sides', () => {
   assert.equal(profileLevels(p, { t: T0, price: 105 })[0].side, 'sell-side');
   assert.deepEqual(profileLevels(null), []);
   for (const l of lv) { assert.equal(l.t, T0); assert.equal(l.tf, '5m'); assert.equal(l.swept, null); assert.ok(l.id.startsWith(`${l.kind}:${T0}:`)); }
+});
+
+test('profileLevels: with lvn:true the LVNs become kind "lvn" zones — side relative to price, merged within lvnMergeTol, capped at lvnMax nearest (review finding czt.mjs:166)', () => {
+  // [100)=20 [101)=0 [102)=0 [103)=0 [104)=50 [105)=20 [106)=0 [107)=0 [108)=30: LVN runs at 102.5 (three empty) and 106.5+107.5 → centre 107
+  const cs = [at(T0, 100.5, 20), at(T0 + M1, 104.5, 50), at(T0 + 2 * M1, 105.5, 20), at(T0 + 3 * M1, 108.5, 30)];
+  const p = volumeProfile(cs, { bucket: 1 });
+  assert.deepEqual(p.lvn, [102.5, 107]);
+  assert.deepEqual(profileLevels(p, { t: T0, price: 104 }).map((l) => l.kind), ['poc', 'vah', 'val'], 'off by default');
+  const lv = profileLevels(p, { t: T0, tf: '1m', price: 104, lvn: true });
+  const lvns = lv.filter((l) => l.kind === 'lvn');
+  assert.deepEqual(lvns.map((l) => [l.price, l.side, l.meta.count]), [[102.5, 'sell-side', 1], [107, 'buy-side', 1]]);
+  assert.equal(lvns[0].id, `lvn:${T0}:102.5`); assert.equal(lvns[0].swept, null);
+  assert.deepEqual(profileLevels(p, { t: T0, price: 104, lvn: true, lvnMergeTol: 5 }).filter((l) => l.kind === 'lvn').map((l) => [l.price, l.meta.count]), [[104.75, 2]], 'merged at the mean');
+  assert.equal(profileLevels(p, { t: T0, price: 104, lvn: true, lvnMax: 1 }).filter((l) => l.kind === 'lvn').length, 1, 'capped to the nearest');
+  assert.equal(profileLevels(p, { t: T0, price: 104, lvn: true, lvnMax: 1 }).find((l) => l.kind === 'lvn').price, 102.5);
 });
 
 // ---- nakedPocs ----

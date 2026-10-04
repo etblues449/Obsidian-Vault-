@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Journal, createJournal, validateSetup, wilson, rOf, stepSetup, summarize, scorecardRows, FILES, SCORECARD_BY } from '../lib/journal.mjs';
+import { Journal, createJournal, validateSetup, wilson, rOf, stepSetup, problemArea, summarize, scorecardRows, FILES, SCORECARD_BY } from '../lib/journal.mjs';
 import { createLogger } from '../lib/log.mjs';
 
 const strategy = JSON.parse(readFileSync(new URL('../config/strategy.json', import.meta.url), 'utf8'));
@@ -182,8 +182,51 @@ describe('trailing by proved auctions (source 05 §7)', () => {
   const swingLow = (price, t) => ({ t, price, kind: 'low', index: 0 });
   const swingHigh = (price, t) => ({ t, price, kind: 'high', index: 0 });
 
+  test('the first trail waits for a PROVED auction: normal rotation never moves the stop (review finding journal.mjs:173)', () => {
+    // Reviewer's reproduction: long 100 / stop 98; rotation 100.6 → 99.6 → 100.8 (mfe 0.4R) prints a confirmed swing low at 99.6.
+    // Old code trailed to 99.5 and the next rotation to 99.3 stopped the trade out although the original stop survives.
+    const j = new Journal({ cfg }); j.record(mkSetup());
+    const swT = ENTRY_T + 15 * M, at = swT + confirm;
+    j.resolveOpen('BTCUSD', bar(0, { h: 100.6, l: 99.9, c: 100.5 }));
+    j.resolveOpen('BTCUSD', { ...bar(0, { h: 100.6, l: 99.6, c: 99.7 }), t: swT });
+    j.resolveOpen('BTCUSD', { ...bar(0, { h: 100.8, l: 99.8, c: 100.7 }), t: swT + M });
+    assert.equal(j.get('BTCUSD-1').mfeR, 0.4);
+    j.resolveOpen('BTCUSD', { ...bar(0, { h: 100.7, l: 100.2, c: 100.4 }), t: at }, { swings: [swingLow(99.6, swT)], atr: 1 });
+    assert.equal(j.get('BTCUSD-1').stop, 98, 'no auction won (mfe 0.4R, no swing high cleared) → the stop stays at the manipulation low');
+    assert.equal(j.get('BTCUSD-1').trail.length, 0);
+    assert.deepEqual(j.resolveOpen('BTCUSD', { ...bar(0, { h: 100.4, l: 99.3, c: 99.5 }), t: at + M }, { swings: [swingLow(99.6, swT)], atr: 1 }), [], 'the 99.3 rotation does not stop it out');
+    assert.equal(j.get('BTCUSD-1').status, 'open');
+    assert.equal(lines(FILES.trail).length, 0);
+  });
+
+  test('the auction is won by a close through a post-entry structure-TF swing high or an opposing level; the trail then follows', () => {
+    const j = new Journal({ cfg }); j.record(mkSetup());
+    const hiT = ENTRY_T + M, loT = ENTRY_T + 15 * M;
+    const sw = [swingHigh(100.8, hiT), swingLow(99.6, loT)];
+    // the swing high is confirmed, the close 100.7 is below it → not yet won; the confirmed swing low does NOT trail
+    j.resolveOpen('BTCUSD', { ...bar(0, { h: 100.75, l: 100.1, c: 100.7 }), t: loT + confirm }, { swings: sw, atr: 1 });
+    assert.equal(j.get('BTCUSD-1').stop, 98);
+    // this bar CLOSES above the swing high 100.8 → the auction is won — the trail takes effect from the NEXT bar
+    j.resolveOpen('BTCUSD', { ...bar(0, { h: 100.95, l: 100.3, c: 100.9 }), t: loT + confirm + M }, { swings: sw, atr: 1 });
+    assert.equal(j.get('BTCUSD-1').stop, 98, 'the move never rides on the print that proved it');
+    j.resolveOpen('BTCUSD', { ...bar(0, { h: 100.95, l: 100.3, c: 100.6 }), t: loT + confirm + 2 * M }, { swings: sw, atr: 1 });
+    const s = j.get('BTCUSD-1');
+    assert.equal(s.stop, 99.5, 'now trails to the swing low 99.6 − 0.1 ATR');
+    assert.equal(s.trail[0].reason, 'provedAuction'); assert.equal(s.trail[0].swingPrice, 99.6);
+    // an opposing LEVEL closed through counts as the won auction too (no swing high needed)
+    const j2 = new Journal({ cfg, dir: join(dir, 'lvl') }); j2.record(mkSetup());
+    // (the close sits > zoneToleranceAtr above the level, so this is a clean clear, not a problem-area tighten)
+    const lvl = [{ kind: 'asiaHigh', price: 100.5, side: 'buy-side' }];
+    j2.resolveOpen('BTCUSD', { ...bar(0, { h: 101.3, l: 100.1, c: 101.2 }), t: loT + confirm }, { swings: [swingLow(99.6, loT)], atr: 1, levels: lvl });
+    assert.equal(j2.get('BTCUSD-1').stop, 98);
+    j2.resolveOpen('BTCUSD', { ...bar(0, { h: 101.3, l: 100.9, c: 101.2 }), t: loT + confirm + M }, { swings: [swingLow(99.6, loT)], atr: 1, levels: lvl });
+    assert.equal(j2.get('BTCUSD-1').stop, 99.5);
+    assert.equal(j2.get('BTCUSD-1').trail[0].reason, 'provedAuction');
+  });
+
   test('a confirmed post-entry swing low moves a long stop up to swing − buffer, capped at entry before +1R', () => {
     const j = new Journal({ cfg }); j.record(mkSetup());
+    j.resolveOpen('BTCUSD', bar(0, { h: 102.1, l: 99.9, c: 101.5 }));               // mfe 1.05R: the auction is proved
     const swT = ENTRY_T + 15 * M;
     const at = swT + confirm;                                                     // first bar on which the swing is confirmed
     // unconfirmed swing (one ms too young) → no move
@@ -196,9 +239,15 @@ describe('trailing by proved auctions (source 05 §7)', () => {
     assert.deepEqual({ from: s.trail[0].from, to: s.trail[0].to, swingPrice: s.trail[0].swingPrice }, { from: 98, to: 98.9, swingPrice: 99 });
     assert.equal(lines(FILES.trail).length, 1);
     // a higher swing low above entry while mfe < 1R → capped AT entry (break-even is the ceiling, not beyond)
+    const j3 = new Journal({ cfg, dir: join(dir, 'cap') }); j3.record(mkSetup());
+    const hi3 = swingHigh(100.8, ENTRY_T);                                        // post-entry swing high, confirmed 45 min later
+    j3.resolveOpen('BTCUSD', { ...bar(0, { h: 100.9, l: 100.1, c: 100.85 }), t: ENTRY_T + confirm }, { swings: [hi3], atr: 1 }); // closes above it: won
     const sw2 = swingLow(101, at + M);
+    j3.resolveOpen('BTCUSD', { ...bar(0, { h: 101.5 }), t: at + M + confirm }, { swings: [hi3, swingLow(99, swT), sw2], atr: 1 });
+    assert.equal(j3.get('BTCUSD-1').mfeR, 0.75, 'auction won by the close above 100.8, but mfe < 1R at the time of the move');
+    assert.equal(j3.get('BTCUSD-1').stop, 100, 'capped at entry');
     j.resolveOpen('BTCUSD', { ...bar(0, { h: 101.5 }), t: at + M + confirm }, { swings: [swingLow(99, swT), sw2], atr: 1 });
-    assert.equal(j.get('BTCUSD-1').stop, 100);
+    assert.equal(j.get('BTCUSD-1').stop, 100.9, 'past +1R the cap is gone');
     assert.equal(j.get('BTCUSD-1').trail.length, 2);
     // the same swings again → nothing new (only ever in the trade direction; no duplicate moves)
     j.resolveOpen('BTCUSD', { ...bar(0, { h: 101.5 }), t: at + 2 * M + confirm }, { swings: [swingLow(99, swT), sw2], atr: 1 });
@@ -219,6 +268,7 @@ describe('trailing by proved auctions (source 05 §7)', () => {
   });
   test('short mirror: swing highs trail the stop down; swing lows are ignored', () => {
     const j = new Journal({ cfg }); j.record(mkShort());
+    j.resolveOpen('BTCUSD', bar(0, { h: 100.2, l: 97.9, c: 98.5 }));               // mfe 1.05R: proved
     const swT = ENTRY_T + M, at = swT + confirm;
     j.resolveOpen('BTCUSD', { ...bar(0, { l: 99 }), t: at }, { swings: [swingHigh(101, swT), swingLow(99.2, swT)], atr: 2 });
     assert.equal(j.get('BTCUSD-S').stop, 101.2);                                   // 101 + 0.1×2
@@ -226,18 +276,56 @@ describe('trailing by proved auctions (source 05 §7)', () => {
   test('switched off in config, or without swings/atr, nothing moves', () => {
     cfg.journal.trailByProvedAuctions = false;
     const j = new Journal({ cfg }); j.record(mkSetup());
+    j.resolveOpen('BTCUSD', bar(0, { h: 102.1 }));                                 // +1R proved — and still nothing moves when off
     const swT = ENTRY_T + M;
     j.resolveOpen('BTCUSD', { ...bar(0), t: swT + confirm }, { swings: [swingLow(99, swT)], atr: 1 });
     assert.equal(j.get('BTCUSD-1').stop, 98);
     cfg.journal.trailByProvedAuctions = true;
     const j2 = new Journal({ cfg, dir: join(dir, 'two') }); j2.record(mkSetup());
+    j2.resolveOpen('BTCUSD', bar(0, { h: 102.1 }));
     j2.resolveOpen('BTCUSD', { ...bar(0), t: swT + confirm });
     assert.equal(j2.get('BTCUSD-1').stop, 98);
     j2.resolveOpen('BTCUSD', { ...bar(0), t: swT + confirm + M }, { swings: [swingLow(99, swT)] });   // no ATR → zero buffer, still moves
     assert.equal(j2.get('BTCUSD-1').stop, 99);
   });
+  test('tighten only at problem areas (source 05 §7 step 4, review finding journal.mjs:156): opposing HVN / level within tolerance or an opposing CVD divergence → stop to the last analysis-TF swing', () => {
+    const tol = strategy.czt.zoneToleranceAtr; // 0.5 ATR
+    const s0 = { ...mkSetup(), stop0: 98, mfeR: 0, maeR: 0, trail: [] };
+    assert.equal(problemArea(s0, bar(0, { c: 100 }), { hvn: [103.5], tol }), null, 'far from the HVN');
+    assert.equal(problemArea(s0, bar(0, { c: 103.1 }), { hvn: [103.5], tol }), 'hvn 103.5');
+    assert.equal(problemArea(s0, bar(0, { c: 103.1 }), { hvn: [96.5], tol }), null, 'an HVN BELOW a long is not opposing');
+    assert.equal(problemArea(s0, bar(0, { c: 103.1 }), { levels: [{ kind: 'pdh', price: 103.4, side: 'buy-side' }], tol }), 'level pdh 103.4');
+    assert.equal(problemArea(s0, bar(0, { c: 103.1 }), { levels: [{ kind: 'equalLows', price: 103.4, side: 'sell-side' }], tol }), null, 'a sell-side level is not opposing a long');
+    assert.equal(problemArea(s0, bar(0, { c: 100.1 }), { divergence: { kind: 'bearish' }, tol }), 'cvdDivergence');
+    assert.equal(problemArea(s0, bar(0, { c: 100.1 }), { divergence: { kind: 'bullish' }, tol }), null);
+    assert.equal(problemArea({ ...s0, side: 'short', stop: 102 }, bar(0, { c: 97.2 }), { hvn: [96.8], tol }), 'hvn 96.8');
+    // Long 100/98, target 104. Price rallies to 102.6 (mfe 1.3R) into an HVN at 103 with no structure-TF swing to trail behind.
+    const j = new Journal({ cfg }); j.record(mkSetup());
+    const sw5 = (price, t) => ({ t, price, kind: 'low', index: 0 });
+    const a5 = ENTRY_T + 10 * M, confirm5 = (lookback + 1) * 5 * M;
+    j.resolveOpen('BTCUSD', bar(0, { h: 101.2, l: 99.9, c: 101.1 }));
+    j.resolveOpen('BTCUSD', { ...bar(0, { h: 102.2, l: 100.9, c: 102.1 }), t: a5 }); // mfe 1.1R
+    j.resolveOpen('BTCUSD', { ...bar(0, { h: 102.7, l: 101.4, c: 102.6 }), t: a5 + confirm5 }, { swings: [], atr: 1, hvn: [103.0], analysisSwings: [sw5(102.0, a5)] });
+    const s = j.get('BTCUSD-1');
+    assert.equal(s.stop, 101.9, 'tightened to the 5m swing 102.0 − 0.1 ATR although no 15m swing exists');
+    assert.equal(s.trail.length, 1); assert.equal(s.trail[0].reason, 'problemArea'); assert.equal(s.trail[0].problem, 'hvn 103');
+    assert.equal(lines(FILES.trail)[0].reason, 'problemArea');
+    // the same bar again without a problem area would not have moved it (no auction gate passed via swings, mfe ≥ 1 but no structure swing)
+    const j2 = new Journal({ cfg, dir: join(dir, 'np') }); j2.record(mkSetup());
+    j2.resolveOpen('BTCUSD', bar(0, { h: 102.2, l: 99.9, c: 102.1 }));
+    j2.resolveOpen('BTCUSD', { ...bar(0, { h: 102.7, l: 101.4, c: 102.6 }), t: a5 + confirm5 }, { swings: [], atr: 1, hvn: [103.0], analysisSwings: [sw5(102.0, a5 + 5 * M)] });
+    assert.equal(j2.get('BTCUSD-1').stop, 98, 'an unconfirmed 5m swing is not used');
+    j2.resolveOpen('BTCUSD', { ...bar(0, { h: 102.7, l: 101.4, c: 102.6 }), t: a5 + confirm5 + M }, { swings: [], atr: 1, hvn: [105.0], analysisSwings: [sw5(102.0, a5)] });
+    assert.equal(j2.get('BTCUSD-1').stop, 98, 'no problem area → the structure-TF rule still governs (no 15m swing → no move)');
+    // an opposing CVD divergence tightens too, but step 1 still caps at entry before +1R
+    const j3 = new Journal({ cfg, dir: join(dir, 'dv') }); j3.record(mkSetup());
+    j3.resolveOpen('BTCUSD', bar(0, { h: 100.9, l: 99.9, c: 100.8 }));           // mfe 0.45R
+    j3.resolveOpen('BTCUSD', { ...bar(0, { h: 100.9, l: 100.3, c: 100.7 }), t: a5 + confirm5 }, { swings: [], atr: 1, divergence: { kind: 'bearish' }, analysisSwings: [sw5(100.4, a5)] });
+    assert.equal(j3.get('BTCUSD-1').stop, 100, 'swing 100.4 − 0.1 = 100.3 would be past entry before +1R → capped at entry');
+    assert.equal(j3.get('BTCUSD-1').trail[0].problem, 'cvdDivergence');
+  });
   test('stepSetup is pure: the input setup is untouched', () => {
-    const s = { ...mkSetup(), stop0: 98, mfeR: 0, maeR: 0, trail: [] };
+    const s = { ...mkSetup(), stop0: 98, mfeR: 1.2, maeR: 0, trail: [] };
     const frozen = structuredClone(s);
     const swT = ENTRY_T + M;
     const out = stepSetup(s, { ...bar(0, { h: 104 }), t: swT + confirm }, { swings: [swingLow(99, swT)], atr: 1, cfg });
@@ -252,8 +340,10 @@ describe('load — replay', () => {
     a.record(mkSetup()); a.record(mkSetup({ id: 'BTCUSD-2' })); a.record(mkSetup({ id: 'XAU-1', symbol: 'XAUUSD', grade: 'B', trigger: { kind: 'absorption' } }));
     a.resolveOpen('BTCUSD', bar(0, { h: 104 }));                                   // BTCUSD-1 and -2 both won on this bar
     const swT = ENTRY_T + M;
+    a.resolveOpen('XAUUSD', bar(0, { h: 102.1 }));                                 // +1R: the auction is proved
     a.resolveOpen('XAUUSD', { ...bar(0), t: swT + 3 * 15 * M }, { swings: [{ t: swT, price: 99, kind: 'low' }], atr: 1 });
     assert.equal(a.get('XAU-1').stop, 98.9);
+    assert.equal(lines(FILES.setups).every((l) => l.auctionWon === undefined && l.mfeR === undefined), true, 'in-memory gate state never lands in setups.jsonl');
 
     const b = new Journal({ cfg });
     const counts = b.load();

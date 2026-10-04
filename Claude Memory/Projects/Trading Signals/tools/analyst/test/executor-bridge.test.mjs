@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createBridge, toAlert, gradeAtLeast, bridgeConfig } from '../lib/executor-bridge.mjs';
+import { createBridge, toAlert, gradeAtLeast, bridgeConfig, displayUrl } from '../lib/executor-bridge.mjs';
 import { createLogger } from '../lib/log.mjs';
 import { fakeFetch } from './helpers.mjs';
 
@@ -122,12 +122,44 @@ describe('sending', () => {
     const { bridge, fetch, log } = harness({ routes: { [URL_]: { status: 403, text: 'bad secret' } } });
     assert.deepEqual(await bridge.maybeSend(setup()), { sent: false, status: 403, error: 'HTTP 403' });
     const line = log.recent(1)[0];
-    assert.equal(line.level, 'warn'); assert.match(line.msg, /HTTP 403 — bad secret/);
+    assert.equal(line.level, 'warn'); assert.match(line.msg, /HTTP 403 \(response body not logged\)/);
+    assert.ok(!everything(log).includes('bad secret'), 'the response body never reaches the feed');
     assert.ok(!everything(log).includes(SECRET));
     assert.deepEqual(await bridge.maybeSend(setup()), { sent: false, skipped: 'duplicate' });     // a timeout may have landed: never double-fire
     assert.equal(fetch.calls.length, 1);
     assert.equal(bridge.stats().failed, 1);
   });
+  test('an ECHOING 4xx endpoint cannot leak ANALYST_EXECUTOR_SECRET into any event msg/data (review finding executor-bridge.mjs:96)', async () => {
+    const echo = async (_url, opts) => ({ ok: false, status: 400, text: async () => `rejected: ${opts.body}`, json: async () => JSON.parse(opts.body) });
+    const { bridge, log } = harness({ fetch: echo });
+    assert.deepEqual(await bridge.maybeSend(setup()), { sent: false, status: 400, error: 'HTTP 400' });
+    const all = log.recent(100);
+    assert.ok(all.length >= 1);
+    for (const ev of all) assert.ok(!JSON.stringify(ev).includes(SECRET), `secret leaked: ${JSON.stringify(ev)}`);
+    assert.ok(!everything(log).includes('rejected:'), 'body text is not logged at all');
+    // a fetch error that embeds the request body is scrubbed before it is logged or returned
+    const leaky = async (_url, opts) => { throw new Error(`socket hang up while sending ${opts.body}`); };
+    const h2 = harness({ fetch: leaky });
+    const r = await h2.bridge.maybeSend(setup());
+    assert.equal(r.sent, false);
+    assert.ok(!r.error.includes(SECRET) && r.error.includes('[redacted]'), r.error);
+    assert.ok(!everything(h2.log).includes(SECRET));
+  });
+
+  test('the URL is logged without userinfo, and a URL carrying user:password@ is refused (review finding executor-bridge.mjs:84)', async () => {
+    assert.equal(displayUrl('http://user:pw@127.0.0.1:8787/webhook'), 'http://127.0.0.1:8787/webhook');
+    assert.equal(displayUrl('http://127.0.0.1:8787/webhook?x=1'), 'http://127.0.0.1:8787/webhook?x=1');
+    assert.equal(displayUrl('not a url'), 'not a url');
+    const { bridge, fetch, log } = harness({ cfg: { url: 'http://alice:s3cret@127.0.0.1:8787/webhook' } });
+    assert.deepEqual(await bridge.maybeSend(setup()), { sent: false, skipped: 'no-url' });
+    assert.equal(fetch.calls.length, 0);
+    assert.ok(!everything(log).includes('s3cret'), 'the password never reaches the feed');
+    assert.match(log.recent(1)[0].msg, /credentials — refused/);
+    const ok = harness();
+    await ok.bridge.maybeSend(setup());
+    assert.equal(ok.log.recent(1)[0].data.url, URL_);
+  });
+
   test('network failure → sent:false with the error message; never throws', async () => {
     const { bridge, log } = harness({ routes: { [URL_]: new Error('ECONNREFUSED 127.0.0.1:8787') } });
     assert.deepEqual(await bridge.maybeSend(setup()), { sent: false, error: 'ECONNREFUSED 127.0.0.1:8787' });

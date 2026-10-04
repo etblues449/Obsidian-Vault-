@@ -6,34 +6,24 @@
 // supplies the imbalance / engulf / bias facts, czt.mjs places the stop at the manipulation low);
 // 04 ("enter a trade in this order block here once price has swept liquidity").
 //
-// DEVIATION: findSwings is implemented here instead of re-exported from ./indicators.mjs, and a
-//   private SMA-seeded EMA + Wilder ATR (null until warm, as §4.2 specifies) back htfBias — both
-//   siblings are being built in parallel. Contracts are identical to §4.2; swap to imports when
-//   indicators.mjs lands (one line each, see the bottom of this file).
+// Indicators come from ./indicators.mjs (ema / atr / swings) — one implementation, one seed. (Review
+//   finding structure.mjs:176: a private Wilder ATR seeded one bar later than indicators.atr disagreed
+//   by 0.84 % on the fixture 1h series; the private copies are gone.) findSwings is a thin wrapper that
+//   keeps the `lookback = 2` default and clamps a non-integer lookback the way the old copy did.
 // Additive (not in SPEC): findFvgs/findOrderBlocks take an optional 4th arg `{ tf }` to stamp
 //   Zone.tf; zones carry `mitigatedT` (and order blocks `displacementT`); isEngulfing returns
 //   `{ side, bodyAtr, full } | null` rather than a bare boolean (truthiness still works);
 //   marketStructure also returns the unbroken reference swings `refHigh`/`refLow`; htfBias halves
 //   strength when the htf structure contradicts the bias-TF EMAs and returns an `htf` summary.
 
+import { ema, atr, swings } from './indicators.mjs';
+
 const SLOPE_BARS = 10;      // EMA50 slope window on the bias TF (task brief)
 const OB_SEARCH_BACK = 10;  // how far back from a displacement we look for its order-block candle
 
-/** Swing highs/lows: a high is a swing high when it strictly exceeds `lookback` candles each side. */
+/** Swing highs/lows (indicators.swings): a high is a swing high when it strictly exceeds `lookback` candles each side. */
 export function findSwings(candles, lookback = 2) {
-  const L = Math.max(1, lookback | 0), out = [];
-  for (let i = L; i < candles.length - L; i++) {
-    const c = candles[i];
-    let hi = true, lo = true;
-    for (let j = i - L; j <= i + L && (hi || lo); j++) {
-      if (j === i) continue;
-      if (hi && candles[j].h >= c.h) hi = false;
-      if (lo && candles[j].l <= c.l) lo = false;
-    }
-    if (hi) out.push({ t: c.t, price: c.h, kind: 'high', index: i });
-    if (lo) out.push({ t: c.t, price: c.l, kind: 'low', index: i });
-  }
-  return out;
+  return swings(candles, Math.max(1, lookback | 0));
 }
 
 /**
@@ -201,32 +191,3 @@ export function htfBias({ store, cfg }) {
 }
 
 const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
-
-// ---- private indicators (replace with `import { ema, atr } from './indicators.mjs'` when it lands) ----
-
-/** SMA-seeded EMA; null until `period` values are in. */
-function ema(values, period) {
-  const out = new Array(values.length).fill(null);
-  if (values.length < period) return out;
-  const k = 2 / (period + 1);
-  let e = 0;
-  for (let i = 0; i < period; i++) e += values[i];
-  e /= period; out[period - 1] = e;
-  for (let i = period; i < values.length; i++) { e = values[i] * k + e * (1 - k); out[i] = e; }
-  return out;
-}
-
-/** Wilder ATR; null until `period` true ranges are in. */
-function atr(candles, period) {
-  const out = new Array(candles.length).fill(null);
-  if (candles.length < period + 1) return out;
-  let sum = 0, a = null;
-  for (let i = 1; i < candles.length; i++) {
-    const c = candles[i], p = candles[i - 1].c;
-    const tr = Math.max(c.h - c.l, Math.abs(c.h - p), Math.abs(c.l - p));
-    if (i < period) sum += tr;
-    else if (i === period) { a = (sum + tr) / period; out[i] = a; }
-    else { a = (a * (period - 1) + tr) / period; out[i] = a; }
-  }
-  return out;
-}

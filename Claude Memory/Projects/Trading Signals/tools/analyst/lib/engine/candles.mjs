@@ -16,6 +16,11 @@
 // DEVIATION (additive): beyond §4.1 — `TFS`, `bucketStart`, `aggregate` (pure), `normalizeCandle` are
 //   exported; CandleStore adds `lastClosed(tf)`, `size(tf)`, `clear()`, an optional `tfs` constructor
 //   option, and `applyHistory` returns `{count}`. `maxPerTf` defaults to 3000 (= history.maxCandlesPerTf).
+// DEVIATION (review finding candles.mjs:251): the FIRST higher-TF bucket of a series whose first child is
+//   not its bucket start (a backfill that begins mid-bucket — with a 4320-minute backfill the first 4h
+//   bucket is partial ~239/240 of the time) carries `partial: true`: its o/h/l/v describe only the
+//   children we hold. `get()` still returns it (the chart may hatch it); `closed()` / `lastClosed()`
+//   skip it, so ATR / bias / swings / prevCandle levels never read a truncated bar as a real one.
 
 export const TF_MS = { '1m': 60e3, '5m': 3e5, '15m': 9e5, '1h': 36e5, '4h': 144e5 };
 export const TFS = Object.keys(TF_MS);
@@ -45,8 +50,9 @@ function fold(agg, child) {
   if (child.n !== undefined) agg.n = (agg.n ?? 0) + child.n;
   return agg;
 }
-function seed(child, bucketT) {
+function seed(child, bucketT, { partial = false } = {}) {
   const agg = { t: bucketT, o: child.o, h: child.h, l: child.l, c: child.c, v: child.v, closed: false };
+  if (partial) agg.partial = true; // first child was not the bucket start: o/h/l/v are truncated
   if (child.buyV !== undefined) { agg.buyV = child.buyV; agg.sellV = child.sellV ?? 0; }
   if (child.n !== undefined) agg.n = child.n;
   return agg;
@@ -64,7 +70,7 @@ export function aggregate(candles1m, tf) {
     if (cur && cur.t === b) fold(cur, c);
     else {
       if (cur) cur.closed = true; // a later bucket started
-      cur = seed(c, b);
+      cur = seed(c, b, { partial: !cur && c.t !== b }); // only the leading bucket can be partial (see header)
       out.push(cur);
     }
     cur.closed = c.closed && isLastChild(c.t, tf);
@@ -168,12 +174,12 @@ export class CandleStore {
         const cur = series[series.length - 1];
         if (cur && !cur.closed) { cur.closed = true; closed.add(tf); }
         st = this._open[tf] = { bucket: b, closedAgg: null, lastClosedT: -Infinity };
-        series.push(seed(c, b));
+        series.push(seed(c, b, { partial: !series.length && c.t !== b }));
         if (series.length > this.maxPerTf) series.shift();
       } else if (b < st.bucket) { if (this._rebuildBucket(tf, b)) updated.add(tf); continue; }
       let candle;
       if (c.closed) {
-        if (c.t > st.lastClosedT) { st.closedAgg = st.closedAgg ? fold(st.closedAgg, c) : seed(c, b); st.lastClosedT = c.t; }
+        if (c.t > st.lastClosedT) { st.closedAgg = st.closedAgg ? fold(st.closedAgg, c) : seed(c, b, { partial: series.length === 1 && !!series[0].partial && series[0].t === b }); st.lastClosedT = c.t; }
         else if (!this._rebuildBucket(tf, b)) continue; // duplicate closed child we cannot re-derive: keep what we have
         candle = { ...this._open[tf].closedAgg };
       } else {
@@ -181,7 +187,9 @@ export class CandleStore {
         candle = st.closedAgg ? fold({ ...st.closedAgg }, c) : seed(c, b);
       }
       if (c.closed && isLastChild(c.t, tf)) candle.closed = true;
-      if (!series.length || series[series.length - 1].t !== b) series.push(candle); else series[series.length - 1] = candle;
+      const slot = series.length && series[series.length - 1].t === b ? series[series.length - 1] : null;
+      if (slot?.partial) candle.partial = true;
+      if (!slot) series.push(candle); else series[series.length - 1] = candle;
       updated.add(tf);
       if (candle.closed) closed.add(tf);
     }
@@ -223,12 +231,14 @@ export class CandleStore {
   }
   /** Newest candle (forming or closed) or undefined. */
   last(tf) { const s = this.get(tf); return s[s.length - 1]; }
-  /** Closed candles only, oldest → newest. */
+  /** Closed, non-partial candles only, oldest → newest (a leading partial bucket is not a real bar — see header). */
   closed(tf, n) {
     const s = this._series[tf];
     if (!s) throw new RangeError(`timeframe ${tf} is not maintained by this store`);
+    const start = s.length && s[0].partial ? 1 : 0;
     const end = s.length && !s[s.length - 1].closed ? s.length - 1 : s.length;
-    return n === undefined ? s.slice(0, end) : s.slice(Math.max(0, end - n), end);
+    if (end <= start) return [];
+    return n === undefined ? s.slice(start, end) : s.slice(Math.max(start, end - n), end);
   }
   lastClosed(tf) { return this.closed(tf, 1)[0]; }
   size(tf) { return this._series[tf]?.length ?? 0; }

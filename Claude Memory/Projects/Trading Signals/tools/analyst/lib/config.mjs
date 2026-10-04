@@ -31,12 +31,22 @@ import { parseHHMM, isValidTimeZone } from './engine/sessions.mjs';
 
 export const CONFIG_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'config');
 export const KNOWN_FEEDS = ['binance', 'simulated', 'yahoo', 'replay'];
-export const LEVEL_KINDS = ['sessionHighLow', 'pdhPdl', 'equalHighsLows', 'valueArea', 'nakedPoc', 'consolidation', 'fvg', 'orderBlock'];
+export const LEVEL_KINDS = ['sessionHighLow', 'pdhPdl', 'equalHighsLows', 'valueArea', 'nakedPoc', 'consolidation', 'fvg', 'orderBlock', 'prevCandle'];
 export const WEIGHT_KEYS = [
   'condition.biasAligned', 'condition.killzone', 'condition.outsideValueTrend', 'condition.insideValueRotation',
-  'zone.pdhPdl', 'zone.sessionHighLow', 'zone.equalHighsLows', 'zone.valueArea', 'zone.nakedPoc', 'zone.fvg', 'zone.orderBlock',
+  'zone.pdhPdl', 'zone.sessionHighLow', 'zone.equalHighsLows', 'zone.valueArea', 'zone.nakedPoc', 'zone.fvg', 'zone.orderBlock', 'zone.prevCandle',
   'trigger.sweepReclaim', 'trigger.absorption', 'trigger.cvdDivergence', 'trigger.engulfing', 'trigger.ltfBos', 'trigger.deltaConfirms',
 ];
+/** Path segments ANALYST_SET may never walk: writing through them pollutes Object.prototype (review finding, config.mjs:255). */
+const FORBIDDEN_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
+/** http(s) URL with no userinfo — credentials in a URL end up in every log line that names it. Returns null when invalid. */
+export function parseHttpUrl(s) {
+  if (typeof s !== 'string' || !/^https?:\/\/\S+$/.test(s)) return null;
+  let u;
+  try { u = new URL(s); } catch { return null; }
+  if (u.username || u.password) return null;
+  return u;
+}
 
 export class ConfigError extends Error {
   constructor(issues, source = 'config') {
@@ -148,8 +158,10 @@ export function validateStrategy(cfg) {
     if (isNum(z.minScore) && isNum(z.gradeB) && isNum(z.gradeA) && !(z.minScore <= z.gradeB && z.gradeB <= z.gradeA)) c.fail('czt', 'expected minScore ≤ gradeB ≤ gradeA');
     c.num(cfg, 'czt.minRr', { gt: 0 });
     c.num(cfg, 'czt.stopBufferAtr', { min: 0 });
+    if (z.minStopAtr !== undefined) c.num(cfg, 'czt.minStopAtr', { min: 0 });
     c.num(cfg, 'czt.maxStopAtr', { gt: 0 });
     if (isNum(z.stopBufferAtr) && isNum(z.maxStopAtr) && z.maxStopAtr <= z.stopBufferAtr) c.fail('czt.maxStopAtr', 'must exceed stopBufferAtr');
+    if (isNum(z.minStopAtr) && isNum(z.maxStopAtr) && z.maxStopAtr <= z.minStopAtr) c.fail('czt.maxStopAtr', 'must exceed minStopAtr');
     if (c.arr(z, 'targetsFrom', { min: 1 })) z.targetsFrom.forEach((k, i) => { if (!LEVEL_KINDS.includes(k)) c.fail(`czt.targetsFrom[${i}]`, `${JSON.stringify(k)} is not one of ${LEVEL_KINDS.join('|')}`); });
     c.num(cfg, 'czt.maxSetupsPerSymbolPerDay', { min: 1, int: true });
     c.num(cfg, 'czt.cooldownMinutes', { min: 0 });
@@ -170,7 +182,7 @@ export function validateStrategy(cfg) {
   if (c.obj(cfg, 'executorBridge')) {
     const b = cfg.executorBridge, cb = c.at('executorBridge.');
     cb.bool(b, 'enabled');
-    if (b.enabled) cb.str(b, 'url', /^https?:\/\/\S+$/);
+    if (b.enabled && cb.str(b, 'url', /^https?:\/\/\S+$/) && !parseHttpUrl(b.url)) cb.fail('url', 'must not carry user:password@ credentials (the URL is logged on every send) and must parse as a URL');
     cb.arr(b, 'symbols');
     cb.oneOf(b, 'minGrade', ['A', 'B', 'C']);
   }
@@ -249,10 +261,16 @@ export function validateSymbols(symbolsCfg, { knownFeeds = KNOWN_FEEDS } = {}) {
 function coerce(raw) {
   try { return JSON.parse(raw); } catch { return raw; }
 }
+/** Dotted-path write. Throws RangeError on a prototype-walking segment — callers decide whether to warn or abort. */
 function setPath(obj, path, value) {
   const keys = path.split('.');
+  if (keys.some((k) => FORBIDDEN_SEGMENTS.has(k))) throw new RangeError(`path "${path}" would write through Object.prototype`);
   let o = obj;
-  for (const k of keys.slice(0, -1)) { if (o[k] === null || typeof o[k] !== 'object') o[k] = {}; o = o[k]; } // arrays survive (list.0.label)
+  for (const k of keys.slice(0, -1)) {
+    // Own properties only: an inherited `constructor` or `__proto__` must never be walked into. Arrays survive (list.0.label).
+    if (!Object.hasOwn(o, k) || o[k] === null || typeof o[k] !== 'object') o[k] = {};
+    o = o[k];
+  }
   o[keys.at(-1)] = value;
 }
 export const envKeyForSymbol = (id) => `ANALYST_FEED_${String(id).toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
@@ -281,9 +299,12 @@ export function applyEnv(cfg, symbolsCfg, env = {}) {
   }
   if (has('ANALYST_SET')) {
     for (const pair of env.ANALYST_SET.split(/[;,]/).map((s) => s.trim()).filter(Boolean)) {
-      const m = /^([A-Za-z0-9_.]+)=(.*)$/.exec(pair);
+      // A path starts with a letter; later segments are [A-Za-z0-9_] (array indexes allowed). `__proto__`, `constructor`,
+      // `prototype` are rejected below as well, so a value can never land on Object.prototype.
+      const m = /^([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)=(.*)$/.exec(pair);
       if (!m) { warnings.push(`ANALYST_SET entry "${pair}" ignored (expected path=value)`); continue; }
       if (m[1].startsWith('executorBridge.') && /secret/i.test(m[1])) { warnings.push(`ANALYST_SET "${m[1]}" ignored — secrets never go in config`); continue; }
+      if (m[1].split('.').some((k) => FORBIDDEN_SEGMENTS.has(k))) { warnings.push(`ANALYST_SET "${m[1]}" ignored — prototype path segments are not allowed`); continue; }
       setPath(cfg, m[1], coerce(m[2]));
       applied.push(m[1]);
     }

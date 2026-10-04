@@ -6,21 +6,26 @@
 // 03 (Asia = consolidation, London = manipulation — hence the Asia range as a first-class level);
 // 04 ("equal highs and equal lows" are liquidity; "buy-side taken → target sell-side").
 //
-// DEVIATION: session/day resolution lives in a small Intl-based helper below instead of importing
-//   ./sessions.mjs (built in parallel). Semantics match SPEC §4.3: wall clock in
-//   sessionsCfg.timezone, DST-aware local day → `dayKey`. Swap to sessions.mjs when it lands.
+// Session / day resolution comes from ./sessions.mjs (localParts, sessionBounds,
+//   dayBounds, shiftDayKey, resolveSession) — one DST implementation. (Review finding liquidity.mjs:137
+//   / structure.mjs:176: the private Intl clock here disagreed with sessions.zonedTimeToUtc at 119 minutes
+//   inside the 01:00–01:59 local hour on the two 2026 DST days; the helper block is gone.)
 // DEVIATION: swings come from ./structure.mjs findSwings (same contract as indicators.swings).
 // Additive (not in SPEC): computeLevels takes `prev` (previous Level[]; `swept` is carried over by
-//   id so a recompute never forgets a purge) and `swingLookback`; Level.swept also records
+//   id so a recompute never forgets a purge), `swingLookback` and `htfTf`; Level.swept also records
 //   `reclaimed`/`reclaimedT`; detectSweeps recognises a delayed reclaim — the close back on the
 //   original side within liqCfg.sweepReclaimCandles (default 3) candles after an unreclaimed sweep —
 //   and reports `reclaimedAfter` (0 = same candle). Level.swept is `null` rather than absent.
+// Additive (review finding liquidity.mjs:137, source 01 "swept below the previous candle's low"): kinds
+//   `prevCandleLow` / `prevCandleHigh` = the last CLOSED `htfTf` (default cfg.timeframes.htf, 4h) candle's
+//   l / h, so the manipulation of the prior 4h low is a first-class sweep (weight key zone.prevCandle).
 
 import { findSwings } from './structure.mjs';
+import { localParts, sessionBounds, dayBounds, shiftDayKey, resolveSession } from './sessions.mjs';
 
 const TF_MS = { '1m': 60e3, '5m': 3e5, '15m': 9e5, '1h': 36e5, '4h': 144e5 }; // mirror of candles.mjs
 const TF_ORDER = ['1m', '5m', '15m', '1h', '4h'];
-const BUY_SIDE = new Set(['pdh', 'sessionHigh', 'asiaHigh', 'equalHighs', 'consolidationHigh', 'vah']);
+const BUY_SIDE = new Set(['pdh', 'sessionHigh', 'asiaHigh', 'equalHighs', 'consolidationHigh', 'vah', 'prevCandleHigh']);
 
 /** Buy-side liquidity sits ABOVE price (highs); sell-side BELOW (lows). */
 export function levelSide(kind) { return BUY_SIDE.has(kind) ? 'buy-side' : 'sell-side'; }
@@ -55,49 +60,7 @@ function covering(store, fromMs) {
   return first || [];
 }
 
-// ---- local wall clock (DST-aware via Intl) — mirrors sessions.mjs §4.3 ----
-
-const dtf = new Map();
-function wallClock(tMs, timeZone) {
-  let f = dtf.get(timeZone);
-  if (!f) {
-    f = new Intl.DateTimeFormat('en-GB', { timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-    dtf.set(timeZone, f);
-  }
-  const p = {};
-  for (const { type, value } of f.formatToParts(tMs)) p[type] = value;
-  return { y: +p.year, m: +p.month, d: +p.day, dayKey: `${p.year}-${p.month}-${p.day}`, minutes: (+p.hour % 24) * 60 + +p.minute };
-}
-function offsetAt(tMs, timeZone) {
-  const base = Math.floor(tMs / 60e3) * 60e3, w = wallClock(base, timeZone);
-  return Date.UTC(w.y, w.m - 1, w.d) + w.minutes * 60e3 - base;
-}
-/** Local (dayKey, minutes-after-midnight; 1440 = next midnight) → UTC ms. Two passes settle DST. */
-function localToUtc(dayKey, minutes, timeZone) {
-  const [y, m, d] = dayKey.split('-').map(Number);
-  const naive = Date.UTC(y, m - 1, d) + minutes * 60e3;
-  const guess = naive - offsetAt(naive, timeZone);
-  return naive - offsetAt(guess, timeZone);
-}
-/** dayKey ± n local days (noon anchor survives 23/25-hour DST days). */
-function shiftDay(dayKey, n, timeZone) { return wallClock(localToUtc(dayKey, 0, timeZone) + n * 864e5 + 432e5, timeZone).dayKey; }
-
-function parseHm(s) { const [h, m] = String(s).split(':').map(Number); return h * 60 + (m || 0); }
-function sessionSpecs(list) {
-  return list.map(s => { const startMin = parseHm(s.start); let endMin = parseHm(s.end); if (endMin <= startMin) endMin += 1440; return { ...s, startMin, endMin }; });
-}
-/** Which session a local minute-of-day is in. A session that started yesterday and runs past midnight → dayOffset −1. */
-function currentSession(specs, minutes) {
-  for (const off of [0, -1]) {
-    const m = minutes - off * 1440;
-    const idx = specs.findIndex(s => m >= s.startMin && m < s.endMin);
-    if (idx >= 0) return { idx, dayOffset: off };
-  }
-  let best = -1; // gap in the list: the latest session that has started today, else yesterday's last
-  specs.forEach((s, i) => { if (s.startMin <= minutes && (best < 0 || s.startMin >= specs[best].startMin)) best = i; });
-  return best >= 0 ? { idx: best, dayOffset: 0 } : { idx: specs.length - 1, dayOffset: -1 };
-}
-function sessionWindow(dayKey, spec, tz) { return { startMs: localToUtc(dayKey, spec.startMin, tz), endMs: localToUtc(dayKey, spec.endMin, tz) }; }
+function parseHm(x) { const [h, m] = String(x).split(':').map(Number); return h * 60 + (m || 0); }
 
 /** Greedy price clusters of swings: a swing joins when within `tol` of the cluster mean. */
 function clusterSwings(swings, tol) {
@@ -126,6 +89,7 @@ export function dedupeLevels(levels, tol) {
  * - pdh/pdl: previous LOCAL day's range (sessionsCfg.timezone, DST-aware).
  * - sessionHigh/Low: the session before the one `now` is in.
  * - asiaHigh/Low: today's Asia range (partial while forming → meta.complete=false), else yesterday's.
+ * - prevCandleHigh/Low: the last closed `htfTf` candle's h / l (source 01: "swept below the previous candle's low").
  * - equalHighs/Lows: ≥ 2 swing highs (lows) on `tf` within equalLevelToleranceAtr × ATR → one level
  *   at their mean, meta.count. Dropped once a candle other than the last closed one has CLOSED
  *   through them by more than the tolerance — that liquidity has been taken (source 04); the last
@@ -134,33 +98,39 @@ export function dedupeLevels(levels, tol) {
  *   total range ≤ consolidationMaxRangeAtr × ATR (the last candle is the candidate sweeper).
  * Levels older than levelExpiryHours are dropped; same-kind levels within tolerance are merged.
  */
-export function computeLevels({ store, tf, atr, sessionsCfg, liqCfg = {}, now, prev, swingLookback }) {
+export function computeLevels({ store, tf, atr, sessionsCfg, liqCfg = {}, now, prev, swingLookback, htfTf = '4h' }) {
   const tz = sessionsCfg?.timezone || 'UTC';
-  const specs = sessionSpecs(sessionsCfg?.list || []);
+  const list = Array.isArray(sessionsCfg?.list) ? sessionsCfg.list : [];
+  const sCfg = { timezone: tz, list };
   const tfCandles = store.closed(tf) || [];
   if (now == null) now = tfCandles.length ? tfCandles[tfCandles.length - 1].t + (TF_MS[tf] || 0) : null;
   if (!Number.isFinite(now)) return [];
   const atrOk = Number.isFinite(atr) && atr > 0;
   const tol = atrOk ? (liqCfg.equalLevelToleranceAtr ?? 0.15) * atr : 0;
-  const clock = wallClock(now, tz);
+  const clock = localParts(now, tz);
   const levels = [];
 
   // 1. Previous day high / low (source 02: "previous highs and previous lows").
-  const prevDay = shiftDay(clock.dayKey, -1, tz);
-  const dayFrom = localToUtc(prevDay, 0, tz), dayTo = localToUtc(clock.dayKey, 0, tz);
+  const prevDay = shiftDayKey(clock.dayKey, -1);
+  const { startMs: dayFrom, endMs: dayTo } = dayBounds(prevDay, sCfg);
   const rd = rangeIn(covering(store, dayFrom), dayFrom, dayTo);
   if (rd) {
     levels.push(mkLevel('pdh', rd.high, rd.tHigh, '1m', { dayKey: prevDay, candles: rd.n }));
     levels.push(mkLevel('pdl', rd.low, rd.tLow, '1m', { dayKey: prevDay, candles: rd.n }));
   }
 
-  if (specs.length) {
+  if (list.length) {
     // 2. Previous session high / low (source 02: "purged during London, entry during New York").
-    const cur = currentSession(specs, clock.minutes);
-    const curDay = cur.dayOffset ? shiftDay(clock.dayKey, cur.dayOffset, tz) : clock.dayKey;
-    const prevIdx = (cur.idx - 1 + specs.length) % specs.length;
-    const prevDayKey = cur.idx === 0 ? shiftDay(curDay, -1, tz) : curDay;
-    const spec = specs[prevIdx], w = sessionWindow(prevDayKey, spec, tz);
+    const cur = resolveSession(now, sCfg);
+    let idx = list.findIndex(x => x.id === cur.id);
+    if (idx < 0) { // a gap in the list (config validation forbids it): the latest session that has started today
+      let best = -1;
+      list.forEach((x, k) => { const m = parseHm(x.start); if (m <= clock.minutes && (best < 0 || m >= parseHm(list[best].start))) best = k; });
+      idx = best >= 0 ? best : 0;
+    }
+    const prevIdx = (idx - 1 + list.length) % list.length;
+    const prevDayKey = idx === 0 ? shiftDayKey(clock.dayKey, -1) : clock.dayKey;
+    const spec = list[prevIdx], w = sessionBounds(prevDayKey, spec.id, sCfg);
     const rs = rangeIn(covering(store, w.startMs), w.startMs, Math.min(w.endMs, now));
     if (rs) {
       const meta = { sessionId: spec.id, label: spec.label, dayKey: prevDayKey, startMs: w.startMs, endMs: w.endMs, candles: rs.n };
@@ -168,10 +138,9 @@ export function computeLevels({ store, tf, atr, sessionsCfg, liqCfg = {}, now, p
       levels.push(mkLevel('sessionLow', rs.low, rs.tLow, '1m', { ...meta }));
     }
     // 3. Asia range (source 03: Asia consolidates, London manipulates it).
-    const asia = specs.find(s => s.id === 'asia');
-    if (asia) {
-      for (const dk of [curDay, shiftDay(curDay, -1, tz)]) {
-        const wa = sessionWindow(dk, asia, tz);
+    if (list.some(x => x.id === 'asia')) {
+      for (const dk of [clock.dayKey, shiftDayKey(clock.dayKey, -1)]) {
+        const wa = sessionBounds(dk, 'asia', sCfg);
         if (wa.startMs > now) continue;
         const ra = rangeIn(covering(store, wa.startMs), wa.startMs, Math.min(wa.endMs, now));
         if (!ra) continue;
@@ -180,6 +149,18 @@ export function computeLevels({ store, tf, atr, sessionsCfg, liqCfg = {}, now, p
         levels.push(mkLevel('asiaLow', ra.low, ra.tLow, '1m', { ...meta }));
         break;
       }
+    }
+  }
+
+  // 3b. The previous higher-timeframe candle (source 01: "we have obviously swept below the previous candle's low").
+  //     Pushed AFTER the session levels so that, on an exact price tie, the session level stays the named pool.
+  if (htfTf && TF_MS[htfTf]) {
+    const hc = store.closed(htfTf) || [];
+    const last = hc.length ? hc[hc.length - 1] : null;
+    if (last && Number.isFinite(last.h) && Number.isFinite(last.l) && last.t + TF_MS[htfTf] <= now) {
+      const meta = { tf: htfTf, startMs: last.t, endMs: last.t + TF_MS[htfTf] };
+      levels.push(mkLevel('prevCandleHigh', last.h, last.t, htfTf, meta));
+      levels.push(mkLevel('prevCandleLow', last.l, last.t, htfTf, { ...meta }));
     }
   }
 

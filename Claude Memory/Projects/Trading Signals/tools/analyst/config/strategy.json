@@ -112,6 +112,7 @@
       "zone.nakedPoc": 1,
       "zone.fvg": 1,
       "zone.orderBlock": 1.5,
+      "zone.prevCandle": 1,
       "trigger.sweepReclaim": 3,
       "trigger.absorption": 2,
       "trigger.cvdDivergence": 1.5,
@@ -124,6 +125,7 @@
     "gradeB": 7,
     "minRr": 1.5,
     "stopBufferAtr": 0.1,
+    "minStopAtr": 0.35,
     "maxStopAtr": 3,
     "targetsFrom": [
       "sessionHighLow",
@@ -136,7 +138,7 @@
     "cooldownMinutes": 30,
     "oneOpenPerSymbol": true,
     "triggerMaxAgeCandles": 6,
-    "_note": "triggerMaxAgeCandles: a CVD divergence or structure break older than this many analysis-TF candles no longer counts as a trigger."
+    "_note": "triggerMaxAgeCandles: a CVD divergence or structure break older than this many analysis-TF candles no longer counts as a trigger. minStopAtr: a stop closer than this to entry is widened AWAY from entry (a few-tick stop under a shallow sweep is inside the spread; the R it promises is fiction). zone.prevCandle: the last closed htf (4h) candle's high/low — source 01's 'swept below the previous candle's low'."
   },
   "risk": {
     "balance": 1000,

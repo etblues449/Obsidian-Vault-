@@ -81,7 +81,7 @@ export class Analyst extends EventEmitter {
       price: null, lastCandleT: null, lastClosed1mT: null, deltaSource: 'proxy',
       session: null, bias: { dir: 'neutral', strength: 0, reasons: ['no data yet'] },
       atr: null, levels: [], zones: [], profile: null, prevDayProfile: null, prevDayKey: null, prevDayStart: null, nakedPocs: [],
-      sweeps: [], absorption: null, divergence: null, structure: null, structSwings: [], structSwingsT: null,
+      sweeps: [], absorption: null, divergence: null, structure: null, structSwings: [], structSwingsT: null, analysisSwings: [],
       czt: null, lastSetup: null, openSetup: null,
       setupsDayKey: null, setupsToday: 0, lastSetupT: null,
       markers: [], trades: [], tradeHead: 0,
@@ -248,7 +248,9 @@ export class Analyst extends EventEmitter {
     this._rollDay(sym, sym.session.dayKey);
     if (resolve && this.journal) {
       const atr = sym.atr ?? undefined;
-      this.journal.resolveOpen(sym.id, c1, { swings: sym.structSwings, atr });
+      // Source 05 §7 step 4 (review finding journal.mjs:156): the resolver also sees the current levels, the developing
+      // profile's HVNs, a fresh CVD divergence and the analysis-TF swings so it can tighten at problem areas.
+      this.journal.resolveOpen(sym.id, c1, { swings: sym.structSwings, atr, levels: sym.levels, hvn: sym.profile?.hvn ?? [], divergence: sym.divergence, analysisSwings: sym.analysisSwings });
     }
   }
 
@@ -301,7 +303,7 @@ export class Analyst extends EventEmitter {
 
     // 1. Resting liquidity (sources 02/04) + prior-day value (source 05 §6) + naked POCs (source 05 §8).
     const liqCfg = { ...cfg.liquidity, swingLookback: cfg.indicators.swingLookback };
-    const levels = computeLevels({ store: sym.store, tf, atr, sessionsCfg: cfg.sessions, liqCfg, now: closeT, prev: sym.levels });
+    const levels = computeLevels({ store: sym.store, tf, atr, sessionsCfg: cfg.sessions, liqCfg, now: closeT, prev: sym.levels, htfTf: cfg.timeframes.htf });
     const dayKey = localParts(closeT, cfg.sessions.timezone).dayKey;
     const prevDay = previousDayKey(dayKey);
     if (sym.prevDayKey !== prevDay) {
@@ -313,7 +315,8 @@ export class Analyst extends EventEmitter {
       sym.prevDayStart = startMs;
     }
     const extra = [];
-    if (sym.prevDayProfile) extra.push(...profileLevels(sym.prevDayProfile, { t: sym.prevDayStart, tf: '1m', price: lastClosed.c, meta: { dayKey: prevDay } }));
+    // Prior-day VAH/POC/VAL + LVNs as zones (source 05 §6; review finding czt.mjs:166) — LVNs closer than one zone tolerance merge.
+    if (sym.prevDayProfile) extra.push(...profileLevels(sym.prevDayProfile, { t: sym.prevDayStart, tf: '1m', price: lastClosed.c, meta: { dayKey: prevDay }, lvn: true, lvnMergeTol: atr ? cfg.czt.zoneToleranceAtr * atr : 0 }));
     try { sym.nakedPocs = nakedPocs(sym.store, cfg, closeT, { atr, tick: sym.cfg.tick }); } catch { sym.nakedPocs = []; }
     extra.push(...sym.nakedPocs);
     const prevById = new Map(sym.levels.filter((l) => l.swept).map((l) => [l.id, l.swept]));
@@ -330,7 +333,8 @@ export class Analyst extends EventEmitter {
 
     // 3. Executed flow (source 05): absorption, CVD divergence, developing profile.
     sym.absorption = atr ? detectAbsorption(c5, atr, cfg) : null;
-    const div = c5.length > 2 * cfg.indicators.swingLookback + 1 ? cvdDivergence(c5, findSwings(c5, cfg.indicators.swingLookback), cfg) : null;
+    sym.analysisSwings = c5.length > 2 * cfg.indicators.swingLookback + 1 ? findSwings(c5, cfg.indicators.swingLookback) : [];
+    const div = sym.analysisSwings.length ? cvdDivergence(c5, sym.analysisSwings, cfg) : null;
     sym.divergence = div && div.age <= cfg.indicators.swingLookback + 1 ? div : null; // an old divergence is not THIS candle's trigger
     const win = c5.slice(-cfg.orderflow.volumeProfileWindowCandles);
     sym.profile = volumeProfile(win, { atr, bucketsAtr: cfg.orderflow.volumeProfileBucketsAtr, tick: sym.cfg.tick, valueAreaPct: cfg.orderflow.valueAreaPct });
@@ -464,9 +468,13 @@ export class Analyst extends EventEmitter {
     for (const s of starts.sort((a, b) => a.startMs - b.startMs)) {
       while (i < candles.length && candles[i].t < s.startMs) i++;
       if (i >= candles.length) break;
-      if (i > 0 || candles[i].t === s.startMs) resets.add(i);
-      if (s.id === 'london' || s.id === 'ny') markers.push({ t: candles[i].t, kind: 'session', text: s.id === 'london' ? 'LDN' : 'NY', side: null });
-      else if (s.id === 'asia' && i > 0) markers.push({ t: candles[i].t, kind: 'session', text: 'ASIA', side: null });
+      // Review finding analyst.mjs:468: a session that opened before the first candle has no bar to mark; an open that is
+      // not bar-aligned (07:00 on a 4h chart) belongs to the bar CONTAINING it — the previous one — not the next bar.
+      if (i === 0 && candles[0].t > s.startMs) continue;
+      const j = candles[i].t > s.startMs ? i - 1 : i;
+      if (j > 0) resets.add(j);
+      if (s.id === 'london' || s.id === 'ny') markers.push({ t: candles[j].t, kind: 'session', text: s.id === 'london' ? 'LDN' : 'NY', side: null });
+      else if (s.id === 'asia' && j > 0) markers.push({ t: candles[j].t, kind: 'session', text: 'ASIA', side: null });
     }
     return { resets, markers };
   }

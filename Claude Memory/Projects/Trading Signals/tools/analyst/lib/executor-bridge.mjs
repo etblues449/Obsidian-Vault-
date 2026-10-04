@@ -16,6 +16,11 @@
 //   `cfg.bridge.*`; strategy.json names the block `executorBridge`, so both are accepted:
 //   cfg.executorBridge ?? cfg.bridge ?? cfg itself when it carries `enabled` directly.
 //   Additive: createBridge() also takes `env` and `timeoutMs` (tests), and returns `stats()`.
+// Review findings executor-bridge.mjs:96 / :84 — the executor's RESPONSE BODY is never logged (an
+//   echoing endpoint would reflect the secret straight into stderr / the feed / SSE / the dashboard: the
+//   status code is enough), every error string is scrubbed of the secret before it is logged or returned,
+//   and the URL is logged with any user:password@ stripped — and a URL carrying userinfo is refused
+//   outright (`no-url`), because the config loader rejects it too.
 
 const GRADE_RANK = { A: 3, B: 2, C: 1 };
 const MAX_SEEN = 5000; // bounded dedupe memory; a day has ≤ 12 grade-A setups across 4 symbols
@@ -24,6 +29,11 @@ const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
 /** grade ≥ minGrade in A > B > C order. Unknown grades never pass. */
 export function gradeAtLeast(grade, minGrade) {
   return (GRADE_RANK[grade] ?? 0) >= (GRADE_RANK[minGrade] ?? Infinity);
+}
+
+/** URL for log lines: userinfo removed. A string that is not a URL is returned as-is. */
+export function displayUrl(u) {
+  try { const x = new URL(String(u)); x.username = ''; x.password = ''; return x.href; } catch { return String(u); }
 }
 
 /** The executor block from a strategy config (see DEVIATION). Always an object. */
@@ -68,6 +78,10 @@ export function createBridge({ cfg, fetch = globalThis.fetch, log = null, now = 
     let body;
     try { body = toAlert(setup, ''); } catch (e) { return skip('invalid', symbol, 'warn', `Bridge: setup rejected — ${e.message}`); }
     if (typeof b.url !== 'string' || !/^https?:\/\/\S+$/.test(b.url)) return skip('no-url', symbol, 'warn', 'Bridge: executorBridge.url is not an http(s) URL');
+    let parsedUrl = null;
+    try { parsedUrl = new URL(b.url); } catch { /* handled below */ }
+    if (!parsedUrl) return skip('no-url', symbol, 'warn', 'Bridge: executorBridge.url does not parse as a URL');
+    if (parsedUrl.username || parsedUrl.password) return skip('no-url', symbol, 'warn', `Bridge: executorBridge.url carries user:password@ credentials — refused (${displayUrl(b.url)})`);
     const secret = typeof env?.ANALYST_EXECUTOR_SECRET === 'string' ? env.ANALYST_EXECUTOR_SECRET : '';
     if (!secret) {
       if (!warnedNoSecret) { warnedNoSecret = true; say('warn', symbol, 'Bridge: ANALYST_EXECUTOR_SECRET is not set — nothing will be forwarded until it is'); }
@@ -81,7 +95,8 @@ export function createBridge({ cfg, fetch = globalThis.fetch, log = null, now = 
     stats.attempted++;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(new Error(`timeout after ${timeoutMs} ms`)), timeoutMs);
-    const safe = { alert_id: body.alert_id, side: body.side, entry: body.entry, sl: body.sl, tp: body.tp, url: b.url }; // what the feed may show — no secret
+    const safe = { alert_id: body.alert_id, side: body.side, entry: body.entry, sl: body.sl, tp: body.tp, url: displayUrl(b.url) }; // what the feed may show — no secret
+    const scrub = (x) => String(x).split(secret).join('[redacted]'); // belt and braces: a fetch error may embed the request
     try {
       const res = await fetch(b.url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: ctrl.signal });
       const status = Number(res?.status) || 0;
@@ -92,13 +107,12 @@ export function createBridge({ cfg, fetch = globalThis.fetch, log = null, now = 
         return { sent: true, status };
       }
       stats.failed++;
-      let detail = '';
-      try { detail = String(await res.text()).slice(0, 200); } catch { /* body unreadable — status is enough */ }
-      say('warn', symbol, `Bridge: executor refused alert ${body.alert_id} with HTTP ${status}${detail ? ` — ${detail}` : ''}`, { ...safe, status });
+      // The response body is deliberately NOT read into the log: an endpoint that echoes its request would hand the secret to the feed.
+      say('warn', symbol, `Bridge: executor refused alert ${body.alert_id} with HTTP ${status} (response body not logged)`, { ...safe, status });
       return { sent: false, status, error: `HTTP ${status}` };
     } catch (e) {
       stats.failed++; stats.lastStatus = null; stats.lastAt = now();
-      const error = e?.name === 'AbortError' || ctrl.signal.aborted ? `timeout after ${timeoutMs} ms` : String(e?.message ?? e);
+      const error = e?.name === 'AbortError' || ctrl.signal.aborted ? `timeout after ${timeoutMs} ms` : scrub(e?.message ?? e);
       say('warn', symbol, `Bridge: could not reach the executor for alert ${body.alert_id} — ${error}`, { ...safe, error });
       return { sent: false, error };
     } finally {

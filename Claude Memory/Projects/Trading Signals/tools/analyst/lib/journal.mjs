@@ -20,6 +20,17 @@
 //   The stop moves only in the trade direction and never beyond entry until the trade has reached
 //   +1R mfe ("do not move your stop to break-even immediately … wait for your side to win a real
 //   auction"). Every move is appended to setup.trail[] and to trail.jsonl.
+//   Review finding journal.mjs:173 — no trail at all until the auction is PROVED (§7 steps 1–2): the trade
+//   has reached +1R mfe, OR a 1m close has cleared an intervening structure-TF swing high (long) /
+//   opposing level that formed after entry ("a directional push that clears a level and forms a newly
+//   defended pivot"). Before that, a post-entry swing low is normal rotation and the stop stays put.
+//   `auctionWon` lives in memory only and re-proves itself after a restart, like mfe.
+//   Review finding journal.mjs:156 — §7 step 4 "tighten only at problem areas": when the 1m close is within
+//   czt.zoneToleranceAtr × ATR of an OPPOSING level (opts.levels, beyond entry in the trade direction) or
+//   an opposing HVN (opts.hvn), or an opposing CVD divergence is present (opts.divergence — exhaustion
+//   delta), the stop is brought to the last confirmed ANALYSIS-TF swing ∓ buffer (opts.analysisSwings,
+//   falling back to the structure-TF swings) regardless of the structure-TF rule and the auction gate. Step 1
+//   still holds: never beyond entry before +1R. Such a move carries `reason:'problemArea'` + `problem`.
 //
 // Statuses are the exit MECHANISM (stop → 'lost', target → 'won', timeout → 'expired'); `resultR`
 // carries the money. The scorecard counts a win as resultR > 0, so a stop-out above entry after a
@@ -27,7 +38,7 @@
 //
 // Deterministic: no Date.now() — `now` is injected and only used for cancel() timestamps.
 // DEVIATION: none from §5. Additive: trail.jsonl; `by:'all'` in scorecard(); cancel(); list(); open();
-//   resolveOpen(symbol, candle, { swings, atr }) returns the resolutions it produced and the
+//   resolveOpen(symbol, candle, { swings, atr, levels?, hvn?, divergence?, analysisSwings? }) returns the resolutions it produced and the
 //   Journal emits 'setup' / 'resolved' / 'trail' events so the orchestrator can forward them.
 
 import { EventEmitter } from 'node:events';
@@ -129,12 +140,39 @@ export function scorecardRows(resolved, { by = 'trigger', symbol } = {}) {
   return [...groups].map(([k, list]) => summarize(k, list)).sort((a, b) => b.n - a.n || String(a.key).localeCompare(String(b.key)));
 }
 
+/** The confirmed swings of `kind` from `swings` that formed at/after `fromT` and whose confirmation precedes `beforeT`. */
+function confirmedSwings(swings, kind, fromT, confirmMs, beforeT) {
+  const out = [];
+  for (const sw of swings || []) {
+    if (!sw || sw.kind !== kind || !isNum(sw.price) || !isNum(sw.t)) continue;
+    if (sw.t < fromT || sw.t + confirmMs > beforeT) continue;
+    out.push(sw);
+  }
+  return out;
+}
+
+/**
+ * Source 05 §7 step 4 — is price at a problem area for this trade? Returns a short label or null.
+ * long: an opposing level / HVN ABOVE entry within `tol` of the close, or a bearish CVD divergence; short mirrored.
+ */
+export function problemArea(s, candle, { levels, hvn, divergence, tol }) {
+  const long = s.side === 'long';
+  if (divergence && divergence.kind === (long ? 'bearish' : 'bullish')) return 'cvdDivergence';
+  if (!(tol > 0)) return null;
+  const opposing = (p) => (long ? p > s.entry : p < s.entry) && Math.abs(p - candle.c) <= tol;
+  for (const l of levels || []) if (l && isNum(l.price) && (!l.side || l.side === (long ? 'buy-side' : 'sell-side')) && opposing(l.price)) return `level ${l.kind} ${l.price}`;
+  for (const p of hvn || []) if (isNum(p) && opposing(p)) return `hvn ${p}`;
+  return null;
+}
+
 /**
  * Walk one open setup forward over one candle. Pure: returns `{ setup, resolution|null, trail|null }`
  * with a NEW setup object (the input is not mutated). `opts.swings` are structure-TF swings,
- * `opts.atr` the current ATR for the trail buffer, `opts.cfg` the strategy config.
+ * `opts.atr` the current ATR for the trail buffer, `opts.cfg` the strategy config; optional
+ * `opts.levels` (current Level[]), `opts.hvn` (profile HVN prices), `opts.divergence` (fresh CVD
+ * divergence or null) and `opts.analysisSwings` (analysis-TF swings) drive the problem-area tightening.
  */
-export function stepSetup(setup, candle, { swings, atr, cfg = {} } = {}) {
+export function stepSetup(setup, candle, { swings, atr, cfg = {}, levels, hvn, divergence, analysisSwings } = {}) {
   const s = { ...setup, trail: setup.trail ? [...setup.trail] : [] };
   const skip = { setup: s, resolution: null, trail: null };
   const entryT = s.t + (TF_MS[s.tf] ?? 0); // 1m children of the trigger candle are pre-entry (entry = its close)
@@ -155,27 +193,42 @@ export function stepSetup(setup, candle, { swings, atr, cfg = {} } = {}) {
 
   // 2. Trail by proved auctions — using swings confirmed BEFORE this candle, so the move precedes the test.
   let trail = null;
-  if (cfg.journal?.trailByProvedAuctions && Array.isArray(swings) && swings.length) {
-    const structureTf = cfg.timeframes?.structure ?? '15m';
+  if (cfg.journal?.trailByProvedAuctions) {
+    const structureTf = cfg.timeframes?.structure ?? '15m', analysisTf = cfg.timeframes?.analysis ?? '5m';
     const lookback = cfg.indicators?.swingLookback ?? 2;
     const confirmMs = (lookback + 1) * (TF_MS[structureTf] ?? TF_MS['15m']);
+    const confirmAnalysisMs = (lookback + 1) * (TF_MS[analysisTf] ?? TF_MS['5m']);
     const buffer = (cfg.czt?.stopBufferAtr ?? 0) * (isNum(atr) ? atr : 0);
-    let best = null;
-    for (const sw of swings) {
-      if (sw.kind !== (long ? 'low' : 'high') || !isNum(sw.price) || !isNum(sw.t)) continue;
-      if (sw.t < entryT || sw.t + confirmMs > candle.t) continue;            // formed after entry, confirmed before this bar
-      const proposed = long ? sw.price - buffer : sw.price + buffer;
-      if (long ? proposed <= s.stop : proposed >= s.stop) continue;           // only ever in the trade direction
-      if (!best || (long ? proposed > best.proposed : proposed < best.proposed)) best = { sw, proposed };
+    const tol = (cfg.czt?.zoneToleranceAtr ?? 0.5) * (isNum(atr) ? atr : 0);
+    const inDir = (p) => (long ? p > s.stop : p < s.stop);
+    const pick = (list) => list.reduce((b, sw) => { const proposed = long ? sw.price - buffer : sw.price + buffer; return inDir(proposed) && (!b || (long ? proposed > b.proposed : proposed < b.proposed)) ? { sw, proposed } : b; }, null);
+    // Never past entry before +1R mfe (source 05 §7 step 1: break-even too early gets stopped by normal rotation).
+    const cap = (p) => ((s.mfeR ?? 0) >= 1 ? p : long ? Math.min(p, s.entry) : Math.max(p, s.entry));
+    const move = (best, extra) => {
+      const to = cap(best.proposed);
+      if (!inDir(to)) return;
+      trail = { id: s.id, symbol: s.symbol, t: candle.t, from: s.stop, to: round(to, 8), swingT: best.sw.t, swingPrice: best.sw.price, ...extra };
+      s.stop = trail.to;
+      s.trail.push(trail);
+    };
+    const proved = (s.mfeR ?? 0) >= 1 || s.auctionWon === true;
+    const problem = problemArea(s, candle, { levels, hvn, divergence, tol });
+    if (problem) {
+      // §7 step 4: tighten at a problem area — the last confirmed analysis-TF swing (fallback: structure TF), no auction gate.
+      const fine = Array.isArray(analysisSwings) && analysisSwings.length ? confirmedSwings(analysisSwings, long ? 'low' : 'high', -Infinity, confirmAnalysisMs, candle.t) : confirmedSwings(swings, long ? 'low' : 'high', -Infinity, confirmMs, candle.t);
+      const last = fine.reduce((b, sw) => (!b || sw.t > b.t ? sw : b), null);
+      if (last) { const proposed = long ? last.price - buffer : last.price + buffer; if (inDir(proposed)) move({ sw: last, proposed }, { reason: 'problemArea', problem }); }
     }
-    if (best) {
-      // Never past entry before +1R mfe (source 05: break-even too early gets stopped by normal rotation).
-      const cap = (s.mfeR ?? 0) >= 1 ? best.proposed : long ? Math.min(best.proposed, s.entry) : Math.max(best.proposed, s.entry);
-      if (long ? cap > s.stop : cap < s.stop) {
-        trail = { id: s.id, symbol: s.symbol, t: candle.t, from: s.stop, to: round(cap, 8), swingT: best.sw.t, swingPrice: best.sw.price };
-        s.stop = trail.to;
-        s.trail.push(trail);
-      }
+    if (!trail && proved && Array.isArray(swings) && swings.length) {
+      const best = pick(confirmedSwings(swings, long ? 'low' : 'high', entryT, confirmMs, candle.t)); // formed after entry, confirmed before this bar
+      if (best) move(best, { reason: 'provedAuction' });
+    }
+    // Did THIS bar win the auction (§7 step 2)? A close beyond a post-entry structure-TF swing high (long) or beyond an
+    // opposing level. Takes effect from the next bar — the move must precede the test, never ride on the same print.
+    if (!s.auctionWon) {
+      const cleared = confirmedSwings(swings, long ? 'high' : 'low', entryT, confirmMs, candle.t).some((sw) => (long ? candle.c > sw.price : candle.c < sw.price))
+        || (levels || []).some((l) => l && isNum(l.price) && (long ? l.price > s.entry && candle.c > l.price : l.price < s.entry && candle.c < l.price));
+      if (cleared) s.auctionWon = true;
     }
   }
 
@@ -261,7 +314,7 @@ export class Journal extends EventEmitter {
     if (this._setups.has(setup.id)) return null;
     const line = structuredClone(setup);
     line.status = 'open';
-    for (const k of ['resolvedAt', 'resultR', 'mfeR', 'maeR', 'trail', 'exit', 'exitPrice', 'stop0', 'ambiguous', 'lastCandleT']) delete line[k]; // creation state only
+    for (const k of ['resolvedAt', 'resultR', 'mfeR', 'maeR', 'trail', 'exit', 'exitPrice', 'stop0', 'ambiguous', 'lastCandleT', 'auctionWon']) delete line[k]; // creation state only
     this._append(this.paths.setups, line);
     const s = { ...line, stop0: line.stop, mfeR: 0, maeR: 0, trail: [] };
     this._setups.set(s.id, s); this._open.set(s.id, s);
@@ -271,14 +324,15 @@ export class Journal extends EventEmitter {
 
   /**
    * Walk every open setup of `symbol` over one 1m candle. `swings` = structure-TF swings (optional),
-   * `atr` = current ATR for the trail buffer. Returns the resolutions produced (plain objects).
+   * `atr` = current ATR for the trail buffer; `levels` / `hvn` / `divergence` / `analysisSwings` feed the
+   * problem-area tightening (see header). Returns the resolutions produced (plain objects).
    */
-  resolveOpen(symbol, candle, { swings, atr } = {}) {
+  resolveOpen(symbol, candle, { swings, atr, levels, hvn, divergence, analysisSwings } = {}) {
     if (!candle || !isNum(candle.t) || !isNum(candle.h) || !isNum(candle.l) || !isNum(candle.c)) return [];
     const out = [];
     for (const s of [...this._open.values()]) {
       if (s.symbol !== symbol) continue;
-      const { setup, resolution, trail } = stepSetup(s, candle, { swings, atr, cfg: this.cfg });
+      const { setup, resolution, trail } = stepSetup(s, candle, { swings, atr, cfg: this.cfg, levels, hvn, divergence, analysisSwings });
       if (trail) { this._append(this.paths.trail, trail); this.emit('trail', trail); }
       this._setups.set(setup.id, setup);
       if (resolution) {

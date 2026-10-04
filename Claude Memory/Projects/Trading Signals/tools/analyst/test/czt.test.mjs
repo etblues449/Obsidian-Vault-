@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { evaluate, evaluateSide, levelLabel, gradeFor } from '../lib/engine/czt.mjs';
+import { evaluate, evaluateSide, levelLabel, gradeFor, REAL_TRIGGERS, CONFIRM_ONLY } from '../lib/engine/czt.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CFG = JSON.parse(readFileSync(resolve(HERE, '../config/strategy.json'), 'utf8'));
@@ -24,11 +24,13 @@ const store = (arr) => ({ closed: (tf, n) => (tf === '5m' ? (n ? arr.slice(-n) :
 /**
  * The source-01 picture: bullish bias, London killzone, the candle sweeps the Asia low 85,120 by
  * 0.8 ATR (manipulation low 85,040), closes back above AND engulfs the previous bearish 5m body.
+ * The fixture carries NO Asia high: at 85,500 it would be the next buy-side pool at 0.62 R and veto the
+ * trade (sources 02/04 — see the targets test); the Asia range here is "the low that got swept".
  */
 function source01Long(over = {}) {
   const prev = { t: T - M5, o: 85300, h: 85310, l: 85210, c: 85220, v: 40, closed: true };
   const cur = { t: T, o: 85200, h: 85330, l: 85040, c: 85320, v: 50, buyV: 17.5, sellV: 32.5, closed: true };
-  const levels = LEVELS();
+  const levels = LEVELS().filter(l => l.kind !== 'asiaHigh');
   const asiaLow = levels.find(l => l.kind === 'asiaLow');
   return {
     symbol: 'BTCUSD', symbolCfg: SYM, cfg: CFG, now: T + M5, store: store([prev, cur]), atr: ATR,
@@ -61,7 +63,7 @@ test('source 01 long: sweep + reclaim + engulf in a London killzone with bullish
   assert.equal(s.zone.level.kind, 'asiaLow', 'the swept level is the primary zone');
   assert.equal(s.condition.valueRelation, 'inside');
   assert.equal(s.condition.session.id, 'london');
-  // targets: nearest OPPOSING (buy-side) liquidity giving ≥ 1.5 R; asiaHigh (0.62 R) and VAH (0.97 R) are too close
+  // targets: nearest OPPOSING (buy-side) liquidity giving ≥ 1.5 R; the VAH (0.97 R) is a value edge, not a pool — stepped over
   assert.deepEqual(s.targets.map(t => t.price), [85800, 86000, 86300], 'nearest first, max 3 (consolidationHigh 86,500 is the 4th)');
   assert.deepEqual(s.targets.map(t => t.kind), ['sessionHigh', 'pdh', 'equalHighs']);
   assert.equal(s.targets[0].label, 'Late NY high 85,800.00');
@@ -80,8 +82,156 @@ test('source 01 long: sweep + reclaim + engulf in a London killzone with bullish
   assert.deepEqual([s.size.units, s.size.lots, s.size.riskUsd, s.size.riskPct], [0.03, 0.03, 8.7, 0.87]);
   // the short side was scored too and lost
   assert.equal(r.sides.short.setup, null);
-  assert.deepEqual(r.sides.short.trigger.hits, ['deltaConfirms'], 'negative closing delta is the only short trigger');
+  assert.deepEqual(r.sides.short.trigger.hits, ['deltaConfirms'], 'negative closing delta is the only short hit — a confirmation');
+  assert.deepEqual(r.sides.short.trigger.real, []); assert.equal(r.sides.short.trigger.kind, null);
+  assert.deepEqual(s.trigger.real, ['sweepReclaim', 'engulfing']);
+  assert.equal(s.stopWidened, undefined, '2.9 ATR stop needs no widening');
   assert.equal(r.blocked, null); assert.equal(r.candidate, null);
+});
+
+test('source 01: entry the candle AFTER the sweep — the stop is still the manipulation low, not the swept level (review finding czt.mjs:225)', () => {
+  // Candle N (t = T) swept the Asia low to 85,040 and reclaimed; detectSweeps marked level.swept and will never re-emit it.
+  // Candle N+1 engulfs N's body while still at the level → trigger engulfing, zone asiaLow. Old code: stop = min(85,120, N+1.l) − 10 = 85,110,
+  // INSIDE the manipulation wick. Source 01: "your stop-loss has got to be at the manipulation low" — and entering later is explicitly allowed.
+  const sweepC = { t: T, o: 85200, h: 85250, l: 85040, c: 85240, v: 50, buyV: 17.5, sellV: 32.5, closed: true };
+  const next = { t: T + M5, o: 85230, h: 85300, l: 85160, c: 85290, v: 45, buyV: 28, sellV: 17, closed: true };
+  const levels = LEVELS().filter(l => l.kind !== 'asiaHigh');
+  levels.find(l => l.kind === 'asiaLow').swept = { t: T, depth: 80, reclaimed: true, reclaimedT: T };
+  const ctx = source01Long({ lastClosed: next, store: store([sweepC, next]), levels, sweeps: [], now: T + 2 * M5, deltaInfo: { value: 11, source: 'trades' } });
+  const r = evaluate(ctx), s = r.setup;
+  assert.ok(s, JSON.stringify(r.rejections));
+  assert.equal(s.entry, 85290);
+  assert.equal(s.stop, 85040 - 0.1 * ATR, 'stop = candle N low − buffer (old code: 85,110, inside the wick)');
+  assert.deepEqual(s.trigger.hits, ['engulfing', 'deltaConfirms']); assert.equal(s.trigger.kind, 'engulfing'); assert.equal(s.trigger.sweep, null);
+  assert.equal(s.zone.level.kind, 'asiaLow', 'the recently swept level is the primary zone');
+  assert.ok(s.reasons.some(x => /^At Asia low 85,120\.00 \(sell-side liquidity\) — swept and reclaimed 1 candle\(s\) ago, manipulation low 85,040\.00$/.test(x)), s.reasons.join('\n'));
+  assert.match(s.invalidation, /^close below 85,030\.00 \(manipulation low 85,040\.00 − 0\.1 ATR buffer\)$/);
+  // a 15m break AFTER the sweep still counts as ltfBos; one that closed before the sweep began does not
+  const bos = evaluateSide({ ...ctx, structure: { trend: 'bullish', lastBos: { t: T, price: 85250, dir: 'up' }, lastChoch: null } }, 'long');
+  assert.ok(bos.reasons.includes('15m break of structure up through 85,250.00 after the sweep'));
+  const before = evaluateSide({ ...ctx, structure: { trend: 'bullish', lastBos: { t: T - 9e5, price: 85250, dir: 'up' }, lastChoch: null } }, 'long');
+  assert.ok(!before.trigger.hits.includes('ltfBos'));
+  // the sweep must be recent: older than triggerMaxAgeCandles (6) → the plain zone-edge stop applies again
+  const stale = source01Long({ ...ctx, levels: levels.map(l => (l.kind === 'asiaLow' ? { ...l, swept: { t: T - 7 * M5, depth: 80, reclaimed: true, reclaimedT: T - 7 * M5 } } : l)) });
+  assert.equal(evaluate(stale).sides.long.stop, 85120 - 10, 'a 7-candle-old sweep no longer anchors');
+  // an unreclaimed sweep never anchors
+  const un = source01Long({ ...ctx, levels: levels.map(l => (l.kind === 'asiaLow' ? { ...l, swept: { t: T, depth: 80, reclaimed: false, reclaimedT: null } } : l)) });
+  assert.equal(evaluate(un).sides.long.stop, 85120 - 10);
+});
+
+test('deltaConfirms is a confirmation, never the only trigger; a PROXY delta is not awarded at all (review finding czt.mjs:156, source 05 §3)', () => {
+  // green candle at the zone, no sweep / engulf / absorption / divergence / break — only the closing delta agrees
+  const base = source01Long({ sweeps: [], engulfing: null, deltaInfo: { value: 30, source: 'trades' } });
+  const r = evaluate(base);
+  assert.equal(r.setup, null);
+  assert.deepEqual(r.sides.long.trigger.hits, ['deltaConfirms']); assert.deepEqual(r.sides.long.trigger.real, []); assert.equal(r.sides.long.trigger.kind, null);
+  assert.ok(r.sides.long.rejections.some(x => /^Only confirmations \(deltaConfirms\) — delta is arithmetic, not a trigger \(source 05 §3\)/.test(x)), r.sides.long.rejections.join('|'));
+  assert.equal(r.sides.long.stop, null, 'no stop / targets are even computed without a real trigger');
+  // the same candle from a feed without a trade tape: the proxy delta is the candle colour — no hit, no reason line
+  const proxy = evaluateSide(source01Long({ sweeps: [], engulfing: null, deltaInfo: { value: 30, source: 'proxy' } }), 'long');
+  assert.deepEqual(proxy.trigger.hits, []);
+  assert.ok(!proxy.reasons.some(x => /Closing delta/.test(x)));
+  // with a real trigger the executed delta still adds its weight and its line
+  const withEng = evaluateSide(source01Long({ sweeps: [], deltaInfo: { value: 30, source: 'trades' } }), 'long');
+  assert.deepEqual(withEng.trigger.hits, ['engulfing', 'deltaConfirms']); assert.deepEqual(withEng.trigger.real, ['engulfing']);
+  assert.ok(withEng.reasons.includes('Closing delta +30 — aggressive buyers lifting the ask (confirmation)'));
+  assert.equal(withEng.score, evaluateSide(source01Long({ sweeps: [], deltaInfo: { value: -30, source: 'trades' } }), 'long').score + CFG.czt.weights['trigger.deltaConfirms']);
+  // the gate is ready for the Pro hits (SPEC-PRO §P5)
+  for (const k of ['footprintImbalance', 'trappedTraders', 'bookAbsorption']) assert.ok(REAL_TRIGGERS.has(k), k);
+  for (const k of ['deltaConfirms', 'unfinishedAuction']) { assert.ok(CONFIRM_ONLY.has(k), k); assert.ok(!REAL_TRIGGERS.has(k)); }
+});
+
+test('cvdDivergence built from a proxy CVD is labelled and does not satisfy the trigger gate (review finding czt.mjs:128)', () => {
+  const base = source01Long({ sweeps: [], engulfing: null, deltaInfo: { value: 0 } });
+  const real = evaluateSide({ ...base, divergence: { kind: 'bullish', t: T - M5, priceSwing: { price: 85050 }, source: 'trades' } }, 'long');
+  assert.deepEqual(real.trigger.real, ['cvdDivergence']); assert.equal(real.trigger.kind, 'cvdDivergence');
+  assert.ok(real.reasons.includes('Price made a lower low at 85,050.00 while CVD made a higher low — effort without result, sellers absorbed'));
+  const proxy = evaluateSide({ ...base, divergence: { kind: 'bullish', t: T - M5, priceSwing: { price: 85050 }, source: 'proxy' } }, 'long');
+  assert.deepEqual(proxy.trigger.hits, ['cvdDivergence'], 'still a weighted confirmation');
+  assert.deepEqual(proxy.trigger.real, []); assert.equal(proxy.trigger.kind, null);
+  assert.ok(proxy.reasons.includes('Price made a lower low at 85,050.00 while CVD made a higher low — effort without result, sellers absorbed (proxy — no trade tape)'));
+  assert.ok(proxy.rejections.some(x => /^Only confirmations \(cvdDivergence\)/.test(x)));
+});
+
+test('targets: the NEXT opposing pool must pay minRr — the engine never measures R past an intervening pool (review finding czt.mjs:242)', () => {
+  // Reviewer's reproduction: long at 1,004 / stop 993 (risk 11); Asia high 1,017 is the next pool at 1.18 R, PDH 1,048 at 4.0 R beyond it.
+  const sym = { id: 'X', dp: 0, tick: 1, contract: { unitsPerLot: 1, label: 'X' } };
+  const cur = { t: T, o: 1000, h: 1005, l: 994, c: 1004, v: 50, buyV: 20, sellV: 30, closed: true };
+  const low = { id: 'asiaLow:996', kind: 'asiaLow', price: 996, t: T - 36e5, tf: '1m', side: 'sell-side', meta: {}, swept: null };
+  const levels = [low, { ...low, id: 'asiaHigh:1017', kind: 'asiaHigh', price: 1017, side: 'buy-side' }, { ...low, id: 'pdh:1048', kind: 'pdh', price: 1048, side: 'buy-side' }];
+  const ctx = source01Long({ symbol: 'X', symbolCfg: sym, atr: 10, lastClosed: cur, store: store([cur]), levels, prevDayProfile: null, engulfing: null,
+    sweeps: [{ t: T, level: low, depth: 2, depthAtr: 0.2, reclaimed: true, candle: cur, reclaimedAfter: 0 }], deltaInfo: { value: -10, source: 'trades' } });
+  const r = evaluate(ctx);
+  assert.equal(r.setup, null);
+  assert.equal(r.sides.long.stop, 993);
+  assert.deepEqual(r.sides.long.targets, []);
+  assert.ok(r.rejections.some(x => /^Next buy-side pool Asia high 1,017 pays only 1\.18 R < minRr 1\.5 — too close to pay for the stop; never target past it/.test(x)), r.rejections.join('|'));
+  // move the Asia high out to 1.5 R+ and it IS the target, PDH second
+  const ok = evaluate({ ...ctx, levels: levels.map(l => (l.kind === 'asiaHigh' ? { ...l, price: 1021 } : l)) });
+  assert.ok(ok.setup); assert.deepEqual(ok.setup.targets.map(t => [t.price, t.kind]), [[1021, 'asiaHigh'], [1048, 'pdh']]);
+  // a swept pool is not "resting liquidity" any more: it neither vetoes nor targets
+  const swept = evaluate({ ...ctx, levels: levels.map(l => (l.kind === 'asiaHigh' ? { ...l, swept: { t: T - 36e5, depth: 3, reclaimed: true } } : l)) });
+  assert.ok(swept.setup); assert.deepEqual(swept.setup.targets.map(t => t.price), [1048]);
+  // value levels (VAH/POC) too close are stepped over, not vetoes: they are magnets, not resting stops
+  const value = evaluate({ ...ctx, levels: [low, levels[2]], prevDayProfile: { poc: 1000, vah: 1012, val: 990 } });
+  assert.ok(value.setup, JSON.stringify(value.rejections)); assert.deepEqual(value.setup.targets.map(t => t.price), [1048]);
+  // a pool outside targetsFrom is neither a target nor a veto (the user chooses which pools count)
+  const cfg = structuredClone(CFG); cfg.czt.targetsFrom = ['pdhPdl'];
+  assert.deepEqual(evaluate({ ...ctx, cfg }).setup.targets.map(t => t.kind), ['pdh']);
+});
+
+test('czt.minStopAtr: a micro stop under a shallow sweep is widened AWAY from entry, rr/targets use the widened stop (review finding "micro stops")', () => {
+  // shallow 0.05 ATR sweep of the Asia low, entry 15 points above the level: raw stop 85,105 is 0.30 ATR from entry 85,135
+  const cur = { t: T, o: 85130, h: 85150, l: 85115, c: 85135, v: 160, buyV: 60, sellV: 100, closed: true };
+  const levels = LEVELS().filter(l => l.kind !== 'asiaHigh');
+  const asiaLow = levels.find(l => l.kind === 'asiaLow');
+  const ctx = source01Long({ lastClosed: cur, store: store([cur]), levels, engulfing: null, absorption: { side: 'bullish', t: T, delta: -40 },
+    sweeps: [{ t: T, level: asiaLow, depth: 5, depthAtr: 0.05, reclaimed: true, candle: cur, reclaimedAfter: 0 }], deltaInfo: { value: -40, source: 'trades' } });
+  const r = evaluate(ctx), s = r.setup;
+  assert.ok(s, JSON.stringify(r.rejections));
+  assert.equal(s.stop, 85135 - 0.35 * ATR, 'entry − minStopAtr × ATR');
+  assert.deepEqual(s.stopWidened, { from: 85105, to: 85100, minStopAtr: 0.35 });
+  assert.ok(Math.abs(s.rr - (s.targets[0].price - 85135) / 35) < 1e-9, 'R measured against the widened stop');
+  assert.equal(s.targets[0].kind, 'poc', 'the prior-day POC above is the nearest magnet');
+  assert.ok(s.reasons.includes('Stop widened from 85,105.00 to 85,100.00 — the manipulation low 85,115.00 sits 0.30 ATR from entry, under czt.minStopAtr 0.35 (a stop inside the spread is fiction; widened away from entry, never toward it)'), s.reasons.join('\n'));
+  assert.equal(s.invalidation, 'close below 85,100.00 (manipulation low 85,115.00, widened to 0.35 ATR minimum)');
+  assert.equal(s.reasons.length, s.condition.hits.length + s.zone.hits.length + s.trigger.hits.length + 1, 'one extra line for the widening');
+  // the setting is honoured: 0 disables it; maxStopAtr still applies after widening
+  const cfg0 = structuredClone(CFG); cfg0.czt.minStopAtr = 0;
+  const raw = evaluate({ ...ctx, cfg: cfg0 }).setup;
+  assert.equal(raw.stop, 85105); assert.equal(raw.stopWidened, undefined);
+  const cfgBig = structuredClone(CFG); cfgBig.czt.minStopAtr = 2.5; cfgBig.czt.maxStopAtr = 2;
+  assert.ok(evaluate({ ...ctx, cfg: cfgBig }).rejections.some(x => /2\.50 ATR from entry > maxStopAtr 2/.test(x)));
+  // a stop already wider than the minimum is never touched
+  assert.equal(evaluate(source01Long()).setup.stop, 85030);
+});
+
+test('zones: prior-day LVNs are zones but never targets; the previous 4h candle high/low is a first-class level (review findings czt.mjs:166, liquidity.mjs:137)', () => {
+  const lvnLevels = LEVELS().filter(l => !['asiaHigh', 'asiaLow'].includes(l.kind));
+  lvnLevels.push({ id: 'lvn:1', kind: 'lvn', price: 85130, t: T - 36e5, tf: '1m', side: 'sell-side', meta: { source: 'prevDayProfile' }, swept: null });
+  lvnLevels.push({ id: 'lvn:2', kind: 'lvn', price: 85700, t: T - 36e5, tf: '1m', side: 'buy-side', meta: { source: 'prevDayProfile' }, swept: null });
+  const cur = { t: T, o: 85200, h: 85330, l: 85110, c: 85320, v: 50, buyV: 17.5, sellV: 32.5, closed: true };
+  const ctx = source01Long({ lastClosed: cur, levels: lvnLevels, sweeps: [], prevDayProfile: null, deltaInfo: { value: 20, source: 'trades' } });
+  const r = evaluateSide(ctx, 'long');
+  assert.ok(r.trigger.hits.includes('engulfing'));
+  assert.deepEqual(r.zone.hits, ['valueArea'], 'the LVN is a zone (weight group valueArea)');
+  assert.ok(r.reasons.includes('At prior-day LVN 85,130.00 (low-volume node — rejection boundary)'));
+  assert.equal(r.zone.level.kind, 'lvn');
+  assert.ok(r.setup, JSON.stringify(r.rejections));
+  assert.ok(!r.setup.targets.some(t => t.kind === 'lvn'), 'an LVN above entry is never a target');
+  assert.equal(r.setup.stop, 85110 - 10, 'no sweep → the candle low under the LVN, − buffer');
+  // previous 4h candle low as the swept level
+  const pcl = { id: 'prevCandleLow:1', kind: 'prevCandleLow', price: 85120, t: T - 144e5, tf: '4h', side: 'sell-side', meta: { tf: '4h' }, swept: null };
+  const pch = { id: 'prevCandleHigh:1', kind: 'prevCandleHigh', price: 85900, t: T - 144e5, tf: '4h', side: 'buy-side', meta: { tf: '4h' }, swept: null };
+  const base = source01Long();
+  const levels = base.levels.filter(l => l.kind !== 'asiaLow').concat([pcl, pch]);
+  const r2 = evaluate({ ...base, levels, sweeps: [{ ...base.sweeps[0], level: pcl }] });
+  assert.ok(r2.setup, JSON.stringify(r2.rejections));
+  assert.ok(r2.setup.zone.hits.includes('prevCandle'));
+  assert.ok(r2.setup.reasons.includes('Swept sell-side liquidity at previous 4h candle low 85,120.00 and reclaimed (manipulation low 85,040.00)'));
+  assert.equal(r2.setup.score, 10 - CFG.czt.weights['zone.sessionHighLow'] + CFG.czt.weights['zone.prevCandle']);
+  assert.ok(!r2.setup.targets.some(t => t.kind === 'prevCandleHigh'), 'prevCandle is not in targetsFrom by default');
+  assert.equal(levelLabel(pch), 'previous 4h candle high');
 });
 
 test('evaluate is pure: same ctx → identical result, ctx untouched, no clock', () => {
@@ -140,11 +290,17 @@ test('targets: opposing side only, never a swept pool, each ≥ minRr, nearest f
   assert.deepEqual(s.targets.map(t => t.price), [86000, 86300, 86500]);
   assert.ok(s.targets.every((t, i, a) => i === 0 || t.price > a[i - 1].price));
   // nothing beyond entry pays ≥ 1.5 R → no setup, with the nearest named
-  const tight = source01Long();
-  tight.levels = tight.levels.filter(l => l.side === 'sell-side' || l.price <= 85600);
+  // the Asia high at 85,500 is the NEXT buy-side pool and pays only 0.62 R → the trade is vetoed, not re-targeted past it
+  const tight = source01Long({ levels: LEVELS() });
   const r = evaluate(tight);
   assert.equal(r.setup, null);
-  assert.ok(r.rejections.some(x => /No opposing \(buy-side\) liquidity giving ≥ 1\.5 R — nearest Asia high 85,500\.00 is 0\.62 R/.test(x)), r.rejections.join('|'));
+  assert.ok(r.rejections.some(x => /^Next buy-side pool Asia high 85,500\.00 pays only 0\.62 R < minRr 1\.5/.test(x)), r.rejections.join('|'));
+  // nothing beyond entry pays and there is no pool to blame: the nearest candidate (a value edge) is named
+  const nothing = source01Long();
+  nothing.levels = nothing.levels.filter(l => l.side === 'sell-side');
+  const r1 = evaluate(nothing);
+  assert.equal(r1.setup, null);
+  assert.ok(r1.rejections.some(x => /No opposing \(buy-side\) liquidity giving ≥ 1\.5 R — nearest prior-day VAH 85,600\.00 is 0\.97 R/.test(x)), r1.rejections.join('|'));
   const none = source01Long(); none.levels = none.levels.filter(l => l.side === 'sell-side'); none.prevDayProfile = null;
   assert.ok(evaluate(none).rejections.some(x => /No opposing \(buy-side\) liquidity above entry to target \(source 04\)/.test(x)));
 });
@@ -152,7 +308,8 @@ test('targets: opposing side only, never a swept pool, each ≥ minRr, nearest f
 test('short mirror: sweep above a session high in the NY killzone with bearish bias → short, stop at the manipulation high + buffer, sell-side targets', () => {
   const prev = { t: T - M5, o: 85320, h: 85430, l: 85310, c: 85420, v: 40, closed: true };
   const cur = { t: T, o: 85400, h: 85580, l: 85300, c: 85310, v: 60, buyV: 39, sellV: 21, closed: true };
-  const levels = LEVELS(); levels.push(lvl('equalLows', 84500, { tf: '5m' }));
+  // no Asia low / Late-NY low: at 0.68 R / 1.46 R they would be the next sell-side pool and veto the short (sources 02/04)
+  const levels = LEVELS().filter(l => !['asiaLow', 'sessionLow'].includes(l.kind)); levels.push(lvl('equalLows', 84500, { tf: '5m' }));
   const hi = levels.find(l => l.kind === 'asiaHigh'); // 85,500
   const ctx = source01Long({
     store: store([prev, cur]), lastClosed: cur, bias: { dir: 'bearish', strength: 0.4, reasons: [] },
@@ -165,7 +322,7 @@ test('short mirror: sweep above a session high in the NY killzone with bearish b
   assert.equal(s.id, `BTCUSD-${T}-short`); assert.equal(s.side, 'short');
   assert.equal(s.entry, 85310); assert.equal(s.stop, 85580 + 10);
   assert.deepEqual(s.trigger.hits, ['sweepReclaim', 'engulfing']);
-  assert.deepEqual(s.targets.map(t => t.price), [84800, 84500], 'Asia low (0.68 R), VAL (1.11 R) and Late NY low (1.46 R) are too close');
+  assert.deepEqual(s.targets.map(t => t.price), [84800, 84500], 'the VAL (1.11 R) is a value edge, stepped over; PDL then equal lows');
   assert.ok(s.reasons.includes('Swept buy-side liquidity at Asia high 85,500.00 and reclaimed (manipulation high 85,580.00)'));
   assert.ok(s.reasons.some(x => /^New York killzone — distribution window/.test(x)));
   assert.equal(s.invalidation, 'close above 85,590.00 (manipulation high 85,580.00 + 0.1 ATR buffer)');
@@ -259,9 +416,10 @@ test('triggers: CVD divergence and structure break age out; BOS must come after 
   const down = evaluateSide({ ...base, structure: { trend: 'bearish', lastBos: { t: T, price: 85250, dir: 'down' }, lastChoch: null } }, 'long');
   assert.ok(!down.trigger.hits.includes('ltfBos'));
 
-  const delta = evaluateSide({ ...base, deltaInfo: { value: 22.5, source: 'proxy' } }, 'long');
+  const delta = evaluateSide({ ...base, deltaInfo: { value: 22.5, source: 'trades' } }, 'long');
   assert.ok(delta.trigger.hits.includes('deltaConfirms'));
-  assert.ok(delta.reasons.includes('Closing delta +22.5 — aggressive buyers lifting the ask (proxy — no trade tape)'));
+  assert.ok(delta.reasons.includes('Closing delta +22.5 — aggressive buyers lifting the ask (confirmation)'));
+  assert.ok(!evaluateSide({ ...base, deltaInfo: { value: 22.5, source: 'proxy' } }, 'long').trigger.hits.includes('deltaConfirms'), 'a proxy delta is the candle colour, not flow');
   assert.ok(evaluateSide({ ...base, deltaInfo: 40 }, 'long').trigger.hits.includes('deltaConfirms'), 'a bare number works too');
   assert.ok(!evaluateSide({ ...base, deltaInfo: { value: 0 } }, 'long').trigger.hits.includes('deltaConfirms'));
 });
@@ -294,9 +452,9 @@ test('absorption must be on the trigger candle and on the right side; a delayed-
 });
 
 test('a sweep level missing from ctx.levels still counts as the zone (price demonstrably reached it)', () => {
-  const ctx = source01Long({ levels: LEVELS().filter(l => l.kind !== 'asiaLow'), prevDayProfile: null });
+  const ctx = source01Long({ levels: LEVELS().filter(l => l.kind !== 'asiaLow' && l.kind !== 'asiaHigh'), prevDayProfile: null });
   const r = evaluate(ctx);
-  assert.ok(r.setup);
+  assert.ok(r.setup, JSON.stringify(r.rejections));
   assert.deepEqual(r.setup.zone.hits, ['sessionHighLow']);
 });
 
@@ -317,6 +475,8 @@ test('levelLabel and gradeFor speak the sources\' language', () => {
   assert.equal(levelLabel(lvl('sessionLow', 1, { meta: { label: 'London' } })), 'London low');
   assert.equal(levelLabel(lvl('equalLows', 1, { meta: { count: 3 } })), 'equal lows (×3)');
   assert.equal(levelLabel({ kind: 'nakedPoc' }), 'naked POC');
-  assert.equal(levelLabel({ kind: 'lvn' }), 'lvn');
+  assert.equal(levelLabel({ kind: 'lvn' }), 'prior-day LVN');
+  assert.equal(levelLabel({ kind: 'prevCandleLow', meta: { tf: '1h' } }), 'previous 1h candle low');
+  assert.equal(levelLabel({ kind: 'somethingNew' }), 'somethingNew');
   assert.deepEqual([5, 7, 8.99, 9, 12].map(s => gradeFor(s, CFG.czt)), ['C', 'B', 'B', 'A', 'A']);
 });
