@@ -15,6 +15,9 @@ Optional:
     OANDA_INSTRUMENT       XAU_USD (default)
     TG_CHANNELS            comma list of channel titles or ids (default: GOLD VIP,THE WAR ZONE)
     TG_SESSION             path to the Telethon session file (default: <state dir>/executor_tg)
+    TRADINGVIEW_ENABLED        1 to accept signals from the local TradingView webhook listener (default: 0)
+    TRADINGVIEW_WEBHOOK_HOST   bind address for that listener (default: 127.0.0.1)
+    TRADINGVIEW_WEBHOOK_PORT   bind port for that listener (default: 8080)
     SUPABASE_URL / SUPABASE_KEY   PostgREST base + service-role key (worker only)
     TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID   outbound alerts
     DASHBOARD_URL / DASHBOARD_TOKEN         Web Push via the dashboard's /api/push/send
@@ -115,6 +118,10 @@ class Settings:
     tg_session: Path
     tg_channels: tuple
 
+    tv_webhook_host: str
+    tv_webhook_port: int
+    tv_enabled: bool
+
     supabase_url: Optional[str]
     supabase_key: Optional[str]
 
@@ -178,6 +185,9 @@ class Settings:
             "tg_api_hash": mask(self.tg_api_hash),
             "tg_session": str(self.tg_session),
             "tg_channels": list(self.tg_channels),
+            "tv_enabled": self.tv_enabled,
+            "tv_webhook_host": self.tv_webhook_host,
+            "tv_webhook_port": self.tv_webhook_port,
             "supabase_url": self.supabase_url or "(unset)",
             "supabase_key": mask(self.supabase_key),
             "telegram_bot_token": mask(self.telegram_bot_token),
@@ -263,6 +273,9 @@ def load(env_file: Optional[Path] = None, require_broker: bool = True) -> Settin
         tg_api_hash=tg_api_hash,
         tg_session=tg_session,
         tg_channels=channels,
+        tv_webhook_host=(os.environ.get("TRADINGVIEW_WEBHOOK_HOST") or "127.0.0.1").strip(),
+        tv_webhook_port=_int("TRADINGVIEW_WEBHOOK_PORT", 8080),
+        tv_enabled=_bool(os.environ.get("TRADINGVIEW_ENABLED"), False),
         supabase_url=(os.environ.get("SUPABASE_URL") or "").strip().rstrip("/") or None,
         supabase_key=(os.environ.get("SUPABASE_KEY") or "").strip() or None,
         telegram_bot_token=(os.environ.get("TELEGRAM_BOT_TOKEN") or "").strip() or None,
@@ -283,4 +296,4 @@ def load(env_file: Optional[Path] = None, require_broker: bool = True) -> Settin
         state_dir=state_dir,
         dry_run=_bool(os.environ.get("DRY_RUN"), False),
         log_level=(os.environ.get("LOG_LEVEL") or "INFO").upper(),
-    )
+                   )
