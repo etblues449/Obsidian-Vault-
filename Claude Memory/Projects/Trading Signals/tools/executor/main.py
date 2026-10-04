@@ -5,8 +5,12 @@
             → live price + drift check → size (broker spec) → order (SL/TP on fill)
             → record trade → alert
 
-Fills and closes come back on OANDA's transaction stream, so trade closure
-is broker truth, not the bot's guess. Every refusal is an event with a reason.
+Fills and closes come back on the broker's transaction stream (OANDA) or
+position polling (MetaAPI / MetaTrader), so trade closure is broker truth, not
+the bot's guess. Every refusal is an event with a reason.
+
+Broker is chosen by BROKER=oanda|metaapi (config.py). Both clients expose the
+same surface, so everything below is broker-agnostic.
 """
 from __future__ import annotations
 
@@ -19,9 +23,10 @@ import sys
 import threading
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from . import __version__, config, risk
+from .broker.metaapi import MetaApiClient
 from .broker.oanda import OandaClient, OandaError, OrderResult
 from .notify import Notifier, build as build_notifier, esc
 from .parser import parse_signal, validate
@@ -44,7 +49,7 @@ def scorecard_line(st: risk.Stats) -> str:
 
 
 class Executor:
-    def __init__(self, settings: config.Settings, broker: OandaClient, store: Store, notifier: Notifier):
+    def __init__(self, settings: config.Settings, broker: "Union[OandaClient, MetaApiClient]", store: Store, notifier: Notifier):
         self.s = settings
         self.broker = broker
         self.store = store
@@ -59,7 +64,7 @@ class Executor:
     # ---------------------------------------------------------------- startup
     def startup(self) -> None:
         s = self.s
-        log.info("Trade Guard executor v%s — %s — %s", __version__, s.oanda_env.upper(), s.instrument)
+        log.info("Trade Guard executor v%s — %s %s — %s", __version__, s.broker.upper(), s.env.upper(), s.instrument)
         log.info("settings: %s", s.redacted())
         self.account = self.broker.summary()
         self.spec = self.broker.instrument(s.instrument)
@@ -70,11 +75,19 @@ class Executor:
 
         if s.is_live:
             ok, reason = self.live_allowed()
-            self.store.record_event("live_start_check", allowed=ok, reason=reason, override=s.gate_override)
-            if not ok:
+            self.store.record_event("live_start_check", allowed=ok, reason=reason, override=s.gate_override,
+                                    dry_run=s.dry_run)
+            if s.dry_run:
+                # Dry run never sends orders, so it may observe a real-money account
+                # without the override. The gate result is still logged.
+                log.warning("DRY RUN on a LIVE account — no orders will be sent (gate: %s)", reason)
+                self.notifier.send(f"🧪 <b>DRY RUN on LIVE account</b> ({esc(s.instrument)}) — no orders will be sent.\n"
+                                   f"Balance {self.account.balance:.2f} {esc(self.account.currency)}\nGate: {esc(reason)}")
+            elif not ok:
                 raise SystemExit(f"LIVE refused: {reason}")
-            log.warning("LIVE TRADING ENABLED — %s", reason)
-            self.notifier.send(f"⚠️ <b>LIVE executor started</b>\n{esc(reason)}")
+            else:
+                log.warning("LIVE TRADING ENABLED — %s", reason)
+                self.notifier.send(f"⚠️ <b>LIVE executor started</b>\n{esc(reason)}")
         else:
             self.notifier.send(f"🧪 Practice executor started ({esc(s.instrument)}). Balance {self.account.balance:.2f} {esc(self.account.currency)}")
 
@@ -82,8 +95,8 @@ class Executor:
         peak = max(float(state.get("peak_nav") or 0.0), self.account.nav)
         self.store.local.set_state(peak_nav=peak)
         self.reconcile()
-        self.store.record_event("startup", env=s.oanda_env, balance=self.account.balance, nav=self.account.nav,
-                                dry_run=s.dry_run, version=__version__)
+        self.store.record_event("startup", env=s.env, broker=s.broker, balance=self.account.balance,
+                                nav=self.account.nav, dry_run=s.dry_run, version=__version__)
 
         self._spawn(self._txn_stream, "txn-stream")
         self._spawn(self._price_stream, "price-stream")
@@ -106,9 +119,13 @@ class Executor:
         st = self.current_stats()
         cfg = self.store.settings()
         params = risk.GateParams(self.s.min_sample, self.s.min_days, self.s.pf_min, self.s.max_dd_pct)
+        # Gate #6 (FCA-authorised execution broker). MetaAPI is used here for
+        # T4Trade, which is on the FCA warning list — that gate can never pass,
+        # whatever the dashboard says. Live on MetaAPI therefore needs GATE_OVERRIDE.
+        broker_ok = False if self.s.broker == "metaapi" else bool(cfg.get("broker_check", True))
         return risk.funding_gates(st, params,
                                   live_check=bool(cfg.get("live_check", False)),
-                                  broker_check=bool(cfg.get("broker_check", True)))
+                                  broker_check=broker_ok)
 
     def live_allowed(self):
         return risk.can_trade_live(self.gates(), self.s.gate_override)
@@ -195,7 +212,7 @@ class Executor:
         k = self.kill_switch()
         if k:
             return k
-        if s.is_live:
+        if s.is_live and not s.dry_run:
             ok, reason = self.live_allowed()
             if not ok:
                 return reason
@@ -348,7 +365,7 @@ class Executor:
                 self.account = self.broker.summary()
                 st = self.current_stats()
                 self.store.push_status({
-                    "ts": time.time(), "env": self.s.oanda_env, "dry_run": self.s.dry_run,
+                    "ts": time.time(), "env": self.s.env, "broker": self.s.broker, "dry_run": self.s.dry_run,
                     "balance": self.account.balance, "nav": self.account.nav,
                     "open_trades": len(self.store.open_trades()), "kill": self.kill_switch(),
                     "price": self.last_price.mid if self.last_price else None,
@@ -363,16 +380,23 @@ class Executor:
     # ---------------------------------------------------------------- shutdown
     def shutdown(self) -> None:
         self.stop.set()
-        self.store.record_event("shutdown", env=self.s.oanda_env)
+        self.store.record_event("shutdown", env=self.s.env)
 
 
 # -------------------------------------------------------------------- wiring
 
+def make_broker(settings: config.Settings):
+    if settings.broker == "metaapi":
+        return MetaApiClient(settings.metaapi_token, settings.metaapi_account_id,
+                             region=settings.metaapi_region, poll_seconds=settings.metaapi_poll_seconds)
+    return OandaClient(settings.rest_host, settings.stream_host, settings.oanda_token, settings.oanda_account_id)
+
+
 def build(settings: config.Settings) -> Executor:
-    broker = OandaClient(settings.rest_host, settings.stream_host, settings.oanda_token, settings.oanda_account_id)
+    broker = make_broker(settings)
     local = LocalStore(settings.state_dir)
     remote = SupabaseStore(settings.supabase_url, settings.supabase_key) if settings.has_supabase else None
-    store = Store(local, remote, env=settings.oanda_env)
+    store = Store(local, remote, env=settings.env)
     return Executor(settings, broker, store, build_notifier(settings))
 
 
@@ -384,7 +408,7 @@ def check(settings: config.Settings) -> int:
     try:
         acct = ex.broker.summary()
         spec = ex.broker.instrument(settings.instrument)
-        print(f"OANDA {settings.oanda_env}: account {acct.id} {acct.currency} balance {acct.balance:.2f} NAV {acct.nav:.2f} open {acct.open_trade_count}")
+        print(f"{settings.broker.upper()} {settings.env}: account {acct.id} {acct.currency} balance {acct.balance:.2f} NAV {acct.nav:.2f} open {acct.open_trade_count}")
         print(f"{spec.name}: min {spec.minimum_trade_size} units, precision {spec.trade_units_precision}, display {spec.display_precision}dp, margin {spec.margin_rate:.3f}")
         payload = ex.broker.pricing([settings.instrument], home_conversions=True)
         p = ex.broker.price_of(payload, settings.instrument)
@@ -395,10 +419,12 @@ def check(settings: config.Settings) -> int:
         risk_account = acct.balance * settings.risk_pct / 100
         units = risk.units_for(risk_account / factor, sig.entry, sig.sl, spec.trade_units_precision, spec.minimum_trade_size, spec.maximum_order_units)
         print(f"sample sizing: SELL @4334 SL 4340 → risk {risk_account:.2f} {acct.currency} → units {units} (min {spec.minimum_trade_size})")
+        if units is not None and hasattr(ex.broker, "units_to_lots"):
+            print(f"  = {ex.broker.units_to_lots(settings.instrument, units)} lots on MetaTrader")
         if units is None:
             print("  ⚠ below broker minimum at this balance/risk — the executor will REFUSE such signals")
     except OandaError as e:
-        print("OANDA check FAILED:", e)
+        print(f"{settings.broker.upper()} check FAILED:", e)
         ok = False
     if ex.store.remote:
         try:
@@ -466,7 +492,7 @@ async def _run(settings: config.Settings) -> None:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(prog="executor", description="Trade Guard executor (OANDA v20)")
+    ap = argparse.ArgumentParser(prog="executor", description="Trade Guard executor (OANDA v20 or MetaAPI/MetaTrader)")
     ap.add_argument("--login", action="store_true", help="interactive Telegram login (creates the session file)")
     ap.add_argument("--list", action="store_true", help="list channels visible to the Telegram session")
     ap.add_argument("--check", action="store_true", help="connectivity + sizing preflight; sends nothing")
