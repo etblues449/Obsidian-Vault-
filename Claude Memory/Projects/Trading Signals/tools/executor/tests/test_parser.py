@@ -2,8 +2,47 @@ import unittest
 
 from executor.parser import Signal, parse_signal, validate
 
+# Verbatim from the GOLD TARDING HUBB channel, 2026-10-04 12:25 — an entry ZONE and
+# four TPs. The follow-ups ("TP 1 HIT 40+ PIPS DONE", the account-management pitch)
+# must parse as noise, never as new signals.
+GTH_SIGNAL = "XAU/USD GOLD BUY  4177 / 4174\U0001f7eb\U0001f48e\n\nTP 4181\nTP 4184\nTP 4187\nTP 4195\n\nSL 4167"
+GTH_FOLLOWUPS = [
+    "XAU/USD  BUY \U0001f4ca\U0001f4ca\n\n\nTP 1 HIT 40+ PIPS DONE \U0001f4e2\U0001f4e2",
+    "XAU/USD  BUY\n\nTP 2 HIT 70+ PIPS DONE",
+    "TP 3 HIT 100+ PIPS DONE",
+    "Hi guys\U0001f44b\nAre you in Big Loss? And big Running loss\nJoin For Account Management",
+]
+
 
 class ParseTests(unittest.TestCase):
+    def test_gold_tarding_hubb_zone_and_multi_tp(self):
+        s = parse_signal(GTH_SIGNAL)
+        # A BUY zone 4174–4177 is filled at its WORSE edge (4177); tp is the first target.
+        self.assertEqual((s.side, s.entry, s.sl, s.tp), (1, 4177.0, 4167.0, 4181.0))
+        self.assertEqual(s.tps, (4181.0, 4184.0, 4187.0, 4195.0))
+        self.assertEqual(s.entry_zone, (4174.0, 4177.0))
+        self.assertIsNone(validate(s))
+        self.assertAlmostEqual(s.rr, 4 / 10)  # +4 to TP1 against −10 to the stop
+
+    def test_sell_zone_takes_the_lower_edge(self):
+        s = parse_signal("XAU/USD SELL 4183/4180 SL 4190 TP 4170")
+        self.assertEqual((s.side, s.entry, s.entry_zone), (-1, 4180.0, (4180.0, 4183.0)))
+
+    def test_zone_never_crosses_lines_or_eats_sl_tp(self):
+        s = parse_signal("BUY 4177\nSL 4167 / TP 4181")
+        self.assertEqual((s.entry, s.entry_zone, s.sl, s.tp), (4177.0, None, 4167.0, 4181.0))
+
+    def test_gold_tarding_hubb_followups_are_noise(self):
+        for text in GTH_FOLLOWUPS:
+            with self.subTest(text=text[:30]):
+                self.assertIsNone(parse_signal(text))
+
+    def test_single_tp_signals_keep_tps_consistent(self):
+        s = parse_signal("SELL @ 4334 SL 4340 TP 4326")
+        self.assertEqual(s.tps, (4326.0,))
+        self.assertIsNone(s.entry_zone)
+        self.assertEqual(parse_signal("BUY @ 4045 SL 4038").tps, ())
+
     def test_canonical_sell(self):
         s = parse_signal("SELL @ 4334 SL 4340 TP 4326")
         self.assertEqual((s.side, s.entry, s.sl, s.tp), (-1, 4334.0, 4340.0, 4326.0))

@@ -1,7 +1,9 @@
 # Trade Guard — tools
 
-Paper-trading verification pipeline for the GOLD VIP / THE WAR ZONE Telegram
-signals. **Nothing in this folder places real orders.** The point is to make
+Paper-trading verification pipeline for the GOLD VIP / THE WAR ZONE / GOLD TARDING HUBB
+Telegram signals (the third added 2026-10-04 — its `BUY 4177 / 4174` entry zones fill at the
+worse edge and all its TPs are kept, TP1 scored). **Nothing in this folder places real orders.**
+The live-chart analysis engine and dashboard live in `analyst/` (own README). The point is to make
 the channel prove itself on paper, at your risk sizing, before a single pound
 is exposed.
 

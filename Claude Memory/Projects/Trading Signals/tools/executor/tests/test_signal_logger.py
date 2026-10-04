@@ -12,12 +12,43 @@ from pathlib import Path
 from unittest import mock
 
 import signal_logger as sl
+from executor.parser import parse_signal as executor_parse
 from executor.tests.fakes import FakeTelegramClient, FakeTgUser
+from executor.tests.test_parser import GTH_FOLLOWUPS, GTH_SIGNAL
 from executor.tests.test_telegram_source import DUMMY_BOT_TOKEN, LOGIN_INPUT_CASES
 
 
 def run(coro):
     return asyncio.run(coro)
+
+
+class ParserParityTests(unittest.TestCase):
+    """The logger's dict parser and the executor's dataclass parser are twins —
+    a channel format one understands, the other must too."""
+
+    CASES = [
+        GTH_SIGNAL,
+        "SELL @ 4334 SL 4340 TP 4326",
+        "BUY GOLD NOW @ 4045.5\nSL 4038\nTP1 4052\nTP2 4060",
+        "XAU/USD SELL 4183/4180 SL 4190 TP 4170",
+    ]
+
+    def test_gold_tarding_hubb_channel_is_listened_to(self):
+        self.assertIn("GOLD TARDING HUBB", sl.CHANNELS)
+
+    def test_same_result_as_executor_parser(self):
+        for text in self.CASES:
+            with self.subTest(text=text[:30]):
+                d, s = sl.parse_signal(text), executor_parse(text)
+                self.assertEqual((d["side"], d["entry"], d["sl"], d["tp"]), (s.side, s.entry, s.sl, s.tp))
+                self.assertEqual(tuple(d["tps"]), s.tps)
+                self.assertEqual(d["entry_zone"], list(s.entry_zone) if s.entry_zone else None)
+
+    def test_followups_are_noise_in_both(self):
+        for text in GTH_FOLLOWUPS:
+            with self.subTest(text=text[:30]):
+                self.assertIsNone(sl.parse_signal(text))
+                self.assertIsNone(executor_parse(text))
 
 
 class ClassifyTests(unittest.TestCase):

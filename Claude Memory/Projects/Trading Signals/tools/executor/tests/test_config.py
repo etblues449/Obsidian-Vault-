@@ -38,7 +38,7 @@ class LoadTests(unittest.TestCase):
         self.assertEqual(s.stream_host, "https://stream-fxpractice.oanda.com")
         self.assertEqual((s.risk_pct, s.daily_loss_pct, s.max_trades_per_day, s.max_dd_pct), (1.0, 5.0, 3, 20.0))
         self.assertEqual((s.max_open_trades, s.max_entry_drift), (1, 0.5))
-        self.assertEqual(s.tg_channels, ("GOLD VIP", "THE WAR ZONE"))
+        self.assertEqual(s.tg_channels, ("GOLD VIP", "THE WAR ZONE", "GOLD TARDING HUBB"))
         self.assertFalse(s.gate_override)
         self.assertFalse(s.dry_run)
         self.assertEqual(s.kill_switch_file, self.state / "KILL")

@@ -28,7 +28,7 @@ Telegram signal source:
 Optional:
     OANDA_ENV              practice (default) | live
     OANDA_INSTRUMENT       XAU_USD (default) — OANDA only; MetaAPI uses METAAPI_SYMBOL
-    TG_CHANNELS            comma list of channel titles or ids (default: GOLD VIP,THE WAR ZONE)
+    TG_CHANNELS            comma list of channel titles or ids (default: GOLD VIP,THE WAR ZONE,GOLD TARDING HUBB)
     TG_SESSION             path to the Telethon session file (default: <state dir>/executor_tg)
     SIGNAL_SOURCES         comma list of enabled signal sources, e.g. telegram,tradingview (default: telegram)
     TRADINGVIEW_ENABLED        1 to accept signals from the local TradingView webhook listener (default: 0)
@@ -309,7 +309,7 @@ def load(env_file: Optional[Path] = None, require_broker: bool = True) -> Settin
         )
     tg_api_hash = (os.environ.get("TG_API_HASH") or "").strip() or None
     channels = tuple(
-        c.strip() for c in (os.environ.get("TG_CHANNELS") or "GOLD VIP,THE WAR ZONE").split(",") if c.strip()
+        c.strip() for c in (os.environ.get("TG_CHANNELS") or "GOLD VIP,THE WAR ZONE,GOLD TARDING HUBB").split(",") if c.strip()
     )
 
     override_raw = os.environ.get("GATE_OVERRIDE")
