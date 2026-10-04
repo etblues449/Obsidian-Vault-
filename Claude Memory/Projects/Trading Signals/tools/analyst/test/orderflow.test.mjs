@@ -305,16 +305,16 @@ test('profileLevels: poc/vah/val as Level objects with sides', () => {
 });
 
 test('profileLevels: with lvn:true the LVNs OUTSIDE the value area become kind "lvn" zones — side relative to price, merged within lvnMergeTol, capped at lvnMax (review finding czt.mjs:166)', () => {
-  // [100)=20 [101)=0 [102)=0 [103)=5 [104)=0 [105)=0 [106)=20 [107)=50 [108)=20: total 115, POC 107.5, VA = [106,109) (90 ≥ 80.5)
+  // [100)=20 [101)=0 [102)=0 [103)=5 [104)=0 [105)=0 [106)=20 [107)=50 [108)=20: total 115, POC 107.5, VA = [106,109) (90 ≥ 80.5), VAH clamped to 108.5
   // LVN runs: idx 1–2 (centre 102) and idx 4–5 (centre 105) — both below VAL 106 → rejection boundaries
   const cs = [at(T0, 100.5, 20), at(T0 + 3 * M1, 103.5, 5), at(T0 + 6 * M1, 106.5, 20), at(T0 + 7 * M1, 107.5, 50), at(T0 + 8 * M1, 108.5, 20)];
   const p = volumeProfile(cs, { bucket: 1 });
-  assert.equal(p.val, 106); assert.equal(p.vah, 109); assert.deepEqual(p.lvn, [102, 105]);
+  assert.equal(p.val, 106); assert.equal(p.vah, 108.5, 'VAH clamps to the traded range high'); assert.deepEqual(p.lvn, [102, 105]);
   assert.deepEqual(profileLevels(p, { t: T0, price: 104 }).map((l) => l.kind), ['poc', 'vah', 'val'], 'off by default');
   const lv = profileLevels(p, { t: T0, tf: '1m', price: 104, lvn: true });
   const lvns = lv.filter((l) => l.kind === 'lvn');
-  assert.deepEqual(lvns.map((l) => [l.price, l.side, l.meta.count]), [[102, 'sell-side', 1], [105, 'buy-side', 1]]);
-  assert.equal(lvns[0].id, `lvn:${T0}:102`); assert.equal(lvns[0].swept, null); assert.equal(lvns[0].tf, '1m');
+  assert.deepEqual(lvns.map((l) => [l.price, l.side, l.meta.count]), [[105, 'buy-side', 1], [102, 'sell-side', 1]], 'nearest to price first');
+  assert.equal(lvns[1].id, `lvn:${T0}:102`); assert.equal(lvns[1].swept, null); assert.equal(lvns[1].tf, '1m');
   assert.deepEqual(profileLevels(p, { t: T0, price: 104, lvn: true, lvnMergeTol: 3 }).filter((l) => l.kind === 'lvn').map((l) => [l.price, l.meta.count]), [[103.5, 2]], 'merged at the mean');
   const one = profileLevels(p, { t: T0, price: 104.9, lvn: true, lvnMax: 1 }).filter((l) => l.kind === 'lvn');
   assert.deepEqual(one.map((l) => l.price), [105], 'capped to the nearest');
