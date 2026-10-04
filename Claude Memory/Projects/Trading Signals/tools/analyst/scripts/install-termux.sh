@@ -26,6 +26,24 @@ cp "$LINK/analyst/scripts/termux-boot-analyst.sh" "$HOME/.termux/boot/tradeguard
 chmod +x "$HOME/.termux/boot/tradeguard-analyst"
 echo "✓ Termux:Boot script installed at ~/.termux/boot/tradeguard-analyst"
 
+ENV_DIR="$HOME/.config/tradeguard"; ENV_FILE="$ENV_DIR/analyst.env"
+mkdir -p "$ENV_DIR"; chmod 700 "$ENV_DIR"
+if [ ! -f "$ENV_FILE" ]; then
+  cat > "$ENV_FILE" <<'ENVEOF'
+# TradeGuard Analyst — local overrides and secrets. Sourced by ~/.termux/boot/tradeguard-analyst.
+# This file is OUTSIDE the vault on purpose: never paste its contents into a note or a chat.
+# Uncomment what you need. Plain NAME=value lines; the boot script exports them.
+#ANALYST_PORT=8080
+#ANALYST_TELEGRAM_BOT_TOKEN=          # @BotFather token — setup / resolution alerts + 17:05 digest
+#ANALYST_TELEGRAM_CHAT_ID=            # your chat id (message the bot, then api.telegram.org/bot<token>/getUpdates)
+#ANALYST_EXECUTOR_SECRET=             # only if executorBridge.enabled is true in config/strategy.json
+ENVEOF
+  chmod 600 "$ENV_FILE"
+  echo "✓ env template written to $ENV_FILE (chmod 600) — fill in the Telegram vars for alerts"
+else
+  chmod 600 "$ENV_FILE"; echo "✓ $ENV_FILE exists (left unchanged)"
+fi
+
 cd "$LINK/analyst"
 node scripts/check.mjs || { echo "✗ preflight failed — fix the FAIL lines above and re-run"; exit 1; }
 
@@ -45,5 +63,7 @@ cat <<'EOF'
  3. Chrome → http://localhost:8080 → menu ⋮ → 'Add to Home screen' → Install.
 From now on the phone boots → the analyst is already running → tap the icon.
 
+Alerts: put ANALYST_TELEGRAM_BOT_TOKEN + ANALYST_TELEGRAM_CHAT_ID in ~/.config/tradeguard/analyst.env, then
+        pkill -f "analyst/server.mjs" && sh ~/.termux/boot/tradeguard-analyst   (the boot script sources that file)
 Logs: ~/tradeguard-analyst.log · stop: pkill -f "analyst/server.mjs" · update: cd ~/Obsidian-Vault- && git pull
 EOF

@@ -7,11 +7,22 @@
 #
 # Logs: ~/tradeguard-analyst.log   Dashboard: http://localhost:8080
 # Stop:  pkill -f "analyst/server.mjs"
+# Env:   ~/.config/tradeguard/analyst.env (optional) — ANALYST_PORT, ANALYST_TELEGRAM_BOT_TOKEN,
+#        ANALYST_TELEGRAM_CHAT_ID, ANALYST_EXECUTOR_SECRET … sourced here so alerts work from boot.
 
 termux-wake-lock
 
 ANALYST_DIR="$HOME/tradeguard/analyst"   # ~/tradeguard -> the vault's Trading Signals/tools (symlink, see install-termux.sh)
 LOG="$HOME/tradeguard-analyst.log"
+ENV_FILE="$HOME/.config/tradeguard/analyst.env"   # optional: ANALYST_* overrides + Telegram alert vars (chmod 600; never in the vault)
+
+# Secrets and overrides live OUTSIDE the vault, same pattern as the executor's executor.env.
+# Lines are plain `export NAME=value` (or NAME=value — everything set here is exported below).
+if [ -f "$ENV_FILE" ]; then
+  set -a
+  . "$ENV_FILE"
+  set +a
+fi
 
 if pgrep -f "analyst/server.mjs" > /dev/null 2>&1; then
   echo "$(date '+%Y-%m-%d %H:%M:%S') already running" >> "$LOG"
