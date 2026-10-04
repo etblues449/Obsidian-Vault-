@@ -1,3 +1,8 @@
-# The executor is stdlib-only except for the Telegram client.
-# Install on the Pi with:  python3 -m venv ~/tradeguard-venv && ~/tradeguard-venv/bin/python -m pip install -r requirements.txt
+# The executor is stdlib-only except for the Telegram client, the optional
+# TradingView webhook listener, and tzdata (Europe/London day boundaries for
+# the daily caps — Android/Termux has no system timezone database, and without
+# it risk.py silently falls back to UTC).
+# Install with:  python3 -m venv ~/tradeguard-venv && ~/tradeguard-venv/bin/python -m pip install -r requirements.txt
 telethon>=1.36,<2
+aiohttp>=3.9,<4
+tzdata>=2024.1

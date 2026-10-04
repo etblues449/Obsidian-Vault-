@@ -15,9 +15,12 @@ Optional:
     OANDA_INSTRUMENT       XAU_USD (default)
     TG_CHANNELS            comma list of channel titles or ids (default: GOLD VIP,THE WAR ZONE)
     TG_SESSION             path to the Telethon session file (default: <state dir>/executor_tg)
+    SIGNAL_SOURCES         comma list of enabled signal sources, e.g. telegram,tradingview (default: telegram)
     TRADINGVIEW_ENABLED        1 to accept signals from the local TradingView webhook listener (default: 0)
     TRADINGVIEW_WEBHOOK_HOST   bind address for that listener (default: 127.0.0.1)
     TRADINGVIEW_WEBHOOK_PORT   bind port for that listener (default: 8080)
+    TRADINGVIEW_WEBHOOK_SECRET  shared secret TradingView must include in the alert body as "secret":"...".
+                                REQUIRED before this listener will accept anything — see tradingview_source.py.
     SUPABASE_URL / SUPABASE_KEY   PostgREST base + service-role key (worker only)
     TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID   outbound alerts
     DASHBOARD_URL / DASHBOARD_TOKEN         Web Push via the dashboard's /api/push/send
@@ -121,6 +124,8 @@ class Settings:
     tv_webhook_host: str
     tv_webhook_port: int
     tv_enabled: bool
+    tv_webhook_secret: Optional[str]
+    signal_sources: tuple
 
     supabase_url: Optional[str]
     supabase_key: Optional[str]
@@ -188,6 +193,8 @@ class Settings:
             "tv_enabled": self.tv_enabled,
             "tv_webhook_host": self.tv_webhook_host,
             "tv_webhook_port": self.tv_webhook_port,
+            "tv_webhook_secret": mask(self.tv_webhook_secret),
+            "signal_sources": list(self.signal_sources),
             "supabase_url": self.supabase_url or "(unset)",
             "supabase_key": mask(self.supabase_key),
             "telegram_bot_token": mask(self.telegram_bot_token),
@@ -261,6 +268,16 @@ def load(env_file: Optional[Path] = None, require_broker: bool = True) -> Settin
         if not (lo <= val <= hi):
             raise ConfigError(f"{name}={val} is outside the sane range [{lo}, {hi}]")
 
+    tv_enabled = _bool(os.environ.get("TRADINGVIEW_ENABLED"), False)
+    tv_secret = (os.environ.get("TRADINGVIEW_WEBHOOK_SECRET") or "").strip() or None
+    if tv_enabled and not tv_secret:
+        raise ConfigError(
+            "TRADINGVIEW_ENABLED=1 but TRADINGVIEW_WEBHOOK_SECRET is not set. "
+            "Generate one (e.g. `python -c \"import secrets; print(secrets.token_urlsafe(32))\"`), "
+            "set it here, and include the same value as \"secret\" in the TradingView alert's JSON body. "
+            "Without this, the webhook accepts any request from anyone who can reach the port."
+        )
+
     kill_file = Path(os.environ.get("KILL_SWITCH_FILE") or state_dir / "KILL").expanduser()
     tg_session = Path(os.environ.get("TG_SESSION") or state_dir / "executor_tg").expanduser()
 
@@ -275,7 +292,13 @@ def load(env_file: Optional[Path] = None, require_broker: bool = True) -> Settin
         tg_channels=channels,
         tv_webhook_host=(os.environ.get("TRADINGVIEW_WEBHOOK_HOST") or "127.0.0.1").strip(),
         tv_webhook_port=_int("TRADINGVIEW_WEBHOOK_PORT", 8080),
-        tv_enabled=_bool(os.environ.get("TRADINGVIEW_ENABLED"), False),
+        tv_enabled=tv_enabled,
+        tv_webhook_secret=tv_secret,
+        signal_sources=tuple(
+            s.strip().lower()
+            for s in (os.environ.get("SIGNAL_SOURCES") or "telegram").split(",")
+            if s.strip()
+        ),
         supabase_url=(os.environ.get("SUPABASE_URL") or "").strip().rstrip("/") or None,
         supabase_key=(os.environ.get("SUPABASE_KEY") or "").strip() or None,
         telegram_bot_token=(os.environ.get("TELEGRAM_BOT_TOKEN") or "").strip() or None,
@@ -296,4 +319,4 @@ def load(env_file: Optional[Path] = None, require_broker: bool = True) -> Settin
         state_dir=state_dir,
         dry_run=_bool(os.environ.get("DRY_RUN"), False),
         log_level=(os.environ.get("LOG_LEVEL") or "INFO").upper(),
-                   )
+    )

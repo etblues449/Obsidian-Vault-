@@ -433,10 +433,36 @@ async def _run(settings: config.Settings) -> None:
             loop.add_signal_handler(s, _sig)
         except (NotImplementedError, RuntimeError):  # pragma: no cover
             _signal.signal(s, _sig)
+
+    tasks = []
+    if "telegram" in settings.signal_sources:
+        tasks.append(asyncio.create_task(telegram_source.listen(settings, on_message, stop), name="telegram"))
+    if "tradingview" in settings.signal_sources and settings.tv_enabled:
+        from . import tradingview_source
+        tasks.append(asyncio.create_task(
+            tradingview_source.start_webhook_server(
+                settings.tv_webhook_host, settings.tv_webhook_port, on_message,
+                secret=settings.tv_webhook_secret, stop=stop,
+            ),
+            name="tradingview",
+        ))
+    if not tasks:
+        raise SystemExit(f"SIGNAL_SOURCES={list(settings.signal_sources)} has no enabled, recognised source "
+                         "(\'telegram\', \'tradingview\' with TRADINGVIEW_ENABLED=1)")
+    log.info("signal sources active: %s", [t.get_name() for t in tasks])
+
     try:
-        await telegram_source.listen(settings, on_message, stop)
+        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+        stop.set()
+        for p in pending:
+            p.cancel()
+        for d in done:
+            exc = d.exception()
+            if exc:
+                raise exc
     finally:
         ex.shutdown()
+
 
 
 def main(argv=None) -> int:
