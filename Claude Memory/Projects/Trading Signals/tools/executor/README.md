@@ -1,4 +1,4 @@
-# Trade Guard executor — OANDA v20, XAU_USD
+# Trade Guard executor — OANDA v20 or MetaTrader (via MetaAPI), gold
 
 One persistent Python process on a Raspberry Pi that turns GOLD VIP Telegram
 signals into OANDA orders with broker-side stop-loss and take-profit, under
@@ -79,6 +79,48 @@ cd ~/tradeguard
 `--check` prints a sample sizing for `SELL @ 4334 SL 4340`. If it says the
 result is below the broker minimum, the executor **will refuse** such
 signals at that balance/risk — it never rounds up to the minimum.
+
+## Broker option: MetaTrader 4/5 via MetaAPI (T4Trade)
+
+`BROKER=metaapi` routes everything through [metaapi.cloud](https://metaapi.cloud)'s REST API
+(`broker/metaapi.py`, stdlib only). MetaAPI's free tier covers one MetaTrader account.
+
+**Before you enable it, read this.** T4Trade is on the FCA warning list (no FSCS, no Financial
+Ombudsman). On `BROKER=metaapi` funding gate #6 is **hard-wired to FAIL**, so live orders are
+impossible without `GATE_OVERRIDE`. That is deliberate. Test a small withdrawal first.
+
+### Setup (phone-only)
+1. app.metaapi.cloud → **Add account** → MetaTrader 4, your T4Trade login, the **investor
+   password is NOT enough** for trading (it is read-only) — use the master password — and the
+   server name exactly as MT4 shows it (MT4 → Settings → Accounts).
+2. Wait until the account shows **Deployed / Connected**. Copy its **account id** (a UUID — not your MT4 login).
+3. app.metaapi.cloud/token → copy the API token.
+4. In `~/.config/tradeguard/executor.env` (chmod 600):
+   ```
+   BROKER=metaapi
+   METAAPI_TOKEN=<token>
+   METAAPI_ACCOUNT_ID=<uuid>
+   METAAPI_ENV=live            # live = real money (default). demo for a demo MT4 account.
+   METAAPI_SYMBOL=XAUUSD       # exact Market Watch name on your account
+   DRY_RUN=1                   # start here
+   ```
+5. `python -m executor --check` — prints balance, symbol spec, live bid/ask and a sample
+   sizing **in lots**. Fix anything it flags before running.
+6. `python -m executor --dry-run` — runs the full loop against the real account and sends nothing.
+   Dry run is allowed on a live account **without** the override; every signal is sized and logged.
+
+### How it maps
+| Executor concept | MetaTrader / MetaAPI |
+|---|---|
+| units | contract units (`lots × contractSize`, e.g. ounces for XAUUSD) |
+| order | `POST /trade` `ORDER_TYPE_BUY/SELL`, volume floored to `volumeStep` (never oversizes) |
+| trade id | MT position id |
+| close events | positions polled every `METAAPI_POLL_SECONDS` (default 10); a vanished position is read from history deals and emitted as a close with realised P&L incl. commission and swap |
+| region | auto-detected via the provisioning API (`METAAPI_REGION` overrides) |
+| account currency ≠ USD | converted with MetaAPI's `lossTickValue` |
+
+A network failure **after** an order is submitted is reported as `UNCERTAIN` (the order may
+exist); the next reconcile adopts any position it finds.
 
 ## Run as a service
 
@@ -170,8 +212,10 @@ cd ~/tradeguard && ~/tradeguard-venv/bin/python -m unittest discover -s executor
 
 Stdlib `unittest`; no network. Covers the parser, sizing/stats/gates/guards,
 the OANDA client (request shapes, fills, cancels, rejects, streaming), the
-stores, config validation (including the 32-bit `api_id` check), and the full
-executor loop against a fake broker.
+MetaAPI client (`test_metaapi.py`: region lookup, lot conversion, rejects,
+uncertain submits, close detection by polling, gate #6 hard-fail, dry run on a
+live account), the stores, config validation (including the 32-bit `api_id`
+check), and the full executor loop against a fake broker.
 
 ## Troubleshooting
 
@@ -181,3 +225,8 @@ executor loop against a fake broker.
 - `cancelled: MARKET_HALTED` / `FOK` cancels — market closed (gold is closed Fri 22:00 → Sun 23:00 London) or price moved during the request; nothing is retried, the signal is logged as failed.
 - "below broker minimum" — increase the balance or `RISK_PCT`, or accept that sub-minimum signals are skipped. Do not lower the broker minimum by hand: it is not yours to change.
 - Telegram session invalid after a phone-side "terminate session" — run `--login` again.
+- MetaAPI `NOT_DEPLOYED` — the account is undeployed in app.metaapi.cloud (accounts idle for a while are undeployed automatically); press Deploy and wait for Connected.
+- MetaAPI `NO_INSTRUMENT` — `METAAPI_SYMBOL` does not match the broker's symbol name exactly (suffixes like `.r`, `m`, `#` matter); copy it from MT4 Market Watch.
+- MetaAPI `TRADE_RETCODE_INVALID_STOPS` — SL/TP inside the broker's stop level, or on the wrong side of the current price.
+- MetaAPI `TRADE_RETCODE_NO_MONEY` — not enough free margin at the account's leverage for that lot size.
+- MetaAPI order reported `UNCERTAIN` — the network dropped after submit. Check MT4; restarting the executor adopts any position that exists.
