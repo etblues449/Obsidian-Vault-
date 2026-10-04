@@ -28,3 +28,6 @@ __pycache__/
 
 # TradeGuard Analyst runtime journal — regenerable, device-local
 Claude Memory/Projects/Trading Signals/tools/analyst/data/
+
+# Playwright MCP session artefacts (browser checks)
+.playwright-mcp/

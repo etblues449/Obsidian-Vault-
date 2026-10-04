@@ -28,5 +28,7 @@ cd "$ANALYST_DIR" || exit 1
 if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 5000000 ]; then mv "$LOG" "$LOG.1"; fi
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') starting node $(node --version)" >> "$LOG"
+# Launched by its FULL path on purpose: the pgrep/pkill guards above and in the runbook match
+# "analyst/server.mjs" against the command line, and a bare `node server.mjs` would never match.
 ANALYST_HOST="${ANALYST_HOST:-127.0.0.1}" ANALYST_PORT="${ANALYST_PORT:-8080}" \
-  nohup node server.mjs >> "$LOG" 2>&1 &
+  nohup node "$ANALYST_DIR/server.mjs" >> "$LOG" 2>&1 &
