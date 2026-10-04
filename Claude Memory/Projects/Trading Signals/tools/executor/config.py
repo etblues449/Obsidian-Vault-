@@ -5,14 +5,29 @@ Everything comes from environment variables, optionally seeded from
 Nothing here is ever written into the vault — the vault holds only the
 *names* of these variables (CLAUDE.md rule).
 
-Required to trade:
+Broker selection:
+    BROKER                 oanda (default) | metaapi
+
+Required to trade with BROKER=oanda:
     OANDA_TOKEN            personal access token (Manage API Access)
     OANDA_ACCOUNT_ID       e.g. 001-004-1234567-001
+
+Required to trade with BROKER=metaapi (MetaTrader 4/5 via metaapi.cloud, e.g. T4Trade):
+    METAAPI_TOKEN          API/account access token from app.metaapi.cloud
+    METAAPI_ACCOUNT_ID     the MetaAPI account id (a UUID, NOT the MT4 login number)
+  Optional:
+    METAAPI_ENV            live (default) | demo — what the MT account really is. live = real money:
+                           the live gate applies and gate #6 (FCA broker) is always FAILED.
+    METAAPI_SYMBOL         broker symbol name (default XAUUSD — check Market Watch for the exact name)
+    METAAPI_REGION         force a region (default: auto-detected via the provisioning API)
+    METAAPI_POLL_SECONDS   position/price polling interval (default 10, minimum 3)
+
+Telegram signal source:
     TG_API_ID / TG_API_HASH  my.telegram.org (read-only user session)
 
 Optional:
     OANDA_ENV              practice (default) | live
-    OANDA_INSTRUMENT       XAU_USD (default)
+    OANDA_INSTRUMENT       XAU_USD (default) — OANDA only; MetaAPI uses METAAPI_SYMBOL
     TG_CHANNELS            comma list of channel titles or ids (default: GOLD VIP,THE WAR ZONE)
     TG_SESSION             path to the Telethon session file (default: <state dir>/executor_tg)
     SIGNAL_SOURCES         comma list of enabled signal sources, e.g. telegram,tradingview (default: telegram)
@@ -151,9 +166,24 @@ class Settings:
     dry_run: bool
     log_level: str
 
+    broker: str = "oanda"
+    metaapi_token: Optional[str] = None
+    metaapi_account_id: Optional[str] = None
+    metaapi_region: Optional[str] = None
+    metaapi_env: str = "live"
+    metaapi_poll_seconds: float = 10.0
+
     @property
     def is_live(self) -> bool:
+        if self.broker == "metaapi":
+            return self.metaapi_env == "live"
         return self.oanda_env == "live"
+
+    @property
+    def env(self) -> str:
+        """Effective environment label used in logs, events and stored rows:
+        'live' (real money) or 'practice' (paper/demo), whatever the broker."""
+        return "live" if self.is_live else "practice"
 
     @property
     def rest_host(self) -> str:
@@ -182,6 +212,13 @@ class Settings:
                 return "(unset)"
             return v[:4] + "…" + v[-2:] if len(v) > 8 else "***"
         return {
+            "broker": self.broker,
+            "env": self.env,
+            "metaapi_account_id": self.metaapi_account_id or "(unset)",
+            "metaapi_token": mask(self.metaapi_token),
+            "metaapi_region": self.metaapi_region or "(auto)",
+            "metaapi_env": self.metaapi_env,
+            "metaapi_poll_seconds": self.metaapi_poll_seconds,
             "oanda_env": self.oanda_env,
             "oanda_account_id": self.oanda_account_id,
             "oanda_token": mask(self.oanda_token),
@@ -233,13 +270,35 @@ def load(env_file: Optional[Path] = None, require_broker: bool = True) -> Settin
     if env not in HOSTS:
         raise ConfigError(f"OANDA_ENV must be 'practice' or 'live', got {env!r}")
 
+    broker = (os.environ.get("BROKER") or "oanda").strip().lower()
+    if broker not in ("oanda", "metaapi"):
+        raise ConfigError(f"BROKER must be 'oanda' or 'metaapi', got {broker!r}")
+
     token = (os.environ.get("OANDA_TOKEN") or "").strip()
     account = (os.environ.get("OANDA_ACCOUNT_ID") or "").strip()
-    if require_broker and (not token or not account):
+    if broker == "oanda" and require_broker and (not token or not account):
         raise ConfigError(
             "OANDA_TOKEN and OANDA_ACCOUNT_ID are required "
             f"(set them in the environment or {state_dir / 'executor.env'})"
         )
+
+    mt_token = (os.environ.get("METAAPI_TOKEN") or "").strip() or None
+    mt_account = (os.environ.get("METAAPI_ACCOUNT_ID") or "").strip() or None
+    if broker == "metaapi" and require_broker and (not mt_token or not mt_account):
+        raise ConfigError(
+            "BROKER=metaapi needs METAAPI_TOKEN and METAAPI_ACCOUNT_ID "
+            f"(set them in the environment or {state_dir / 'executor.env'})"
+        )
+    mt_env = (os.environ.get("METAAPI_ENV") or "live").strip().lower()
+    if mt_env not in ("live", "demo"):
+        raise ConfigError(f"METAAPI_ENV must be 'live' or 'demo', got {mt_env!r}")
+    mt_poll = _float("METAAPI_POLL_SECONDS", 10.0)
+    if mt_poll < 3:
+        raise ConfigError(f"METAAPI_POLL_SECONDS={mt_poll} is below 3 — that would hammer MetaAPI's rate limits")
+    if broker == "metaapi":
+        instrument = (os.environ.get("METAAPI_SYMBOL") or "XAUUSD").strip()
+    else:
+        instrument = (os.environ.get("OANDA_INSTRUMENT") or "XAU_USD").strip()
 
     tg_id_raw = (os.environ.get("TG_API_ID") or "").strip()
     tg_api_id = int(tg_id_raw) if tg_id_raw else None
@@ -285,7 +344,7 @@ def load(env_file: Optional[Path] = None, require_broker: bool = True) -> Settin
         oanda_env=env,
         oanda_token=token,
         oanda_account_id=account,
-        instrument=(os.environ.get("OANDA_INSTRUMENT") or "XAU_USD").strip(),
+        instrument=instrument,
         tg_api_id=tg_api_id,
         tg_api_hash=tg_api_hash,
         tg_session=tg_session,
@@ -319,4 +378,10 @@ def load(env_file: Optional[Path] = None, require_broker: bool = True) -> Settin
         state_dir=state_dir,
         dry_run=_bool(os.environ.get("DRY_RUN"), False),
         log_level=(os.environ.get("LOG_LEVEL") or "INFO").upper(),
+        broker=broker,
+        metaapi_token=mt_token,
+        metaapi_account_id=mt_account,
+        metaapi_region=(os.environ.get("METAAPI_REGION") or "").strip() or None,
+        metaapi_env=mt_env,
+        metaapi_poll_seconds=mt_poll,
     )
