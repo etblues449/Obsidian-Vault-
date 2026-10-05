@@ -79,7 +79,16 @@ export function createServer({ analyst, log, journal = null, publicDir = PUBLIC_
   log.on('event', onLog);
   analyst.on('candle', onCandle); analyst.on('setup', onSetup); analyst.on('status', onStatus); analyst.on('levels', onLevels);
   analyst.on('footprint', onFootprint); analyst.on('book', onBook);
-  const heartbeat = T.setInterval(() => { for (const res of clients) { if (res.destroyed) clients.delete(res); else res.write(': hb\n\n'); } }, HEARTBEAT_MS);
+  // Heartbeat writes guarded with try-catch to prevent process crash if res.write() throws (SPEC-PRO §P6 finding)
+  const heartbeat = T.setInterval(() => {
+    for (const res of clients) {
+      if (res.destroyed) clients.delete(res);
+      else {
+        try { res.write(': hb\n\n'); }
+        catch (e) { clients.delete(res); res.destroy(); }
+      }
+    }
+  }, HEARTBEAT_MS);
   if (heartbeat && typeof heartbeat.unref === 'function') heartbeat.unref();
 
   function sse(req, res) {

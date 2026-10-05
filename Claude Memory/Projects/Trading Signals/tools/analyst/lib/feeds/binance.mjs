@@ -191,6 +191,8 @@ export class BinanceFeed extends FeedAdapter {
       ws = new this.d.WebSocket(`${WS_BASE}?streams=${this.streams().join('/')}`);
     } catch (e) { this._onFailure(`socket constructor: ${e.message}`); return; }
     this.ws = ws;
+    // Reset depth frame sequence on reconnect to accept fresh frames (SPEC-PRO §P2 finding)
+    this._lastDepthId = undefined;
     let watchdog = null, cleanTimer = null;
     const alive = () => this.ws === ws && gen === this._wsGen && !this._closed;
     const kick = () => {

@@ -266,9 +266,14 @@ export class Journal extends EventEmitter {
     this.paths = Object.fromEntries(Object.entries(FILES).map(([k, f]) => [k, join(this.dir, f)]));
     this._setups = new Map();   // id → setup (open or resolved), insertion = creation order
     this._open = new Map();     // id → setup (status 'open')
+    this._dirEnsured = false;
   }
 
-  _ensureDir() { this.fs.mkdirSync(this.dir, { recursive: true }); }
+  _ensureDir() {
+    if (this._dirEnsured) return;
+    this.fs.mkdirSync(this.dir, { recursive: true });
+    this._dirEnsured = true;
+  }
   _append(path, obj) { this._ensureDir(); this.fs.appendFileSync(path, JSON.stringify(obj) + '\n'); }
   _readLines(path) {
     let text;

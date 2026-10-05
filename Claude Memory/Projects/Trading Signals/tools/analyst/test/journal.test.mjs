@@ -454,4 +454,25 @@ describe('cancel / list / misc', () => {
     assert.throws(() => j.record(mkSetup()), /EACCES/);
     assert.equal(j.open().length, 0);                                               // nothing half-recorded in memory either
   });
+  test('mkdirSync is called once on the first append; if the dir becomes read-only, the error comes from appendFileSync', () => {
+    let mkdirCount = 0;
+    let appendCount = 0;
+    const fs = {
+      mkdirSync() { mkdirCount++; },
+      appendFileSync() {
+        appendCount++;
+        if (appendCount >= 3) throw new Error('dir became read-only'); // third append fails
+      },
+      readFileSync() { const e = new Error('x'); e.code = 'ENOENT'; throw e; }
+    };
+    const j = new Journal({ cfg, fs });
+    j.record(mkSetup());
+    assert.equal(mkdirCount, 1, 'mkdirSync called once on first append');
+    assert.equal(appendCount, 1, 'appendFileSync called on first append');
+    j.record(mkSetup({ id: 's2' }));
+    assert.equal(mkdirCount, 1, 'mkdirSync not called again on second append');
+    assert.equal(appendCount, 2, 'appendFileSync called on second append');
+    assert.throws(() => j.record(mkSetup({ id: 's3' })), /dir became read-only/, 'third write error comes from appendFileSync, not mkdirSync');
+    assert.equal(mkdirCount, 1, 'mkdirSync still called only once (cached)');
+  });
 });

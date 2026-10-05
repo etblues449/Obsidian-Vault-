@@ -45,6 +45,7 @@ export const ORDERBOOK_DEFAULTS = Object.freeze({
   levels: 20, wallMult: 5, pullWindowMs: 3000, absorbRatio: 0.5, absorbWindowSec: 120, imbalanceMin: 0.25, historySeconds: 600,
 });
 const EPS = 1e-9;
+const MAX_SNAPSHOTS = 2000;  // Hard limit on history ring size to prevent unbounded growth on slow feeds (SPEC-PRO §P6 finding)
 
 /** cfg.orderbook merged over the §P5 defaults (plain object, never the caller's). Invalid values fall back. */
 export function orderbookConfig(cfg) {
@@ -329,13 +330,15 @@ export class OrderBook {
     };
   }
 
-  /** One summary per second: a second frame inside the same second replaces the first; bounded by count and by age. */
+  /** One summary per second: a second frame inside the same second replaces the first; bounded by count (min of historySeconds and MAX_SNAPSHOTS), and by age. */
   _record(summary) {
     const sec = Math.floor(summary.t / 1000);
     const h = this._history;
     if (h.length && Math.floor(h[h.length - 1].t / 1000) === sec) h[h.length - 1] = summary; else h.push(summary);
     const minT = summary.t - this.cfg.historySeconds * 1000;
-    while (h.length && (h.length > this.cfg.historySeconds || h[0].t < minT)) h.shift();
+    // Bounded by count (min of historySeconds and hard MAX_SNAPSHOTS limit) and by age to prevent unbounded growth on slow feeds
+    const maxEntries = Math.min(this.cfg.historySeconds, MAX_SNAPSHOTS);
+    while (h.length && (h.length > maxEntries || h[0].t < minT)) h.shift();
   }
 }
 

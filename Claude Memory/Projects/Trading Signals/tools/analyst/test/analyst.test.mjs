@@ -247,6 +247,26 @@ describe('errors', () => {
   });
 });
 
+describe('memory leaks (review findings)', () => {
+  test('feed event handlers are detached on stop to prevent memory leaks on restart', async () => {
+    const { analyst, feeds } = build();
+    await analyst.start();
+    const sym = analyst.symbols.get('BTCUSD');
+    const feed = sym.feed;
+    // Store initial listener count for each event
+    const initialCount = {};
+    for (const ev of ['history', 'candle', 'trade', 'depth', 'status', 'done']) {
+      initialCount[ev] = feed.eventNames().filter(e => e === ev).length === 0 ? 0 : feed.listeners(ev).length;
+    }
+    // Stop and verify handlers are detached
+    await analyst.stop();
+    for (const ev of ['history', 'candle', 'trade', 'depth', 'status', 'done']) {
+      const finalCount = feed.eventNames().filter(e => e === ev).length === 0 ? 0 : feed.listeners(ev).length;
+      assert.equal(finalCount, 0, `all ${ev} listeners detached on stop (initial: ${initialCount[ev]})`);
+    }
+  });
+});
+
 // ---------------------------------------------------------------------------------------------------------------
 // SPEC-PRO §P6 — footprints, order book, trade backfill and the notifier through the orchestrator
 // ---------------------------------------------------------------------------------------------------------------

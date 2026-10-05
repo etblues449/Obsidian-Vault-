@@ -126,6 +126,8 @@ export class Analyst extends EventEmitter {
       markers: [], trades: [], tradeHead: 0,
       pendingTfs: new Set(), lastEmitT: -Infinity, flushTimer: null,
       analysedT: null,
+      // Feed event handlers (stored for detachment in stop())
+      feedHandlers: { onHistory: null, onCandle: null, onTrade: null, onDepth: null, onStatus: null, onDone: null },
     };
   }
 
@@ -167,12 +169,19 @@ export class Analyst extends EventEmitter {
       catch (e) { sym.status = { state: 'error', kind: sym.status.kind, detail: e.message }; this._log('error', sym.id, `Feed could not be created: ${e.message}`); this.emit('status', { symbol: sym.id, ...sym.status }); return; }
       sym.feed = feed;
       sym.status.kind = feed.kind ?? sym.status.kind;
-      feed.on('history', (m) => this._safe(sym, () => this._onHistory(sym, m.candles)));
-      feed.on('candle', (m) => this._safe(sym, () => this._onCandle(sym, m.candle)));
-      feed.on('trade', (m) => this._onTrade(sym, m.trade));
-      feed.on('depth', (m) => this._safe(sym, () => this._onDepth(sym, m.snapshot, m.source)));
-      feed.on('status', (m) => this._onStatus(sym, m));
-      feed.on('done', () => this.emit('done', { symbol: sym.id }));
+      // Store handlers for detachment in stop() to prevent memory leaks and handler duplication
+      sym.feedHandlers.onHistory = (m) => this._safe(sym, () => this._onHistory(sym, m.candles));
+      sym.feedHandlers.onCandle = (m) => this._safe(sym, () => this._onCandle(sym, m.candle));
+      sym.feedHandlers.onTrade = (m) => this._safe(sym, () => this._onTrade(sym, m.trade));
+      sym.feedHandlers.onDepth = (m) => this._safe(sym, () => this._onDepth(sym, m.snapshot, m.source));
+      sym.feedHandlers.onStatus = (m) => this._safe(sym, () => this._onStatus(sym, m));
+      sym.feedHandlers.onDone = () => this.emit('done', { symbol: sym.id });
+      feed.on('history', sym.feedHandlers.onHistory);
+      feed.on('candle', sym.feedHandlers.onCandle);
+      feed.on('trade', sym.feedHandlers.onTrade);
+      feed.on('depth', sym.feedHandlers.onDepth);
+      feed.on('status', sym.feedHandlers.onStatus);
+      feed.on('done', sym.feedHandlers.onDone);
       try { await feed.connect(); }
       catch (e) { this._onStatus(sym, { state: 'error', detail: e?.message ?? String(e) }); }
     }));
@@ -184,7 +193,16 @@ export class Analyst extends EventEmitter {
     for (const sym of this.symbols.values()) {
       if (sym.flushTimer) { this.timers.clearTimeout(sym.flushTimer); sym.flushTimer = null; }
       if (sym.bookTimer) { this.timers.clearTimeout(sym.bookTimer); sym.bookTimer = null; }
-      if (sym.feed) { try { await sym.feed.close(); } catch { /* closing */ } }
+      if (sym.feed) {
+        // Detach feed event listeners to prevent memory leaks and handler duplication (SPEC-PRO §P6 finding)
+        if (sym.feedHandlers.onHistory) sym.feed.off('history', sym.feedHandlers.onHistory);
+        if (sym.feedHandlers.onCandle) sym.feed.off('candle', sym.feedHandlers.onCandle);
+        if (sym.feedHandlers.onTrade) sym.feed.off('trade', sym.feedHandlers.onTrade);
+        if (sym.feedHandlers.onDepth) sym.feed.off('depth', sym.feedHandlers.onDepth);
+        if (sym.feedHandlers.onStatus) sym.feed.off('status', sym.feedHandlers.onStatus);
+        if (sym.feedHandlers.onDone) sym.feed.off('done', sym.feedHandlers.onDone);
+        try { await sym.feed.close(); } catch { /* closing */ }
+      }
     }
     if (this.journal) {
       this.journal.off('resolved', this._onResolved);
@@ -306,7 +324,11 @@ export class Analyst extends EventEmitter {
     this._refreshStructureSwings(sym);
     this._analyze(sym, { live: false });
     this._log('info', sym.id, `History loaded: ${count} × 1m candles${last ? ` to ${new Date(last.t).toISOString().slice(0, 16)}Z` : ''}`);
-    if (this._wantsTradeBackfill(sym)) this._backfillTrades(sym); // async, bounded, never throws
+    if (this._wantsTradeBackfill(sym)) {
+      // Start backfill async with rejection handler to prevent unhandled promise rejection (SPEC-PRO §P6 finding)
+      const backfill = this._backfillTrades(sym);
+      if (backfill && typeof backfill.catch === 'function') backfill.catch(() => {});
+    }
     for (const tf of sym.store.tfs) if (sym.store.size(tf)) sym.pendingTfs.add(tf);
     this._flushCandles(sym, true);
     this.emit('levels', { symbol: sym.id, levels: sym.levels, zones: sym.zones, profile: sym.profile });
