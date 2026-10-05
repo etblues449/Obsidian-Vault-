@@ -135,7 +135,16 @@ export function scorecardTable(rows) {
 }
 
 export function setupLine(s, dp = 2) {
-  const res = s.status === 'open' ? 'open' : `${s.status}${s.exit ? '/' + s.exit : ''} ${signed(s.resultR)}R${s.resolvedAt ? ' @ ' + iso(s.resolvedAt) : ''}${s.ambiguous ? ' (ambiguous bar)' : ''}`;
+  let displayStatus = s.status;
+  if (s.status !== 'open') {
+    const r = Number(s.resultR) || 0;
+    if (r > 0.05) displayStatus = 'won';
+    else if (r < -0.05) displayStatus = 'lost';
+    else displayStatus = 'flat';
+    if (s.exit) displayStatus += '/' + s.exit;
+  }
+  
+  const res = s.status === 'open' ? 'open' : `${displayStatus} ${signed(s.resultR)}R${s.resolvedAt ? ' @ ' + iso(s.resolvedAt) : ''}${s.ambiguous ? ' (ambiguous bar)' : ''}`;
   return `${iso(s.t)}  ${s.side.toUpperCase().padEnd(5)} ${s.grade} ${fmt(s.score, 1).padStart(4)}  entry ${fmt(s.entry, dp)}  stop ${fmt(s.stop, dp)}  T1 ${fmt(s.targets?.[0]?.price, dp)} (${fmt(s.rr, 2)}R)  → ${res}  [${[...(s.condition?.hits || []), ...(s.zone?.hits || []), ...(s.trigger?.hits || [])].join(', ')}]`;
 }
 
@@ -193,3 +202,4 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   main().then((code) => process.exit(code), (e) => { process.stderr.write(`backtest failed: ${e.stack || e.message}\n`); process.exit(1); });
 }
+

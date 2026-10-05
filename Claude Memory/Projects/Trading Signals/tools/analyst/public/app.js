@@ -399,7 +399,15 @@
     const head = el('div', 'setup-head');
     const title = el('b', '', `${side.toUpperCase() || 'SETUP'} ${str(setup.symbol)} ${str(setup.tf)}`.trim());
     const grade = el('span', `grade grade-${str(setup.grade) || 'none'}`, `${str(setup.grade, '—')} · ${num(setup.score) == null ? '—' : setup.score.toFixed(1)}`);
-    const status = el('span', 'st', `${str(setup.status, 'open')}${num(setup.resultR) != null ? ' ' + fmtR(setup.resultR) : ''} · ${fmtHm(setup.t)}`);
+    let displayStatus = str(setup.status, 'open');
+    if (displayStatus !== 'open' && num(setup.resultR) != null) {
+      const r = setup.resultR;
+      if (r > 0.05) displayStatus = 'won';
+      else if (r < -0.05) displayStatus = 'lost';
+      else displayStatus = 'flat';
+      if (setup.exit) displayStatus += '/' + setup.exit;
+    }
+    const status = el('span', 'st', `${displayStatus}${num(setup.resultR) != null ? ' ' + fmtR(setup.resultR) : ''} · ${fmtHm(setup.t)}`);
     head.append(title, grade, status); card.appendChild(head);
     const dl = el('dl', 'setup-kv');
     const kv = (k, v, cls) => { dl.appendChild(el('dt', '', k)); const dd = el('dd', cls || ''); if (typeof v === 'string') dd.textContent = v; else dd.appendChild(v); dl.appendChild(dd); };
@@ -419,7 +427,15 @@
     const body = $('watchBody'); body.replaceChildren();
     if (!S.symbols.length) { const tr = el('tr'); const td = el('td', 'muted', S.snap ? 'No symbols configured.' : 'Connecting…'); td.colSpan = 7; tr.appendChild(td); body.appendChild(tr); return; }
     for (const s of S.symbols) {
-      const dp = num(s.dp, 2); const tr = el('tr', s.id === S.active ? 'is-active' : ''); tr.tabIndex = 0; tr.setAttribute('role', 'button'); tr.setAttribute('aria-label', `Show ${str(s.id)}`);
+      const dp = num(s.dp, 2); const tr = el(      let lsStatus = ls ? str(ls.status, 'open') : '';
+      if (ls && lsStatus !== 'open' && num(ls.resultR) != null) {
+        const r = ls.resultR;
+        if (r > 0.05) lsStatus = 'won';
+        else if (r < -0.05) lsStatus = 'lost';
+        else lsStatus = 'flat';
+        if (ls.exit) lsStatus += '/' + ls.exit;
+      }
+      const lsText = ls ? `${str(ls.side).toUpperCase()} ${str(ls.grade)} · ${lsStatus}${num(ls.resultR) != null ? ' ' + fmtR(ls.resultR) : ''}`.replace(/\s+/g, ' ') : '';
       const ls = s.openSetup || s.lastSetup; const lsText = ls ? `${str(ls.side).toUpperCase()} ${str(ls.grade)} · ${str(ls.status, 'open')}${num(ls.resultR) != null ? ' ' + fmtR(ls.resultR) : ''}`.replace(/\s+/g, ' ') : '';
       // phones (< 600 px) show the last setup under the symbol instead of a seventh column (CSS swaps the two)
       const sym = el('td', 'sym'); sym.append(el('b', '', str(s.id)), el('small', 'name', str(s.name)), el('small', 'last-inline', lsText)); tr.appendChild(sym);
