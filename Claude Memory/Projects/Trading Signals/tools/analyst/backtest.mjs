@@ -9,6 +9,11 @@
 // --warmup      minutes of history the engine sees before the first live candle (default 240, ≤ half the data)
 // --json        machine-readable result instead of the tables
 //
+// Pro (SPEC-PRO §P6): a kline backtest has NO trade tape and NO order book, so the footprint / book triggers
+// (footprintImbalance, trappedTraders, bookAbsorption, unfinishedAuction, condition.bookImbalance) can never fire
+// here — the "By trigger" table says so (`n/a (no trade tape)`, a footer line) and their weights simply never add up. Only a
+// replay built with `trades` (see test/e2e.test.mjs) exercises them offline.
+//
 // The Analyst is driven by a fake clock set from each candle's close BEFORE the engine sees it (the
 // replay feed's listeners run in registration order), so every session, cooldown and expiry decision
 // is made in candle time. The journal writes to an in-memory fs: a backtest never touches data/.
@@ -139,11 +144,17 @@ export function setupLine(s, dp = 2) {
   return `${iso(s.t)}  ${s.side.toUpperCase().padEnd(5)} ${s.grade} ${fmt(s.score, 1).padStart(4)}  entry ${fmt(s.entry, dp)}  stop ${fmt(s.stop, dp)}  T1 ${fmt(s.targets?.[0]?.price, dp)} (${fmt(s.rr, 2)}R)  → ${res}  [${[...(s.condition?.hits || []), ...(s.zone?.hits || []), ...(s.trigger?.hits || [])].join(', ')}]`;
 }
 
+/** SPEC-PRO §P6: the hits a kline-only backtest can never produce (no aggTrade tape, no depth stream). */
+export const NO_TAPE_HITS = ['footprintImbalance', 'trappedTraders', 'bookAbsorption', 'unfinishedAuction', 'bookImbalance'];
+
 export function render(r, dp = 2) {
   const out = [];
   out.push(`TradeGuard backtest — ${r.symbol} · analysis ${r.tf} · ${r.candles} × 1m candles ${iso(r.from)} → ${iso(r.to)} · warm-up ${r.warmup} min`);
   out.push(`Setups: ${r.setups.length} (${r.open} still open)   net ${signed(r.scorecard.all[0]?.netR ?? 0)}R   expectancy ${signed(r.scorecard.all[0]?.expectancyR ?? 0)}R/trade`);
   out.push('', 'By trigger', scorecardTable(r.scorecard.trigger));
+  // DEVIATION (SPEC-PRO §P6 says "in the table header"): the note sits directly UNDER the by-trigger table — the header
+  // line `By trigger` / `key …` is pinned by test/backtest.test.mjs and the README's sample output.
+  out.push(`${NO_TAPE_HITS.join(', ')}: n/a (no trade tape) — footprint / order-book hits need the live aggTrade + depth streams`);
   out.push('', 'By session', scorecardTable(r.scorecard.session));
   out.push('', 'By grade', scorecardTable(r.scorecard.grade));
   out.push('', 'Setups');

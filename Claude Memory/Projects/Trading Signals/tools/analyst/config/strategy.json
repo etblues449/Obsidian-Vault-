@@ -118,7 +118,12 @@
       "trigger.cvdDivergence": 1.5,
       "trigger.engulfing": 1,
       "trigger.ltfBos": 1.5,
-      "trigger.deltaConfirms": 1
+      "trigger.deltaConfirms": 1,
+      "trigger.footprintImbalance": 2,
+      "trigger.trappedTraders": 2,
+      "trigger.bookAbsorption": 1.5,
+      "trigger.unfinishedAuction": 0.5,
+      "condition.bookImbalance": 0.5
     },
     "minScore": 6,
     "gradeA": 9,
@@ -151,6 +156,33 @@
     "dir": "data",
     "resolveTimeoutHours": 48,
     "trailByProvedAuctions": true
+  },
+  "footprint": {
+    "bucketAtr": 0.05,
+    "imbalanceRatio": 3,
+    "stackedMin": 3,
+    "maxCandles": 48,
+    "backfillMaxRequests": 40,
+    "_note": "SPEC-PRO §P1/§P5. bucketAtr: footprint level size as an ATR multiple (snapped to the symbol tick). imbalanceRatio 3 = the 300 % diagonal rule (source 05 §3). backfillMaxRequests × 1000 trades is the most aggTrades history fetched at start (≈ the last 15–40 min for BTCUSDT) — footprints built from a truncated tape are flagged partial."
+  },
+  "orderbook": {
+    "levels": 20,
+    "wallMult": 5,
+    "pullWindowMs": 3000,
+    "absorbRatio": 0.5,
+    "absorbWindowSec": 120,
+    "imbalanceMin": 0.25,
+    "historySeconds": 600,
+    "_note": "SPEC-PRO §P2/§P5. Visible top of book only (depth20), never level 3. wallMult × median qty of a side's levels = a wall; a wall absent for pullWindowMs was pulled (spoof) unless ≥ absorbRatio × its size printed at its price; imbalanceMin is the |bid−ask|/(bid+ask) depth imbalance the condition.bookImbalance hit needs."
+  },
+  "notify": {
+    "minGrade": "B",
+    "onResolve": true,
+    "digestAt": "17:05",
+    "cooldownMinutes": 1,
+    "maxPerHour": 30,
+    "feedProblemCooldownMinutes": 15,
+    "_note": "SPEC-PRO §P3. Telegram alerts — enabled only when ANALYST_TELEGRAM_BOT_TOKEN and ANALYST_TELEGRAM_CHAT_ID are set in the environment (never in a file). digestAt is wall-clock in sessions.timezone; the daily digest is remembered per London day in <journal.dir>/notify-state.json."
   },
   "executorBridge": {
     "enabled": false,

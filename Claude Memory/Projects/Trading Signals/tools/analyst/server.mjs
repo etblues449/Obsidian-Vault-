@@ -5,7 +5,12 @@
 //
 // Routes: GET /health · /api/state · /api/chart/:symbol?tf=&limit= · /api/setups?symbol=&limit= ·
 //         /api/scorecard?by= · /api/feed?limit=&symbol= · /events (SSE) · static from public/
-// SSE: `retry: 3000`, a ": hb" comment every 15 s, events `event` | `candle` | `setup` | `status` | `levels`.
+//         Pro (SPEC-PRO §P6): /api/footprint/:symbol?n=12 · /api/book/:symbol · /api/pro/:symbol
+// SSE: `retry: 3000`, a ": hb" comment every 15 s, events `event` | `candle` | `setup` | `status` | `levels`
+//      + Pro `footprint` { symbol, tf, footprint, trapped } (one per closed analysis-TF candle) and `book`
+//      { symbol, summary } (≤ 1/s per symbol — the Analyst throttles).
+// Notifier (SPEC-PRO §P3): main() creates lib/notify.mjs's notifier (enabled only with ANALYST_TELEGRAM_BOT_TOKEN +
+//      ANALYST_TELEGRAM_CHAT_ID in the environment) and hands it to the Analyst; /health reports `notifier.enabled`.
 //      The shared logger's 'event' stream is what reaches the feed (feed/journal/bridge/analyst lines
 //      all go through it); the Analyst's own 'event' is NOT subscribed here, that would double them.
 //      On connect every client receives the current 'status' of each symbol so a reconnecting
@@ -22,6 +27,7 @@ import { loadConfig } from './lib/config.mjs';
 import { createLogger } from './lib/log.mjs';
 import { createJournal, SCORECARD_BY } from './lib/journal.mjs';
 import { createBridge } from './lib/executor-bridge.mjs';
+import { createNotifier } from './lib/notify.mjs';
 import { Analyst } from './lib/engine/analyst.mjs';
 import { TF_MS } from './lib/engine/candles.mjs';
 
@@ -68,8 +74,11 @@ export function createServer({ analyst, log, journal = null, publicDir = PUBLIC_
   const onSetup = (s) => broadcast('setup', s);
   const onStatus = (s) => broadcast('status', s);
   const onLevels = (m) => broadcast('levels', m);
+  const onFootprint = (m) => broadcast('footprint', m);
+  const onBook = (m) => broadcast('book', m);
   log.on('event', onLog);
   analyst.on('candle', onCandle); analyst.on('setup', onSetup); analyst.on('status', onStatus); analyst.on('levels', onLevels);
+  analyst.on('footprint', onFootprint); analyst.on('book', onBook);
   const heartbeat = T.setInterval(() => { for (const res of clients) { if (res.destroyed) clients.delete(res); else res.write(': hb\n\n'); } }, HEARTBEAT_MS);
   if (heartbeat && typeof heartbeat.unref === 'function') heartbeat.unref();
 
@@ -90,9 +99,22 @@ export function createServer({ analyst, log, journal = null, publicDir = PUBLIC_
       const snap = analyst.snapshot();
       const symbols = {};
       for (const s of snap.symbols || []) symbols[s.id] = { state: s.feed?.state ?? null, kind: s.feed?.kind ?? null, lastCandleT: s.lastCandleT ?? null };
-      return json(res, 200, { ok: true, uptime: Math.round((now() - startedAt) / 1000), uptimeMs: now() - startedAt, symbols });
+      const out = { ok: true, uptime: Math.round((now() - startedAt) / 1000), uptimeMs: now() - startedAt, symbols };
+      if (snap.notifier) out.notifier = snap.notifier;
+      return json(res, 200, out);
     }
     if (p === '/api/state') return json(res, 200, analyst.snapshot());
+    // Pro routes (SPEC-PRO §P6). An unknown symbol is a RangeError → 404; anything else → 500 with the message.
+    const pro = /^\/api\/(footprint|book|pro)\/(.+)$/.exec(p);
+    if (pro) {
+      let id;
+      try { id = decodeURIComponent(pro[2]); } catch { return json(res, 400, { error: 'bad symbol encoding' }); }
+      const method = { footprint: 'footprintData', book: 'bookData', pro: 'proData' }[pro[1]];
+      if (typeof analyst[method] !== 'function') return json(res, 501, { error: `${pro[1]} not available on this analyst` });
+      const n = url.searchParams.has('n') ? intParam(url.searchParams.get('n'), 12, { min: 1, max: 600 }) : undefined;
+      try { return json(res, 200, n === undefined ? analyst[method](id) : analyst[method](id, n)); }
+      catch (e) { return json(res, e instanceof RangeError ? 404 : 500, { error: e.message }); }
+    }
     if (p.startsWith('/api/chart/')) {
       let id;
       try { id = decodeURIComponent(p.slice('/api/chart/'.length)); } catch { return json(res, 400, { error: 'bad symbol encoding' }); }
@@ -160,6 +182,7 @@ export function createServer({ analyst, log, journal = null, publicDir = PUBLIC_
     T.clearInterval(heartbeat);
     log.off('event', onLog);
     analyst.off('candle', onCandle); analyst.off('setup', onSetup); analyst.off('status', onStatus); analyst.off('levels', onLevels);
+    analyst.off('footprint', onFootprint); analyst.off('book', onBook);
     for (const res of clients) { try { res.end(); } catch { /* gone */ } }
     clients.clear();
     await new Promise((r) => server.close(() => r()));
@@ -180,7 +203,9 @@ export async function main({ env = process.env, argv = process.argv } = {}) {
   const dataDir = resolve(HERE, cfg.journal.dir);
   const journal = createJournal({ cfg, dir: dataDir, log, now: () => Date.now() });
   const bridge = createBridge({ cfg, log, now: () => Date.now(), env });
-  const analyst = new Analyst({ cfg, symbolsCfg, log, journal, bridge, now: () => Date.now() });
+  const dpOf = (symbol) => symbolsCfg.symbols.find((s) => s.id === symbol)?.dp;
+  const notifier = createNotifier({ cfg: { ...cfg, journal: { ...cfg.journal, dir: dataDir } }, env, log, now: () => Date.now(), dp: dpOf });
+  const analyst = new Analyst({ cfg, symbolsCfg, log, journal, bridge, notifier, now: () => Date.now() });
   const app = createServer({ analyst, log, journal });
 
   await new Promise((resolveListen) => {
@@ -197,6 +222,8 @@ export async function main({ env = process.env, argv = process.argv } = {}) {
   for (const s of symbolsCfg.symbols) log.info(s.id, `feed ${s.feed}${s.feedOriginal ? ` (overrides ${s.feedOriginal})` : ''} → ${s.feed === 'binance' ? 'LIVE' : s.feed === 'simulated' ? 'SIM' : s.feed === 'yahoo' ? 'DELAYED' : s.feed.toUpperCase()}${s.sourceNote ? ` — ${s.sourceNote}` : ''}`);
   if (cfg.executorBridge?.enabled) log.warn('*', `Executor bridge ENABLED for ${cfg.executorBridge.symbols.join(', ')} (grade ≥ ${cfg.executorBridge.minGrade}) → ${cfg.executorBridge.url}`);
   else log.info('*', 'Executor bridge off — analysis only, nothing here places orders');
+  if (notifier.enabled) log.ok('*', `Telegram alerts ON (grade ≥ ${cfg.notify?.minGrade ?? 'B'}, digest at ${cfg.notify?.digestAt ?? '17:05'} ${cfg.sessions.timezone})`);
+  else log.info('*', 'Telegram alerts off — set ANALYST_TELEGRAM_BOT_TOKEN and ANALYST_TELEGRAM_CHAT_ID to enable (SPEC-PRO §P3)');
 
   let shuttingDown = false;
   const shutdown = async (signal) => {
@@ -212,7 +239,7 @@ export async function main({ env = process.env, argv = process.argv } = {}) {
   process.on('unhandledRejection', (e) => { log.error('*', `Unhandled rejection: ${e?.stack || e}`); });
 
   await analyst.start();
-  return { app, analyst, journal, log, url };
+  return { app, analyst, journal, log, url, notifier };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main();

@@ -39,11 +39,30 @@
 //   cfg.czt.minStopAtr (default 0.35): a stop closer than this to entry is widened AWAY from entry (never
 //   toward it) before rr / targets / maxStopAtr are computed — a few-tick stop under a shallow sweep sits
 //   inside the spread and the R it promises is fiction (review: $0.24 gold stops, 74 R targets). The reason
-//   line says so. Pro hits (SPEC-PRO §P5) footprintImbalance / trappedTraders / bookAbsorption are real
-//   triggers, unfinishedAuction a confirmation; the integrator adds the hits, the gate is ready for them.
+//   line says so.
+// Pro (SPEC-PRO §P5; source 05 §2–§4 is the authority): ctx may carry `footprint` (the last closed analysis-TF
+//   Footprint), `footprints` (recent closed ones, oldest→newest) and `book` (BookSummary). From them:
+//     trigger.footprintImbalance  a STACKED imbalance in the side's direction on the trigger candle, or on the sweep
+//                                 candle when the entry comes after a reclaimed sweep (source 05 §3: "aggressive buyers
+//                                 stepping in" at the zone) — a REAL trigger
+//     trigger.trappedTraders      footprint.trappedTraders() agrees with the side (§4: "a trapped buyer's stop loss is
+//                                 a market sell order") — a REAL trigger; decided at the last candle's close
+//     trigger.bookAbsorption      BookSummary.absorbed holds a wall on the side's favour (bid wall for a long) within
+//                                 zoneToleranceAtr of entry and younger than orderbook.absorbWindowSec (§4) — REAL
+//     trigger.unfinishedAuction   the trigger candle's extreme in the TRADE direction printed both sides (§3: "the market
+//                                 may revisit that price to complete business") — a target-side magnet, CONFIRMATION only
+//     condition.bookImbalance     |depth imbalance| ≥ orderbook.imbalanceMin in the side's favour (§2: resting flow is
+//                                 context, never conviction — hence a 0.5 condition, not a trigger)
+//   A footprint whose `t` is not the trigger candle's is ignored (it is not THIS candle's flow); a trapped-traders
+//   result stamped on another candle likewise. ctx.trapped (precomputed) wins over recomputing from ctx.footprints.
+// DEVIATION (Pro, additive): the footprintImbalance line names the zone level when there is one ("at the Asia low")
+//   and otherwise the price span of the run; the bookAbsorption / bookImbalance lines say "visible top of book" so
+//   the feed never over-claims level 3 (SPEC-PRO §P2).
 
 import { isEngulfing } from './structure.mjs';
 import { size as riskSize, rr as riskRr, dailyCaps } from './risk.mjs';
+import { trappedTraders as findTrapped, summarizeForCzt } from './footprint.mjs';
+import { bookImbalanceFavours, recentAbsorption, orderbookConfig } from './orderbook.mjs';
 
 const TF_MS = { '1m': 60e3, '5m': 3e5, '15m': 9e5, '1h': 36e5, '4h': 144e5 }; // mirror of candles.mjs
 const BUY_SIDE = new Set(['pdh', 'sessionHigh', 'asiaHigh', 'equalHighs', 'consolidationHigh', 'vah', 'prevCandleHigh']);
@@ -160,6 +179,7 @@ export function evaluateSide(ctx, side) {
     manipExtreme = bull ? Math.min(recentSwept.price - recentSwept.swept.depth, c.l) : Math.max(recentSwept.price + recentSwept.swept.depth, c.h);
   }
   const sweepT = sweep ? (sweep.level.swept?.t ?? sweep.t) : recentSwept ? recentSwept.swept.t : null;
+  const fps = Array.isArray(ctx.footprints) ? ctx.footprints.filter(Boolean) : ctx.footprint ? [ctx.footprint] : [];
   const abs = ctx.absorption;
   if (abs && abs.side === (bull ? 'bullish' : 'bearish') && (abs.t == null || abs.t === c.t)) {
     const d = Number.isFinite(abs.delta) ? ` (delta ${fmtDelta(abs.delta)})` : '';
@@ -199,10 +219,40 @@ export function evaluateSide(ctx, side) {
       hit('trigger', 'ltfBos', `${tfs.structure ?? '15m'} ${what} ${wantDir} through ${fmt(brk.price)}${sweepT != null ? ' after the sweep' : ''}`);
     }
   }
+  // ---- Pro triggers (SPEC-PRO §P5): what the TAPE did at the zone — footprint imbalances, trapped traders, absorption at a wall ----
+  const fpAt = (t) => (Number.isFinite(t) ? fps.find((f) => f && f.t === t) ?? null : null);
+  const fp = ctx.footprint && (ctx.footprint.t == null || ctx.footprint.t === c.t) ? ctx.footprint : fpAt(c.t);
+  const zoneName = sweep ? levelLabel(sweep.level) : recentSwept ? levelLabel(recentSwept) : zoneLevels[0] ? levelLabel(zoneLevels[0]) : null;
+  // Stacked imbalance on the trigger candle, or on the sweep candle when the entry comes a candle or two after the reclaim.
+  const sweepFp = sweepT != null && sweepT !== c.t ? fpAt(sweepT) : null;
+  const imbFp = [fp, sweepFp].find((f) => f && summarizeForCzt(f, { side }).stackedToward) ?? null;
+  if (imbFp) {
+    const toward = bull ? 'buy' : 'sell';
+    const run = imbFp.stacked.filter((r) => r.side === toward).reduce((a, b) => (b.count > a.count ? b : a));
+    const where = zoneName ? `at the ${zoneName}` : `at ${fmt(run.from)}–${fmt(run.to)}`;
+    const when = imbFp === sweepFp ? ' on the sweep candle' : '';
+    hit('trigger', 'footprintImbalance', `Stacked ${toward} imbalances (×${run.count}) ${where}${when} — aggressive ${bull ? 'buyers' : 'sellers'} stepping in at the zone`);
+  }
+  const trap = ctx.trapped !== undefined ? ctx.trapped : fps.length >= 2 ? findTrapped(fps) : null;
+  if (trap && trap.side === (bull ? 'bullish' : 'bearish') && (trap.t == null || trap.t === c.t)) {
+    hit('trigger', 'trappedTraders', trap.reason || `Trapped ${bull ? 'sellers' : 'buyers'}: stacked ${bull ? 'sell' : 'buy'} imbalances at ${fmt(trap.edge)} then a close ${bull ? 'above' : 'below'} — their stops are market ${bull ? 'buys' : 'sells'}`);
+  }
+  const book = ctx.book ?? null;
+  const obCfg = orderbookConfig(cfg);
+  const wall = book ? recentAbsorption(book, { side, price: entry, tolerance: tol, windowMs: obCfg.absorbWindowSec * 1000 }) : null;
+  if (wall) {
+    const q = (x) => (Number.isFinite(x) ? x.toLocaleString('en-GB', { maximumFractionDigits: 3 }) : '?');
+    hit('trigger', 'bookAbsorption', `Absorption at the ${wall.side} wall ${fmt(wall.price)}: ${q(wall.tradedQty)} traded into ${q(wall.qty)} resting and it held — passive ${bull ? 'buyers soaking up market sells' : 'sellers soaking up market buys'} (visible top of book)`);
+  }
   const dv = typeof ctx.deltaInfo === 'number' ? ctx.deltaInfo : ctx.deltaInfo?.value;
   // Source 05 §3: executed delta is a confirmation; a body/range PROXY delta is the candle's colour, not flow — never awarded.
   if (Number.isFinite(dv) && Math.sign(dv) === dir && ctx.deltaInfo?.source !== 'proxy') {
     hit('trigger', 'deltaConfirms', `Closing delta ${fmtDelta(dv)} — aggressive ${bull ? 'buyers lifting the ask' : 'sellers hitting the bid'} (confirmation)`, { confirmOnly: true });
+  }
+  // §P5: an unfinished auction at the trade-direction extreme is a magnet the market "may revisit to complete business" — never the only trigger.
+  if (fp && summarizeForCzt(fp, { side }).unfinishedToward) {
+    const ext = bull ? fp.high : fp.low;
+    hit('trigger', 'unfinishedAuction', `Unfinished auction at the trigger candle's ${bull ? 'high' : 'low'}${Number.isFinite(ext) ? ` ${fmt(ext)}` : ''} — both sides printed at the extreme, the market may revisit it to complete business (target-side magnet, confirmation)`, { confirmOnly: true });
   }
 
   // ---- Zone: the candle traded into a reference level / zone appropriate to the side ----
@@ -230,6 +280,9 @@ export function evaluateSide(ctx, side) {
     hit('condition', 'biasAligned', `Bias pushing ${bull ? 'higher' : 'lower'} on ${biasTf}${str}`);
   }
   if (session?.killzone) hit('condition', 'killzone', `${session.label ?? session.id} killzone — ${session.role ?? 'manipulation'} window, time dictates the move`);
+  if (book && bookImbalanceFavours(book, side, obCfg.imbalanceMin)) {
+    hit('condition', 'bookImbalance', `Visible book ${Math.round(Math.abs(book.imbalance) * 100)} % ${bull ? 'bid' : 'ask'}-heavy (depth imbalance ${fmtDelta(book.imbalance)}, ≥ ${obCfg.imbalanceMin}) — resting ${bull ? 'buyers' : 'sellers'} outweigh; top of book, not level 3`);
+  }
   const p = ctx.prevDayProfile;
   let valueRelation = 'unknown';
   if (p && Number.isFinite(p.vah) && Number.isFinite(p.val)) {

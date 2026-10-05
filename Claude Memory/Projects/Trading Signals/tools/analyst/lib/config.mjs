@@ -22,6 +22,11 @@
 //   ANALYST_EXECUTOR_ENABLED=true|false   executorBridge.enabled
 //   ANALYST_EXECUTOR_URL                  executorBridge.url
 //   ANALYST_SET="czt.minScore=5;risk.balance=2000"   any dotted strategy path; values parsed as JSON when possible
+//   ANALYST_TELEGRAM_BOT_TOKEN / _CHAT_ID    read by lib/notify.mjs at send time only — never copied into cfg (SPEC-PRO §P3)
+//
+// SPEC-PRO §P5: `footprint`, `orderbook` and `notify` are optional blocks (the modules default to PRO_DEFAULTS when
+//   absent) validated key by key when present; the five Pro weights are in WEIGHT_KEYS and therefore REQUIRED in
+//   czt.weights like every other hit.
 
 import { readFileSync } from 'node:fs';
 import { resolve, dirname, isAbsolute } from 'node:path';
@@ -36,7 +41,16 @@ export const WEIGHT_KEYS = [
   'condition.biasAligned', 'condition.killzone', 'condition.outsideValueTrend', 'condition.insideValueRotation',
   'zone.pdhPdl', 'zone.sessionHighLow', 'zone.equalHighsLows', 'zone.valueArea', 'zone.nakedPoc', 'zone.fvg', 'zone.orderBlock', 'zone.prevCandle',
   'trigger.sweepReclaim', 'trigger.absorption', 'trigger.cvdDivergence', 'trigger.engulfing', 'trigger.ltfBos', 'trigger.deltaConfirms',
+  // SPEC-PRO §P5 — footprint / order-book hits (footprintImbalance, trappedTraders, bookAbsorption are real triggers;
+  // unfinishedAuction a confirmation; bookImbalance a condition). The blocks below (footprint/orderbook/notify) feed them.
+  'trigger.footprintImbalance', 'trigger.trappedTraders', 'trigger.bookAbsorption', 'trigger.unfinishedAuction', 'condition.bookImbalance',
 ];
+/** SPEC-PRO §P5 defaults for the three Pro blocks — validation accepts a missing block (the modules default to these). */
+export const PRO_DEFAULTS = Object.freeze({
+  footprint: Object.freeze({ bucketAtr: 0.05, imbalanceRatio: 3.0, stackedMin: 3, maxCandles: 48, backfillMaxRequests: 40 }),
+  orderbook: Object.freeze({ levels: 20, wallMult: 5, pullWindowMs: 3000, absorbRatio: 0.5, absorbWindowSec: 120, imbalanceMin: 0.25, historySeconds: 600 }),
+  notify: Object.freeze({ minGrade: 'B', onResolve: true, digestAt: '17:05', cooldownMinutes: 1, maxPerHour: 30, feedProblemCooldownMinutes: 15 }),
+});
 /** Path segments ANALYST_SET may never walk: writing through them pollutes Object.prototype (review finding, config.mjs:255). */
 const FORBIDDEN_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
 /** http(s) URL with no userinfo — credentials in a URL end up in every log line that names it. Returns null when invalid. */
@@ -178,6 +192,34 @@ export function validateStrategy(cfg) {
     c.str(cfg, 'journal.dir');
     c.num(cfg, 'journal.resolveTimeoutHours', { gt: 0 });
     c.bool(cfg, 'journal.trailByProvedAuctions');
+  }
+  // SPEC-PRO §P5 blocks. Each is OPTIONAL (footprint.mjs / orderbook.mjs / notify.mjs apply the §P5 defaults when
+  // the block is absent) but when present every key is checked — a typo here would otherwise fall back silently.
+  if (cfg.footprint !== undefined && c.obj(cfg, 'footprint')) {
+    c.num(cfg, 'footprint.bucketAtr', { gt: 0 });
+    c.num(cfg, 'footprint.imbalanceRatio', { min: 1 });
+    c.num(cfg, 'footprint.stackedMin', { min: 2, int: true });
+    c.num(cfg, 'footprint.maxCandles', { min: 2, int: true });
+    c.num(cfg, 'footprint.backfillMaxRequests', { min: 0, int: true });
+  }
+  if (cfg.orderbook !== undefined && c.obj(cfg, 'orderbook')) {
+    c.oneOf(cfg, 'orderbook.levels', [5, 10, 20]);
+    c.num(cfg, 'orderbook.wallMult', { gt: 1 });
+    c.num(cfg, 'orderbook.pullWindowMs', { min: 1000, int: true });
+    c.num(cfg, 'orderbook.absorbRatio', { gt: 0 });
+    c.num(cfg, 'orderbook.absorbWindowSec', { gt: 0 });
+    c.num(cfg, 'orderbook.imbalanceMin', { gt: 0, max: 1 });
+    c.num(cfg, 'orderbook.historySeconds', { min: 60, int: true });
+  }
+  if (cfg.notify !== undefined && c.obj(cfg, 'notify')) {
+    const nt = cfg.notify, cn = c.at('notify.');
+    cn.oneOf(nt, 'minGrade', ['A', 'B', 'C']);
+    cn.bool(nt, 'onResolve');
+    if (cn.str(nt, 'digestAt') && parseHHMM(nt.digestAt) === null) cn.fail('digestAt', `expected HH:MM, got ${JSON.stringify(nt.digestAt)}`);
+    cn.num(nt, 'cooldownMinutes', { min: 0 });
+    cn.num(nt, 'maxPerHour', { min: 1, int: true });
+    if (nt.feedProblemCooldownMinutes !== undefined) cn.num(nt, 'feedProblemCooldownMinutes', { min: 0 });
+    for (const k of Object.keys(nt)) if (!(k in PRO_DEFAULTS.notify) && !k.startsWith('_')) cn.fail(k, 'unknown key (a secret never goes in config — the token and chat id come from ANALYST_TELEGRAM_BOT_TOKEN / ANALYST_TELEGRAM_CHAT_ID)');
   }
   if (c.obj(cfg, 'executorBridge')) {
     const b = cfg.executorBridge, cb = c.at('executorBridge.');

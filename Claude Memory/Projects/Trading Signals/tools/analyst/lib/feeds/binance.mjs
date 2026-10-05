@@ -1,17 +1,28 @@
 // lib/feeds/binance.mjs — Binance spot public data (SPEC.md §3, kind='live'). No key, no account.
 //   Backfill: GET data-api.binance.vision/api/v3/klines?symbol=…&interval=1m&limit=1000, paginated
 //             backwards with endTime until history.backfillMinutes is covered (≤ 1 request/s).
-//   Stream:   ONE combined socket per adapter — <s>@kline_1m + <s>@aggTrade. kline.k.x = closed,
+//   Stream:   ONE combined socket per adapter — <s>@kline_1m + <s>@aggTrade + <s>@depth20. kline.k.x = closed,
 //             k.V = taker-buy base volume → buyV (sellV = v − buyV): true aggressor delta (source 05 §3).
 //             aggTrade.m = "buyer is the maker" ⇒ the SELLER aggressed ⇒ side 'sell'.
+//             depth20 (SPEC-PRO §P2, 1 s partial book, top 20 per side) → 'depth' { symbol, snapshot } for
+//             lib/engine/orderbook.mjs; the payload has no timestamp so the frame is stamped with the adapter's clock.
+//             One REST GET /depth?limit=20 right after the socket opens seeds the book before the first 1 s frame.
 //   Resilience: reconnect on close/error with exponential backoff + jitter (attempt counter reset after a
 //             clean 60 s), 90 s silence watchdog, Binance's 24 h socket cut handled as a plain reconnect,
 //             gap re-backfill from the last closed candle after every reconnect, 'error' status after 10
 //             consecutive failures (keeps trying forever, 60 s cap), 429/418 → Retry-After or 60 s.
 // Everything injectable through `deps` ({ fetch, WebSocket, now, setTimeout, clearTimeout, random }) so the
 // tests run against fakes with a virtual clock.
+//
+// DEVIATION (SPEC-PRO §P6, additive): the depth stream rides on the SAME combined socket (one connection per
+//   symbol, as SPEC §3 requires) and surfaces as a third event, 'depth' { symbol, snapshot: BookSnapshot }.
+//   `opts.depth === false` (or symbol.feedParams.depth === false) leaves the socket at kline + aggTrade only.
+//   parseStreamMessage(raw, { t }) takes the clock stamp for depth frames; it still returns null for anything else.
+//   The REST snapshot on connect is best-effort (a failure is a warn line, the 1 s stream fills the book anyway)
+//   and obeys the same ≤ 1 REST call/s + 429 holdoff as the klines calls.
 
 import { FeedAdapter, backoffMs } from './base.mjs';
+import { depthStreamName, parseDepthMessage, fetchDepthSnapshot } from './binance-depth.mjs';
 
 export const REST_BASE = 'https://data-api.binance.vision/api/v3';
 export const WS_BASE = 'wss://data-stream.binance.vision/stream';
@@ -43,14 +54,18 @@ export function parseAggTrade(data) {
   return { t: +data.T, p: +data.p, q: +data.q, side: data.m ? 'sell' : 'buy' };
 }
 
-/** Parse one combined-stream message. Returns { candle } | { trade } | null for anything else. */
-export function parseStreamMessage(raw) {
+/**
+ * Parse one combined-stream message. Returns { candle } | { trade } | { depth } | null for anything else.
+ * `t` stamps a depth frame (the partial-depth payload carries no event time — SPEC-PRO §P2).
+ */
+export function parseStreamMessage(raw, { t = null } = {}) {
   let msg;
   try { msg = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch { return null; }
   const data = msg?.data ?? msg;
   if (!data || typeof data !== 'object') return null;
   if (data.e === 'kline' && data.k) return { candle: parseKline(data) };
   if (data.e === 'aggTrade') return { trade: parseAggTrade(data) };
+  if (Array.isArray(data.bids) && Array.isArray(data.asks)) { const depth = parseDepthMessage(msg, { t }); return depth ? { depth } : null; }
   return null;
 }
 
@@ -66,6 +81,8 @@ export class BinanceFeed extends FeedAdapter {
     this.stream = String(symbol.feedParams?.stream || symbol.id).toLowerCase();
     this.pair = this.stream.toUpperCase();
     this.backfillMinutes = Number.isInteger(opts.backfillMinutes) ? opts.backfillMinutes : 1440;
+    this.depth = opts.depth !== false && symbol.feedParams?.depth !== false;   // SPEC-PRO §P2 partial book on the same socket
+    this.depthLevels = [5, 10, 20].includes(opts.depthLevels) ? opts.depthLevels : 20;
     this.log = opts.log ?? null;
     this.d = {
       fetch: deps.fetch ?? globalThis.fetch, WebSocket: deps.WebSocket ?? globalThis.WebSocket,
@@ -171,7 +188,7 @@ export class BinanceFeed extends FeedAdapter {
     const gen = ++this._wsGen;
     let ws;
     try {
-      ws = new this.d.WebSocket(`${WS_BASE}?streams=${this.stream}@kline_1m/${this.stream}@aggTrade`);
+      ws = new this.d.WebSocket(`${WS_BASE}?streams=${this.streams().join('/')}`);
     } catch (e) { this._onFailure(`socket constructor: ${e.message}`); return; }
     this.ws = ws;
     let watchdog = null, cleanTimer = null;
@@ -190,13 +207,14 @@ export class BinanceFeed extends FeedAdapter {
     ws.onmessage = (ev) => {
       if (!alive()) return;
       kick();
-      const parsed = parseStreamMessage(ev.data);
+      const parsed = parseStreamMessage(ev.data, { t: this.d.now() });
       if (!parsed) return;
       if (parsed.candle) {
         const c = parsed.candle;
         if (c.closed && (this.lastClosedT === null || c.t > this.lastClosedT)) this.lastClosedT = c.t;
         this.emit('candle', { symbol: this.symbol.id, candle: c });
       } else if (parsed.trade) this.emit('trade', { symbol: this.symbol.id, trade: parsed.trade });
+      else if (parsed.depth) this._onDepth(parsed.depth, 'stream');
     };
     ws.onerror = (ev) => { if (alive()) this._drop(ws, ev?.message || ev?.error?.message || 'socket error'); };
     ws.onclose = (ev) => { if (alive()) this._drop(ws, `closed (${ev?.code ?? '?'}${ev?.reason ? ' ' + ev.reason : ''})`); };
@@ -215,6 +233,40 @@ export class BinanceFeed extends FeedAdapter {
       } catch (e) { this._say('warn', `Gap re-backfill failed: ${e.message}`); }
     }
     if (alive()) { this.attempt = 0; this.setStatus('live'); }
+    if (alive() && this.depth) this._depthSnapshot(alive); // best-effort seed for the book; never delays 'live'
+  }
+
+  /** The stream names of the combined socket (SPEC §3 + SPEC-PRO §P2). */
+  streams() {
+    const out = [`${this.stream}@kline_1m`, `${this.stream}@aggTrade`];
+    if (this.depth) out.push(depthStreamName(this.stream, { levels: this.depthLevels }));
+    return out;
+  }
+
+  /** Depth frames: drop one whose lastUpdateId is older than the newest seen (a stale frame after a reconnect). */
+  _onDepth(snapshot, source) {
+    if (!snapshot) return;
+    const id = snapshot.lastUpdateId;
+    if (Number.isFinite(id)) {
+      if (this._lastDepthId !== undefined && id < this._lastDepthId) return;
+      this._lastDepthId = id;
+    }
+    this.emit('depth', { symbol: this.symbol.id, snapshot, source });
+  }
+
+  /** One rate-limited REST depth snapshot after the socket opens (SPEC-PRO §P6 "REST snapshot on connect"). */
+  async _depthSnapshot(alive) {
+    try {
+      const wait = Math.max(this.restRetryAt - this.d.now(), this.lastRestAt + MIN_REST_GAP_MS - this.d.now());
+      if (wait > 0) await this._sleep(wait);
+      if (!alive()) return;
+      this.lastRestAt = this.d.now();
+      const snap = await fetchDepthSnapshot({ symbol: this.pair, limit: this.depthLevels, fetch: this.d.fetch, now: this.d.now });
+      if (alive()) this._onDepth(snap, 'rest');
+    } catch (e) {
+      if (Number.isFinite(e?.retryAfterMs)) this.restRetryAt = this.d.now() + e.retryAfterMs;
+      this._say('warn', `Depth snapshot failed: ${e?.message ?? e} — the 1 s depth stream fills the book`);
+    }
   }
 
   /** Tear down `ws` and schedule a reconnect. Idempotent per socket. */

@@ -19,6 +19,27 @@
 //   (backtest.mjs awaits it). The 'event' emitted here covers only the analyst's own log lines — the
 //   server pipes the shared logger (which also carries feed/journal/bridge lines) to SSE, so it must
 //   not subscribe to both.
+//
+// Pro (SPEC-PRO §P6) — per symbol:
+//   footprint   a FootprintBuilder (analysis TF, the symbol's tick, bucket = bucketFor(ATR)) fed by EVERY trade the
+//               feed emits (Binance aggTrades, the simulator's and a replay's synthetic trades alike); on each closed
+//               analysis-TF candle closeCandle() → SSE 'footprint' { symbol, tf, footprint, trapped }; ctx.footprint /
+//               ctx.footprints / ctx.trapped reach czt. A Binance symbol backfills its tape at start through
+//               lib/feeds/binance-trades.mjs (backward, bounded by footprint.backfillMaxRequests) and REBUILDS the
+//               builder from tape + the live trades that arrived meanwhile; a truncated tape marks older candles partial.
+//   book        an OrderBook created on the FIRST 'depth' event a feed emits (so only feeds that carry depth — Binance —
+//               ever have one; sim / replay / delayed report `reason` instead), fed by every depth snapshot and every
+//               trade (noteTrade: absorption is decided by the tape, never by qty changes); SSE 'book' { symbol, summary }
+//               at most once per second per symbol; ctx.book reaches czt (condition.bookImbalance / trigger.bookAbsorption).
+//   notifier    optional (lib/notify.mjs): journal 'setup' / 'resolved' → Telegram; on each closed 1m candle the daily
+//               digest is sent once per London day at notify.digestAt (the notifier remembers the dayKey); feed
+//               'reconnecting' / 'error' statuses → feedProblem (rate-limited by the notifier).
+//   read models footprintData(id, n) · bookData(id) · proData(id) back /api/footprint, /api/book, /api/pro.
+// DEVIATION (Pro, additive): the book is created lazily on the first depth snapshot rather than "per Binance symbol"
+//   — the feed, not the config name, is what proves depth exists (a Binance symbol overridden onto `simulated` by
+//   ANALYST_FEED must not show an empty book). A trade backfill that fails or is disabled (backfillMaxRequests 0)
+//   leaves footprints building from the live stream; `footprintData().backfill` reports which. `pro.hits` are the
+//   five §P5 hits of the czt result's winning side as booleans.
 
 import { EventEmitter } from 'node:events';
 import { CandleStore, TF_MS } from './candles.mjs';
@@ -28,11 +49,19 @@ import { computeLevels, detectSweeps, levelSide } from './liquidity.mjs';
 import { marketStructure, findFvgs, findOrderBlocks, htfBias } from './structure.mjs';
 import { detectAbsorption, cvdDivergence, volumeProfile, profileLevels, nakedPocs } from './orderflow.mjs';
 import { evaluate, gradeFor, levelLabel } from './czt.mjs';
+import { FootprintBuilder, bucketFor, serializeFootprint, trappedTraders, footprintConfig } from './footprint.mjs';
+import { OrderBook } from './orderbook.mjs';
 import { createFeed } from '../feeds/registry.mjs';
+import { fetchAggTrades } from '../feeds/binance-trades.mjs';
 
 const CANDLE_THROTTLE_MS = 500;   // ≤ 2 forming-candle bursts per second per symbol (SPEC §4.9 / §6)
 const MAX_MARKERS = 400;          // sweep / absorption / setup markers kept per symbol for the chart
 const MAX_TRADES = 20000;         // fallback when history.maxTradesInMemory is absent
+const BOOK_THROTTLE_MS = 1000;    // SSE 'book' at most once per second per symbol (SPEC-PRO §P6)
+const PRO_FOOTPRINTS = 12;        // columns the Pro panel shows (SPEC-PRO §P7); /api/footprint?n= overrides
+const BOOK_HISTORY = 60;          // /api/book history length (SPEC-PRO §P6)
+const PRO_HITS = { trigger: ['footprintImbalance', 'trappedTraders', 'bookAbsorption', 'unfinishedAuction'], condition: ['bookImbalance'] };
+const iso = (t) => (fin(t) ? new Date(t).toISOString().slice(0, 16) + 'Z' : '?');
 
 const fin = (v) => typeof v === 'number' && Number.isFinite(v);
 const sideOf = (l) => l.side || levelSide(l.kind);
@@ -49,9 +78,11 @@ export class Analyst extends EventEmitter {
    * @param {Function} [opts.feedFactory]  (symbolCfg, globalCfg, deps) → adapter; default registry.createFeed
    * @param {Function} opts.now        injected clock (ms)
    * @param {object} [opts.timers]     { setTimeout, clearTimeout } for the candle throttle (tests inject a fake clock's)
-   * @param {object} [opts.feedDeps]   passed to the feed factory (fetch, WebSocket, now, timers…)
+   * @param {object} [opts.feedDeps]   passed to the feed factory (fetch, WebSocket, now, timers…); `fetch` also serves the trade backfill
+   * @param {object} [opts.notifier]   lib/notify.mjs notifier (setup / resolved / digest / digestDue / feedProblem); optional
+   * @param {boolean} [opts.tradeBackfill=true]  aggTrades tape backfill for Binance symbols at start (SPEC-PRO §P1)
    */
-  constructor({ cfg, symbolsCfg, log = null, journal = null, bridge = null, feedFactory = createFeed, now = null, timers = {}, feedDeps = {} } = {}) {
+  constructor({ cfg, symbolsCfg, log = null, journal = null, bridge = null, notifier = null, feedFactory = createFeed, now = null, timers = {}, feedDeps = {}, tradeBackfill = true } = {}) {
     super();
     if (!cfg || !symbolsCfg || !Array.isArray(symbolsCfg.symbols)) throw new TypeError('Analyst needs { cfg, symbolsCfg }');
     if (typeof now !== 'function') throw new TypeError('Analyst needs an injected clock (`now: () => ms`) — the engine never reads the wall clock itself');
@@ -60,6 +91,8 @@ export class Analyst extends EventEmitter {
     this.log = log;
     this.journal = journal;
     this.bridge = bridge;
+    this.notifier = notifier;
+    this.tradeBackfill = tradeBackfill !== false;
     this.feedFactory = feedFactory;
     this.now = now;
     this.timers = { setTimeout: timers.setTimeout ?? globalThis.setTimeout, clearTimeout: timers.clearTimeout ?? globalThis.clearTimeout };
@@ -70,12 +103,18 @@ export class Analyst extends EventEmitter {
     for (const s of symbolsCfg.symbols) this.symbols.set(s.id, this._initSymbol(s));
     this._onResolved = (setup) => this._handleResolved(setup);
     this._onTrail = (mv) => this._handleTrail(mv);
+    const quiet = (p) => { if (p && typeof p.catch === 'function') p.catch(() => {}); };
+    this._onNotifySetup = (s) => quiet(this.notifier?.setup(s));
+    this._onNotifyResolved = (s) => quiet(this.notifier?.resolved(s));
   }
 
   _initSymbol(symbolCfg) {
     const tfs = this.cfg.timeframes?.available || Object.keys(TF_MS);
+    const tick = fin(symbolCfg.tick) && symbolCfg.tick > 0 ? symbolCfg.tick : Math.pow(10, -(fin(symbolCfg.dp) ? symbolCfg.dp : 2));
     return {
-      id: symbolCfg.id, cfg: symbolCfg, feed: null,
+      id: symbolCfg.id, cfg: symbolCfg, feed: null, tick,
+      fp: new FootprintBuilder({ tf: this.cfg.timeframes?.analysis ?? '5m', tick, cfg: this.cfg }), fpBucket: null, fpBackfill: null,
+      book: null, bookEmitT: -Infinity, bookTimer: null, depthFrames: 0,
       store: new CandleStore({ maxPerTf: this.cfg.history?.maxCandlesPerTf ?? 3000, tfs }),
       status: { state: 'connecting', kind: symbolCfg.feed === 'binance' ? 'live' : symbolCfg.feed === 'simulated' ? 'sim' : symbolCfg.feed === 'yahoo' ? 'delayed' : symbolCfg.feed === 'replay' ? 'replay' : 'unknown', detail: null },
       price: null, lastCandleT: null, lastClosed1mT: null, deltaSource: 'proxy',
@@ -112,6 +151,7 @@ export class Analyst extends EventEmitter {
       }
       this.journal.on('resolved', this._onResolved);
       this.journal.on('trail', this._onTrail);
+      if (this.notifier) { this.journal.on('setup', this._onNotifySetup); this.journal.on('resolved', this._onNotifyResolved); }
       for (const sym of this.symbols.values()) {
         const open = this.journal.open(sym.id);
         sym.openSetup = open.length ? open[open.length - 1] : null;
@@ -130,6 +170,7 @@ export class Analyst extends EventEmitter {
       feed.on('history', (m) => this._safe(sym, () => this._onHistory(sym, m.candles)));
       feed.on('candle', (m) => this._safe(sym, () => this._onCandle(sym, m.candle)));
       feed.on('trade', (m) => this._onTrade(sym, m.trade));
+      feed.on('depth', (m) => this._safe(sym, () => this._onDepth(sym, m.snapshot, m.source)));
       feed.on('status', (m) => this._onStatus(sym, m));
       feed.on('done', () => this.emit('done', { symbol: sym.id }));
       try { await feed.connect(); }
@@ -142,11 +183,14 @@ export class Analyst extends EventEmitter {
     this.running = false;
     for (const sym of this.symbols.values()) {
       if (sym.flushTimer) { this.timers.clearTimeout(sym.flushTimer); sym.flushTimer = null; }
+      if (sym.bookTimer) { this.timers.clearTimeout(sym.bookTimer); sym.bookTimer = null; }
       if (sym.feed) { try { await sym.feed.close(); } catch { /* closing */ } }
     }
     if (this.journal) {
       this.journal.off('resolved', this._onResolved);
       this.journal.off('trail', this._onTrail);
+      this.journal.off('setup', this._onNotifySetup);
+      this.journal.off('resolved', this._onNotifyResolved);
       if (typeof this.journal.flush === 'function') this.journal.flush();
     }
   }
@@ -164,14 +208,90 @@ export class Analyst extends EventEmitter {
     const level = state === 'error' ? 'error' : state === 'reconnecting' ? 'warn' : state === 'live' || state === 'sim' || state === 'delayed' ? 'ok' : 'info';
     this._log(level, sym.id, `Feed ${state}${detail ? ` — ${detail}` : ''}`);
     this.emit('status', { symbol: sym.id, state, kind, detail: detail ?? null });
+    if (this.notifier && (state === 'error' || state === 'reconnecting')) { const p = this.notifier.feedProblem(sym.id, `feed ${state}${detail ? ` — ${detail}` : ''}`); if (p?.catch) p.catch(() => {}); }
   }
 
   _onTrade(sym, trade) {
     if (!trade || !fin(trade.p)) return;
+    // Pro: every trade feeds the footprint (source 05 §3) and the book's executed-volume accounting (§2/§4).
+    sym.fp.addTrade(trade);
+    if (sym.book) sym.book.noteTrade(trade);
     const max = this.cfg.history?.maxTradesInMemory ?? MAX_TRADES;
     if (max <= 0) return;
     if (sym.trades.length < max) sym.trades.push(trade);
     else { sym.trades[sym.tradeHead] = trade; sym.tradeHead = (sym.tradeHead + 1) % max; }
+  }
+
+  /** The trade ring in chronological order. */
+  _ringTrades(sym) {
+    const max = this.cfg.history?.maxTradesInMemory ?? MAX_TRADES;
+    return sym.trades.length < max ? sym.trades : [...sym.trades.slice(sym.tradeHead), ...sym.trades.slice(0, sym.tradeHead)];
+  }
+
+  // ---- Pro: order book (SPEC-PRO §P2 / §P6) ----
+  _onDepth(sym, snapshot, source) {
+    if (!snapshot || !Array.isArray(snapshot.bids) || !Array.isArray(snapshot.asks)) return;
+    if (!sym.book) {
+      sym.book = new OrderBook({ cfg: this.cfg, tick: sym.tick, now: this.now });
+      this._log('info', sym.id, `Order book: first depth snapshot (${source ?? 'stream'}) — visible top of book, ${snapshot.bids.length}+${snapshot.asks.length} levels, not level 3`);
+    }
+    sym.book.applySnapshot(snapshot);
+    sym.depthFrames++;
+    this._queueBook(sym);
+  }
+
+  _queueBook(sym) {
+    const wait = sym.bookEmitT + BOOK_THROTTLE_MS - this.now();
+    if (wait <= 0) this._emitBook(sym);
+    else if (!sym.bookTimer) sym.bookTimer = this.timers.setTimeout(() => { sym.bookTimer = null; this._emitBook(sym); }, wait);
+  }
+
+  _emitBook(sym) {
+    if (!sym.book) return;
+    sym.bookEmitT = this.now();
+    this.emit('book', { symbol: sym.id, summary: sym.book.summary() });
+  }
+
+  // ---- Pro: footprint tape backfill (SPEC-PRO §P1 / §P6) ----
+  _wantsTradeBackfill(sym) {
+    return this.tradeBackfill && sym.cfg.feed === 'binance' && typeof sym.cfg.feedParams?.stream === 'string' && footprintConfig(this.cfg).backfillMaxRequests > 0;
+  }
+
+  async _backfillTrades(sym) {
+    if (sym.fpBackfill) return; // once per start
+    const fcfg = footprintConfig(this.cfg);
+    const tf = this.cfg.timeframes.analysis, tfMs = TF_MS[tf];
+    const pair = String(sym.cfg.feedParams.stream).toUpperCase();
+    const nowMs = this.now();
+    const startTime = Math.floor(nowMs / tfMs) * tfMs - fcfg.maxCandles * tfMs; // the whole footprint ring; maxRequests bounds the cost
+    sym.fpBackfill = { state: 'running', startedAt: nowMs, pair, startTime };
+    const relog = { info: (_, m, d) => this._log('info', sym.id, m, d), warn: (_, m, d) => this._log('warn', sym.id, m, d) };
+    try {
+      const trades = await fetchAggTrades({ symbol: pair, startTime, direction: 'backward', cfg: this.cfg, fetch: this.feedDeps.fetch ?? globalThis.fetch, log: relog, now: this.now, setTimeout: this.timers.setTimeout });
+      if (!this.running) return;
+      this._rebuildFootprints(sym, trades);
+      sym.fpBackfill = { state: 'done', pair, trades: trades.length, requests: trades.requests, partial: trades.partial, coverage: trades.coverage, finishedAt: this.now() };
+      this._log('info', sym.id, `Footprint tape: ${trades.length} trade(s) in ${trades.requests} request(s), ${iso(trades.coverage.from)} → ${iso(trades.coverage.to)}${trades.partial ? ' — PARTIAL: older candles are flagged partial' : ''}`, { requests: trades.requests, partial: trades.partial });
+      const last = sym.fp.last();
+      if (last) this.emit('footprint', { symbol: sym.id, tf, footprint: serializeFootprint(last), trapped: trappedTraders(sym.fp.recent()), rebuilt: true });
+    } catch (e) {
+      sym.fpBackfill = { state: 'error', pair, error: e?.message ?? String(e), finishedAt: this.now() };
+      this._log('warn', sym.id, `Footprint tape backfill failed: ${e?.message ?? e} — footprints build from the live stream only`);
+    }
+  }
+
+  /** Replace the builder with one built from the backfilled tape + the live trades that arrived meanwhile. */
+  _rebuildFootprints(sym, trades) {
+    const tf = this.cfg.timeframes.analysis, tfMs = TF_MS[tf];
+    const fresh = new FootprintBuilder({ tf, tick: sym.tick, bucket: sym.fpBucket ?? undefined, cfg: this.cfg });
+    for (const tr of trades) fresh.addTrade(tr);
+    const to = fin(trades.coverage?.to) ? trades.coverage.to : -Infinity;
+    for (const tr of this._ringTrades(sym)) if (tr.t > to) fresh.addTrade(tr);
+    if (trades.partial && fin(trades.coverage?.from)) fresh.markPartialBefore(trades.coverage.from);
+    const lastClosed = sym.store.lastClosed(tf);
+    const first = trades.length ? trades[0].t : (sym.trades.length ? this._ringTrades(sym)[0].t : null);
+    if (lastClosed && fin(first)) for (let b = fresh.bucketStart(first); b <= lastClosed.t; b += tfMs) fresh.closeCandle(b);
+    sym.fp = fresh;
   }
 
   _onHistory(sym, candles) {
@@ -183,6 +303,7 @@ export class Analyst extends EventEmitter {
     this._refreshStructureSwings(sym);
     this._analyze(sym, { live: false });
     this._log('info', sym.id, `History loaded: ${count} × 1m candles${last ? ` to ${new Date(last.t).toISOString().slice(0, 16)}Z` : ''}`);
+    if (this._wantsTradeBackfill(sym)) this._backfillTrades(sym); // async, bounded, never throws
     for (const tf of sym.store.tfs) if (sym.store.size(tf)) sym.pendingTfs.add(tf);
     this._flushCandles(sym, true);
     this.emit('levels', { symbol: sym.id, levels: sym.levels, zones: sym.zones, profile: sym.profile });
@@ -252,6 +373,20 @@ export class Analyst extends EventEmitter {
       // profile's HVNs, a fresh CVD divergence and the analysis-TF swings so it can tighten at problem areas.
       this.journal.resolveOpen(sym.id, c1, { swings: sym.structSwings, atr, levels: sym.levels, hvn: sym.profile?.hvn ?? [], divergence: sym.divergence, analysisSwings: sym.analysisSwings });
     }
+    if (resolve && this.notifier) this._maybeDigest(c1.t + 60e3);
+  }
+
+  /** SPEC-PRO §P3: the daily digest once per London day when a 1m candle closes at or after notify.digestAt. */
+  _maybeDigest(closeT) {
+    let due;
+    try { due = this.notifier.digestDue(closeT); } catch { return; }
+    if (!due?.due) return;
+    let setupsToday = 0;
+    for (const s of this.symbols.values()) setupsToday += s.setupsToday;
+    const rows = this.journal ? this.journal.scorecard({ by: 'trigger' }) : [];
+    Promise.resolve(this.notifier.digest(rows, { dayKey: due.dayKey, setupsToday, title: `Digest ${due.dayKey}` }))
+      .then((r) => { if (r?.sent) this._log('ok', '*', `Telegram digest sent for ${due.dayKey} (${rows.length} trigger row(s), ${setupsToday} setup(s) today)`); else if (r?.error) this._log('warn', '*', `Telegram digest for ${due.dayKey} failed: ${r.error}`); })
+      .catch(() => {});
   }
 
   _refreshStructureSwings(sym) {
@@ -298,6 +433,13 @@ export class Analyst extends EventEmitter {
     const closeT = lastClosed.t + TF_MS[tf];
     const atr = lastAtr(c5, cfg.indicators.atrPeriod);
     sym.atr = atr;
+    // Pro: the footprint bucket follows the ATR (applies from the next candle); close this candle's footprint.
+    if (atr > 0) { const b = bucketFor(atr, sym.tick, cfg); if (b !== sym.fpBucket) { sym.fpBucket = b; sym.fp.setBucket(b); } }
+    const footprint = sym.fp.closeCandle(lastClosed.t);
+    const footprints = sym.fp.recent();
+    const trapped = trappedTraders(footprints);
+    const book = sym.book ? sym.book.summary() : null;
+    this.emit('footprint', { symbol: sym.id, tf, footprint: serializeFootprint(footprint), trapped });
     const session = resolveSession(lastClosed.t, cfg);
     if (!sym.session) { sym.session = resolveSession(closeT - 1, cfg); this._rollDay(sym, sym.session.dayKey); }
 
@@ -348,6 +490,7 @@ export class Analyst extends EventEmitter {
       symbol: sym.id, symbolCfg: sym.cfg, cfg, now: closeT, store: sym.store, atr, session, bias: sym.bias,
       levels: sym.levels, sweeps, zones: sym.zones, profile: sym.profile, prevDayProfile: sym.prevDayProfile,
       absorption: sym.absorption, divergence: sym.divergence, structure: sym.structure, lastClosed, deltaInfo: delta(lastClosed),
+      footprint, footprints, trapped, book,
       limits: { setupsToday: sym.setupsToday, lastSetupT: sym.lastSetupT, openSetup: sym.openSetup, openAcrossSymbols: openAcross - (sym.openSetup ? 1 : 0), dailyLossUsd: this._dailyLossUsd(dayKey) },
     };
     const result = evaluate(ctx);
@@ -378,6 +521,7 @@ export class Analyst extends EventEmitter {
       if (!stored) return; // already journaled (restart replayed the same candle)
     }
     sym.lastSetup = stored; sym.openSetup = stored; sym.lastSetupT = stored.t; sym.setupsToday++;
+    if (!this.journal) this._onNotifySetup(stored); // with a journal the notifier rides its 'setup' event
     this._marker(sym, { t: stored.t, kind: 'setup', side: stored.side, text: `${stored.side.toUpperCase()} ${stored.grade}`, grade: stored.grade });
     const dp = sym.cfg.dp;
     this._log('signal', sym.id, `${stored.side.toUpperCase()} ${stored.grade} (${stored.score.toFixed(1)}) ${stored.tf} @ ${fmtPrice(stored.entry, dp)} · stop ${fmtPrice(stored.stop, dp)} · T1 ${fmtPrice(stored.targets[0].price, dp)} (${stored.rr.toFixed(2)} R) · ${stored.trigger.kind}`, { id: stored.id, reasons: stored.reasons, invalidation: stored.invalidation, size: stored.size });
@@ -446,9 +590,60 @@ export class Analyst extends EventEmitter {
         price: s.price, change: this._change(s),
         session: s.session ?? resolveSession(now, this.cfg), bias: s.bias, czt: this._cztView(s),
         lastSetup: s.lastSetup, openSetup: s.openSetup, lastCandleT: s.lastCandleT, atr: s.atr, deltaSource: s.deltaSource,
+        pro: { footprints: s.fp.size, bucket: s.fpBucket, partial: s.fpBackfill?.state === 'running' || s.fp.recent(PRO_FOOTPRINTS).some((f) => f.partial), book: !!s.book, depthFrames: s.depthFrames, hits: this._proHits(s) },
       })),
       limits: { setupsToday, openCount: this.journal ? this.journal.open().length : [...this.symbols.values()].filter((s) => s.openSetup).length },
+      notifier: this.notifier ? { enabled: !!this.notifier.enabled } : null,
     };
+  }
+
+  // ---- Pro read models (SPEC-PRO §P6 routes) ----
+  _sym(symbolId) {
+    const sym = this.symbols.get(symbolId);
+    if (!sym) throw new RangeError(`unknown symbol ${JSON.stringify(symbolId)}`);
+    return sym;
+  }
+
+  /** The five §P5 hits of the last czt evaluation's winning side, as booleans. */
+  _proHits(sym) {
+    const r = sym.czt;
+    const out = {};
+    for (const [layer, keys] of Object.entries(PRO_HITS)) for (const k of keys) out[k] = !!r?.[layer]?.hits?.includes(k);
+    return out;
+  }
+
+  _bookReason(sym) {
+    const kind = sym.status.kind;
+    if (kind === 'live') return sym.depthFrames ? null : 'No depth snapshot yet — waiting for the first order-book frame';
+    return `No order book for this feed (${kind}) — the visible top of book exists only on Binance live symbols`;
+  }
+
+  /** GET /api/footprint/:symbol?n= → { symbol, tf, bucket, tick, partial, footprints, current, backfill }. */
+  footprintData(symbolId, n = PRO_FOOTPRINTS) {
+    const sym = this._sym(symbolId);
+    const k = Math.max(1, Math.min(footprintConfig(this.cfg).maxCandles, n | 0 || PRO_FOOTPRINTS));
+    const footprints = sym.fp.recent(k).map(serializeFootprint);
+    const running = sym.fpBackfill?.state === 'running';
+    return {
+      symbol: sym.id, tf: sym.fp.tf, bucket: sym.fp.bucket, tick: sym.tick,
+      partial: running || footprints.some((f) => f.partial), footprints,
+      current: serializeFootprint(sym.fp.current()), backfill: sym.fpBackfill, dropped: sym.fp.dropped,
+    };
+  }
+
+  /** GET /api/book/:symbol → { symbol, summary, history } or { symbol, summary: null, history: [], reason }. */
+  bookData(symbolId, n = BOOK_HISTORY) {
+    const sym = this._sym(symbolId);
+    if (!sym.book) return { symbol: sym.id, summary: null, history: [], reason: this._bookReason(sym) };
+    return { symbol: sym.id, summary: sym.book.summary(), history: sym.book.history(Math.max(1, Math.min(600, n | 0 || BOOK_HISTORY))), frames: sym.depthFrames };
+  }
+
+  /** GET /api/pro/:symbol → footprint + book + trapped traders + the czt Pro hits, in one call (shape pro.js reads). */
+  proData(symbolId, n = PRO_FOOTPRINTS) {
+    const sym = this._sym(symbolId);
+    const fp = this.footprintData(symbolId, n);
+    const { symbol, ...book } = this.bookData(symbolId);
+    return { symbol, tf: fp.tf, bucket: fp.bucket, tick: fp.tick, partial: fp.partial, footprints: fp.footprints, current: fp.current, backfill: fp.backfill, book, trapped: trappedTraders(sym.fp.recent()), hits: this._proHits(sym), feed: { state: sym.status.state, kind: sym.status.kind } };
   }
 
   /** Session-open indexes (VWAP / CVD anchors) and LDN / NY markers for a candle series. */

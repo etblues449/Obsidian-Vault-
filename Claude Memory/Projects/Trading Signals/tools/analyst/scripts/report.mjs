@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 // scripts/report.mjs — the markdown scorecard digest (SPEC.md §1): by trigger, by symbol, by session (and
 // grade) + the last 20 setups, printed to stdout and written to data/reports/YYYY-MM-DD.md.
-//   node scripts/report.mjs [--symbol XAUUSD] [--limit 20] [--no-write] [--out path.md]
+//   node scripts/report.mjs [--symbol XAUUSD] [--limit 20] [--no-write] [--out path.md] [--telegram]
 // Reads the journal exactly as the server does (lib/journal.mjs load()), so numbers match the dashboard.
+// --telegram (SPEC-PRO §P6): also sends the compact digest (by-trigger scorecard + today's setup count) once through
+//   lib/notify.mjs — needs ANALYST_TELEGRAM_BOT_TOKEN + ANALYST_TELEGRAM_CHAT_ID in the environment. It goes through
+//   notifier.send(), NOT the once-per-day memory the Analyst keeps: an explicit CLI run is explicit intent, and the
+//   evening digest the server sends stays its own. Exit 0 when sent, 3 when skipped/failed (the reason is printed).
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
@@ -10,6 +14,8 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { loadConfig } from '../lib/config.mjs';
 import { createJournal } from '../lib/journal.mjs';
+import { createNotifier, formatDigest } from '../lib/notify.mjs';
+import { localParts, dayBounds } from '../lib/engine/sessions.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const fmt = (x, dp = 2) => (typeof x === 'number' && Number.isFinite(x) ? x.toLocaleString('en-GB', { minimumFractionDigits: dp, maximumFractionDigits: dp }) : '—');
@@ -54,20 +60,39 @@ export function buildReport({ cfg, symbolsCfg, journal, symbol, limit = 20, now 
   return parts.join('\n');
 }
 
-export async function main(argv = process.argv.slice(2), env = process.env) {
-  const { values } = parseArgs({ args: argv, options: { symbol: { type: 'string' }, limit: { type: 'string', default: '20' }, write: { type: 'boolean', default: true }, out: { type: 'string' } }, allowNegative: true });
+/** The Telegram digest text for `now`: by-trigger rows + the number of setups journaled in the current London day. */
+export function digestFor({ cfg, journal, symbol, now = Date.now() }) {
+  const tz = cfg.sessions.timezone;
+  const dayKey = localParts(now, tz).dayKey;
+  const { startMs, endMs } = dayBounds(dayKey, cfg);
+  const setupsToday = journal.list({ symbol, limit: 1000 }).filter((s) => s.t >= startMs && s.t < endMs).length;
+  const rows = journal.scorecard({ by: 'trigger', symbol });
+  return { dayKey, setupsToday, rows, text: formatDigest(rows, { dayKey, setupsToday, title: `Digest ${dayKey}${symbol ? ` · ${symbol}` : ''}` }) };
+}
+
+export async function main(argv = process.argv.slice(2), env = process.env, { fetch = globalThis.fetch, now = () => Date.now() } = {}) {
+  const { values } = parseArgs({ args: argv, options: { symbol: { type: 'string' }, limit: { type: 'string', default: '20' }, write: { type: 'boolean', default: true }, out: { type: 'string' }, telegram: { type: 'boolean', default: false } }, allowNegative: true });
   const { cfg, symbolsCfg } = loadConfig({ env });
   const dir = resolve(ROOT, cfg.journal.dir);
-  const journal = createJournal({ cfg, dir, now: () => Date.now() });
+  const journal = createJournal({ cfg, dir, now });
   const counts = journal.load();
   if (counts.malformed) process.stderr.write(`warning: ${counts.malformed} unreadable journal line(s) skipped\n`);
-  const md = buildReport({ cfg, symbolsCfg, journal, symbol: values.symbol, limit: Number(values.limit) || 20 });
+  const md = buildReport({ cfg, symbolsCfg, journal, symbol: values.symbol, limit: Number(values.limit) || 20, now: now() });
   process.stdout.write(md);
   if (values.write) {
-    const file = values.out ? resolve(values.out) : join(dir, 'reports', `${new Date().toISOString().slice(0, 10)}.md`);
+    const file = values.out ? resolve(values.out) : join(dir, 'reports', `${new Date(now()).toISOString().slice(0, 10)}.md`);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, md);
     process.stderr.write(`written ${file}\n`);
+  }
+  if (values.telegram) {
+    const notifier = createNotifier({ cfg: { ...cfg, journal: { ...cfg.journal, dir } }, env, fetch, now, stateFile: null });
+    if (!notifier.enabled) { process.stderr.write('telegram: not sent — set ANALYST_TELEGRAM_BOT_TOKEN and ANALYST_TELEGRAM_CHAT_ID (SPEC-PRO §P3)\n'); return 3; }
+    const d = digestFor({ cfg, journal, symbol: values.symbol, now: now() });
+    const r = await notifier.send('digest', d.text, { key: 'digest', cooldownMs: 0 });
+    if (r.sent) { process.stderr.write(`telegram: digest sent for ${d.dayKey} (${d.rows.length} trigger row(s), ${d.setupsToday} setup(s) today, HTTP ${r.status})\n`); return 0; }
+    process.stderr.write(`telegram: digest NOT sent — ${r.skipped ? `skipped (${r.skipped})` : r.error ?? `HTTP ${r.status}`}\n`);
+    return 3;
   }
   return 0;
 }
