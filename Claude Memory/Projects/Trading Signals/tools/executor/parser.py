@@ -20,6 +20,10 @@ SIDE_RE = re.compile(r"\b(BUY|LONG|SELL|SHORT)\b", re.I)
 SL_RE = re.compile(r"S\.?\s?L\.?\s*[:@=\s]\s*\$?(\d{3,5}(?:\.\d+)?)", re.I)
 TP_RE = re.compile(r"T\.?\s?P\.?\s?\d?\s*[:@=\s]\s*\$?(\d{3,5}(?:\.\d+)?)", re.I)
 ENTRY_RE = re.compile(r"(?:ENTRY|@|NOW\s*@?|PRICE)\s*[:=]?\s*\$?(\d{3,5}(?:\.\d+)?)", re.I)
+# "BUY 4177 / 4174" — an entry ZONE on the same line as the side keyword (GOLD TARDING
+# HUBB style, 2026-10-04). The fill assumed is the WORSE edge for the side — highest
+# for a buy, lowest for a sell — so sizing and the paper record never flatter the channel.
+ZONE_RE = re.compile(r"\b(?:BUY|LONG|SELL|SHORT)\b[^\n\d]{0,20}?(\d{3,5}(?:\.\d+)?)\s*[/\-–]\s*(\d{3,5}(?:\.\d+)?)", re.I)
 NUM_RE = re.compile(r"\d{3,5}(?:\.\d+)?")
 
 PRICE_LO, PRICE_HI = 500.0, 20000.0
@@ -34,6 +38,8 @@ class Signal:
     entry: float
     sl: float
     tp: Optional[float]
+    tps: tuple = ()                        # every TP posted, in order; tp == tps[0] when present
+    entry_zone: Optional[tuple] = None     # (low, high) when the channel gave a zone, else None
 
     @property
     def side_label(self) -> str:
@@ -65,25 +71,32 @@ def parse_signal(text: str) -> Optional[Signal]:
 
     sl_match = SL_RE.search(text)
     sl = float(sl_match.group(1)) if sl_match else None
-    tp_match = TP_RE.search(text)
-    tp = float(tp_match.group(1)) if tp_match else None
+    tps = tuple(float(x) for x in TP_RE.findall(text))
+    tp = tps[0] if tps else None
 
     entry: Optional[float] = None
-    m = ENTRY_RE.search(text)
-    if m:
-        entry = float(m.group(1))
-    else:
-        nums = [float(n) for n in NUM_RE.findall(text)
-                if PRICE_LO <= float(n) <= PRICE_HI and float(n) not in (sl, tp)]
-        if nums:
-            entry = nums[0]
+    entry_zone: Optional[tuple] = None
+    z = ZONE_RE.search(text)
+    if z and side is not None:
+        a, b = float(z.group(1)), float(z.group(2))
+        entry_zone = (min(a, b), max(a, b))
+        entry = max(a, b) if side == 1 else min(a, b)
+    if entry is None:
+        m = ENTRY_RE.search(text)
+        if m:
+            entry = float(m.group(1))
+        else:
+            nums = [float(n) for n in NUM_RE.findall(text)
+                    if PRICE_LO <= float(n) <= PRICE_HI and float(n) not in (sl, tp)]
+            if nums:
+                entry = nums[0]
 
     if side is None and entry is not None and sl is not None:
         side = -1 if sl > entry else 1
 
     if entry is None or sl is None or side is None:
         return None
-    return Signal(side=side, entry=entry, sl=sl, tp=tp)
+    return Signal(side=side, entry=entry, sl=sl, tp=tp, tps=tps, entry_zone=entry_zone)
 
 
 def validate(sig: Signal) -> Optional[str]:

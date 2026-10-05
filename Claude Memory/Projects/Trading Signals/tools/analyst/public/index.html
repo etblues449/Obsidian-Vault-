@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="TradeGuard Analyst — live Condition → Zone → Trigger analysis of four charts. Analysis only; nothing here places orders.">
+  <meta name="referrer" content="no-referrer">
+  <title>TradeGuard Analyst</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Cpath d='M8 22l6-8 4 5 6-9' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="app.css">
+  <!-- Apply the persisted theme BEFORE first paint so a dark user never sees a light flash. SPEC §7: dark via
+       prefers-color-scheme AND a toggle persisted in localStorage; storage can throw (private mode) → try/catch. -->
+  <script>
+    try { var t = localStorage.getItem('tradeguard.theme'); if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#chart">Skip to chart</a>
+
+  <!-- 1. Header: brand, feed status pill for the ACTIVE symbol, SSE link dot, theme toggle -->
+  <header class="hdr" role="banner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">TradeGuard <span class="brand-sub">Analyst</span></span>
+    </div>
+    <div class="hdr-right">
+      <span id="sseDot" class="sse-dot" role="status" aria-live="polite" title="Event stream: connecting">
+        <span class="sr-only">Event stream connecting</span>
+      </span>
+      <span id="statusPill" class="pill pill-connecting" role="status" aria-live="polite">Connecting…</span>
+      <button id="themeBtn" class="icon-btn" type="button" aria-label="Toggle dark theme" aria-pressed="false" title="Toggle theme (d)">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20V2z"/><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. Symbol tabs (keyboard 1–4) -->
+  <nav class="tabs" aria-label="Symbols">
+    <div id="symbolTabs" class="tablist" role="tablist" aria-label="Chart symbol">
+      <button class="tab is-active" role="tab" aria-selected="true" type="button" disabled>Loading…</button>
+    </div>
+  </nav>
+
+  <!-- 3. Timeframe pills (keyboard t) -->
+  <div class="tfbar">
+    <div id="tfPills" class="pills" role="group" aria-label="Timeframe"></div>
+    <div class="tfbar-meta" id="chartMeta" aria-live="polite"></div>
+  </div>
+
+  <main class="grid" id="main">
+    <!-- 4. Chart -->
+    <section class="card chart-card" aria-labelledby="chartTitle">
+      <div class="chart-head">
+        <h1 id="chartTitle" class="chart-title">
+          <span id="chartSymbol">—</span>
+          <span id="chartName" class="muted"></span>
+        </h1>
+        <div class="price-block">
+          <span id="chartPrice" class="price">—</span>
+          <span id="chartChange" class="change">—</span>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div id="chart" class="chart" role="img" aria-label="Candlestick chart with EMA 9, EMA 21, EMA 50, VWAP, volume and delta"></div>
+        <div id="zoneLayer" class="zone-layer" aria-hidden="true"></div>
+        <div id="chartEmpty" class="chart-empty" hidden>Waiting for candles…</div>
+      </div>
+      <div class="legend" id="legend" aria-label="Series legend">
+        <span class="lg"><i class="lg-key" style="--k: var(--ema9)"></i>EMA 9 <b data-lg="ema9">—</b></span>
+        <span class="lg"><i class="lg-key" style="--k: var(--ema21)"></i>EMA 21 <b data-lg="ema21">—</b></span>
+        <span class="lg"><i class="lg-key" style="--k: var(--ema50)"></i>EMA 50 <b data-lg="ema50">—</b></span>
+        <span class="lg"><i class="lg-key" style="--k: var(--vwap)"></i>VWAP <b data-lg="vwap">—</b></span>
+        <span class="lg"><i class="lg-key lg-bar" style="--k: var(--muted)"></i>Vol <b data-lg="vol">—</b></span>
+        <span class="lg"><i class="lg-key lg-bar" style="--k: var(--good)"></i>Δ <b data-lg="delta">—</b> <small data-lg="deltaSrc"></small></span>
+        <span class="lg"><i class="lg-key lg-dash" style="--k: var(--lvl-pd)"></i>PDH/PDL</span>
+        <span class="lg"><i class="lg-key lg-dash" style="--k: var(--lvl-session)"></i>Session H/L</span>
+        <span class="lg"><i class="lg-key lg-dash" style="--k: var(--lvl-equal)"></i>Equal H/L</span>
+        <span class="lg"><i class="lg-key lg-dash" style="--k: var(--lvl-value)"></i>POC/VAH/VAL</span>
+        <span class="lg"><i class="lg-key lg-box" style="--k: var(--zone-bull)"></i>FVG/OB</span>
+      </div>
+    </section>
+
+    <!-- 5. CZT panel: Condition → Zone → Trigger (source 05 §6) -->
+    <section class="card czt" aria-labelledby="cztTitle">
+      <div class="card-head">
+        <h2 id="cztTitle">Condition → Zone → Trigger</h2>
+        <span id="cztSide" class="side-tag side-none">no side</span>
+      </div>
+      <div class="czt-cols" id="cztCols">
+        <div class="czt-col" data-layer="condition"><h3>Condition</h3><ul class="hits" aria-label="Condition hits"></ul><div class="czt-score">—</div></div>
+        <div class="czt-col" data-layer="zone"><h3>Zone</h3><ul class="hits" aria-label="Zone hits"></ul><div class="czt-score">—</div></div>
+        <div class="czt-col" data-layer="trigger"><h3>Trigger</h3><ul class="hits" aria-label="Trigger hits"></ul><div class="czt-score">—</div></div>
+      </div>
+      <div class="scorebar" aria-label="CZT score">
+        <div class="scorebar-track"><div id="scoreFill" class="scorebar-fill" style="width:0%"></div></div>
+        <div class="scorebar-text"><span>Score <b id="scoreNum">0.0</b></span><span id="gradeTag" class="grade grade-none">—</span></div>
+      </div>
+      <p id="cztNote" class="czt-note muted">Waiting for the first closed analysis candle.</p>
+      <div id="setupCard" class="setup-card setup-empty">
+        <p class="muted">No setup. Never take a trigger in the middle of nowhere — wait for price to reach a zone and show its hand.</p>
+      </div>
+    </section>
+
+    <!-- 6. Watchlist -->
+    <section class="card watch" aria-labelledby="watchTitle">
+      <div class="card-head"><h2 id="watchTitle">Watchlist</h2><span id="limitsTag" class="muted small"></span></div>
+      <div class="table-wrap">
+        <table class="tbl watch-tbl">
+          <thead><tr>
+            <th scope="col">Symbol</th><th scope="col" class="num">Price</th><th scope="col" class="num">Δ%</th>
+            <th scope="col">Session</th><th scope="col">Bias</th><th scope="col">Feed</th><th scope="col">Last setup</th>
+          </tr></thead>
+          <tbody id="watchBody"><tr><td colspan="7" class="muted">Connecting…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 7. Execution feed (live logs) -->
+    <section class="card feed" aria-labelledby="feedTitle">
+      <div class="card-head">
+        <h2 id="feedTitle">Execution feed (live logs)</h2>
+        <label class="sel-wrap"><span class="sr-only">Filter feed by symbol</span>
+          <select id="feedFilter" aria-label="Filter feed by symbol"><option value="">All symbols</option></select>
+        </label>
+      </div>
+      <ol id="feedList" class="feed-list" aria-live="polite" aria-relevant="additions"><li class="muted">No events yet.</li></ol>
+    </section>
+
+    <!-- 8. Scorecard -->
+    <section class="card score" aria-labelledby="scoreTitle">
+      <div class="card-head">
+        <h2 id="scoreTitle">Scorecard</h2>
+        <div class="pills pills-sm" id="scoreBy" role="group" aria-label="Scorecard grouping">
+          <button class="pill-btn is-active" type="button" data-by="trigger" aria-pressed="true">By trigger</button>
+          <button class="pill-btn" type="button" data-by="symbol" aria-pressed="false">By symbol</button>
+          <button class="pill-btn" type="button" data-by="grade" aria-pressed="false">By grade</button>
+          <button class="pill-btn" type="button" data-by="session" aria-pressed="false">By session</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="tbl score-tbl">
+          <thead><tr>
+            <th scope="col">Key</th><th scope="col" class="num">n</th><th scope="col" class="num">Win %</th>
+            <th scope="col" class="num" title="Expectancy per trade, in R">Exp R</th><th scope="col" class="num" title="Profit factor">PF</th><th scope="col" class="num" title="Max drawdown, in R">DD R</th>
+            <th scope="col" class="num" title="Average R:R to first target">R:R</th><th scope="col" class="num" title="95% confidence interval of the win rate">CI</th>
+          </tr></thead>
+          <tbody id="scoreBody"><tr><td colspan="8" class="muted">No resolved setups yet — the scorecard fills as setups resolve walk-forward.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot muted small">
+    <span>Keys: <kbd>1</kbd>–<kbd>4</kbd> symbol · <kbd>t</kbd> timeframe · <kbd>d</kbd> theme</span>
+    <span>Analysis only — nothing here places orders.</span>
+  </footer>
+
+  <script src="vendor/lightweight-charts.standalone.production.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

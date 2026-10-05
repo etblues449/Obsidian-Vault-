@@ -3,6 +3,10 @@
 ## Goal
 Independently verify (or bury) the "GOLD VIP" / "THE WAR ZONE" Telegram XAUUSD signals **on paper, at Elliot's own risk sizing, before any real money moves** — and keep a hard funding gate between the channel's marketing and the bank account.
 
+## Status (2026-10-04, evening)
+- **GOLD TARDING HUBB added to the paper-verification portfolio** (Elliot's request, same treatment as GOLD VIP). Both parsers now read its format — an entry **zone** (`BUY 4177 / 4174` → filled at the worse edge, 4177) and **multiple TPs** (`tps`, `tp` = first, which the resolver scores); its "TP 1 HIT 40+ PIPS DONE" and "Join For Account Management" follow-ups parse as noise. Default channel lists (`signal_logger.py` `CHANNELS`, executor `TG_CHANNELS`) include it. Tests **139/139** (8 new, built on the verbatim message). Findings — self-reported wins, the account-management funnel, TP1 at R:R 0.4 — in [[Due Diligence — GOLD TARDING HUBB]]. **Elliot:** `git pull`, `--list` to confirm the dialog title, restart the listener.
+- **TradeGuard Analyst — autonomous live-chart engine + dashboard — being built on branch `claude/lucid-ritchie-ilz9kv`, PR #92 (draft).** `tools/analyst/`: zero-dep Node ≥ 22, BTCUSD + XAUUSD (PAXG) live from Binance with aggressor-tagged trades (true delta/CVD), NQ1! + OIL simulated (labelled, adapter slot for a real feed), five analysis layers (sessions, liquidity, structure, order flow, CZT) from the five strategy sources checked in under `docs/sources/`, journaled setups resolved walk-forward, scorecard by trigger/symbol/session. Status at this write: 3 of 6 engine modules verified here (152/152 tests); integration, adversarial review, soak and README still to come in this session — the final numbers land in the session record.
+
 ## Status (2026-10-04)
 - **TradingView signal source added** alongside Telegram (`tools/executor/tradingview_source.py`): shared-secret auth (`hmac.compare_digest`, 401 otherwise), unique per-alert ids (fixed a silent duplicate-refusal bug), single `_run()` entry point (Copilot's broken duplicate in `__main__.py` removed), `tzdata` added (Termux had no tz database → London-day caps were resetting on UTC). Elliot set the webhook secret and bound it to `127.0.0.1`.
 - **MetaAPI broker adapter built — T4Trade MT4 reachable from the executor, gated.** `tools/executor/broker/metaapi.py` (stdlib REST, endpoints verified against metaapi.cloud docs 2026-10-04), selected by `BROKER=metaapi`; OANDA remains the default and is unchanged. Lot conversion floors to `volumeStep` (never oversizes); closes detected by polling positions → history deals; region auto-detected; network drop after submit reported `UNCERTAIN` and adopted by reconcile. **Gate #6 (FCA broker) is hard-wired FAIL on MetaAPI** → live needs `GATE_OVERRIDE`; **dry run is now allowed on a live account without the override**. Tests **131/131** (30 new). Verified by fresh clone → byte-identical → green. Details: [[sessions/2026-10-04]].
@@ -54,6 +58,7 @@ Independently verify (or bury) the "GOLD VIP" / "THE WAR ZONE" Telegram XAUUSD s
 - [x] Deep-research verdict → plan → Phase 1 built (2026-09-06).
 - [x] Claude: TradingView webhook source + secret auth (2026-10-04); Elliot set the secret and `127.0.0.1` bind.
 - [x] Claude: MetaAPI broker adapter, 131/131 tests (2026-10-04).
+- [ ] **Elliot: pick up GOLD TARDING HUBB on the phone** — `git pull`, `python signal_logger.py --list` (confirm the dialog title contains `GOLD TARDING HUBB`), then `termux-wake-lock && python signal_logger.py` — expect a `listening:` line for it alongside GOLD VIP.
 - [ ] **Elliot: MetaAPI** — app.metaapi.cloud → add the T4Trade MT4 account (master password, exact server name) → Deployed/Connected → put `BROKER=metaapi`, `METAAPI_TOKEN`, `METAAPI_ACCOUNT_ID`, `METAAPI_SYMBOL`, `DRY_RUN=1` in `executor.env` → `git pull` → `python -m executor --check` → report output → `--dry-run`.
 - [ ] **Elliot (alternative path): OANDA Europe practice account** → *Manage API Access* token + account id; **Raspberry Pi** (64-bit OS); then follow `tools/executor/README.md`: install → `--login` → `--list` → `--check` → `--dry-run` → systemd. Report what `--check` prints for sample sizing.
 - [x] Claude: Phase 2 — `supabase/schema.sql`, `/trade` page + `/api/trade` in jarvis-carousel, Web Push (2026-09-06).
@@ -64,6 +69,7 @@ Independently verify (or bury) the "GOLD VIP" / "THE WAR ZONE" Telegram XAUUSD s
 
 ## Reference
 - [[Due Diligence — GOLD VIP + T4Trade]] — full cited findings (FCA/AMF/FSMA/FSA primary sources)
+- [[Due Diligence — GOLD TARDING HUBB]] — second channel in the paper portfolio (2026-10-04): what was observed, how the parsers read its zone + multi-TP format, red flags, the phone steps
 - [[Research — Executor Stack Verdict 2026-09-05]] — deep-research verdict on the autonomous-executor stack (IBKR/Vercel/Pake rejected; OANDA-or-Capital.com + persistent worker + PWA recommended; 21 confirmed / 4 refuted claims) + second pass over 12 more brokers
 - [[Executor — Architecture]] — decisions, data flow, risk controls, code map, verification ladder
 - `tools/executor/README.md` — the executor runbook (Pi install, first run, systemd, kill switch, going live, **MetaAPI/T4Trade**)

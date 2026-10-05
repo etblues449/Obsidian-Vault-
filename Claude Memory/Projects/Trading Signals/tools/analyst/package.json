@@ -1,0 +1,18 @@
+{
+  "name": "tradeguard-analyst",
+  "version": "1.0.0",
+  "description": "TradeGuard Analyst — autonomous live-chart analysis engine (liquidity, sessions, structure, order flow, CZT) with a phone-first dashboard. Zero dependencies.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test",
+    "check": "node scripts/check.mjs",
+    "backtest": "node backtest.mjs",
+    "report": "node scripts/report.mjs"
+  },
+  "license": "UNLICENSED"
+}
