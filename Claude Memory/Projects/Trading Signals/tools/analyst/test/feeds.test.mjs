@@ -14,7 +14,10 @@ import { mkCandles, fakeClock, fakeWebSocket, fakeFetch } from './helpers.mjs';
 const KLINE = JSON.parse('{"stream":"btcusdt@kline_1m","data":{"e":"kline","E":1791142274032,"s":"BTCUSDT","k":{"t":1791142260000,"T":1791142319999,"s":"BTCUSDT","i":"1m","f":6734731469,"L":6734731522,"o":"85462.50000000","c":"85462.50000000","h":"85462.50000000","l":"85462.49000000","v":"0.29537000","n":54,"x":false,"q":"25243.05602030","V":"0.03490000","Q":"2982.64125000","B":"0"}}}');
 const AGG = JSON.parse('{"stream":"paxgusdt@aggTrade","data":{"e":"aggTrade","E":1791142265500,"s":"PAXGUSDT","a":37416157,"p":"4146.00000000","q":"0.01890000","f":51562765,"l":51562765,"T":1791142265492,"m":false,"M":true}}');
 const ROW = JSON.parse('[1791142140000,"85466.00000000","85466.01000000","85462.49000000","85462.50000000","0.81900000",1791142199999,"69996.12071080",236,"0.23085000","19729.73114640","0"]');
-const collect = (feed) => { const ev = { history: [], candle: [], trade: [], status: [], done: [] }; for (const k of Object.keys(ev)) feed.on(k, (m) => ev[k].push(m)); return ev; };
+// SPEC-PRO §P2: a partial-depth frame on the combined stream (top 20, best first, NO timestamp) + a REST /depth body.
+const depthRows = (from, dir, n = 20) => Array.from({ length: n }, (_, i) => [(from + dir * i * 0.01).toFixed(2), (0.5 + i * 0.1).toFixed(3)]);
+const DEPTH = (lastUpdateId = 2) => ({ stream: 'btcusdt@depth20', data: { lastUpdateId, bids: depthRows(85462.49, -1), asks: depthRows(85462.5, 1) } });
+const collect = (feed) => { const ev = { history: [], candle: [], trade: [], depth: [], status: [], done: [] }; for (const k of Object.keys(ev)) feed.on(k, (m) => ev[k].push(m)); return ev; };
 const { cfg, symbolsCfg } = loadConfig({ env: {} });
 
 describe('registry', () => {
@@ -100,9 +103,26 @@ describe('binance parsing (SPEC §8 samples)', () => {
   });
 });
 
+describe('binance depth parsing in the combined stream (SPEC-PRO §P2 / §P6)', () => {
+  test('a depth20 frame → { depth: BookSnapshot } stamped with the caller\'s clock; kline/aggTrade frames are untouched; REST body parses too', () => {
+    const r = parseStreamMessage(JSON.stringify(DEPTH(77)), { t: 1791142265500 });
+    assert.ok(r && r.depth && !r.candle && !r.trade);
+    const d = r.depth;
+    assert.equal(d.t, 1791142265500); assert.equal(d.lastUpdateId, 77); assert.equal(d.stream, 'btcusdt@depth20');
+    assert.equal(d.bids.length, 20); assert.equal(d.asks.length, 20);
+    assert.ok(d.bids.every((l, i) => !i || l.price < d.bids[i - 1].price), 'bids best (highest) first');
+    assert.ok(d.asks.every((l, i) => !i || l.price > d.asks[i - 1].price), 'asks best (lowest) first');
+    assert.deepEqual(d.bids[0], { price: 85462.49, qty: 0.5 }); assert.deepEqual(d.asks[0], { price: 85462.5, qty: 0.5 });
+    assert.equal(parseStreamMessage(DEPTH()).depth.t, null, 'no clock given → t null (OrderBook stamps it)');
+    assert.ok(parseStreamMessage(KLINE, { t: 1 }).candle && parseStreamMessage(AGG, { t: 1 }).trade);
+    assert.equal(parseStreamMessage(JSON.stringify({ stream: 'btcusdt@depth20', data: { lastUpdateId: 1, bids: 'x', asks: [] } })), null);
+    assert.ok(parseStreamMessage({ lastUpdateId: 5, bids: depthRows(100, -1, 5), asks: depthRows(100.01, 1, 5) }, { t: 9 }).depth, 'a bare REST body (no stream wrapper) is a depth snapshot too');
+  });
+});
+
 describe('binance adapter', () => {
   const page = (fromT, n, nowMs) => Array.from({ length: n }, (_, i) => { const t = fromT + i * 60e3; return [t, '100', '101', '99', '100.5', '2', t + 59999, '0', 10, '1.2', '0', '0']; });
-  function harness({ backfillMinutes = 1500, nowMs = Date.UTC(2026, 0, 13, 8, 0, 0) } = {}) {
+  function harness({ backfillMinutes = 1500, nowMs = Date.UTC(2026, 0, 13, 8, 0, 0), opts = {} } = {}) {
     const clock = fakeClock(nowMs);
     const WS = fakeWebSocket();
     const rows = [];
@@ -113,8 +133,9 @@ describe('binance adapter', () => {
         const end = Number(u.searchParams.get('endTime')); const start = Math.floor(end / 60e3) * 60e3 - 999 * 60e3;
         return { json: page(start, 1000, clock.now()) };
       },
+      [`${REST_BASE}/depth`]: () => ({ json: DEPTH(1).data }),
     });
-    const feed = new BinanceFeed({ id: 'BTCUSD', feedParams: { stream: 'btcusdt' } }, { backfillMinutes }, { fetch, WebSocket: WS, now: clock.now, setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout, random: () => 0.5 });
+    const feed = new BinanceFeed({ id: 'BTCUSD', feedParams: { stream: 'btcusdt' } }, { backfillMinutes, ...opts }, { fetch, WebSocket: WS, now: clock.now, setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout, random: () => 0.5 });
     return { clock, WS, fetch, feed, rows, ev: collect(feed) };
   }
   test('backfills paginated (≤ 1 request/s), emits history + forming candle, opens ONE combined socket, goes live', async () => {
@@ -132,7 +153,7 @@ describe('binance adapter', () => {
     assert.ok(hist.every((c) => c.closed && c.buyV === 1.2 && c.sellV === 0.8));
     assert.equal(h.ev.candle.length, 1); assert.equal(h.ev.candle[0].candle.closed, false, 'the forming kline rides as a candle event');
     assert.equal(h.WS.instances.length, 1);
-    assert.equal(h.WS.last().url, 'wss://data-stream.binance.vision/stream?streams=btcusdt@kline_1m/btcusdt@aggTrade');
+    assert.equal(h.WS.last().url, 'wss://data-stream.binance.vision/stream?streams=btcusdt@kline_1m/btcusdt@aggTrade/btcusdt@depth20', 'SPEC-PRO §P6: depth20 rides the SAME combined socket');
     assert.equal(h.feed.state, 'connecting');
     h.WS.last().open(); await h.clock.flush();
     assert.equal(h.feed.state, 'live');
@@ -179,6 +200,68 @@ describe('binance adapter', () => {
     assert.equal(WS.instances.length, 1, 'socket opened anyway');
     assert.equal(feed.restRetryAt, clock.now() + 7000);
     await feed.close();
+  });
+});
+
+describe('binance adapter — depth on the combined socket (SPEC-PRO §P2 / §P6)', () => {
+  const page = (fromT, n) => Array.from({ length: n }, (_, i) => { const t = fromT + i * 60e3; return [t, '100', '101', '99', '100.5', '2', t + 59999, '0', 10, '1.2', '0', '0']; });
+  const mk = (opts = {}, feedParams = { stream: 'btcusdt' }) => {
+    const clock = fakeClock(Date.UTC(2026, 0, 13, 8, 0, 0));
+    const WS = fakeWebSocket();
+    const depthCalls = [];
+    const fetch = fakeFetch({
+      [`${REST_BASE}/klines`]: (url) => { const end = Number(new URL(url).searchParams.get('endTime')); return { json: page(Math.floor(end / 60e3) * 60e3 - 59 * 60e3, 60) }; },
+      [`${REST_BASE}/depth`]: (url) => { depthCalls.push(url); return { json: DEPTH(1).data }; },
+    });
+    const feed = new BinanceFeed({ id: 'BTCUSD', feedParams }, { backfillMinutes: 60, ...opts }, { fetch, WebSocket: WS, now: clock.now, setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout, random: () => 0.5 });
+    return { clock, WS, fetch, feed, depthCalls, ev: collect(feed) };
+  };
+  test('REST /depth?limit=20 right after the socket opens (rate-limited, never delays live), then stream frames → depth events; stale lastUpdateId frames are dropped', async () => {
+    const h = mk();
+    const p = h.feed.connect(); await h.clock.flush(); await p;
+    assert.equal(h.depthCalls.length, 0, 'no depth call before the socket is open');
+    h.WS.last().open(); await h.clock.flush();
+    assert.equal(h.feed.state, 'live');
+    // the klines page went out at t0; the depth call respects the 1 s REST gap
+    assert.equal(h.depthCalls.length, 0); assert.equal(h.clock.pending() > 0, true, 'waiting for the REST gap');
+    h.clock.tick(1000); await h.clock.flush(); await h.clock.flush();
+    assert.deepEqual(h.depthCalls, [`${REST_BASE}/depth?symbol=BTCUSDT&limit=20`]);
+    assert.equal(h.ev.depth.length, 1);
+    assert.equal(h.ev.depth[0].symbol, 'BTCUSD'); assert.equal(h.ev.depth[0].source, 'rest');
+    assert.equal(h.ev.depth[0].snapshot.bids.length, 20); assert.equal(h.ev.depth[0].snapshot.asks.length, 20);
+    assert.equal(h.ev.depth[0].snapshot.t, h.clock.now(), 'stamped with the adapter clock (the payload has no timestamp)');
+    h.clock.tick(1000);
+    h.WS.last().message(DEPTH(2));
+    assert.equal(h.ev.depth.length, 2); assert.equal(h.ev.depth[1].source, 'stream'); assert.equal(h.ev.depth[1].snapshot.lastUpdateId, 2); assert.equal(h.ev.depth[1].snapshot.t, h.clock.now());
+    h.WS.last().message(DEPTH(1));
+    assert.equal(h.ev.depth.length, 2, 'a frame older than the newest lastUpdateId is dropped');
+    h.WS.last().message(KLINE); h.WS.last().message(AGG);
+    assert.equal(h.ev.candle.length, 2); assert.equal(h.ev.trade.length, 1); assert.equal(h.ev.depth.length, 2, 'kline / aggTrade frames are not depth');
+    await h.feed.close();
+    assert.equal(h.clock.pending(), 0);
+  });
+  test('a failed REST snapshot is a warn line, not a status change; depth can be switched off per adapter or per symbol', async () => {
+    const h = mk();
+    h.fetch.calls.length = 0;
+    const WS2 = fakeWebSocket();
+    const bad = fakeFetch({ klines: () => ({ json: [] }), depth: () => ({ status: 500 }) });
+    const lines = [];
+    const feed = new BinanceFeed({ id: 'BTCUSD', feedParams: { stream: 'btcusdt' } }, { backfillMinutes: 60, log: { warn: (s, m) => lines.push(m), info() {} } }, { fetch: bad, WebSocket: WS2, now: h.clock.now, setTimeout: h.clock.setTimeout, clearTimeout: h.clock.clearTimeout });
+    const ev = collect(feed);
+    const p = feed.connect(); await h.clock.flush(); await p;
+    WS2.last().open(); await h.clock.flush(); h.clock.tick(1000); await h.clock.flush(); await h.clock.flush();
+    assert.equal(feed.state, 'live'); assert.equal(ev.depth.length, 0);
+    assert.ok(lines.some((m) => /^Depth snapshot failed: Binance depth HTTP 500/.test(m)), lines.join('|'));
+    await feed.close();
+    const off = mk({ depth: false });
+    const p2 = off.feed.connect(); await off.clock.flush(); await p2;
+    assert.equal(off.WS.last().url, 'wss://data-stream.binance.vision/stream?streams=btcusdt@kline_1m/btcusdt@aggTrade');
+    off.WS.last().open(); await off.clock.flush(); off.clock.tick(2000); await off.clock.flush();
+    assert.equal(off.depthCalls.length, 0); off.WS.last().message(DEPTH(3)); assert.equal(off.ev.depth.length, 0);
+    await off.feed.close();
+    const perSym = mk({}, { stream: 'paxgusdt', depth: false });
+    assert.deepEqual(perSym.feed.streams(), ['paxgusdt@kline_1m', 'paxgusdt@aggTrade']);
+    await perSym.feed.close();
   });
 });
 

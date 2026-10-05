@@ -254,7 +254,10 @@ export class Analyst extends EventEmitter {
 
   // ---- Pro: footprint tape backfill (SPEC-PRO §P1 / §P6) ----
   _wantsTradeBackfill(sym) {
-    return this.tradeBackfill && sym.cfg.feed === 'binance' && typeof sym.cfg.feedParams?.stream === 'string' && footprintConfig(this.cfg).backfillMaxRequests > 0;
+    // footprint.backfillMaxRequests 0 switches the tape off (footprintConfig() would fall back to the default for 0, so read the raw value).
+    const raw = this.cfg.footprint?.backfillMaxRequests;
+    const maxReq = fin(raw) ? raw : footprintConfig(this.cfg).backfillMaxRequests;
+    return this.tradeBackfill && sym.cfg.feed === 'binance' && typeof sym.cfg.feedParams?.stream === 'string' && maxReq > 0;
   }
 
   async _backfillTrades(sym) {
@@ -625,7 +628,7 @@ export class Analyst extends EventEmitter {
     const footprints = sym.fp.recent(k).map(serializeFootprint);
     const running = sym.fpBackfill?.state === 'running';
     return {
-      symbol: sym.id, tf: sym.fp.tf, bucket: sym.fp.bucket, tick: sym.tick,
+      symbol: sym.id, tf: sym.fp.tf, bucket: sym.fp.nextBucket ?? sym.fp.bucket, tick: sym.tick,   // the bucket the NEXT candle uses
       partial: running || footprints.some((f) => f.partial), footprints,
       current: serializeFootprint(sym.fp.current()), backfill: sym.fpBackfill, dropped: sym.fp.dropped,
     };

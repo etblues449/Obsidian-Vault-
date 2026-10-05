@@ -20,6 +20,13 @@ function stubAnalyst() {
   const a = new EventEmitter();
   a.snapshot = () => ({ t: 1, uptimeMs: 5, symbols: [{ id: 'BTCUSD', name: 'Bitcoin', dp: 2, feed: { state: 'live', kind: 'live', sourceNote: 'x' }, price: 100, change: { abs: 1, pct: 1, windowLabel: 'today' }, session: { id: 'london', killzone: true }, bias: { dir: 'bullish', strength: 0.5, reasons: [] }, czt: { condition: { hits: [], score: 0 }, zone: { hits: [], score: 0 }, trigger: { hits: [], score: 0 }, score: 0, grade: null, side: null }, lastSetup: null, openSetup: null, lastCandleT: 60e3, atr: 1, deltaSource: 'trades' }], limits: { setupsToday: { BTCUSD: 0 }, openCount: 0 } });
   a.chartData = (symbol, tf = '5m', limit = 500) => { if (symbol !== 'BTCUSD') throw new RangeError('unknown symbol'); return { symbol, tf, dp: 2, limit, candles: [{ t: 0, o: 1, h: 2, l: 0.5, c: 1.5, v: 1, delta: 0.1 }], ema9: [], ema21: [], ema50: [], vwap: [], cvd: [], levels: [], zones: [], markers: [], profile: null, session: { id: 'london' }, setups: [] }; };
+  // SPEC-PRO §P6 read models (the shapes the Analyst returns; `n` is echoed so the route's query handling is visible)
+  const known = (symbol) => { if (symbol !== 'BTCUSD') throw new RangeError('unknown symbol'); };
+  const FP = { t: 0, tf: '5m', bucket: 5, high: 101, low: 99, totalBid: 3, totalAsk: 9, delta: 6, poc: 100, levels: [{ price: 100, bid: 3, ask: 9, delta: 6, total: 12 }], imbalances: [{ price: 100, side: 'buy', ratio: null, infinite: true }], stacked: [], unfinishedHigh: false, unfinishedLow: true, nTrades: 4, partial: false };
+  const SUMMARY = { t: 1, bestBid: 99.99, bestAsk: 100, mid: 99.995, spread: 0.01, spreadBp: 1, bidDepth: 10, askDepth: 5, imbalance: 1 / 3, walls: [], nearestWall: { bid: null, ask: null }, pulled: [], absorbed: [], tradedThrough: [], levels: { bids: [], asks: [] } };
+  a.footprintData = (symbol, n = 12) => { known(symbol); return { symbol, tf: '5m', bucket: 5, partial: false, n, footprints: [FP] }; };
+  a.bookData = (symbol) => { known(symbol); return { symbol, summary: SUMMARY, history: [SUMMARY] }; };
+  a.proData = (symbol, n = 12) => { known(symbol); return { symbol, tf: '5m', bucket: 5, partial: false, n, footprints: [FP], book: { summary: SUMMARY, history: [SUMMARY] }, trapped: null, hits: { footprintImbalance: false, trappedTraders: false, bookAbsorption: false, unfinishedAuction: false, bookImbalance: true } }; };
   return a;
 }
 
@@ -113,6 +120,33 @@ describe('server', () => {
     assert.match(r2.text, /event: status\ndata: \{"symbol":"BTCUSD","state":"reconnecting"/);
     await new Promise((r3) => setTimeout(r3, 20));
     assert.equal(app.clients.size, 0, 'closed clients are dropped');
+  });
+  test('SPEC-PRO §P6: /api/footprint/:symbol?n=, /api/book/:symbol, /api/pro/:symbol in the contract shapes; unknown symbol 404; bad n clamped', async () => {
+    const fp = JSON.parse((await get(base, '/api/footprint/BTCUSD?n=3')).body);
+    assert.equal(fp.symbol, 'BTCUSD'); assert.equal(fp.tf, '5m'); assert.equal(fp.n, 3); assert.equal(fp.partial, false);
+    assert.equal(fp.footprints.length, 1); assert.equal(fp.footprints[0].nTrades, 4);
+    assert.deepEqual(fp.footprints[0].imbalances[0], { price: 100, side: 'buy', ratio: null, infinite: true }, 'Infinity ratios travel as null + infinite:true (JSON-safe)');
+    assert.equal(JSON.parse((await get(base, '/api/footprint/BTCUSD')).body).n, 12, 'default n');
+    assert.equal(JSON.parse((await get(base, '/api/footprint/BTCUSD?n=0')).body).n, 1, 'n is clamped ≥ 1');
+    assert.equal(JSON.parse((await get(base, '/api/footprint/BTCUSD?n=abc')).body).n, 12, 'a non-number n falls back to the default');
+    const book = JSON.parse((await get(base, '/api/book/BTCUSD')).body);
+    assert.equal(book.symbol, 'BTCUSD'); assert.equal(book.summary.bestAsk, 100); assert.equal(book.history.length, 1);
+    const pro = JSON.parse((await get(base, '/api/pro/BTCUSD')).body);
+    assert.equal(pro.symbol, 'BTCUSD'); assert.ok(Array.isArray(pro.footprints)); assert.equal(pro.book.summary.bidDepth, 10); assert.equal(pro.trapped, null);
+    assert.deepEqual(Object.keys(pro.hits).sort(), ['bookAbsorption', 'bookImbalance', 'footprintImbalance', 'trappedTraders', 'unfinishedAuction']);
+    assert.equal(pro.hits.bookImbalance, true);
+    for (const r of ['/api/footprint/XXX', '/api/book/XXX', '/api/pro/XXX']) { const res = await get(base, r); assert.equal(res.status, 404, r); assert.match(JSON.parse(res.body).error, /unknown symbol/); }
+    const enc = await get(base, '/api/pro/%ZZ'); assert.equal(enc.status, 400);
+    const h = JSON.parse((await get(base, '/health')).body); assert.equal(h.ok, true);
+  });
+  test('SPEC-PRO §P6: SSE forwards the analyst\'s footprint and book events', async () => {
+    const p = sseRead(base, '/events', { until: (b) => /event: footprint/.test(b) && /event: book/.test(b) });
+    await new Promise((r2) => setTimeout(r2, 50));
+    analyst.emit('footprint', { symbol: 'BTCUSD', tf: '5m', footprint: { t: 5, nTrades: 1, imbalances: [{ price: 1, side: 'buy', ratio: null, infinite: true }] }, trapped: null });
+    analyst.emit('book', { symbol: 'BTCUSD', summary: { t: 6, bestBid: 1, bestAsk: 2, imbalance: 0 } });
+    const r = await p;
+    assert.match(r.text, /event: footprint\ndata: \{"symbol":"BTCUSD","tf":"5m","footprint":\{"t":5,"nTrades":1,"imbalances":\[\{"price":1,"side":"buy","ratio":null,"infinite":true\}\]\},"trapped":null\}/);
+    assert.match(r.text, /event: book\ndata: \{"symbol":"BTCUSD","summary":\{"t":6,"bestBid":1,"bestAsk":2,"imbalance":0\}\}/);
   });
   test('heartbeat comment every 15 s on the injected timer', async () => {
     const p = sseRead(base, '/events', { until: (b) => /: hb/.test(b), timeoutMs: 1000 });

@@ -214,7 +214,7 @@ export class BinanceFeed extends FeedAdapter {
         if (c.closed && (this.lastClosedT === null || c.t > this.lastClosedT)) this.lastClosedT = c.t;
         this.emit('candle', { symbol: this.symbol.id, candle: c });
       } else if (parsed.trade) this.emit('trade', { symbol: this.symbol.id, trade: parsed.trade });
-      else if (parsed.depth) this._onDepth(parsed.depth, 'stream');
+      else if (parsed.depth && this.depth) this._onDepth(parsed.depth, 'stream'); // depth off ⇒ no book, even for a stray frame
     };
     ws.onerror = (ev) => { if (alive()) this._drop(ws, ev?.message || ev?.error?.message || 'socket error'); };
     ws.onclose = (ev) => { if (alive()) this._drop(ws, `closed (${ev?.code ?? '?'}${ev?.reason ? ' ' + ev.reason : ''})`); };

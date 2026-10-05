@@ -358,3 +358,28 @@ describe('test fakes (used by the feed and server suites)', () => {
     assert.notEqual(loadFixture()[0].c, -1);
   });
 });
+
+describe('SPEC-PRO §P5 blocks (footprint / orderbook / notify) and the five Pro weights', () => {
+  const base = () => loadConfig({ env: {} });
+  const withStrategy = (mutate) => { const { cfg } = base(); mutate(cfg); return validateStrategy(cfg); };
+  test('the shipped file carries all three blocks and the five weights; the blocks are optional, their keys are not', () => {
+    const { cfg } = base();
+    assert.deepEqual(cfg.footprint && { bucketAtr: cfg.footprint.bucketAtr, imbalanceRatio: cfg.footprint.imbalanceRatio, stackedMin: cfg.footprint.stackedMin, maxCandles: cfg.footprint.maxCandles, backfillMaxRequests: cfg.footprint.backfillMaxRequests }, { bucketAtr: 0.05, imbalanceRatio: 3, stackedMin: 3, maxCandles: 48, backfillMaxRequests: 40 });
+    assert.equal(cfg.orderbook.levels, 20); assert.equal(cfg.orderbook.imbalanceMin, 0.25); assert.equal(cfg.notify.digestAt, '17:05'); assert.equal(cfg.notify.minGrade, 'B');
+    for (const k of ['trigger.footprintImbalance', 'trigger.trappedTraders', 'trigger.bookAbsorption', 'trigger.unfinishedAuction', 'condition.bookImbalance']) { assert.ok(WEIGHT_KEYS.includes(k), k); assert.equal(typeof cfg.czt.weights[k], 'number', k); }
+    assert.deepEqual(withStrategy((c) => { delete c.footprint; delete c.orderbook; delete c.notify; }), [], 'absent blocks → the modules\' §P5 defaults');
+    assert.ok(withStrategy((c) => { delete c.czt.weights['trigger.footprintImbalance']; }).some((s) => s.includes('trigger.footprintImbalance')), 'a Pro weight is required like every other hit');
+    assert.ok(withStrategy((c) => { c.footprint.stackedMin = 1; }).some((s) => s.includes('footprint.stackedMin')));
+    assert.ok(withStrategy((c) => { c.footprint.imbalanceRatio = 0.5; }).some((s) => s.includes('footprint.imbalanceRatio')));
+    assert.ok(withStrategy((c) => { c.footprint.backfillMaxRequests = 2.5; }).some((s) => s.includes('backfillMaxRequests')));
+    assert.deepEqual(withStrategy((c) => { c.footprint.backfillMaxRequests = 0; }), [], '0 turns the tape backfill off');
+    assert.ok(withStrategy((c) => { c.orderbook.levels = 7; }).some((s) => s.includes('orderbook.levels')));
+    assert.ok(withStrategy((c) => { c.orderbook.imbalanceMin = 1.5; }).some((s) => s.includes('orderbook.imbalanceMin')));
+    assert.ok(withStrategy((c) => { c.orderbook.pullWindowMs = 10; }).some((s) => s.includes('orderbook.pullWindowMs')));
+    assert.ok(withStrategy((c) => { c.notify.digestAt = '25:00'; }).some((s) => s.includes('notify.digestAt')));
+    assert.ok(withStrategy((c) => { c.notify.minGrade = 'S'; }).some((s) => s.includes('notify.minGrade')));
+    assert.ok(withStrategy((c) => { c.notify.maxPerHour = 0; }).some((s) => s.includes('notify.maxPerHour')));
+    assert.ok(withStrategy((c) => { c.notify.token = 'abc'; }).some((s) => s.includes('notify.token') && s.includes('secret')), 'a token in config is refused by name');
+    assert.ok(withStrategy((c) => { c.notify = 'yes'; }).some((s) => s.includes('notify')));
+  });
+});

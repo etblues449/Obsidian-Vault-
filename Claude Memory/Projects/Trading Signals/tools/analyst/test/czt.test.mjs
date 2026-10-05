@@ -481,3 +481,107 @@ test('levelLabel and gradeFor speak the sources\' language', () => {
   assert.equal(levelLabel({ kind: 'somethingNew' }), 'somethingNew');
   assert.deepEqual([5, 7, 8.99, 9, 12].map(s => gradeFor(s, CFG.czt)), ['C', 'B', 'B', 'A', 'A']);
 });
+
+// ---------------------------------------------------------------------------------------------------------------
+// SPEC-PRO §P5 — the Pro hits (source 05 §2–§4) and the confirmation-only gate
+// ---------------------------------------------------------------------------------------------------------------
+/** A Footprint in the engine's shape (only the fields czt reads matter: t, stacked, unfinished*, high/low, poc, close). */
+const fpOf = ({ t = T, stacked = [], unfinishedHigh = false, unfinishedLow = false, high = 85330, low = 85040, close = 85320, levels = [], poc = 85100 } = {}) =>
+  ({ t, tf: '5m', bucket: 5, tick: 0.01, open: 85200, close, high, low, totalBid: 30, totalAsk: 20, total: 50, delta: -10, poc, levels, imbalances: [], stacked, unfinishedHigh, unfinishedLow, nTrades: 100, partial: false, truncated: false });
+const BOOK = (over = {}) => ({ t: T + M5, bestBid: 85319, bestAsk: 85320, mid: 85319.5, spread: 1, spreadBp: 0.12, bidDepth: 14, askDepth: 6, imbalance: 0.4, walls: [], nearestWall: { bid: null, ask: null }, pulled: [], absorbed: [], tradedThrough: [], levels: { bids: [], asks: [] }, ...over });
+
+test('Pro: trigger.footprintImbalance — a stacked imbalance in the side\'s direction on the trigger candle is a REAL trigger named at the zone (SPEC-PRO §P5, source 05 §3)', () => {
+  const stackedBuy = [{ side: 'buy', from: 85040, to: 85060, count: 4 }];
+  const base = source01Long({ footprint: fpOf({ stacked: stackedBuy }) });
+  const r = evaluate(base);
+  assert.ok(r.setup, r.rejections.join('|'));
+  assert.ok(r.trigger.hits.includes('footprintImbalance') && r.trigger.real.includes('footprintImbalance'));
+  assert.ok(r.setup.reasons.includes('Stacked buy imbalances (×4) at the Asia low — aggressive buyers stepping in at the zone'), r.setup.reasons.join('\n'));
+  assert.equal(r.score, evaluate(source01Long()).score + CFG.czt.weights['trigger.footprintImbalance'], 'adds exactly its weight');
+  assert.equal(r.trigger.kind, 'sweepReclaim', 'the sweep outranks it for Setup.trigger.kind');
+  // alone (no sweep / engulf / absorption / divergence / break) it satisfies the ≥ 1-REAL-trigger gate and names the kind
+  const alone = evaluate(source01Long({ sweeps: [], engulfing: null, deltaInfo: { value: 0 }, footprint: fpOf({ stacked: stackedBuy }) }));
+  assert.ok(alone.setup, alone.rejections.join('|'));
+  assert.deepEqual(alone.trigger.hits, ['footprintImbalance']); assert.deepEqual(alone.trigger.real, ['footprintImbalance']); assert.equal(alone.trigger.kind, 'footprintImbalance');
+  assert.match(alone.setup.reasons.find(x => /^Stacked buy/.test(x)), /^Stacked buy imbalances \(×4\) at the prior-day POC — aggressive buyers stepping in at the zone$/, 'without a sweep the nearest zone level names the place');
+  // a SELL run is against a long (and is the short's hit); a footprint from another candle is not this candle's flow
+  const against = evaluateSide(source01Long({ footprint: fpOf({ stacked: [{ side: 'sell', from: 85300, to: 85330, count: 3 }] }) }), 'long');
+  assert.ok(!against.trigger.hits.includes('footprintImbalance'));
+  assert.ok(evaluateSide(source01Long({ footprint: fpOf({ stacked: [{ side: 'sell', from: 85300, to: 85330, count: 3 }] }) }), 'short').trigger.hits.includes('footprintImbalance'));
+  const stale = evaluateSide(source01Long({ footprint: fpOf({ t: T - M5, stacked: stackedBuy }) }), 'long');
+  assert.ok(!stale.trigger.hits.includes('footprintImbalance'), 'a footprint stamped on another candle is ignored');
+  // entry the candle AFTER a reclaimed sweep: the stacked run on the SWEEP candle still counts ("or on the sweep candle for a reclaim")
+  const sweepC = { t: T, o: 85200, h: 85250, l: 85040, c: 85240, v: 50, buyV: 17.5, sellV: 32.5, closed: true };
+  const next = { t: T + M5, o: 85230, h: 85300, l: 85160, c: 85290, v: 45, buyV: 28, sellV: 17, closed: true };
+  const levels = LEVELS().filter(l => l.kind !== 'asiaHigh');
+  levels.find(l => l.kind === 'asiaLow').swept = { t: T, depth: 80, reclaimed: true, reclaimedT: T };
+  const after = evaluateSide(source01Long({ lastClosed: next, store: store([sweepC, next]), levels, sweeps: [], now: T + 2 * M5, engulfing: null, deltaInfo: { value: 0 },
+    footprints: [fpOf({ t: T, stacked: stackedBuy, close: 85240 }), fpOf({ t: T + M5, close: 85290 })] }), 'long');
+  assert.ok(after.trigger.real.includes('footprintImbalance'), after.trigger.hits.join(','));
+  assert.ok(after.reasons.includes('Stacked buy imbalances (×4) at the Asia low on the sweep candle — aggressive buyers stepping in at the zone'), after.reasons.join('\n'));
+});
+
+test('Pro: trigger.trappedTraders — footprint.trappedTraders() agreeing with the side is a REAL trigger; ctx.trapped (precomputed) wins (source 05 §4)', () => {
+  const lv = (from, to, step) => { const out = []; for (let p = from; p <= to + 1e-9; p += step) out.push({ price: Math.round(p * 100) / 100, bid: 1, ask: 1, delta: 0, total: 2, n: 2 }); return out; };
+  // previous candle: stacked SELL imbalances in its lower third (85,000–85,020 of 85,000–85,100); the trigger candle closes above → trapped sellers (bullish)
+  const prev = fpOf({ t: T - M5, levels: lv(85000, 85100, 5), stacked: [{ side: 'sell', from: 85000, to: 85020, count: 3 }], close: 85050 });
+  const base = source01Long({ sweeps: [], engulfing: null, deltaInfo: { value: 0 }, footprints: [prev, fpOf({ t: T, close: 85320 })] });
+  const r = evaluate(base);
+  assert.ok(r.setup, r.rejections.join('|'));
+  assert.deepEqual(r.trigger.hits, ['trappedTraders']); assert.equal(r.trigger.kind, 'trappedTraders');
+  assert.ok(r.setup.reasons.includes('Trapped sellers: stacked sell imbalances at 85,000–85,020 then a close above (85,320) — their stops are market buys'), r.setup.reasons.join('\n'));
+  assert.ok(!evaluateSide(base, 'short').trigger.hits.includes('trappedTraders'), 'a bullish trap is not a short\'s trigger');
+  // a bearish trap (stacked BUY in the upper third, then a close below) is the short's
+  const prevBuy = fpOf({ t: T - M5, levels: lv(85300, 85400, 5), stacked: [{ side: 'buy', from: 85380, to: 85400, count: 3 }], close: 85390 });
+  const bear = evaluateSide(source01Long({ sweeps: [], engulfing: null, deltaInfo: { value: 0 }, footprints: [prevBuy, fpOf({ t: T, close: 85320 })] }), 'short');
+  assert.ok(bear.trigger.real.includes('trappedTraders'), bear.trigger.hits.join(','));
+  assert.ok(bear.reasons.some(x => /^Trapped buyers: stacked buy imbalances at 85,380–85,400 then a close below \(85,320\) — their stops are market sells$/.test(x)), bear.reasons.join('\n'));
+  // the analyst passes its own result: null means "none", even when ctx.footprints would say otherwise; a stale trap (other candle) is ignored
+  assert.ok(!evaluateSide({ ...base, trapped: null }, 'long').trigger.hits.includes('trappedTraders'));
+  const explicit = evaluateSide({ ...base, footprints: [], trapped: { side: 'bullish', t: T, at: T - M5, levels: [85000], edge: 85020, close: 85320, reason: 'Trapped sellers: custom line' } }, 'long');
+  assert.ok(explicit.reasons.includes('Trapped sellers: custom line'));
+  assert.ok(!evaluateSide({ ...base, footprints: [], trapped: { side: 'bullish', t: T - M5, edge: 85020, close: 85320, reason: 'x' } }, 'long').trigger.hits.includes('trappedTraders'));
+});
+
+test('Pro: trigger.bookAbsorption — an absorbed wall on the side\'s favour within zoneToleranceAtr of entry and inside absorbWindowSec is a REAL trigger (source 05 §4)', () => {
+  const wall = { side: 'bid', price: 85300, qty: 12, lastQty: 12, tradedQty: 7, at: T + M5 - 30e3, ageMs: 30e3 };
+  const base = source01Long({ sweeps: [], engulfing: null, deltaInfo: { value: 0 }, book: BOOK({ imbalance: 0, absorbed: [wall] }) });
+  const r = evaluate(base);
+  assert.ok(r.setup, r.rejections.join('|'));
+  assert.deepEqual(r.trigger.hits, ['bookAbsorption']); assert.equal(r.trigger.kind, 'bookAbsorption');
+  assert.ok(r.setup.reasons.includes('Absorption at the bid wall 85,300.00: 7 traded into 12 resting and it held — passive buyers soaking up market sells (visible top of book)'), r.setup.reasons.join('\n'));
+  assert.ok(!evaluateSide(base, 'short').trigger.hits.includes('bookAbsorption'), 'a bid wall absorbing is bullish, never the short\'s trigger');
+  assert.ok(evaluateSide({ ...base, book: BOOK({ imbalance: 0, absorbed: [{ ...wall, side: 'ask', price: 85330 }] }) }, 'short').trigger.hits.includes('bookAbsorption'));
+  assert.ok(!evaluateSide({ ...base, book: BOOK({ imbalance: 0, absorbed: [{ ...wall, ageMs: 121e3 }] }) }, 'long').trigger.hits.includes('bookAbsorption'), 'older than orderbook.absorbWindowSec');
+  assert.ok(!evaluateSide({ ...base, book: BOOK({ imbalance: 0, absorbed: [{ ...wall, price: 85200 }] }) }, 'long').trigger.hits.includes('bookAbsorption'), 'further than zoneToleranceAtr (0.5 ATR = 50) from entry');
+  assert.ok(!evaluateSide({ ...base, book: null }, 'long').trigger.hits.includes('bookAbsorption'));
+});
+
+test('Pro: trigger.unfinishedAuction is a CONFIRMATION only — weight, a reason line, never the gate (SPEC-PRO §P5)', () => {
+  const base = source01Long({ sweeps: [], engulfing: null, deltaInfo: { value: 0 }, footprint: fpOf({ unfinishedHigh: true }) });
+  const r = evaluate(base);
+  assert.equal(r.setup, null);
+  assert.deepEqual(r.sides.long.trigger.hits, ['unfinishedAuction']); assert.deepEqual(r.sides.long.trigger.real, []); assert.equal(r.sides.long.trigger.kind, null);
+  assert.ok(r.sides.long.rejections.some(x => /^Only confirmations \(unfinishedAuction\)/.test(x)), r.sides.long.rejections.join('|'));
+  assert.ok(r.sides.long.reasons.includes("Unfinished auction at the trigger candle's high 85,330.00 — both sides printed at the extreme, the market may revisit it to complete business (target-side magnet, confirmation)"), r.sides.long.reasons.join('\n'));
+  // with the sweep it adds exactly its weight; the LOW being unfinished is the short's magnet, not the long's
+  const withSweep = evaluate(source01Long({ footprint: fpOf({ unfinishedHigh: true }) }));
+  assert.equal(withSweep.score, evaluate(source01Long()).score + CFG.czt.weights['trigger.unfinishedAuction']);
+  assert.ok(!evaluateSide(source01Long({ footprint: fpOf({ unfinishedLow: true }) }), 'long').trigger.hits.includes('unfinishedAuction'));
+  assert.ok(evaluateSide(source01Long({ footprint: fpOf({ unfinishedLow: true }) }), 'short').trigger.hits.includes('unfinishedAuction'));
+});
+
+test('Pro: condition.bookImbalance — |depth imbalance| ≥ orderbook.imbalanceMin in the side\'s favour (source 05 §2: context, not conviction)', () => {
+  const r = evaluate(source01Long({ book: BOOK({ imbalance: 0.3 }) }));
+  assert.ok(r.setup && r.condition.hits.includes('bookImbalance'), r.condition.hits.join(','));
+  assert.ok(r.setup.reasons.includes('Visible book 30 % bid-heavy (depth imbalance +0.3, ≥ 0.25) — resting buyers outweigh; top of book, not level 3'), r.setup.reasons.join('\n'));
+  assert.equal(r.score, evaluate(source01Long()).score + CFG.czt.weights['condition.bookImbalance']);
+  assert.ok(!evaluateSide(source01Long({ book: BOOK({ imbalance: 0.2 }) }), 'long').condition.hits.includes('bookImbalance'), 'below imbalanceMin');
+  assert.ok(!evaluateSide(source01Long({ book: BOOK({ imbalance: -0.3 }) }), 'long').condition.hits.includes('bookImbalance'), 'ask-heavy is the short\'s context');
+  assert.ok(evaluateSide(source01Long({ book: BOOK({ imbalance: -0.3 }) }), 'short').condition.hits.includes('bookImbalance'));
+  // a book alone never makes a Setup: it is a Condition, and the gate still needs a REAL trigger
+  const only = evaluate(source01Long({ sweeps: [], engulfing: null, deltaInfo: { value: 0 }, book: BOOK({ imbalance: 0.6 }) }));
+  assert.equal(only.setup, null); assert.ok(only.sides.long.rejections.some(x => /^No trigger on the last closed candle/.test(x)));
+  // every Pro weight is in the shipped config, so a missing one would make the scorer silently ignore the hit
+  for (const k of ['trigger.footprintImbalance', 'trigger.trappedTraders', 'trigger.bookAbsorption', 'trigger.unfinishedAuction', 'condition.bookImbalance']) assert.equal(typeof CFG.czt.weights[k], 'number', k);
+});

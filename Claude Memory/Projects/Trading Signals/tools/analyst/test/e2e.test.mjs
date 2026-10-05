@@ -22,6 +22,7 @@ import { CandleStore, aggregate } from '../lib/engine/candles.mjs';
 import { lastAtr } from '../lib/engine/indicators.mjs';
 import { htfBias } from '../lib/engine/structure.mjs';
 import { resolveSession } from '../lib/engine/sessions.mjs';
+import { bucketFor } from '../lib/engine/footprint.mjs';
 import { mkCandles } from './helpers.mjs';
 
 const MIN = 60e3;
@@ -173,5 +174,75 @@ test('e2e: London-killzone sweep-and-reclaim of the Asia low under bullish bias 
     assert.match(readFileSync(join(dir, 'resolutions.jsonl'), 'utf8'), /"status":"won"/);
     const reloaded = createJournal({ cfg, dir, now });
     assert.deepEqual(reloaded.load(), { setups: 1, open: 0, resolved: 1, malformed: 0 });
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('e2e Pro (SPEC-PRO §P8): stacked BUY imbalances on the sweep candle at the swept Asia low under bullish bias → the long\'s reasons name the imbalance; the footprint SSE column is serialised', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'analyst-e2e-pro-'));
+  try {
+    const { cfg, symbolsCfg } = loadConfig({ env: { ANALYST_SYMBOLS: 'BTCUSD', ANALYST_FEED: 'replay' } });
+    const sc = buildScenario();
+    const { candles, history, sweepLow, playLast } = sc;
+    const bucket = bucketFor(sc.atr0, symbolsCfg.symbols[0].tick, cfg);
+    assert.equal(bucket, 0.01, `footprint bucket for ATR ${sc.atr0} at tick 0.01 (bucketAtr ${cfg.footprint.bucketAtr})`);
+    // The tape of the manipulation minute (08:12): one sell hits the bid at the sweep low, then aggressive buyers lift the ask
+    // on each of the next nine levels. bid(P − bucket) is 0 above the first level, so every one of them is a buy imbalance
+    // (ratio ∞ → serialised null) and together they are one stacked run of 9 (source 05 §3).
+    const px = (k) => +(sweepLow + k * bucket).toFixed(2);
+    const trades = [{ t: T(8, 12) + 500, p: px(0), q: 1, side: 'sell' }];
+    for (let k = 1; k <= 9; k++) trades.push({ t: T(8, 12) + 1000 + k * 1000, p: px(k), q: 5, side: 'buy' });
+    let clock = history[0].t;
+    const now = () => clock;
+    const log = createLogger({ now, stream: null });
+    const journal = createJournal({ cfg, dir, log, now });
+    const symbol = { ...symbolsCfg.symbols[0], feedParams: { candles, trades, playLast } };
+    const fpEvents = [], bookEvents = [];
+    const analyst = new Analyst({
+      cfg, symbolsCfg: { symbols: [symbol] }, log, journal, now,
+      timers: { setTimeout: () => null, clearTimeout: () => {} },
+      feedFactory: (s, g, deps) => {
+        const feed = new ReplayFeed(s, s.feedParams, deps);
+        feed.on('history', (m) => { clock = m.candles[m.candles.length - 1].t + MIN; });
+        feed.on('candle', (m) => { clock = m.candle.t + MIN; });
+        return feed;
+      },
+    });
+    analyst.on('footprint', (m) => fpEvents.push(structuredClone(m)));
+    analyst.on('book', (m) => bookEvents.push(m));
+    await analyst.start();
+    await analyst.stop();
+
+    const all = journal.list({ symbol: 'BTCUSD', limit: 100 });
+    assert.equal(all.length, 1, `expected exactly one setup, got ${all.map((s) => `${s.side}@${new Date(s.t).toISOString()}`).join(', ')}\nfeed:\n${log.recent(40).map((e) => `${e.level} ${e.msg}`).join('\n')}`);
+    const s = all[0];
+    assert.equal(s.side, 'long'); assert.equal(s.t, T(8, 10)); assert.equal(s.status, 'won');
+    assert.ok(s.trigger.hits.includes('sweepReclaim') && s.trigger.hits.includes('footprintImbalance'), s.trigger.hits.join(','));
+    assert.ok(s.trigger.real.includes('footprintImbalance'), 'a REAL trigger (satisfies the gate on its own)');
+    assert.equal(s.trigger.kind, 'sweepReclaim', 'the sweep still names the setup (TRIGGER_PRIORITY)');
+    const line = s.reasons.find((r) => /^Stacked buy imbalances/.test(r));
+    assert.match(line ?? '', /^Stacked buy imbalances \(×9\) at the (Asia low|Asian low|equal lows|Asian session low|previous session low) — aggressive buyers stepping in at the zone$/, s.reasons.join('\n'));
+    assert.ok(!s.trigger.hits.includes('unfinishedAuction'), 'only buys printed at the top of the tape — a finished auction');
+    // score = Σ weights of its hits, the footprint weight among them
+    const W = cfg.czt.weights;
+    const sum = [...s.condition.hits.map((h) => W[`condition.${h}`]), ...s.zone.hits.map((h) => W[`zone.${h}`]), ...s.trigger.hits.map((h) => W[`trigger.${h}`])].reduce((a, b) => a + b, 0);
+    assert.ok(Math.abs(s.score - sum) < 1e-9, `score ${s.score} vs Σ weights ${sum}`);
+    assert.ok(sum >= cfg.czt.minScore + W['trigger.footprintImbalance']);
+    assert.ok(s.score >= cfg.czt.minScore && ['A', 'B'].includes(s.grade));
+    // the footprint SSE column for the sweep candle, exactly as the dashboard receives it
+    assert.equal(fpEvents.length, 1 + 9, 'history + nine 5m closes (08:00 → 08:45), one footprint event each');
+    const col = fpEvents.find((m) => m.footprint.t === T(8, 10));
+    assert.ok(col); assert.equal(col.symbol, 'BTCUSD'); assert.equal(col.tf, '5m'); assert.equal(col.trapped, null);
+    const f = col.footprint;
+    assert.equal(f.nTrades, 10); assert.equal(f.bucket, bucket); assert.equal(f.partial, false); assert.equal(f.totalAsk, 45); assert.equal(f.totalBid, 1);
+    assert.deepEqual(f.stacked, [{ side: 'buy', from: px(1), to: px(9), count: 9 }]);
+    assert.equal(f.imbalances.length, 9); assert.equal(f.imbalances[0].ratio, 5);
+    assert.ok(f.imbalances.slice(1).every((i) => i.ratio === null && i.infinite === true), 'Infinity ratios travel as null + infinite:true');
+    assert.equal(f.unfinishedHigh, false, 'only buys printed at the top level'); assert.equal(f.unfinishedLow, false, 'only the one sell printed at the low level — a finished auction (clean 0 ask)');
+    assert.ok(fpEvents.filter((m) => m.footprint.t !== T(8, 10)).every((m) => m.footprint.nTrades === 0), 'no other candle had a tape');
+    assert.equal(bookEvents.length, 0, 'a replay feed has no depth → no book, no book events');
+    const pro = analyst.proData('BTCUSD');
+    assert.equal(pro.book.summary, null); assert.match(pro.book.reason, /^No order book for this feed \(replay\)/);
+    assert.equal(pro.footprints.find((x) => x.t === T(8, 10)).nTrades, 10);
+    assert.equal(pro.partial, false); assert.equal(pro.backfill, null);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
