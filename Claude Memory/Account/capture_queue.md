@@ -766,3 +766,5 @@ Full grading: `Projects/Smart Home/diagnostics/2026-10-03-agent-spec-diagnosis.m
 - [ ] jarvis-core: replace the retired llama-3.3 default with the gpt-oss-120b failover chain (Guide C step 1, blocks everything else).
 - [x] Termux runtime question: the Agent SDK needs proot (glibc). Patched-native cannot run it.
 
+- [ ] ~~Run Guide A on the Windows PC~~ superseded: phone-only. Run the doc's Guide A steps 1–10 on the Fold (install.sh, then jarvis login, then jarvis start; step 9 is the safety-guard check).
+
