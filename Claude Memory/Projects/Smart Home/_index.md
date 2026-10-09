@@ -690,3 +690,11 @@ Two Termux gotchas worth keeping:
   - [ ] Attach `jarvis-core` and fix diagnosis §2.1 + §2.4; add Tier 3–5 suites.
   - [ ] Decide: quiet-hours window; Tier 3 provider under C1; voice agent on Vercel (redeploy or retire).
 - Session record: [[sessions/2026-10-03]]
+
+
+## Update 2026-10-09: adewaskar/jarvis reviewed
+- **Status:** Audited the upstream source and built a hardened copy (loopback bind, secret-file guard, Windows fixes, 16 tests). It runs on the Windows PC only. The Fold 7 needs proot and is untested.
+- **Decision:** Take his browser-side voice loop (VAD, assembler, barge-in, echo filter, fillers, turn ids) into jarvis-core's web UI, rather than running his app on the phone.
+- **Next:** (1) Do the gpt-oss-120b brain fix. (2) Port the VAD into web/index.html. (3) Run Guide A on the PC.
+- Session record: [[sessions/2026-10-09]]
+
