@@ -759,3 +759,10 @@ Full grading: `Projects/Smart Home/diagnostics/2026-10-03-agent-spec-diagnosis.m
 - [ ] Elliot: recreate the TradingView SSM alert before it expires (~4 Nov 2026; reminder ~28 Oct)
 - Decision (open): the index still lists "block/report @Signalstevebot" (2026-07-10) while Signalstevebot is now Elliot's own alert bot — confirm which bot that action meant
 
+
+## Added 2026-10-09 (adewaskar/jarvis audit)
+- [ ] Run Guide A on the Windows PC with the hardened zip. Step 8 confirms the secret-file hook fires live.
+- [ ] jarvis-core: port the browser VAD, assembler, barge-in and echo filter into web/index.html (Guide C steps 2–5).
+- [ ] jarvis-core: replace the retired llama-3.3 default with the gpt-oss-120b failover chain (Guide C step 1, blocks everything else).
+- [x] Termux runtime question: the Agent SDK needs proot (glibc). Patched-native cannot run it.
+
